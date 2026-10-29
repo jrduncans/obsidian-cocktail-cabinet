@@ -47,7 +47,7 @@ Quick starting guide for new plugin devs:
 ## How to use
 
 - Clone this repo.
-- Make sure your NodeJS is at least v18 (`node --version`).
+- Make sure your NodeJS is at least v20 (`node --version`).
 - `npm i` to install dependencies.
 - `npm run dev` to start compilation in watch mode.
 
@@ -61,6 +61,8 @@ Quick starting guide for new plugin devs:
 - This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
 - Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
 - A GitHub action is preconfigured to automatically lint every commit on all branches.
+
+The development dependency override pins Obsidian's transitive Moment dependency to the patched `2.31.0`, matching the [current Obsidian API package](https://github.com/obsidianmd/obsidian-api/blob/master/package.json). The lint plugin still pins an older Obsidian API package; remove the override when its dependency no longer needs this fix. The plugin bundle keeps `obsidian` external and does not import Moment.
 
 ## Funding URL
 
