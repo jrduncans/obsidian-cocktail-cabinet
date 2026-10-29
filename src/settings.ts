@@ -1,18 +1,18 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import MyPlugin from './main';
+import CocktailCabinetPlugin from './main';
 
-export interface MyPluginSettings {
+export interface CocktailCabinetSettings {
 	mySetting: string;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	mySetting: 'default',
 };
 
-export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+export class CocktailCabinetSettingTab extends PluginSettingTab {
+	plugin: CocktailCabinetPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: CocktailCabinetPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

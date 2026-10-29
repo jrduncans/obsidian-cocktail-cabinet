@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "cocktail-cabinet",
+	"name": "Cocktail Cabinet",
 	"version": "1.0.0",
 	"minAppVersion": "1.0.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Cocktail recipes and bottle inventory tools for your vault.",
+	"author": "Stephen Duncan",
+	"authorUrl": "https://github.com/jrduncans",
 	"isDesktopOnly": false
 }

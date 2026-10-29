@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-cocktail-cabinet",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Cocktail recipes and bottle inventory tools for your vault.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
