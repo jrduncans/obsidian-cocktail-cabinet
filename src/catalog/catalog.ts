@@ -45,7 +45,6 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 	['Rhum Agricole Blanc', 'Unaged sugarcane-juice rhum in the agricole style.'],
 	['Aged Rhum Agricole', 'Barrel-aged sugarcane-juice rhum in the agricole style.'],
 	['Black Rum', 'Dark rum for recipes explicitly calling for black rum; bottlings differ substantially.'],
-	['Coconut Rum', 'Coconut-flavored rum; sweetness and strength vary by bottling.'],
 ]);
 family('Cachaça', 'Spirit', 'Brazilian sugarcane spirits, kept separate from the Rum family.', [
 	['Unaged Cachaça', 'Unaged Brazilian sugarcane spirit for recipes calling for cachaça.'],
@@ -97,7 +96,7 @@ family('Floral Liqueur', 'Liqueur', 'Flower-flavored liqueurs used as cocktail m
 ]);
 family('Spice Liqueur', 'Liqueur', 'Spice-led liqueurs; each type retains its distinct recipe role.', [
 	['Allspice Dram', 'Allspice liqueur, also called pimento dram.'],
-	['Falernum', 'Falernum; sweetness and alcohol content vary between preparations and bottlings.'],
+	['Falernum', 'Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottling.'],
 ]);
 family('Amaro', 'Liqueur', 'Bitter liqueurs grouped as amaro for cocktail browsing. Styles vary in sweetness, strength, and bitterness; choose a type or bottle when it matters.', [
 	['Red Bitter Liqueur', 'Campari-style bitter liqueur, distinct from the Aperol-style Orange Bitter Liqueur recipe role. Color alone does not determine membership.'],
@@ -127,10 +126,6 @@ family('Sherry', 'Fortified Wine', 'Sherry styles.', [
 	['Fino Sherry', 'Dry sherry in the fino style.'], ['Amontillado Sherry', 'Dry sherry in the amontillado style.'],
 	['Oloroso Sherry', 'Sherry in the oloroso style; use the sweetness specified by your recipe.'], ['Pedro Ximénez Sherry', 'Sweet Pedro Ximénez sherry.'],
 ]);
-family('Other Fortified Wine', 'Fortified Wine', 'Other fortified wine ingredients.', [
-	['Ruby Port', 'Fortified wine in the ruby port style.'], ['Tawny Port', 'Fortified wine in the tawny port style.'],
-	['Quinquina', 'Quinine-flavored aperitif wine; use a bottle reference for a particular formulation.'],
-]);
 family('Bitters', undefined, 'Concentrated bitters used in small cocktail seasoning quantities.', [
 	['Aromatic Bitters', 'Concentrated aromatic bitters used in dashes or other small seasoning amounts.'], ['Orange Bitters', 'Concentrated orange-flavored bitters used as cocktail seasoning.'],
 	['Creole Bitters', 'Creole-style aromatic bitters for recipes that specify that profile.'], ['Chocolate Bitters', 'Concentrated chocolate-flavored bitters used as cocktail seasoning.'],
@@ -145,16 +140,17 @@ family('Other Fruit Juice', 'Juice', 'Other fruit juices; track purchased juice 
 	['Apple Juice', 'Juice from apples; specify a preparation when it changes your recipe.'], ['Passion Fruit Juice', 'Passion fruit juice; distinguish sweetened preparations when they affect a recipe.'],
 ]);
 family('Vegetable Juice', 'Juice', 'Vegetable juices.', [['Tomato Juice', 'Juice from tomatoes used in savory cocktails; seasoned mixes should be distinguished when needed.']]);
-family('Sugar Syrup', 'Syrup', 'Sugar and water syrups with a defined ratio by weight.', [
+family('Sugar Syrup', 'Syrup', 'Syrups made from sugar, honey, or agave without added flavorings. Record dilution and concentration on the ingredient page; flavor from the sweetener itself does not make a syrup flavored.', [
 	['Simple Syrup (1 to 1)', 'White sugar and water at 1:1 by weight. Nominal Brix: 50.'],
 	['Simple Syrup (2 to 1)', 'White sugar and water at 2:1 by weight. Nominal Brix: approximately 66.7.'],
 	['Demerara Syrup (2 to 1)', 'Demerara sugar and water at 2:1 by weight. Nominal sugar concentration: approximately 66.7 percent; actual Brix can vary.'],
-]);
-family('Flavored Syrup', 'Syrup', 'Flavored syrups; recipe details and concentration belong on the ingredient page.', [
-	['Orgeat', 'Almond syrup; concentration and flavor vary by preparation.'],
-	['Grenadine', 'Pomegranate syrup; document the preparation or purchased source you use.'],
 	['Honey Syrup', 'Honey diluted with water. Specify the ratio for your recipes.'],
 	['Agave Syrup', 'Agave-based sweetener. Document whether it is diluted.'],
+]);
+family('Flavored Syrup', 'Syrup', 'Syrups flavored with fruit, nuts, spices, or other added ingredients. Recipe details and concentration belong on the ingredient page.', [
+	['Orgeat', 'Almond syrup; concentration and flavor vary by preparation.'],
+	['Grenadine', 'Pomegranate syrup; document the preparation or purchased source you use.'],
+	['Falernum Syrup', 'Nonalcoholic spiced falernum syrup, distinct from Falernum liqueur. Record the preparation or purchased source you use.'],
 	['Ginger Syrup', 'A sweet ginger preparation; record the concentration and preparation you use.'], ['Cinnamon Syrup', 'A sweet cinnamon preparation; record the concentration and preparation you use.'],
 	['Passion Fruit Syrup', 'Sweetened passion fruit syrup, distinct from unsweetened juice.'],
 ]);
@@ -163,6 +159,7 @@ family('Carbonated Mixer', undefined, 'Carbonated cocktail mixers.', [
 	['Ginger Beer', 'Ginger-flavored mixer used for a more pronounced ginger profile; brands vary.'], ['Ginger Ale', 'Ginger-flavored soft drink, kept distinct from ginger beer in recipes.'], ['Cola', 'Cola-flavored soft drink used as a cocktail mixer.'],
 ]);
 ingredientTypes(undefined, [
+	['Cream of Coconut', 'Sweetened coconut cream used for sweetness and texture in cocktails, distinct from unsweetened coconut cream or coconut milk.'],
 	['Heavy Cream', 'High-fat dairy cream for recipes that specify cream.'], ['Milk', 'Dairy milk for recipes calling for milk; use a separate ingredient where a substitution changes the recipe.'], ['Egg White', 'The white of an egg, used for texture and foam in cocktails.'], ['Whole Egg', 'A whole egg, including yolk, for flips and other cocktails that specify it.'],
 ]);
 ingredientTypes(undefined, [

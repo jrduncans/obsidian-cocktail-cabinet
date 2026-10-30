@@ -4,14 +4,14 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-113 ingredient types, 27 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+111 ingredient types, 26 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
 | Ingredient type | Family (optional) | Category (optional) |
 | --- | --- | --- |
 | Absinthe | Anise Spirit | Spirit |
-| Agave Syrup | Flavored Syrup | Syrup |
+| Agave Syrup | Sugar Syrup | Syrup |
 | Aged Aquavit | Aquavit | Spirit |
 | Aged Blended Rum | Rum | Spirit |
 | Aged Cachaça | Cachaça | Spirit |
@@ -43,11 +43,11 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Chocolate Bitters | Bitters | — |
 | Cinnamon Syrup | Flavored Syrup | Syrup |
 | Cocktail Cherry | — | — |
-| Coconut Rum | Rum | Spirit |
 | Coffee Liqueur | — | — |
 | Cognac | Brandy | Spirit |
 | Cola | Carbonated Mixer | — |
 | Cranberry Juice | Other Fruit Juice | Juice |
+| Cream of Coconut | — | — |
 | Crème de Cacao | — | — |
 | Creole Bitters | Bitters | — |
 | Demerara Rum | Rum | Spirit |
@@ -58,6 +58,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Egg White | — | — |
 | Elderflower Liqueur | Floral Liqueur | Liqueur |
 | Falernum | Spice Liqueur | Liqueur |
+| Falernum Syrup | Flavored Syrup | Syrup |
 | Fernet | Amaro | Liqueur |
 | Fino Sherry | Sherry | Fortified Wine |
 | Genever | Gin | Spirit |
@@ -69,7 +70,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Green Herbal Liqueur | Herbal Liqueur | Liqueur |
 | Grenadine | Flavored Syrup | Syrup |
 | Heavy Cream | — | — |
-| Honey Syrup | Flavored Syrup | Syrup |
+| Honey Syrup | Sugar Syrup | Syrup |
 | Irish Whiskey | Whiskey | Spirit |
 | Lemon Juice | Citrus Juice | Juice |
 | Lemon Peel | — | — |
@@ -100,12 +101,10 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Pineapple Juice | Other Fruit Juice | Juice |
 | Plymouth Gin | Gin | Spirit |
 | Prosecco | Sparkling Wine | Wine |
-| Quinquina | Other Fortified Wine | Fortified Wine |
 | Red Bitter Liqueur | Amaro | Liqueur |
 | Red Wine | Still Wine | Wine |
 | Reposado Tequila | Agave Spirit | Spirit |
 | Rhum Agricole Blanc | Rum | Spirit |
-| Ruby Port | Other Fortified Wine | Fortified Wine |
 | Rye Whiskey | Whiskey | Spirit |
 | Salt | — | — |
 | Simple Syrup (1 to 1) | Sugar Syrup | Syrup |
@@ -113,7 +112,6 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Single Malt Scotch | Whiskey | Spirit |
 | Soda Water | Carbonated Mixer | — |
 | Sweet Vermouth | Vermouth | Fortified Wine |
-| Tawny Port | Other Fortified Wine | Fortified Wine |
 | Tomato Juice | Vegetable Juice | Juice |
 | Tonic Water | Carbonated Mixer | — |
 | Unaged Aquavit | Aquavit | Spirit |

@@ -62,8 +62,12 @@ The remaining branches retain their previous draft classifications for later foc
 - Apple Brandy is a family containing Apple Brandy, Bonded Apple Brandy, Applejack, and Calvados types. Users decide which types their bottles fit. Broad recipe references can use the family; the Apple Brandy type also remains available as requested.
 - Use Brandy colloquially for French-style grape brandy, with Cognac and Armagnac as types. Remove the residual Grape Brandy type from the starter catalog.
 - Omit Pisco from the starter cabinet. Users can add a type or family and choose their own scheme; no demonstration recipe or default subdivisions are supplied.
+- Sugar Syrup includes simple, demerara, honey, and agave syrups without added flavorings. The sweetener's own flavor does not put it in Flavored Syrup; that family groups fruit-, nut-, and spice-flavored preparations.
+- Keep Falernum as the liqueur under Spice Liqueur and add a distinct nonalcoholic Falernum Syrup under Flavored Syrup. This deliberately reverses the knowledge vault's unadorned Falernum name for syrup; any future adoption must preserve ingredient meaning rather than match names alone.
+- Omit Coconut Rum from the starter set. Add Cream of Coconut as a standalone type, explicitly distinguished from unsweetened coconut cream and coconut milk.
+- Omit Quinquina, Ruby Port, Tawny Port, and the Other Fortified Wine family from the starter set. Vermouth and Sherry provide the initial Fortified Wine families; users can add further wine styles as needed.
 
-The hierarchy table is generated from the catalog with `npm run catalog:docs`; `npm test` checks it for drift. Tests also assert the reviewed classifications above so that a synchronized table cannot silently reintroduce the old defaults.
+The hierarchy table is generated from the catalog with `npm run catalog:docs`; `npm test` checks it for drift. Tests also assert selected reviewed classifications so that a synchronized table cannot silently reintroduce those old defaults.
 
 ## Open decisions
 

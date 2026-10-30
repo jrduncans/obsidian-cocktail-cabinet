@@ -4,6 +4,8 @@ Compared the live `knowledge` hierarchy with the plugin catalog committed as `6e
 
 Follow-up decisions on 2026-10-30: split the bitter-liqueur recipe roles into Red Bitter Liqueur (Campari/Crimson Snap) and Orange Bitter Liqueur (Aperol/Mari Gold), include Bitter Bianco alongside Salers in Gentian Liqueur, and retain the broad Orange Liqueur type. See the [substitution review](knowledge-substitutions-review.md) for the recorded relationships and adoption implications. The tables below otherwise describe the original comparison snapshot.
 
+Further starter review on 2026-10-30 resolves the Falernum naming question: the starter uses **Falernum Syrup** for the nonalcoholic syrup and **Falernum** for the liqueur. Existing knowledge links to Falernum therefore correspond to Falernum Syrup; existing Falernum Liqueur links correspond to Falernum. This is an agreed naming distinction, not an automatic migration. Honey Syrup now retains its Sugar Syrup family, joined by Agave Syrup. Coconut Rum is no longer a starter entry, and Cream of Coconut has been added as a standalone type. The snapshot rows below predate these changes.
+
 The important distinction: **the starter catalog is a set of defaults, not a required taxonomy.** The reader accepts custom categories, families, and types. Most reclassifications below are choices to revisit before migration, rather than changes your vault must accept. The fixed relationship levels, optional parents, and naming policy are the broader design commitments.
 
 ## Give these the most attention
