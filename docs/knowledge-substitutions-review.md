@@ -91,6 +91,10 @@ The initial plugin currently implements same-type discovery, not an explicit `Su
 
 Use types for the intended replacement groups. These cases no longer demonstrate a required directional exception, so an explicit substitution feature can remain an open option rather than a prerequisite established by this audit.
 
+## Future case from the rum review
+
+On 2026-10-30, the user identified **O.F.T.D. → Demerara 151 Rum** as a practical substitution case to consider in the future. It is separate from the 11 declared links audited above. The agreed starter name remains Demerara 151 Rum; a possible substitute need not share that ingredient identity. The rum review records O.F.T.D. at 69% ABV and Hamilton 151 at 75.5% in the vault. Future substitution behavior should preserve the recipe's original requirement and distinguish the chosen substitute. Whether suitability is recipe-specific, whether to allow the reverse substitution, and how to handle quantity adjustments remain undecided. No matching rule or vault substitution field was added. See the [rum organization review](rum-organization-review.md).
+
 ## Scope and evidence
 
 The relationship inventory came from the live Obsidian metadata cache across indexed Markdown notes, without filtering to current stock. Each linked target and its Type/ABV properties was resolved, and the involved bottle bodies were inspected. Relevant template, Bases, view, and skill references were checked separately. No stock quantities, purchase data, or recipe contents were needed. Findings are saved locally alongside the hierarchy review; no knowledge-vault notes were changed.

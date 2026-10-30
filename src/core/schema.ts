@@ -21,6 +21,7 @@ export interface CabinetNote {
 	name: string;
 	kind: NoteKind;
 	parents: string[];
+	aliases?: string[];
 }
 
 export interface NoteDraft {

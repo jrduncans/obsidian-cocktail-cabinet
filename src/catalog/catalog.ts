@@ -6,16 +6,18 @@ export interface CatalogEntry extends NoteDraft {
 	parent?: string;
 }
 
+type TypeDefinition = [name: string, description: string, properties?: Properties];
+
 const entries: CatalogEntry[] = [];
 function category(name: string, description: string) {
 	entries.push({ id: `category:${fileName(name)}`, kind: 'category', name, description });
 }
-function ingredientTypes(parent: string | undefined, types: [string, string][]) {
-	for (const [name, description] of types) {
-		entries.push({ id: `type:${fileName(name)}`, kind: 'type', name, parent, description });
+function ingredientTypes(parent: string | undefined, types: TypeDefinition[]) {
+	for (const [name, description, properties] of types) {
+		entries.push({ id: `type:${fileName(name)}`, kind: 'type', name, parent, description, properties });
 	}
 }
-function family(name: string, parent: string | undefined, description: string, types: [string, string][]) {
+function family(name: string, parent: string | undefined, description: string, types: TypeDefinition[]) {
 	entries.push({ id: `family:${fileName(name)}`, kind: 'family', name, parent, description });
 	ingredientTypes(name, types);
 }
@@ -35,16 +37,24 @@ family('Whiskey', 'Spirit', 'Whiskey styles used in cocktail recipes.', [
 	['Irish Whiskey', 'Irish whiskey; select a bottling to suit the recipe.'],
 ]);
 family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine them to fit your recipes.', [
-	['Lightly Aged Blended Rum', 'Lightly aged blended rum for recipes calling for a light-bodied rum.'],
-	['Aged Blended Rum', 'Aged blended rum; flavor and strength vary by bottling.'],
-	['Unaged Jamaican Rum', 'Unaged Jamaican rum; check the bottle strength when using a recipe.'],
+	['Light Rum', 'Lightly aged rum filtered to remove color, with a relatively restrained flavor profile; Don Q Cristal is an example. Distinct from White Blended Rum.'],
+	['White Blended Rum', 'Clear multi-region rum blends, such as Probitas, combining different flavor profiles. Components may be aged or unaged; kept distinct from the more restrained Light Rum role.'],
+	['Aged Barbados Rum', 'Moderately aged Barbados-style blends of pot- and column-still rum, represented by Real McCoy 5, Planteray Barbados 5 Year, and Mount Gay Eclipse. Older expressions such as Real McCoy 12 generally fit; lighter white styles such as Real McCoy 3 and Mount Gay Silver do not.'],
+	['Aged Column Still Rum', 'Aged column-still rum in the recipe role represented by Ron Abuelo Añejo and Don Q Gold, kept distinct from Aged Barbados Rum. Moderately aged expressions are typical; older expressions can generally fill the same role.'],
+	['Aged Blended Rum', 'Aged blends of rum from multiple regions, in the recipe role represented by Planteray Original Dark. Keep distinct from Aged Barbados Rum and Aged Column Still Rum.'],
 	['Aged Jamaican Rum', 'Barrel-aged Jamaican rum, kept distinct from unaged and explicitly overproof styles.'],
-	['Overproof Jamaican Rum', 'High-strength Jamaican rum, distinct from standard-strength rum in a recipe.'],
+	['Aged Overproof Jamaican Rum', 'High-strength barrel-aged Jamaican rum for recipes specifying this role, distinct from Unaged Overproof Jamaican Rum and standard-strength Aged Jamaican Rum.'],
+	['Unaged Overproof Jamaican Rum', 'High-strength unaged Jamaican rum for recipes specifying this role, distinct from Aged Overproof Jamaican Rum.'],
 	['Demerara Rum', 'Demerara rum; choose a bottling and strength to suit the recipe.'],
-	['Overproof Demerara Rum', 'High-strength Demerara rum for recipes that specify it.'],
-	['Rhum Agricole Blanc', 'Unaged sugarcane-juice rhum in the agricole style.'],
-	['Aged Rhum Agricole', 'Barrel-aged sugarcane-juice rhum in the agricole style.'],
-	['Black Rum', 'Dark rum for recipes explicitly calling for black rum; bottlings differ substantially.'],
+	['Demerara 151 Rum', 'Demerara rum bottled at 151 US proof (75.5% ABV), for recipes specifying this strength and style. Distinct from standard-strength Demerara Rum and multi-region overproof blends.'],
+	['Blended Overproof Rum', 'High-strength rum blends, including O.F.T.D., Hamilton Zombie Blend, and Planteray Mister Fogg. Their strengths and flavor profiles differ; recipes often specify a particular bottle.'],
+	['Unaged Rhum Agricole', 'Unaged sugarcane-juice rhum in the agricole style, also called rhum agricole blanc. Kept distinct from Aged Rhum Agricole.', { aliases: ['Rhum Agricole Blanc'] }],
+	['Aged Rhum Agricole', 'Barrel-aged sugarcane-juice rhum in the agricole style, also called rhum agricole vieux in this cabinet. Kept distinct from Unaged Rhum Agricole.', { aliases: ['Rhum Agricole Vieux'] }],
+	['Unaged Haitian Rum', 'Traditional Barbancourt-style white rum without wood maturation; steel-tank resting is compatible with this type. Keep distinct from Aged Haitian Rum and Clairin. Preserve a recipe’s named bottle and strength.', { aliases: ['White Haitian Rum'] }],
+	['Aged Haitian Rum', 'Barrel-aged Haitian rum in the Barbancourt-style recipe role, represented by Barbancourt 3 Star and 5 Star. Keep distinct from Unaged Haitian Rum and Clairin.'],
+	['Unaged Mexican Rum', 'Unaged Mexican cane-juice rum in the recipe role represented by Paranubes Blanco, with pronounced fermentation and savory character. Choose other bottles for their fit with this profile; recipes may specify a particular bottle or strength.', { aliases: ['Oaxacan Rum'] }],
+	['Black Jamaican Rum', 'Jamaican rum with pronounced caramel influence, distinct from the Aged Jamaican Rum recipe role. Color alone does not determine membership.'],
+	['Pineapple Rum', 'Pineapple-flavored rum, including Stiggins’ Fancy. Other pineapple rums can differ substantially in flavor; recipes often name the intended bottle.'],
 ]);
 family('Cachaça', 'Spirit', 'Brazilian sugarcane spirits, kept separate from the Rum family.', [
 	['Unaged Cachaça', 'Unaged Brazilian sugarcane spirit for recipes calling for cachaça.'],

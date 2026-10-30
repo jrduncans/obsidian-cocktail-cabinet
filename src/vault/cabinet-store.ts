@@ -1,4 +1,4 @@
-import { App, TFile, TFolder, parseYaml } from 'obsidian';
+import { App, TFile, TFolder, parseFrontMatterAliases, parseYaml } from 'obsidian';
 import { cabinetFolder, KINDS, PROP, wikiLink } from '../core/schema';
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { ingredientSection, localDate, renderNote } from '../core/notes';
@@ -32,7 +32,7 @@ export class CabinetStore {
 			const properName: unknown = frontmatter?.[PROP.name];
 			const name = typeof properName === 'string' && properName.trim() && !/[|[\]\r\n]/.test(properName)
 				? properName.trim() : file.basename;
-			return [{ path: file.path, name, kind: kind as NoteKind, parents }];
+			return [{ path: file.path, name, kind: kind as NoteKind, parents, aliases: parseFrontMatterAliases(frontmatter) || [] }];
 		}).sort((left, right) => left.name.localeCompare(right.name));
 		const byPath = new Map(notes.map(note => [note.path, note]));
 		for (const note of notes) {

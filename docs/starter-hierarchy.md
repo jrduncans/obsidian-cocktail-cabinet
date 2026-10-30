@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-111 ingredient types, 26 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+119 ingredient types, 26 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -13,9 +13,13 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Absinthe | Anise Spirit | Spirit |
 | Agave Syrup | Sugar Syrup | Syrup |
 | Aged Aquavit | Aquavit | Spirit |
+| Aged Barbados Rum | Rum | Spirit |
 | Aged Blended Rum | Rum | Spirit |
 | Aged Cachaça | Cachaça | Spirit |
+| Aged Column Still Rum | Rum | Spirit |
+| Aged Haitian Rum | Rum | Spirit |
 | Aged Jamaican Rum | Rum | Spirit |
+| Aged Overproof Jamaican Rum | Rum | Spirit |
 | Aged Rhum Agricole | Rum | Spirit |
 | Allspice Dram | Spice Liqueur | Liqueur |
 | Amaretto | Nut Liqueur | Liqueur |
@@ -30,10 +34,11 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Artichoke Amaro | Amaro | Liqueur |
 | Banana Liqueur | Fruit Liqueur | Liqueur |
 | Bénédictine | Herbal Liqueur | Liqueur |
-| Black Rum | Rum | Spirit |
+| Black Jamaican Rum | Rum | Spirit |
 | Blackcurrant Liqueur | Fruit Liqueur | Liqueur |
 | Blanc Vermouth | Vermouth | Fortified Wine |
 | Blanco Tequila | Agave Spirit | Spirit |
+| Blended Overproof Rum | Rum | Spirit |
 | Blended Scotch | Whiskey | Spirit |
 | Bonded Apple Brandy | Apple Brandy | Spirit |
 | Bourbon | Whiskey | Spirit |
@@ -50,6 +55,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Cream of Coconut | — | — |
 | Crème de Cacao | — | — |
 | Creole Bitters | Bitters | — |
+| Demerara 151 Rum | Rum | Spirit |
 | Demerara Rum | Rum | Spirit |
 | Demerara Syrup (2 to 1) | Sugar Syrup | Syrup |
 | Dry Sparkling Wine | Sparkling Wine | Wine |
@@ -74,7 +80,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Irish Whiskey | Whiskey | Spirit |
 | Lemon Juice | Citrus Juice | Juice |
 | Lemon Peel | — | — |
-| Lightly Aged Blended Rum | Rum | Spirit |
+| Light Rum | Rum | Spirit |
 | Lime Juice | Citrus Juice | Juice |
 | Lime Peel | — | — |
 | London Dry Gin | Gin | Spirit |
@@ -91,20 +97,18 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Orange Liqueur | Fruit Liqueur | Liqueur |
 | Orange Peel | — | — |
 | Orgeat | Flavored Syrup | Syrup |
-| Overproof Demerara Rum | Rum | Spirit |
-| Overproof Jamaican Rum | Rum | Spirit |
 | Passion Fruit Juice | Other Fruit Juice | Juice |
 | Passion Fruit Syrup | Flavored Syrup | Syrup |
 | Pastis | Anise Spirit | Spirit |
 | Peach Liqueur | Fruit Liqueur | Liqueur |
 | Pedro Ximénez Sherry | Sherry | Fortified Wine |
 | Pineapple Juice | Other Fruit Juice | Juice |
+| Pineapple Rum | Rum | Spirit |
 | Plymouth Gin | Gin | Spirit |
 | Prosecco | Sparkling Wine | Wine |
 | Red Bitter Liqueur | Amaro | Liqueur |
 | Red Wine | Still Wine | Wine |
 | Reposado Tequila | Agave Spirit | Spirit |
-| Rhum Agricole Blanc | Rum | Spirit |
 | Rye Whiskey | Whiskey | Spirit |
 | Salt | — | — |
 | Simple Syrup (1 to 1) | Sugar Syrup | Syrup |
@@ -116,8 +120,12 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Tonic Water | Carbonated Mixer | — |
 | Unaged Aquavit | Aquavit | Spirit |
 | Unaged Cachaça | Cachaça | Spirit |
-| Unaged Jamaican Rum | Rum | Spirit |
+| Unaged Haitian Rum | Rum | Spirit |
+| Unaged Mexican Rum | Rum | Spirit |
+| Unaged Overproof Jamaican Rum | Rum | Spirit |
+| Unaged Rhum Agricole | Rum | Spirit |
 | Violet Liqueur | Floral Liqueur | Liqueur |
 | Vodka | — | — |
+| White Blended Rum | Rum | Spirit |
 | Whole Egg | — | — |
 | Yellow Herbal Liqueur | Herbal Liqueur | Liqueur |

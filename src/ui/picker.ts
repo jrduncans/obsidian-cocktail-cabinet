@@ -11,7 +11,8 @@ export class NotePicker extends FuzzySuggestModal<CabinetNote> {
 	getItems(): CabinetNote[] { return this.notes; }
 	getItemText(note: CabinetNote): string {
 		const filename = note.path.split('/').slice(-1)[0]?.replace(/\.md$/, '') || note.name;
-		return `${note.name}${filename === note.name ? '' : ` (${filename})`} · ${note.kind}`;
+		const aliases = [...new Set(note.aliases || [])].filter(alias => alias !== note.name && alias !== filename);
+		return `${note.name}${filename === note.name ? '' : ` (${filename})`}${aliases.length ? ` · ${aliases.join(', ')}` : ''} · ${note.kind}`;
 	}
 	onChooseItem(note: CabinetNote) { this.choose(note); }
 }

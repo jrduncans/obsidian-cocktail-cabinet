@@ -123,6 +123,18 @@ void test('proper names survive in properties, page headings, aliases, and link 
 	for (const name of ['Broken|Alias', 'Broken]]link', 'Line\nbreak']) assert.throws(() => wikiLink(note.path, name));
 });
 
+void test('agricole starter notes preserve both French names as aliases for distinct age-based types', () => {
+	const files = starterPlan('Cocktails');
+	for (const [name, alias] of [['Unaged Rhum Agricole', 'Rhum Agricole Blanc'], ['Aged Rhum Agricole', 'Rhum Agricole Vieux']]) {
+		const file = files.find(file => file.path === notePath('Cocktails', 'type', name!));
+		assert.ok(file, name);
+		const aliases = file.content.split('\n').find(line => line.startsWith('aliases: '));
+		assert.ok(aliases, name);
+		assert.deepEqual(JSON.parse(aliases.slice('aliases: '.length)), [alias]);
+		assert.ok(!files.some(other => other.path === notePath('Cocktails', 'type', alias!)));
+	}
+});
+
 void test('accented starter names keep their catalog identity and plain parent filenames', () => {
 	const files = starterPlan('Cocktails');
 	const cachaca = files.find(file => file.catalogId === 'family:Cachaca');
