@@ -79,7 +79,7 @@ family('Anise Spirit', 'Spirit', 'Anise-flavored spirits used for pours and rins
 	['Pastis', 'Pastis for recipes that specify it.'],
 ]);
 family('Fruit Liqueur', 'Liqueur', 'Fruit-flavored liqueurs.', [
-	['Orange Liqueur', 'Orange liqueur; refine to a specific style or bottle when the recipe needs it.'],
+	['Orange Liqueur', 'Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles. Bottles share this broad recipe role; link a specific bottle when needed.'],
 	['Maraschino Liqueur', 'Maraschino liqueur, distinct from cherry brandy and cherry syrup.'],
 	['Cherry Liqueur', 'Cherry liqueur for recipes that specify it.'],
 	['Apricot Liqueur', 'Apricot liqueur, distinct from dry apricot brandy.'],
@@ -100,8 +100,9 @@ family('Spice Liqueur', 'Liqueur', 'Spice-led liqueurs; each type retains its di
 	['Falernum', 'Falernum; sweetness and alcohol content vary between preparations and bottlings.'],
 ]);
 family('Amaro', 'Liqueur', 'Bitter liqueurs grouped as amaro for cocktail browsing. Styles vary in sweetness, strength, and bitterness; choose a type or bottle when it matters.', [
-	['Red Bitter Liqueur', 'Red bitter liqueur; specify a bottle where bitterness and sweetness matter.'],
-	['Gentian Liqueur', 'Bitter liqueur with gentian character; select a bottle to capture the specific formulation.'], ['Fernet', 'A strongly bitter herbal liqueur in the fernet style.'],
+	['Red Bitter Liqueur', 'Campari-style bitter liqueur, distinct from the Aperol-style Orange Bitter Liqueur recipe role. Color alone does not determine membership.'],
+	['Orange Bitter Liqueur', 'Aperol-style bitter liqueur, distinct from the Campari-style Red Bitter Liqueur recipe role and from Orange Liqueur. Color alone does not determine membership.'],
+	['Gentian Liqueur', 'Bitter liqueurs in the gentian recipe role, including Salers, Suze, Avèze, and, in this cabinet, Bitter Bianco. Formulations and strengths vary; select a bottle when needed.'], ['Fernet', 'A strongly bitter herbal liqueur in the fernet style.'],
 	['Artichoke Amaro', 'A bitter herbal liqueur in an artichoke-based style.'],
 ]);
 family('Nut Liqueur', 'Liqueur', 'Nut-flavored liqueurs. Add other nut styles when useful to your recipes.', [

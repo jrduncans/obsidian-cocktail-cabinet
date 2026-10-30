@@ -148,7 +148,7 @@ void test('reviewed liqueur groupings and the default Vodka type replace the ini
 		['Elderflower Liqueur', 'Floral Liqueur'], ['Violet Liqueur', 'Floral Liqueur'],
 		['Allspice Dram', 'Spice Liqueur'], ['Falernum', 'Spice Liqueur'], ['Amaretto', 'Nut Liqueur'],
 		['Coffee Liqueur', undefined], ['Crème de Cacao', undefined], ['Vodka', undefined],
-		['Red Bitter Liqueur', 'Amaro'], ['Gentian Liqueur', 'Amaro'], ['Fernet', 'Amaro'], ['Artichoke Amaro', 'Amaro'],
+		['Red Bitter Liqueur', 'Amaro'], ['Orange Bitter Liqueur', 'Amaro'], ['Gentian Liqueur', 'Amaro'], ['Fernet', 'Amaro'], ['Artichoke Amaro', 'Amaro'],
 	];
 	for (const [name, parent] of expected) {
 		const entry = STARTER_CATALOG.find(entry => entry.kind === 'type' && entry.name === name);

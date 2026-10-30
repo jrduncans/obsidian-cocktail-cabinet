@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-112 ingredient types, 27 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+113 ingredient types, 27 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -84,6 +84,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Navy Strength Gin | Gin | Spirit |
 | Old Tom Gin | Gin | Spirit |
 | Oloroso Sherry | Sherry | Fortified Wine |
+| Orange Bitter Liqueur | Amaro | Liqueur |
 | Orange Bitters | Bitters | — |
 | Orange Juice | Citrus Juice | Juice |
 | Orange Liqueur | Fruit Liqueur | Liqueur |

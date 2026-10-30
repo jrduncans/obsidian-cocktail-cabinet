@@ -29,3 +29,15 @@ The broader grouping of apple brandy and applejack styles, including Bonded Appl
 
 **Apple Brandy (type)**:
 The generic apple-brandy ingredient type, alongside the more specific types in the Apple Brandy family.
+
+**Red Bitter Liqueur**:
+The Campari-style bitter-liqueur recipe role, separate from the Aperol-style role. Color alone does not determine membership.
+
+**Orange Bitter Liqueur**:
+The Aperol-style bitter-liqueur recipe role, including Mari Gold, separate from Red Bitter Liqueur and Orange Liqueur.
+
+**Gentian Liqueur**:
+The gentian bitter-liqueur recipe role, including Salers, Suze, Avèze, and, in this cabinet, Bitter Bianco.
+
+**Orange Liqueur**:
+A broad ingredient type encompassing triple sec, curaçao, and brandy- or rum-based orange liqueurs, without ranking bottles as closer alternatives to one another.

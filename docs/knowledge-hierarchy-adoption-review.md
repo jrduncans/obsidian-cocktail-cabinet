@@ -2,6 +2,8 @@
 
 Compared the live `knowledge` hierarchy with the plugin catalog committed as `6e51eca` on 2026-10-29. This focuses on choices that could change your existing classifications, ingredient meanings, or links when adopting the plugin. It does not list ingredients absent from the starter catalog. Properties and UI are for the next review.
 
+Follow-up decisions on 2026-10-30: split the bitter-liqueur recipe roles into Red Bitter Liqueur (Campari/Crimson Snap) and Orange Bitter Liqueur (Aperol/Mari Gold), include Bitter Bianco alongside Salers in Gentian Liqueur, and retain the broad Orange Liqueur type. See the [substitution review](knowledge-substitutions-review.md) for the recorded relationships and adoption implications. The tables below otherwise describe the original comparison snapshot.
+
 The important distinction: **the starter catalog is a set of defaults, not a required taxonomy.** The reader accepts custom categories, families, and types. Most reclassifications below are choices to revisit before migration, rather than changes your vault must accept. The fixed relationship levels, optional parents, and naming policy are the broader design commitments.
 
 ## Give these the most attention
