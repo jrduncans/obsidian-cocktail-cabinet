@@ -1,93 +1,72 @@
 # Cocktail Cabinet
 
-An Obsidian plugin for cocktail recipes and bottle inventory, currently in early development from the Obsidian sample plugin template.
+An Obsidian plugin for building and maintaining your own cocktail recipes and ingredient cabinet. Early development; note schemas and the starter catalog are still being reviewed.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Get started
 
-The sample functionality is still present while cocktail features are being developed:
+1. Enable **Cocktail Cabinet** in **Settings → Community plugins**.
+2. Select the glass ribbon icon or run **Cocktail Cabinet: Open cabinet**.
+3. Select **Set up cabinet**. Choose a folder and select **Preview** to inspect creation counts and conflicts, then **Create cabinet**.
+4. Add bottles, other stock, and cocktail recipes from the cabinet or command palette.
 
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and outputs a Notice on click.
+The starter catalog includes ingredient descriptions, with optional **Family** and **Category** groupings where they help. A type can stand alone, and a family can have no category. The three default sugar syrups have nominal Brix and optional preparation instructions. It supplies ingredient definitions, with no owned inventory or cocktail recipes. See the [draft starter hierarchy](docs/starter-hierarchy.md) for the complete list.
 
-## First time developing plugins?
+Setup creates ordinary Markdown notes inside the chosen folder. Existing starter notes are preserved, including custom descriptions and renamed pages that retain their catalog ID. Conflicting unrelated notes stop setup before any notes are created. Setup is additive and can finish an interrupted run; it does not overwrite or delete existing content. Keep catalog IDs on starter pages so later setup runs recognize them.
 
-Quick starting guide for new plugin devs:
+## Create and browse
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `src/main.ts` to `main.js`.
-- Make changes to `src/main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+- **Open cabinet**: start with **All ingredient types**, which includes every type regardless of its parents. Families and categories provide additional browsing. A note's details let you open it, browse linked ingredients and stock, or find related recipes. Use **Refresh** after adding notes while the cabinet remains open.
+- **Add ingredient type**: create an ingredient with an optional family, description, Brix, and preparation instructions. Add categories and families through **Open cabinet**.
+- **Add a bottle**: enter its ingredient types, volume in milliliters, ABV, remaining open percentage, and unopened count. Blank amounts stay unknown. A bottle record describes a bottling and its stock, rather than creating one note per physical bottle.
+- **Add other stock**: record fresh ingredients, prepared or bottled juice, homemade or purchased syrup, and other sources. Select the ingredient types they provide and an availability of Unknown, Have, Low, or Out. One source can provide several ingredients.
+- **Create a cocktail recipe**: enter ingredient amounts as written, select a bottle or any hierarchy level, or leave an ingredient as plain text. **New type** creates and selects a missing type without losing the recipe form. Source and rating remain on the recipe; the creation date is resolved locally.
+- **Browse related recipes**: from an ingredient or bottle note, find recipe ingredient references beneath that classification, broadly specified recipes it can fulfill, and same-type bottle alternatives. References elsewhere in a recipe, such as tasting notes, do not count.
 
-## Releasing new releases
+A recipe may reference **Rum**, **Aged Jamaican Rum**, or a particular bottle. Broad references stay broad. A narrow reference does not acquire every other type in the same family. Recipe text is not rewritten when browsing related recipes.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+Edit notes and properties directly in Obsidian. Browsing uses current metadata when opened or refreshed and requires neither Dataview nor Bases. Ordinary links and notes remain usable with the plugin disabled.
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+New notes use plain Latin filenames and retain their proper name in `cocktail-name` and the page heading. Generated links display that proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`. Accented names also become Obsidian aliases; the plugin's ingredient picker includes both spellings when they differ. Existing notes without `cocktail-name` use their filename as the displayed name.
 
-## Adding your plugin to the community plugin list
+The Apple Brandy family includes Apple Brandy, Bonded Apple Brandy, Applejack, and Calvados. Classify your bottles deliberately. The Brandy family uses the common French-style grape-brandy meaning and contains Cognac and Armagnac. Pisco is left to users to add and classify.
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+Herbal, floral, spice, and nut liqueurs have separate families. Coffee Liqueur, Crème de Cacao, and Vodka stand alone. The starter bitter liqueurs use the Amaro family and ingredient names such as Red Bitter Liqueur.
 
-## How to use
+## Current limits
 
-- Clone this repo.
-- Make sure your NodeJS is at least v20 (`node --version`).
-- `npm i` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+- Existing personal collections using the old `Subcategory`, `Type`, and `base` conventions need a future adoption/migration flow. Setup does not convert them. Choose a fresh cabinet folder to experiment.
+- Stock is recorded and editable; consumption calculations, drink logging, imports, and agent integration are future work.
+- Non-bottle stock currently uses availability and form, with no preparation batches, measured juice yields, or consumption tracking.
+- Syrup filenames spell ratios as “1 to 1” and “2 to 1” for cross-platform filenames; their descriptions and ratio property use 1:1 and 2:1 by weight.
+- The runtime declares Obsidian 1.4.0 as its minimum for the APIs used. Manual verification has been on desktop Obsidian 1.14.5; real iOS and Android testing remains outstanding.
 
-## Manually installing the plugin
+## Storage and privacy
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+All runtime operations stay in the selected vault. The plugin makes no network requests and collects no telemetry. External reference links on ingredient pages open only when selected.
 
-## Improve code quality with eslint
+Notes use `cocktail-kind` to identify their role and cocktail-prefixed properties to avoid common vault property conflicts. Links include vault-relative folder paths. See [the current schema and design](docs/cabinet-design.md) and [domain glossary](GLOSSARY.md).
 
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code.
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+## Development
 
-The development dependency override pins Obsidian's transitive Moment dependency to the patched `2.31.0`, matching the [current Obsidian API package](https://github.com/obsidianmd/obsidian-api/blob/master/package.json). The lint plugin still pins an older Obsidian API package; remove the override when its dependency no longer needs this fix. The plugin bundle keeps `obsidian` external and does not import Moment.
+Use Node.js 20+ and npm:
 
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-	"fundingUrl": "https://buymeacoffee.com"
-}
+```sh
+npm install
+npm run dev
 ```
 
-If you have multiple URLs, you can also do:
+Checks:
 
-```json
-{
-	"fundingUrl": {
-		"Buy Me a Coffee": "https://buymeacoffee.com",
-		"GitHub Sponsor": "https://github.com/sponsors",
-		"Patreon": "https://www.patreon.com/"
-	}
-}
+```sh
+npm test
+npm run build
+npm run lint
 ```
 
-## API Documentation
+After changing starter ingredients, run `npm run catalog:docs` to regenerate the hierarchy table. `npm test` also checks that the table matches the catalog.
 
-See https://docs.obsidian.md
+The dev vault's plugin directory is a symlink to this repository. Builds supply `main.js` directly; Hot Reload is installed in that vault. Generated bundles and local `data.json` settings are ignored by Git.
+
+For another test vault, copy `main.js`, `manifest.json`, and `styles.css` to `<vault>/.obsidian/plugins/cocktail-cabinet/` and enable the plugin. Release assets belong at that same plugin root; do not commit generated bundles.
+
+The development override pins Obsidian's transitive Moment dependency to `2.31.0`. The plugin bundle keeps `obsidian` external and does not import Moment.

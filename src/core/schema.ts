@@ -1,0 +1,97 @@
+export const KINDS = ['category', 'family', 'type', 'bottle', 'ingredient', 'recipe'] as const;
+export type NoteKind = typeof KINDS[number];
+export type PropertyValue = string | number | boolean | null | string[];
+export type Properties = Record<string, PropertyValue>;
+
+export const FOLDERS: Record<NoteKind, string> = {
+	category: 'Categories', family: 'Families', type: 'Types',
+	bottle: 'Bottles', ingredient: 'Ingredients', recipe: 'Recipes',
+};
+
+export const PROP = {
+	kind: 'cocktail-kind', name: 'cocktail-name', category: 'cocktail-category', family: 'cocktail-family',
+	types: 'cocktail-types', provides: 'cocktail-provides', catalogId: 'cocktail-catalog-id',
+	brix: 'cocktail-brix', volume: 'cocktail-volume-ml', abv: 'cocktail-abv',
+	open: 'cocktail-open-fraction', unopened: 'cocktail-unopened',
+	availability: 'cocktail-availability', form: 'cocktail-form',
+} as const;
+
+export interface CabinetNote {
+	path: string;
+	name: string;
+	kind: NoteKind;
+	parents: string[];
+}
+
+export interface NoteDraft {
+	kind: NoteKind;
+	name: string;
+	description: string;
+	properties?: Properties;
+	method?: string;
+	ingredients?: string[];
+	tastingNotes?: string;
+}
+
+export interface PlannedFile {
+	path: string;
+	content: string;
+	kind: NoteKind | 'cabinet';
+	catalogId?: string;
+}
+
+export function cabinetFolder(value: string): string {
+	const path = value.trim().replace(/\\/g, '/').replace(/\/+$/, '');
+	if (!path || path.startsWith('/') || path.split('/').some(part => !part || part.startsWith('.'))) {
+		throw new Error('Choose a folder inside the vault, without hidden folders or special characters.');
+	}
+	for (const part of path.split('/')) noteName(part);
+	return path;
+}
+
+export function noteName(value: string): string {
+	const name = value.trim();
+	if (!name || name.startsWith('.') || name.endsWith('.') || /[/\\:*?"<>|#[\]^]/.test(name)
+		|| Array.from(name).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) {
+		throw new Error('Enter a name without slashes, colons, brackets, or other special characters.');
+	}
+	if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)) {
+		throw new Error('Choose a name that is valid on all supported platforms.');
+	}
+	return name;
+}
+
+export function notePath(root: string, kind: NoteKind, name: string): string {
+	return `${cabinetFolder(root)}/${FOLDERS[kind]}/${fileName(name)}.md`;
+}
+
+/** Fold Latin diacritics for filenames while retaining the entered name separately. */
+export function fileName(value: string): string {
+	const replacements: Record<string, string> = {
+		Æ: 'AE', æ: 'ae', Œ: 'OE', œ: 'oe', Ø: 'O', ø: 'o', Ð: 'D', ð: 'd',
+		Þ: 'Th', þ: 'th', Ł: 'L', ł: 'l', Đ: 'D', đ: 'd', ß: 'ss', ı: 'i',
+		'‘': "'", '’': "'", '–': '-', '—': '-',
+	};
+	const name = noteName(value).normalize('NFKD').replace(/\p{M}/gu, '')
+		.replace(/[ÆæŒœØøÐðÞþŁłĐđßı‘’–—]/g, character => replacements[character] || character);
+	if (Array.from(name).some(character => character.charCodeAt(0) > 126)) {
+		throw new Error('Use a name that can be written with plain Latin characters for the filename.');
+	}
+	return noteName(name);
+}
+
+export function wikiLink(path: string, displayName?: string): string {
+	if (displayName !== undefined && (!displayName.trim() || /[|[\]\r\n]/.test(displayName))) {
+		throw new Error('The displayed name must be a single line without brackets or a vertical bar.');
+	}
+	return `[[${path.replace(/\.md$/, '')}${displayName === undefined ? '' : `|${displayName.trim()}`}]]`;
+}
+
+export function optionalNumber(value: string, label: string, min: number, max = Infinity, integer = false): number | null {
+	if (!value.trim()) return null;
+	const number = Number(value);
+	if (!Number.isFinite(number) || number < min || number > max || (integer && !Number.isInteger(number))) {
+		throw new Error(`${label} must be ${integer ? 'a whole number' : 'a number'} ${max === Infinity ? `of at least ${min}` : `between ${min} and ${max}`}.`);
+	}
+	return number;
+}

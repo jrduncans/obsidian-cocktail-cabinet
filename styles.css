@@ -1,8 +1,41 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
+.cocktail-cabinet-form .setting-item-control {
+	flex-wrap: wrap;
+}
+.cocktail-cabinet-form textarea {
+	width: 100%;
+	min-width: 12rem;
+}
+.cocktail-cabinet-error {
+	color: var(--text-error);
+}
+.cocktail-cabinet-error:empty {
+	display: none;
+}
+.cocktail-cabinet-ingredient {
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.cocktail-cabinet-ingredient .setting-item {
+	align-items: flex-start;
+	flex-direction: column;
+	gap: var(--size-4-2);
+}
+.cocktail-cabinet-ingredient .setting-item-info {
+	width: 100%;
+}
+.cocktail-cabinet-ingredient .setting-item-control {
+	justify-content: flex-start;
+	width: 100%;
+}
+@media (max-width: 600px) {
+	.cocktail-cabinet-form .setting-item {
+		flex-direction: column;
+		align-items: stretch;
+		gap: var(--size-4-2);
+	}
+	.cocktail-cabinet-form .setting-item-control {
+		justify-content: flex-start;
+	}
+}
+.cocktail-cabinet-modal {
+	width: min(48rem, calc(100vw - 2rem));
+}

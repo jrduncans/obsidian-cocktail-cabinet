@@ -7,6 +7,7 @@ Turn the cocktail workflows already implemented as skills, scripts, and template
 - Chosen identity: display name **Cocktail Cabinet**, plugin ID `cocktail-cabinet`, repository `obsidian-cocktail-cabinet`. The repository is intended to remain private for now; publication is a later decision.
 - This repository is also the intended home for the supporting cocktail scripts as they are migrated from the vault.
 - Before planning ingredient resolution, logging, imports, or agent integration, read [the workflow assessment](docs/workflow-assessment.md) for existing behavior, known gaps, and proposed architecture. Its recommendations are proposals, not an approved implementation scope.
+- Before changing cabinet setup, hierarchy, or note schemas, read [the cabinet design](docs/cabinet-design.md) for agreed behavior and the current implementation choices. Use [the glossary](GLOSSARY.md) for domain terms.
 
 This project spans three workspace folders:
 
@@ -27,8 +28,8 @@ This project spans three workspace folders:
 - Plugin settings written to `data.json` also land in the repository through that symlink. Keep that local state ignored by Git.
 - The Hot Reload community plugin is installed in `Cocktail Cabinet Dev` to support development reloads.
 - Initial state recorded on 2026-10-29: the repository was created from the Obsidian sample plugin template; only `npm install` and `npm run dev` had been run.
-- Identity setup completed on 2026-10-29: manifest, package metadata, README introduction, ribbon tooltip, and internal classes now use the project identity. The manifest ID matches the dev vault's `cocktail-cabinet` plugin directory. Sample functionality remains except for the template logging timer, removed to satisfy lint.
-- Pending setup: enable **Cocktail Cabinet** in the dev vault. The user is handling this step; enabling has not yet been confirmed. Update this status when confirmed.
+- Identity setup completed on 2026-10-29: the manifest ID matches the dev vault's `cocktail-cabinet` plugin directory.
+- Cocktail Cabinet was confirmed enabled through the live Obsidian CLI on 2026-10-29. The sample functionality has been replaced with initial cabinet setup, note creation, and browsing; the starter catalog is a draft for review.
 
 ## Project overview
 
