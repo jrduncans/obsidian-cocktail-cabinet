@@ -1,0 +1,131 @@
+# Rum organization review
+
+Working review, 2026-10-30. This records evidence, proposals, and explicitly agreed decisions. It is not a vault migration plan.
+
+## Agreed decisions
+
+- Keep **Black Jamaican Rum** as the ingredient type name under Rum. Explain its caramel influence and Jamaican character in the description rather than renaming it Caramel-Forward Jamaican Rum. Color alone does not establish membership. This replaces the starter catalog's broader Black Rum entry.
+- Keep **Aged Overproof Jamaican Rum** and **Unaged Overproof Jamaican Rum** as separate types under Rum, replacing the generic Overproof Jamaican Rum starter entry. Preserve the Smith & Cross role separately from the Wray & Nephew/Rum Fire role.
+- Use **Light Rum** for the lightly aged, filtered, relatively restrained style represented by Don Q Cristal. Keep aging and filtration details in its description rather than using the longer Lightly Aged and Filtered Rum name. Preserve the separate clear multi-region blended role as White Blended Rum. Imported light-rum wording may be broader than this cabinet definition.
+- Use **White Blended Rum** for the Probitas role, replacing Lightly Aged Blended Rum in the starter. Explain the clear multi-region blend and potentially aged or unaged components in its description. Keep it separate from Light Rum.
+- Use **Demerara 151 Rum**, replacing Overproof Demerara Rum, to preserve the 151 US proof (75.5% ABV) recipe role. The user notes that O.F.T.D. is commonly substituted in practice; retain that as a future substitution case rather than merging the ingredient identities. Recipe-specific suitability and any quantity adjustments remain open.
+- Add **Blended Overproof Rum** as a shared type covering O.F.T.D. and Hamilton Zombie Blend. In practice, recipes usually specify these bottles directly. Preserve those named bottle requirements; the shared type remains useful for classification without implying identical flavor or strength.
+- Add **Aged Barbados Rum** for the moderately aged Barbados-style blend of pot- and column-still rum. The recipe role is anchored by Real McCoy 5, Planteray Barbados 5 Year, and Mount Gay Eclipse. Older expressions such as Real McCoy 12 generally fit; Real McCoy 3 and Mount Gay Silver do not. Use Barbados in the name rather than choosing Barbadian or Bajan. This is a recipe role without a fixed age range.
+- Add **Aged Column Still Rum** for the Ron Abuelo Añejo/Don Q Gold recipe role, generally allowing older expressions. The user confirms that recipes can seek a style distinct from Aged Barbados Rum while acknowledging a gray area between them. Keep the existing vault name for now; choosing column-still versus Spanish-style terminology remains open. The role is agreed even though the final terminology is not fully settled.
+- Keep **Aged Blended Rum** for the aged multi-region blend recipe role anchored by Planteray Original Dark. The user confirms this is a specific role, not a generic requirement for aged rum. Preserve its distinction from Aged Barbados Rum and Aged Column Still Rum.
+- Add **Pineapple Rum** as a broad generic type. The user notes that most recipes should probably specify Stiggins’ Fancy because other pineapple rums can be quite different. Preserve named bottle choices while allowing genuinely generic Pineapple Rum requirements. No existing recipe references are rewritten by this decision.
+- Use **Unaged Rhum Agricole** and **Aged Rhum Agricole** as the displayed names. Capture **Rhum Agricole Blanc** and **Rhum Agricole Vieux** respectively as standard Obsidian aliases and mention them in the descriptions. Both naming conventions find the same ingredient pages in cabinet pickers. Existing notes are preserved by setup rather than rewritten.
+- The user confirms that **Haitian Rum** refers to the Barbancourt-style recipe role here and that Clairin would be named separately. Separate aged Barbancourt from the white role. Use **Unaged Haitian Rum** and **Aged Haitian Rum** as consistent age-based names; define unaged as no wood maturation, permit steel-tank resting, and capture **White Haitian Rum** as its alias. The aged role is anchored by Barbancourt 3 Star and 5 Star. Do not assign the newer 110 expression to an age-based type solely because it is white; its exact maturation details remain unverified.
+- The user confirms that **Oaxacan Rum** is the recipe role currently supplied by Paranubes, the only example they have tried, and is open to a better name that can accommodate similar Mexican rums. Use **Unaged Mexican Rum** as the short displayed name, define its Paranubes-style fresh-cane-juice profile in the description, and retain **Oaxacan Rum** as a search alias. This is a deliberately authored recipe role rather than automatic membership by country and age; no other bottle has been approved as a substitute.
+- Omit **Navy Strength Rum** as a separate starter type. The user considers the role too narrow to justify a type and assigns **Planteray Mister Fogg** to **Blended Overproof Rum** instead. The catalog description now includes Mister Fogg as an example. This records the intended classification; knowledge-vault notes remain unchanged, including FALSE IDOL's legacy Navy Strength Rum requirement.
+- Omit **Unaged Jamaican Rum** as a separate non-overproof starter type. The user cites Rum Bar Silver as an example of an existing product but has not encountered a recipe calling for this role. Keep **Unaged Overproof Jamaican Rum** as its own type. Existing products alone do not require inclusion in the starter.
+
+Remaining questions concern naming refinements and bottle/recipe adoption rather than coverage of every existing rum style.
+
+## Basis and scope
+
+Compared the working starter catalog with the live knowledge vault through read-only Obsidian CLI queries. At the start of this review, the vault had 18 types under Rum and the starter had 10. The decisions recorded above bring the starter to 18 Rum types. The starter also has separate Cachaça types, which are outside that count. Queried 500 recipe notes and counted links only within Ingredients sections, resolving their targets through Obsidian. Bottle assignments include all matching bottle notes, regardless of current stock. No availability claims are made here.
+
+Recipe counts below are distinct recipes directly linking a type, including aliased links. They exclude recipes linking only a named bottle, plain-text requirements, and mentions outside Ingredients. Counts show usage, not which recipes are preferred or how often drinks are made. A recipe may count toward several types.
+
+The existing rum type pages provide Base embeds but no explanatory definitions. Bottle assignments and recipe wording therefore supply evidence of intended meaning; they do not conclusively define every boundary.
+
+Local sources: [starter catalog](../src/catalog/catalog.ts), [cabinet design](cabinet-design.md), [earlier hierarchy comparison](knowledge-hierarchy-adoption-review.md), and live knowledge notes in `Cocktails/Types/`, `Cocktails/Bottles/`, and `Cocktails/Recipes/`.
+
+## Pietrek reference
+
+Pietrek's nine recipe-oriented styles distinguish aged Jamaican, caramel-led Jamaican, filtered light rum, moderately aged rum, aged Demerara, Demerara 151, unaged Jamaican overproof, unaged cane-juice spirits, and clear multiregion blends. The article is a bounded tiki selection, not a classification of every rum. Smith & Cross is an aged-Jamaican example requiring strength consideration; O.F.T.D. and Stiggins' Fancy are additional recommendations outside the nine. Agricole and cachaça share his unaged cane-juice grouping; this need not determine our ingredient identities. [Pietrek, 2023](https://cocktailwonk.com/2023/06/nine-essential-tiki-rum-styles.html).
+
+The plugin's bottom-up principle can use these flavor distinctions while preserving narrower requirements demonstrated by the user's recipes. Matching the number nine is not a design objective.
+
+## Current vault versus starter
+
+All rows below refer to types within the Rum family/subcategory.
+
+| Knowledge type | Direct recipe links | Initial starter relationship | Proposal or question |
+| --- | ---: | --- | --- |
+| White Blended Rum | 14 | Lightly Aged Blended Rum was nearby; now renamed and defined | Agreed: use White Blended Rum for the Probitas role, with the multi-region distinction in its description. |
+| Unaged Column Still Rum | 3 | No separate counterpart; Light Rum now added | Agreed: use Light Rum for the lightly aged, filtered role, with production details in its description. |
+| Aged Column Still Rum | 8 | Absent as a separate role; now added | Agreed: retain the Ron Abuelo/Don Q Gold role separately from Aged Barbados, generally allowing older expressions. Keep the existing name for now; final terminology remains open. |
+| Aged Blended Rum | 16 | Same name; definition now clarified | Agreed: aged multi-region blend role anchored by Planteray Original Dark, distinct from the Barbados and column-still roles. |
+| Barbados Rum | 11 | Absent; Aged Barbados Rum now added | Agreed: Aged Barbados Rum names the moderately aged Barbados-style role; older expressions generally fit, while the lighter white styles named above do not. |
+| Aged Jamaican Rum | 25 | Same name | Preserve. Define the intended recipe role and review edge-case bottle assignments separately. |
+| Aged Overproof Jamaican Rum | 10 | Collapsed into Overproof Jamaican Rum; now split | Agreed: keep the separate aged overproof type. Smith & Cross is the main named-bottle anchor in the vault. |
+| Unaged Overproof Jamaican Rum | 3 | Collapsed into Overproof Jamaican Rum; now split | Agreed: keep the separate unaged overproof type. Wray & Nephew, Rum Fire, and Rum Bar White Overproof are assigned here. |
+| Black Jamaican Rum | 5 | Black Rum dropped the Jamaican qualifier; now corrected | Agreed: retain Black Jamaican Rum and explain the caramel-led role in its description. |
+| Demerara Rum | 9 | Same name | Preserve the non-151 role; specify the intended strength and aging scope in its description. |
+| Demerara 151 Rum | 5 | Overproof Demerara Rum lost exact proof; now corrected | Agreed: use Demerara 151 Rum. O.F.T.D. remains a future substitution case with a distinct ingredient identity. |
+| Blended Overproof Rum | 4 | Absent; now added | Agreed: shared type for O.F.T.D., Hamilton Zombie Blend, and Mister Fogg, while preserving the specific bottles generally named by recipes. |
+| Rhum Agricole Blanc | 1 | Now named Unaged Rhum Agricole | Agreed: Unaged Rhum Agricole and Aged Rhum Agricole use consistent age-based names; Rhum Agricole Blanc and Rhum Agricole Vieux are their searchable aliases. |
+| Pineapple Rum | 11 | Absent; now added | Agreed: broad generic type; preserve Stiggins’ Fancy or other named bottles when recipes specify them, since pineapple rums can differ substantially. |
+| Navy Strength Rum | 1 | Absent; omission confirmed | Agreed: omit this separate starter type and classify Mister Fogg as Blended Overproof Rum. Future adoption must preserve FALSE IDOL's legacy requirement. |
+| Haitian Rum | 1 | Absent; separate age-based Haitian types now added | Agreed: Barbancourt-style aged and white roles are separate, with Clairin outside both. The starter uses Aged Haitian Rum and Unaged Haitian Rum, the latter defined by no wood maturation. |
+| Oaxacan Rum | 0 | Absent; Unaged Mexican Rum now added | Paranubes is the user-confirmed anchor. The starter uses Unaged Mexican Rum with a Paranubes-style definition and Oaxacan Rum as a searchable alias; other bottles need deliberate classification. |
+| Coconut Rum | 1 | Deliberately removed in the preceding review | Keep the agreed starter omission unless reconsidered. Existing private types and recipes remain valid. |
+
+Two initial starter types had no exact named counterpart in the vault: **Unaged Jamaican Rum** and **Aged Rhum Agricole**. Unaged Jamaican Rum is now omitted because the user has not encountered a recipe need for that non-overproof role. Aged Rhum Agricole remains, supported by plain-text requirements in Rum Penicillin and Someday at Christmas. A lack of a linked type is not evidence of a lack of recipe need.
+
+## Decisions demonstrated by recipes
+
+- **Planter's Punch, 1930s** has separate pours of Aged Jamaican Rum, Black Jamaican Rum, and Aged Column Still Rum. This supports preserving those distinctions while reviewing names and definitions.
+- **Mr. Bali Hai Tribute** separately links Black Jamaican Rum/Worthy Park 109 and Unaged Column Still Rum/Don Q Cristal. A generic color or light/heavy split would discard useful information.
+- **Split Decision** separately links Demerara Rum, Aged Overproof Jamaican Rum, and Blended Overproof Rum. Treating all high-proof ingredients as one role would collapse requirements within one drink.
+- **Trouble & Desire** explicitly permits Aged Jamaican Rum or Aged Overproof Jamaican Rum for one pour. That is evidence for a recipe-specific alternative, not a reason to merge the types globally.
+- **Banana Bread Old Fashioned** permits Barbados Rum or Aged Blended Rum. Again, an explicit alternative does not establish that every recipe using either type accepts the other.
+- **Rum Penicillin** and **Someday at Christmas** explicitly request aged agricole in plain text. The starter's Aged Rhum Agricole has evidence even though the vault lacks a matching type note.
+- **Chiquita Old Fashioned** links Unaged Overproof Jamaican Rum but says preferably Smith & Cross. That conflict needs recipe-level review; it should not define the classification boundary.
+- **Mollymock** links Black Jamaican Rum while recording that the original calls for Bacardi black rum. Preserve the distinction between the source wording and the user's chosen interpretation.
+
+## Naming versus recipe-role choices
+
+**Unaged Column Still Rum** is the strongest factual naming concern. The vault assigns Don Q Cristal; its producer currently specifies 1½–5 years in American white oak. Confirm the bottle expression before migration, but the producer description does not support calling this example unaged. [Don Q](https://donq.com/don-q-cristal/).
+
+**Aged Jamaican Rum** includes Denizen Merchant's Reserve. The producer describes a Jamaican/Martinique blend. That can still be an intentional classification by recipe role, but its definition must make that choice intelligible rather than suggest all assigned bottles are wholly Jamaican. [Denizen](https://www.denizenrum.com/denizen-merchants-reserve/).
+
+The same type includes Hamilton Jamaican Pot Still Gold. Its importer describes fresh clear distillate followed by dilution and caramel coloring, without describing aging. That warrants checking the Aged Jamaican assignment; the page does not explicitly state an age, so do not infer a definitive migration from silence. [Hamilton importer](https://www.caribbean-spirits.com/labeldetails.php?id=57).
+
+**Blended Overproof Rum** includes both O.F.T.D. and Hamilton Zombie Blend. Their vault ABVs are 69% and 59%. A shared type should represent a deliberate recipe role; these stored strengths already show why a matching type cannot imply equal strength or an automatic equal-volume replacement.
+
+## Haitian white and aged expressions
+
+A targeted live recipe check on 2026-10-30 found Northern Crossing and Green Strawberry Daiquiri linking Barbancourt 3 Star, Captain Ron linking Haitian Rum with Barbancourt 5 Star specified, and Slow Hands explicitly requesting overproof white rum, Barbancourt 110. Fay Wray has the source wording Barbancourt 4 Star; preserve that wording pending separate source review rather than infer a corrected bottle.
+
+The importer homepage describes traditional 86-proof White as resting less than a year in steel tanks, while its oak-aged range includes 3 Star at four years and 5 Star at eight. This supports a practical no-wood-maturation role for that traditional white expression. [Importer homepage](https://crillonimportersltd.com/).
+
+The importer product page now identifies White as 110-proof Haitian Proof, and the producer describes the newer release as overproof white rum. Neither expression-specific source reviewed states its maturation or filtration process. Do not transfer the older 43% white expression’s steel-resting details to the newer 55% release or infer no wood maturation solely from color. Its named bottle requirement in Slow Hands is preserved; no bottle classifications were changed. [Importer product page](https://crillonimportersltd.com/brand/barbancourt/?bottle=4), [producer announcement](https://www.barbancourt.com/nouvelles/double-medaille-dor-pour-le-rhum-barbancourt/).
+
+## Mexican rum name and scope
+
+The live vault has Paranubes under Oaxacan Rum at a recorded 54% ABV, and Paranubes Pineapple Daiquiri names that bottle directly. No other Mexican rum was identified in the targeted bottle/recipe query. The user confirms that Paranubes is the only example they have tried; their belief that some other Mexican rums may fit is a research question rather than a substitution approval.
+
+Paranubes explicitly describes its Blanco as unaged and made from fresh cane juice, with ambient fermentation and savory/ripe-fruit character. Its process includes rolling fermentation in pine vats and a copper hybrid still. The producer also offers an aged Añejo, so Mexican Cane Juice Rum and Oaxacan Rum alone omit a useful age distinction. [Producer sales sheet](https://static1.squarespace.com/static/590b74bdb8a79b7a77caff17/t/66675c798afe077278c3f242/1718049916740/Paranubes%2BBlanco%2BSales%2BSheet%2BFINAL.pdf), [process](https://www.paranubes.com/tech), [products](https://www.paranubes.com/products).
+
+Related examples support researching a broader Mexican role, but do not establish replacements: Alambique Serrano Cartier 30 is an unaged cane-juice rum from Oaxaca, with a described release at 70.3% ABV; Cañada uses spontaneous cane-juice fermentation in steel tanks and a different still process. [Cartier 30 producer](https://www.alambiqueserrano.com/cartier-30), [Cañada producer](https://www.cloudforestrum.com/production).
+
+Uruapan Charanda Blanco provides a concrete breadth counterexample: its importer identifies the export expression as unaged, 40% ABV, and a blend of 50% cane-juice rum and 50% molasses rum. Neither Mexican origin nor unaged status therefore defines the Paranubes role by itself. [Importer](https://www.bbcspirits.com/gb/rums/805-rum-mexico-uruapan-charanda-blanco-7503007479426.html).
+
+Naming judgment: use the concise Unaged Mexican Rum label with an explicit Paranubes-style fresh-cane-juice definition. Unaged Mexican Cane Juice Rum would make that definition more visible in every link but is longer than the short-name approach chosen elsewhere. Retain Oaxacan Rum as an alias for the existing vault role, preserve specifically named bottles in recipes, and keep agricole, cachaça, and clairin as distinct ingredient identities.
+
+## Retiring the legacy Navy Strength type
+
+A targeted live check confirms that Planteray Mister Fogg currently has only Navy Strength Rum as its Type and that FALSE IDOL references 0.75 oz of Navy Strength Rum. The intended new home for Mister Fogg is Blended Overproof Rum; this review does not change the live bottle assignment in isolation. Future adoption must decide whether FALSE IDOL should name Mister Fogg to preserve the intended bottle role or accept a broader Blended Overproof Rum requirement. Do not delete the legacy type or widen the recipe automatically.
+
+## Suggested discussion order
+
+1. **Jamaican roles:** retain Aged Jamaican, Aged Overproof Jamaican, Unaged Overproof Jamaican, and Black Jamaican. Black Jamaican Rum is the agreed name; its description explains the caramel influence. The separate aged and unaged overproof types are also agreed. Omit the separate non-overproof Unaged Jamaican Rum type because the user has not encountered a recipe need for it.
+2. **Light rum:** Light Rum and White Blended Rum are the agreed names for the separate filtered light-rum and clear multiregion blended roles. Any vault migration must review existing links rather than map source wording by name alone.
+3. **Demerara and overproof blends:** Demerara 151 Rum is the agreed name. Retain O.F.T.D. as a future substitution case for that requirement without merging identities. Blended Overproof Rum is agreed as the shared type for O.F.T.D., Hamilton Zombie Blend, and Mister Fogg; recipes generally retain specific bottle requirements. Navy Strength Rum is omitted as a separate starter type.
+4. **Aged background roles:** Aged Barbados Rum, Aged Column Still Rum, and Aged Blended Rum are agreed as distinct recipe roles, with the examples and boundaries above. Aged Blended means the multi-region blend role anchored by Planteray Original Dark. The Aged Column Still label remains open to refinement.
+5. **Further recipe needs:** Pineapple Rum, separate aged/unaged Rhum Agricole, separate aged/unaged Barbancourt-style Haitian roles, and the Paranubes-style Unaged Mexican Rum role are recorded above. Navy Strength Rum is omitted, with Mister Fogg assigned to Blended Overproof Rum for future adoption. Maintain the already agreed Coconut Rum starter omission. The separate non-overproof Unaged Jamaican Rum role is omitted for lack of an encountered recipe need.
+
+## Hierarchy and matching implications
+
+These distinctions can remain sibling types beneath Rum within the existing Spirit → Rum → type structure. More useful ingredient types do not require deeper hierarchy.
+
+The current schema has no type-to-type parent relationship. Adding a broad Moderately Aged Rum type would not automatically make Barbados or Aged Column Still its children. Broad matching across such roles would need deliberate classification choices or a separately designed mechanism; it should not be promised through naming alone.
+
+Bottle notes support multiple types, but sharing any type currently makes bottles candidates for the same-type related-recipe behavior. Assigning every aged rum an additional broad type could therefore widen bottle alternatives. Do not introduce that as an incidental fix for vocabulary overlap.
+
+The agreed Black Jamaican Rum name and description, the separate aged and unaged overproof Jamaican types, the Light Rum and White Blended Rum roles, Demerara 151 Rum, Blended Overproof Rum, Aged Barbados Rum, Aged Column Still Rum, the clarified Aged Blended Rum role, Pineapple Rum, the consistent age-based agricole names with French aliases, the separate Haitian roles, Unaged Mexican Rum, and Mister Fogg as a Blended Overproof Rum example have been applied to the starter catalog. The separate non-overproof Unaged Jamaican Rum starter entry has been removed. Naming refinements and adoption questions remain recorded above. Settings and knowledge-vault notes were not changed.
+
+Alias verification: all 25 source tests, lint, and production build pass. A temporary test in the live development-vault runtime verified both French and English queries through the actual Obsidian fuzzy picker, canonical selection links, and scalar/list alias parsing using synthetic in-memory pages. The test plugin was unloaded and removed; no vault notes were created or changed.
