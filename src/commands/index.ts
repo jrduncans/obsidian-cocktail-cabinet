@@ -1,5 +1,5 @@
 import type CocktailCabinetPlugin from '../main';
-import { Notice } from 'obsidian';
+import { MarkdownView, Notice } from 'obsidian';
 import { IngredientModal } from '../ui/ingredient-modal';
 import { StockModal } from '../ui/stock-modal';
 import { RecipeModal } from '../ui/recipe-modal';
@@ -57,6 +57,20 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		id: 'create-recipe',
 		name: 'Create a cocktail recipe',
 		callback: () => handle(() => ready(() => new RecipeModal(plugin).open())),
+	});
+	plugin.addCommand({
+		id: 'enhance-recipe',
+		name: 'Enhance as cocktail recipe',
+		checkCallback: checking => {
+			const file = plugin.app.workspace.getActiveFile();
+			if (!file || file.extension !== 'md') return false;
+			if (!checking) void handle(() => ready(async () => {
+				const view = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+				const content = view?.file === file ? view.editor.getValue() : await plugin.app.vault.read(file);
+				new RecipeModal(plugin, { path: file.path, content }).open();
+			}));
+			return true;
+		},
 	});
 	plugin.addCommand({
 		id: 'browse-related-recipes',

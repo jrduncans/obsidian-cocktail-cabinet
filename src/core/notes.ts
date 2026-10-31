@@ -21,14 +21,18 @@ export function renderNote(root: string, draft: NoteDraft, date: string): Planne
 		properties.created = date;
 		properties.rating ??= null;
 		properties.source ??= null;
-		body = `### Ingredients\n\n${draft.ingredients?.map(line => `- ${line}`).join('\n') || '- '}`
-			+ `\n\n### Method\n\n${draft.method?.trim() || ''}`
-			+ `\n\n### Description\n\n${body}`
-			+ `\n\n### Tasting Notes\n\n${draft.tastingNotes?.trim() || ''}`;
+		body = recipeBody(draft);
 	} else if (draft.method?.trim()) {
 		body += `\n\n### Preparation\n\n${draft.method.trim()}`;
 	}
 	return { path: notePath(root, draft.kind, name), content: markdown(properties, `# ${name}\n\n${body}`), kind: draft.kind };
+}
+
+export function recipeBody(draft: NoteDraft): string {
+	return `### Ingredients\n\n${draft.ingredients?.map(line => `- ${line}`).join('\n') || '- '}`
+		+ `\n\n### Method\n\n${draft.method?.trim() || ''}`
+		+ `\n\n### Description\n\n${draft.description.trim()}`
+		+ `\n\n### Tasting Notes\n\n${draft.tastingNotes?.trim() || ''}`;
 }
 
 export function localDate(date = new Date()): string {

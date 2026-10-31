@@ -4,14 +4,14 @@ import type { CabinetNote, NoteKind, Properties } from '../core/schema';
 import { CabinetForm } from './form';
 
 export class IngredientModal extends CabinetForm {
-	constructor(private plugin: CocktailCabinetPlugin, private kind: 'category' | 'family' | 'type' = 'type', private created?: (note: CabinetNote) => void) {
+	constructor(private plugin: CocktailCabinetPlugin, private kind: 'category' | 'family' | 'type' = 'type', private created?: (note: CabinetNote) => void, private initialName = '') {
 		super(plugin.app);
 	}
 
 	onOpen() {
 		this.begin(`Add ingredient ${this.kind}`, this.kind === 'category' ? undefined
 			: `An ingredient ${this.kind === 'type' ? 'family' : 'category'} is optional. Select one when it provides a useful grouping.`);
-		let name = '', description = '', preparation = '';
+		let name = this.initialName, description = '', preparation = '';
 		let shoppingList = false;
 		let parents: CabinetNote[] = [];
 		this.text('Name', name, value => { name = value; });

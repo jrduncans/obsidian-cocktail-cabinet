@@ -23,11 +23,11 @@ export abstract class CabinetForm extends Modal {
 			.addText(text => text.setValue(value).onChange(change));
 	}
 
-	protected area(label: string, value: string, change: (value: string) => void, description = '') {
+	protected area(label: string, value: string, change: (value: string) => void, description = '', rows = 3) {
 		return new Setting(this.contentEl).setName(label).setDesc(description)
 			.addTextArea(text => {
 				text.setValue(value).onChange(change);
-				text.inputEl.rows = 3;
+				text.inputEl.rows = rows;
 			});
 	}
 

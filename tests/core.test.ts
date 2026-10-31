@@ -59,8 +59,17 @@ void test('catalog identities use current starter names without URL schemes', ()
 void test('starter catalog supplies definitions without implying owned stock or supplying cocktail recipes', () => {
 	const files = starterPlan('Cocktails');
 	assert.ok(files.filter(file => file.kind === 'type').length >= 90);
-	assert.ok(files.every(file => ['category', 'family', 'type', 'cabinet', 'base'].includes(file.kind)));
-	assert.ok(files.filter(file => file.kind !== 'base').every(file => !file.content.includes(`${PROP.open}:`) && !file.content.includes(`${PROP.availability}:`)));
+	assert.ok(files.every(file => ['category', 'family', 'type', 'bottle', 'cabinet', 'base'].includes(file.kind)));
+	assert.ok(files.filter(file => file.kind !== 'base').every(file => !file.content.includes(`${PROP.open}:`) && !file.content.includes(`${PROP.unopened}:`)));
+	const bottles = files.filter(file => file.kind === 'bottle');
+	assert.ok(bottles.length > 0);
+	for (const bottle of bottles) {
+		assert.ok(bottle.content.includes(`${PROP.stockTracking}: "status"`));
+		assert.ok(bottle.content.includes(`${PROP.availability}: "Unknown"`));
+		assert.ok(bottle.content.includes(`${PROP.shoppingList}: false`));
+	}
+	assert.ok(!STARTER_CATALOG.some(entry => entry.name === 'Angostura Bitters' && entry.kind === 'type'));
+	assert.ok(bottles.find(file => file.catalogId === 'bottle/Angostura Bitters')?.content.includes(`${PROP.type}: "[[Cocktails/Types/Aromatic Bitters|Aromatic Bitters]]"`));
 });
 
 void test('three default sugar syrups retain distinct identities, ratios, and preparation instructions', () => {
@@ -74,6 +83,7 @@ void test('renamed catalog pages remain the target of new parent links', () => {
 	const paths = new Map([
 		['family/Rum', 'Cocktails/Families/My Rum.md'], ['category/Spirit', 'Cocktails/Categories/Spirits.md'],
 		['family/Apple Brandy Family', 'Cocktails/Families/My Apple Brandies.md'], ['family/Amaro Family', 'Cocktails/Families/My Amari.md'],
+		['type/Aromatic Bitters', 'Cocktails/Types/My Aromatic Bitters.md'], ['bottle/Angostura Bitters', 'Cocktails/Bottles/My Angostura.md'],
 	]);
 	const files = starterPlan('Cocktails', paths);
 	assert.ok(files.some(file => file.path === 'Cocktails/Families/My Rum.md'));
@@ -81,6 +91,9 @@ void test('renamed catalog pages remain the target of new parent links', () => {
 	assert.ok(jamaican?.content.includes('[[Cocktails/Families/My Rum|Rum]]'));
 	assert.ok(files.find(file => file.catalogId === 'type/Apple Brandy')?.content.includes('[[Cocktails/Families/My Apple Brandies|Apple Brandy Family]]'));
 	assert.ok(files.find(file => file.catalogId === 'type/Amaro')?.content.includes('[[Cocktails/Families/My Amari|Amaro Family]]'));
+	const angostura = files.find(file => file.catalogId === 'bottle/Angostura Bitters');
+	assert.equal(angostura?.path, 'Cocktails/Bottles/My Angostura.md');
+	assert.ok(angostura?.content.includes(`${PROP.type}: "[[Cocktails/Types/My Aromatic Bitters|Aromatic Bitters]]"`));
 });
 
 void test('unparented types are valid notes', () => {
@@ -107,7 +120,7 @@ void test('starter groupings are optional at both parent levels', () => {
 	assert.ok(files.some(file => file.content.includes('[[Cocktails/Families/Bitters|Bitters]]')));
 	for (const entry of STARTER_CATALOG) {
 		if (!entry.parent) continue;
-		const parentKind = entry.kind === 'type' ? 'family' : 'category';
+		const parentKind = entry.kind === 'bottle' ? 'type' : entry.kind === 'type' ? 'family' : 'category';
 		assert.ok(STARTER_CATALOG.some(parent => parent.name === entry.parent && parent.kind === parentKind), entry.name);
 	}
 });

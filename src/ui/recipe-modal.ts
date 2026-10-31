@@ -1,64 +1,87 @@
 import { Setting } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
-import type { CabinetNote } from '../core/schema';
+import { parseRecipeText } from '../core/recipe-import';
+import type { RecipeImport } from '../core/recipe-import';
+import type { NoteDraft } from '../core/schema';
+import { readRecipeDocument } from '../vault/recipe-document';
+import type { RecipeSnapshot } from '../vault/cabinet-store';
 import { CabinetForm } from './form';
-import { NotePicker } from './picker';
-import { IngredientModal } from './ingredient-modal';
+import { RecipeIngredients } from './recipe-ingredients';
 
-interface IngredientRow { amount: string; text: string; note?: CabinetNote; }
+const IMPORTED_FIELDS = ['cc-name', 'name', 'title', 'source', 'rating', 'created', 'cc-kind'];
 
 export class RecipeModal extends CabinetForm {
-	constructor(private plugin: CocktailCabinetPlugin) { super(plugin.app); }
+	constructor(private plugin: CocktailCabinetPlugin, private snapshot?: RecipeSnapshot) { super(plugin.app); }
 
 	onOpen() {
-		this.begin('Create a cocktail recipe', 'Choose ingredients at the specificity you want: a bottle, a type, a family, or a category. You can also leave an ingredient as plain text.');
-		let name = '', source = '', method = '', description = '', tastingNotes = '';
-		this.text('Recipe name', name, value => { name = value; });
-		this.text('Source (optional)', source, value => { source = value; });
-		new Setting(this.contentEl).setName('Ingredients').setHeading();
-		const rowsEl = this.contentEl.createDiv({ cls: 'cocktail-cabinet-ingredients' });
-		const rows: IngredientRow[] = [];
-		const addRow = () => {
-			const data: IngredientRow = { amount: '', text: '' };
-			rows.push(data);
-			const wrapper = rowsEl.createDiv({ cls: 'cocktail-cabinet-ingredient' });
-			const row = new Setting(wrapper).setName(`Ingredient ${rows.length}`);
-			row.addText(text => {
-				text.setPlaceholder('Amount').onChange(value => { data.amount = value; });
-				text.inputEl.setAttribute('aria-label', 'Ingredient amount');
-			});
-			row.addText(text => {
-				text.setPlaceholder('Ingredient or garnish').onChange(value => { data.text = value; data.note = undefined; row.setDesc('Plain text ingredient'); });
-				text.inputEl.setAttribute('aria-label', 'Ingredient name');
-				const choose = (note: CabinetNote) => {
-					data.note = note;
-					data.text = note.name;
-					text.setValue(note.name);
-					row.setDesc(`Linked to ${note.kind}: ${note.name}`);
-				};
-				row.addButton(button => button.setButtonText('Select').onClick(() => {
-					new NotePicker(this.app, this.plugin.store.notes().filter(note => ['category', 'family', 'type', 'bottle'].includes(note.kind)), choose).open();
-				}));
-				row.addButton(button => button.setButtonText('New type').onClick(() => {
-					new IngredientModal(this.plugin, 'type', choose).open();
-				}));
-			});
-			row.addExtraButton(button => button.setIcon('trash').setTooltip('Remove ingredient').onClick(() => {
-				rows.splice(rows.indexOf(data), 1);
-				wrapper.remove();
+		this.begin(this.snapshot ? 'Enhance as cocktail recipe' : 'Create a cocktail recipe', 'Paste copied recipe text, or enter a recipe manually. To enhance an existing Obsidian page, open it and run Enhance as cocktail recipe.');
+		if (this.snapshot) {
+			try { this.review(this.snapshot.content); }
+			catch (error) { this.showError(error); }
+			return;
+		}
+		let text = '';
+		this.area('Recipe text', text, value => { text = value; }, 'Paste ingredient lines and preparation text copied from a recipe. Headings and bullets are optional. URLs can be recorded as sources; pages are not fetched.', 12)
+			.setClass('cocktail-cabinet-name');
+		new Setting(this.contentEl)
+			.addButton(button => button.setButtonText('Cancel').onClick(() => this.close()))
+			.addButton(button => button.setButtonText('Enter manually').onClick(() => this.edit(parseRecipeText(''))))
+			.addButton(button => button.setButtonText('Review recipe').setCta().onClick(() => {
+				try {
+					if (!text.trim()) throw new Error('Paste recipe text before reviewing it, or select Enter manually.');
+					this.review(text);
+				} catch (error) { this.showError(error); }
 			}));
-		};
-		addRow();
-		new Setting(this.contentEl).addButton(button => button.setButtonText('Add ingredient').onClick(addRow));
-		this.area('Method', method, value => { method = value; });
-		this.area('Description', description, value => { description = value; });
-		this.area('Tasting notes', tastingNotes, value => { tastingNotes = value; });
-		this.submit('Create recipe', async () => {
-			const ingredients = rows.filter(row => row.text.trim()).map(row =>
-				[row.amount.trim(), row.note ? this.plugin.store.link(row.note) : row.text.trim()].filter(Boolean).join(' '));
-			if (!ingredients.length) throw new Error('Add at least one ingredient before creating the recipe.');
-			if (rows.some(row => row.amount.trim() && !row.text.trim())) throw new Error('Choose an ingredient for each entered amount.');
-			const file = await this.plugin.store.create({ kind: 'recipe', name, ingredients, method, description, tastingNotes, properties: { source: source.trim() || null, rating: null } });
+	}
+
+	private showError(error: unknown) {
+		this.errorEl.setText(error instanceof Error ? error.message : 'The recipe text could not be read.');
+	}
+
+	private review(text: string) {
+		const { body, metadata } = readRecipeDocument(text);
+		const recipe = parseRecipeText(body, metadata);
+		if (!recipe.ingredients.length && !this.snapshot) {
+			throw new Error('No ingredient lines found. Use one ingredient per line, with amounts or list bullets, or add an Ingredients heading.');
+		}
+		if (this.snapshot) recipe.name ||= this.snapshot.path.split('/').at(-1)!.replace(/\.md$/, '');
+		this.edit(recipe, text, metadata);
+	}
+
+	private edit(recipe: RecipeImport, original = '', metadata: Record<string, unknown> = {}) {
+		this.contentEl.empty();
+		this.begin('Review cocktail recipe', 'Check the detected ingredients and preparation text, then accept any useful links. Nothing is linked automatically.');
+		if (this.snapshot) {
+			const destination = this.plugin.store.recipeDestination(this.snapshot.path);
+			this.contentEl.createEl('p', { text: destination === this.snapshot.path
+				? `Save changes to ${destination}. Existing properties are kept.`
+				: `Save and move ${this.snapshot.path} to ${destination}. Existing properties are kept. Obsidian manages links according to your vault settings.` });
+		}
+		for (const warning of recipe.warnings) this.contentEl.createEl('p', { text: warning });
+		if (original) {
+			const details = this.contentEl.createEl('details');
+			details.createEl('summary', { text: 'Original text' });
+			details.createEl('pre', { text: original, cls: 'cocktail-cabinet-original' });
+		}
+		const extra = Object.fromEntries(Object.entries(metadata).filter(([key]) => !IMPORTED_FIELDS.includes(key)));
+		if (!this.snapshot && Object.keys(extra).length) {
+			this.contentEl.createEl('p', { text: 'Additional source properties were kept in the description for review.' });
+			recipe.description = [recipe.description, `Imported properties:\n\n${JSON.stringify(extra, null, 2)}`].filter(Boolean).join('\n\n');
+		}
+		this.text('Recipe name', recipe.name, value => { recipe.name = value; }).setClass('cocktail-cabinet-name');
+		this.text('Source (optional)', recipe.source, value => { recipe.source = value; }).setClass('cocktail-cabinet-name');
+		const ingredients = new RecipeIngredients(this.plugin, this.contentEl, recipe.ingredients);
+		this.area('Method', recipe.method, value => { recipe.method = value; }).setClass('cocktail-cabinet-name');
+		this.area('Description', recipe.description, value => { recipe.description = value; }).setClass('cocktail-cabinet-name');
+		this.area('Tasting notes', recipe.tastingNotes, value => { recipe.tastingNotes = value; }).setClass('cocktail-cabinet-name');
+		const moving = this.snapshot && this.plugin.store.recipeDestination(this.snapshot.path) !== this.snapshot.path;
+		this.submit(moving ? 'Move and save recipe' : this.snapshot ? 'Save recipe' : 'Create recipe', async () => {
+			const draft: NoteDraft = {
+				kind: 'recipe', name: recipe.name, ingredients: ingredients.lines(), method: recipe.method,
+				description: recipe.description, tastingNotes: recipe.tastingNotes,
+				properties: { source: recipe.source.trim() || null, rating: typeof metadata.rating === 'number' ? metadata.rating : null },
+			};
+			const file = this.snapshot ? await this.plugin.store.enhanceRecipe(this.snapshot, draft) : await this.plugin.store.create(draft);
 			this.close();
 			await this.plugin.store.open(file.path);
 		});

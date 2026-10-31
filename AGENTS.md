@@ -7,7 +7,7 @@ Turn the cocktail workflows already implemented as skills, scripts, and template
 - Chosen identity: display name **Cocktail Cabinet**, plugin ID `cocktail-cabinet`, repository `obsidian-cocktail-cabinet`. The repository is intended to remain private for now; publication is a later decision.
 - This repository is also the intended home for the supporting cocktail scripts as they are migrated from the vault.
 - Before planning ingredient resolution, logging, imports, or agent integration, read [the workflow assessment](docs/workflow-assessment.md) for existing behavior, known gaps, and proposed architecture. Its recommendations are proposals, not an approved implementation scope.
-- Before changing cabinet setup, hierarchy, or note schemas, read [the cabinet design](docs/cabinet-design.md) for agreed behavior and the current implementation choices. Use [the glossary](GLOSSARY.md) for domain terms.
+- Before changing cabinet setup, hierarchy, note schemas, recipe creation, or ingredient resolution, read [the cabinet design](docs/cabinet-design.md) for agreed behavior, the collection-coherence goal, and current implementation choices. Use [the glossary](GLOSSARY.md) for domain terms.
 
 This project spans three workspace folders:
 

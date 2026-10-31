@@ -20,6 +20,7 @@ function fixture() {
 	const app = {
 		vault: {
 			getFiles: () => [...contents.keys()].map(path => new TFile(path)),
+			getAllLoadedFiles: () => [...contents.keys()].map(path => new TFile(path)),
 			getAbstractFileByPath: (path: string) => contents.has(path) ? new TFile(path) : folders.has(path) ? new TFolder() : null,
 			read: (file: TFile) => Promise.resolve(contents.get(file.path)),
 			createFolder: (path: string) => { folders.add(path); return Promise.resolve(); },
@@ -28,9 +29,23 @@ function fixture() {
 				contents.set(path, content);
 				return Promise.resolve(new TFile(path));
 			},
+			process: (file: TFile, transform: (content: string) => string) => {
+				const content = transform(contents.get(file.path)!);
+				contents.set(file.path, content);
+				return Promise.resolve(content);
+			},
+		},
+		fileManager: {
+			renameFile: (file: TFile, destination: string) => {
+				assert.ok(!contents.has(destination));
+				contents.set(destination, contents.get(file.path)!);
+				contents.delete(file.path);
+				Object.assign(file, { path: destination });
+				return Promise.resolve();
+			},
 		},
 	} as unknown as App;
-	return { contents, folders, store: new CabinetStore(app, () => 'Cocktails') };
+	return { app, contents, folders, store: new CabinetStore(app, () => 'Cocktails') };
 }
 
 void test('setup preserves a complete cabinet', async () => {
@@ -133,4 +148,84 @@ void test('bottle classification reads one scalar type without broadening, while
 	}
 	frontmatters.set(bottle, { 'cc-kind': 'bottle', 'cc-name': 'Example', 'cc-types': [`[[${first}]]`, `[[${second}]]`] });
 	assert.deepEqual(read().parents, []);
+});
+
+const enhancementDraft = {
+	kind: 'recipe' as const, name: 'A clipped recipe',
+	ingredients: ['2 oz [[Cocktails/Families/Gin|Gin (Cold River)]]'],
+	method: 'Stir with ice.', description: 'Personal annotation.', properties: { source: 'https://example.test/recipe' },
+};
+
+void test('enhancing an existing page moves it into Recipes and preserves metadata', async () => {
+	const { store, contents } = fixture();
+	const path = 'Clippings/Original filename.md';
+	const original = `---\n${JSON.stringify({ source: 'Old source', rating: 'Loved it', created: '2024-04-11', tags: ['cocktails'], custom: { nested: [1, 2] }, aliases: ['Old title'] })}\n---\n2 oz Gin\n\nStir with ice.`;
+	contents.set(path, original);
+	const result = await store.enhanceRecipe({ path, content: original }, enhancementDraft);
+	assert.equal(result.path, 'Cocktails/Recipes/Original filename.md');
+	assert.ok(!contents.has(path));
+	const saved = contents.get(result.path)!;
+	const properties = JSON.parse(saved.split('---\n')[1]!) as Record<string, unknown>;
+	assert.equal(properties['cc-kind'], 'recipe');
+	assert.equal(properties['cc-name'], 'A clipped recipe');
+	assert.equal(properties.rating, 'Loved it');
+	assert.equal(properties.created, '2024-04-11');
+	assert.equal(properties.source, 'https://example.test/recipe');
+	assert.deepEqual(properties.tags, ['cocktails']);
+	assert.deepEqual(properties.aliases, ['Old title']);
+	assert.deepEqual(properties.custom, { nested: [1, 2] });
+	assert.ok(saved.includes('### Method\n\nStir with ice.'));
+	assert.ok(saved.includes('Personal annotation.'));
+});
+
+void test('enhancement retains the location of a note already inside the cabinet', async () => {
+	const { store, contents } = fixture();
+	const path = 'Cocktails/My recipes/Original.md', original = '2 oz Gin\n\nStir with ice.';
+	contents.set(path, original);
+	assert.equal(store.recipeDestination(path), path);
+	assert.equal((await store.enhanceRecipe({ path, content: original }, enhancementDraft)).path, path);
+	assert.ok(contents.get(path)?.includes('cc-kind'));
+});
+
+void test('a stale review, renamed original, conflicting destination, or different resource kind cannot overwrite notes', async () => {
+	const { store, contents } = fixture();
+	const path = 'Clippings/Original.md', original = '2 oz Gin';
+	contents.set(path, 'Edited while review is open.');
+	await assert.rejects(store.enhanceRecipe({ path, content: original }, enhancementDraft), /note changed/);
+	assert.equal(contents.get(path), 'Edited while review is open.');
+	contents.delete(path);
+	await assert.rejects(store.enhanceRecipe({ path, content: original }, enhancementDraft), /moved or removed/);
+	contents.set(path, original);
+	contents.set('Cocktails/Recipes/original.md', 'A different recipe.');
+	await assert.rejects(store.enhanceRecipe({ path, content: original }, enhancementDraft), /already exists/);
+	assert.equal(contents.get(path), original);
+	assert.equal(contents.get('Cocktails/Recipes/original.md'), 'A different recipe.');
+	contents.delete('Cocktails/Recipes/original.md');
+	const other = `---\n${JSON.stringify({ 'cc-kind': 'type' })}\n---\nOriginal ingredient description.`;
+	contents.set(path, other);
+	await assert.rejects(store.enhanceRecipe({ path, content: other }, enhancementDraft), /another cabinet resource/);
+	assert.equal(contents.get(path), other);
+});
+
+void test('a failed move restores the source content but never overwrites concurrent edits', async () => {
+	const { app, store, contents } = fixture();
+	const path = 'Clippings/Original.md', original = '2 oz Gin';
+	contents.set(path, original);
+	app.fileManager.renameFile = () => Promise.reject(new Error('Move failed'));
+	await assert.rejects(store.enhanceRecipe({ path, content: original }, enhancementDraft), /original note content was restored/);
+	assert.equal(contents.get(path), original);
+	app.fileManager.renameFile = () => {
+		contents.set(path, contents.get(path)! + '\nConcurrent edit.');
+		return Promise.reject(new Error('Move failed'));
+	};
+	await assert.rejects(store.enhanceRecipe({ path, content: original }, enhancementDraft), /enhanced note remains/);
+	assert.ok(contents.get(path)?.endsWith('Concurrent edit.'));
+});
+
+void test('editor newline normalization does not make an unchanged note appear stale', async () => {
+	const { store, contents } = fixture();
+	const path = 'Cocktails/Recipes/Normalized.md';
+	contents.set(path, '\uFEFF2 oz Gin\r\n\r\nStir with ice.');
+	await store.enhanceRecipe({ path, content: '2 oz Gin\n\nStir with ice.' }, enhancementDraft);
+	assert.ok(contents.get(path)?.includes('### Method'));
 });

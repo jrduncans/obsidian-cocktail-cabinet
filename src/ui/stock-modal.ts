@@ -2,13 +2,13 @@ import { Setting } from 'obsidian';
 import type { DropdownComponent, TextComponent } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { BottleAmount, OPEN_AMOUNT_UNITS } from '../core/bottle-amount';
-import { PROP } from '../core/schema';
+import { PROP, noteName } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
 import { AVAILABILITY, STOCK_FORMS, STOCK_TRACKING, stockProperties } from '../core/stock';
 import { CabinetForm } from './form';
 
 export class StockModal extends CabinetForm {
-	constructor(private plugin: CocktailCabinetPlugin, private bottle: boolean) {
+	constructor(private plugin: CocktailCabinetPlugin, private bottle: boolean, private created?: (note: CabinetNote) => void, private initialName = '') {
 		super(plugin.app);
 	}
 
@@ -17,7 +17,7 @@ export class StockModal extends CabinetForm {
 			this.bottle ? 'Add a bottle' : 'Add other stock',
 			'Record what you have using volume or a manual availability status. Blank amounts stay unknown.',
 		);
-		let name = '', description = '', volume = '', abv = '';
+		let name = this.initialName, description = '', volume = '', abv = '';
 		let unopened = '', remaining = '', lastPurchasePrice = '';
 		const open = new BottleAmount();
 		let refreshOpen: (() => void) | undefined;
@@ -123,7 +123,8 @@ export class StockModal extends CabinetForm {
 			}
 			const file = await this.plugin.store.create({ kind, name, description, properties });
 			this.close();
-			await this.plugin.store.open(file.path);
+			if (this.created) this.created({ path: file.path, name: noteName(name).normalize('NFC'), kind, parents: types.map(note => note.path) });
+			else await this.plugin.store.open(file.path);
 		});
 	}
 }

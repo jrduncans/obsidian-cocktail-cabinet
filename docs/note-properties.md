@@ -82,6 +82,8 @@ A named bottle, together with its recorded stock. One note tracks the open amoun
 
 Earlier development notes using `cc-types` need manual conversion: select one ingredient type, store its quoted wiki link as the scalar `cc-type`, and remove `cc-types`. The reader does not fall back to the old property or choose between multiple types. Update preserved bottle Bases to use `note.cc-type` in their property configuration and column order; setup does not overwrite them.
 
+Starter bottle references, such as Angostura Bitters classified as Aromatic Bitters, use status tracking with Unknown availability. Their existence does not establish ownership; quantities, bottle size, strength, and purchase intent are not inferred. Recipes can link to the same bottle note before and after the user records stock.
+
 Only the selected mode's stock fields apply: volume mode has open mL and unopened count; status mode has qualitative availability. Full bottle volume, ABV, price, and the shopping flag remain independent metadata in either mode. The description lives in the body.
 
 When all quantities are known, total volume is `open mL + unopened count × bottle volume mL`; it is derived rather than stored separately. Unknown quantities must not silently become zero when claiming an exact total. Opening an unopened bottle requires a known bottle volume and a known positive unopened count. The model records one open-bottle amount rather than several separately measured open bottles.
@@ -172,9 +174,9 @@ A cocktail's requirements, method, description, and tasting notes. New notes are
 | `cc-kind` | `"recipe"` | `true` | Identifies a recipe for browsing and related-recipe discovery. |
 | `cc-name` | `string` | `false` | Proper recipe name for plugin UI and new links. Generated from the required Recipe name input; falls back to the filename if absent or unusable. |
 | `aliases` | `string[]` | `false` | Alternate names included in cabinet picker search and available to Obsidian links. |
-| `created` | `date` | `false` | Resolved to the local calendar date during creation, such as `2026-10-30`. Recorded metadata; no current date-based behavior reads it. Generated recipes always include it. |
+| `created` | `date` | `false` | Resolved to the local calendar date during creation; enhancement retains an existing creation date. For example, `2026-10-30`. Recorded metadata; no current date-based behavior reads it. Generated recipes always include it. |
 | `source` | `string \| null` | `false` | Provenance such as a URL, book, or attribution. The form trims text and stores `null` when blank. Recorded only; no fetching or interpretation. |
-| `rating` | `unknown` | `false` | Reserved rating metadata, initialized to `null`. The value type and scale have not been defined or validated. No rating form input, sorting, or filtering currently uses it. |
+| `rating` | `unknown` | `false` | Reserved rating metadata, initialized to `null`; copied-text creation retains a numeric source rating; enhancement preserves an existing rating of any shape. The scale has not been defined or validated. No rating form input, sorting, or filtering currently uses it. |
 
 Recipe requirements are Markdown body content rather than frontmatter properties:
 
@@ -185,7 +187,11 @@ Recipe requirements are Markdown body content rather than frontmatter properties
 | Description | `Markdown` | `false` | Recipe description; written by the form and not interpreted. |
 | Tasting Notes | `Markdown` | `false` | Personal tasting notes; written by the form and not interpreted. Links here do not count as ingredient requirements. |
 
-Linked requirements can reference an ingredient category, family, type, or specific bottle. The recipe creation picker does not select other-stock sources. Amounts remain text and are not parsed into quantities. Plain-text ingredients cannot be resolved through the classification graph. Related-recipe discovery does not rewrite recipe requirements or consider recorded stock quantities and availability.
+Linked requirements can reference an ingredient category, family, type, specific bottle, or other-stock source. A source's `cc-provides` links participate in related-recipe traversal. The form offers suggestions by name, filename, and alias, without automatically linking ingredients or inferring style defaults, substitutions, or inventory bottle choices. Accepted links retain the ingredient's entered wording as display text. Existing Markdown wiki links are preserved unless explicitly replaced or unlinked. Plain-text ingredients remain valid but cannot be resolved through the classification graph.
+
+Recipe review accepts copied plain text, bullet lists, or structured Markdown. Familiar leading amounts identify ingredients without headings; a following paragraph beginning with a preparation verb is treated as Method. Parenthetical brands participate in link suggestions without changing source text. Structured pages can use a title and ingredient list, with Method/Directions/Instructions, Description/Notes, and Tasting Notes sections. For copied-text creation, frontmatter name/source and numeric rating are read; other properties are placed in Description for review. Creation uses a new local date. **Enhance as cocktail recipe** instead keeps all existing frontmatter values, including nested properties, aliases, rating, and creation date, while updating the name, source, and recipe kind. YAML may be reformatted. Notes outside the cabinet move to `<root>/Recipes/<existing filename>` through Obsidian’s file manager; notes inside the cabinet keep their path. The review shows the destination. Saving checks the source has not changed and refuses conflicting filenames. A failed move restores the original content only if no concurrent edit would be overwritten. Unknown sections and indented ingredient continuations are retained in Description with a warning, and the original text is available during review. Missing recipe details remain blank.
+
+Amounts remain text in the ingredient list, with no duplicate structured quantity property. The form recognizes single positive volumes in mL, cL, and US fluid ounces (`29.5735295625 mL` per ounce), including decimal and mixed or Unicode fractions, to show an interpretation. Explicit non-volume equivalents such as `1 barspoon (1/8 oz)` use the stated volume; no volume is assumed for a bare barspoon or dash. Ranges, dual volume measurements such as `1 oz (30 ml)`, and other unclear quantities require later review. This does not perform inventory arithmetic or decide which alternative in an `A or B` line was used. Related-recipe discovery does not rewrite requirements or consider recorded stock quantities and availability.
 
 ## Cabinet home
 
@@ -211,7 +217,7 @@ The display name, filename, catalog ID, and page heading have separate roles. Cr
 
 There is no ongoing synchronization between these representations. Editing `cc-name` affects subsequent plugin displays and newly generated links; it does not rename the file, rewrite the heading, or update existing links' display text.
 
-`cc-catalog-id` is optional for custom resources but must be retained on starter categories, families, and types for setup to preserve their catalog identity across renames. IDs use a slash between the level and identity, such as `family/Aquavit`, to avoid URL-scheme rendering. Catalog identity is independent of the display name and path. Browsing and recipe discovery do not use it.
+`cc-catalog-id` is optional for custom resources but must be retained on starter categories, families, types, and bottle references for setup to preserve their catalog identity across renames. IDs use a slash between the level and identity, such as `family/Aquavit`, to avoid URL-scheme rendering. Catalog identity is independent of the display name and path. Browsing and recipe discovery do not use it.
 
 ## Plugin settings
 
@@ -232,3 +238,4 @@ Settings are saved in the plugin's `data.json`, outside note frontmatter.
 - [Hierarchy traversal and same-type bottle discovery](../src/core/relationships.ts).
 - [Stock validation and mode-specific properties](../src/core/stock.ts).
 - [Bottle and other-stock inputs](../src/ui/stock-modal.ts), [ingredient inputs](../src/ui/ingredient-modal.ts), and [recipe inputs](../src/ui/recipe-modal.ts).
+- [Markdown recipe parsing and link suggestions](../src/core/recipe-import.ts), [amount interpretation](../src/core/recipe-amount.ts), and [ingredient review controls](../src/ui/recipe-ingredients.ts).

@@ -5,6 +5,9 @@ import { ingredientSection, localDate, renderNote } from '../core/notes';
 import { relatedTargets } from '../core/relationships';
 import { starterPlan } from '../core/setup';
 import type { SetupPreview } from '../core/setup';
+import { enhancedRecipeContent } from './recipe-document';
+
+export interface RecipeSnapshot { path: string; content: string; }
 
 const PARENT_PROPERTIES: Partial<Record<NoteKind, string>> = {
 	family: PROP.category,
@@ -167,6 +170,45 @@ export class CabinetStore {
 		return found.filter((note): note is CabinetNote => note !== null);
 	}
 
+	recipeDestination(path: string): string {
+		return path.startsWith(`${this.root}/`) ? path : `${this.root}/Recipes/${path.split('/').at(-1)!}`;
+	}
+
+	async enhanceRecipe(snapshot: RecipeSnapshot, draft: NoteDraft): Promise<TFile> {
+		return this.write(async () => {
+			if (!await this.isSetUp()) throw new Error('Set up a cabinet before saving recipes.');
+			const file = this.app.vault.getAbstractFileByPath(snapshot.path);
+			if (!(file instanceof TFile) || file.extension !== 'md') throw new Error('The original note was moved or removed. Reopen it to review again.');
+			const destination = this.recipeDestination(snapshot.path);
+			if (destination !== snapshot.path && this.app.vault.getAllLoadedFiles().some(item => item.path.toLowerCase() === destination.toLowerCase())) {
+				throw new Error('A note with this filename already exists in Recipes. Rename one of the notes and review again.');
+			}
+			const content = enhancedRecipeContent(snapshot.content, draft);
+			await this.app.vault.process(file, current => {
+				if (normalizeSource(current) !== normalizeSource(snapshot.content)) throw new Error('The note changed after review opened. Reopen the review to include those changes.');
+				return content;
+			});
+			if (destination !== snapshot.path) {
+				try {
+					await this.ensureFolder(destination.slice(0, destination.lastIndexOf('/')));
+					await this.app.fileManager.renameFile(file, destination);
+				} catch (error) {
+					let restored = false;
+					try {
+						await this.app.vault.process(file, current => {
+							if (current !== content) throw new Error('The note changed during the move.');
+							return snapshot.content;
+						});
+						restored = true;
+					} catch { /* Preserve any concurrent changes instead of rolling them back. */ }
+					const reason = error instanceof Error ? error.message : 'The move failed.';
+					throw new Error(`Could not move the recipe: ${reason} ${restored ? 'The original note content was restored.' : `The enhanced note remains at ${file.path}; inspect it before retrying.`}`);
+				}
+			}
+			return file;
+		});
+	}
+
 	link(note: CabinetNote): string {
 		return wikiLink(note.path, note.name);
 	}
@@ -205,4 +247,8 @@ export class CabinetStore {
 			this.writing = false;
 		}
 	}
+}
+
+function normalizeSource(content: string): string {
+	return content.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
 }

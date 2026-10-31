@@ -5,7 +5,7 @@ Language for cocktail recipes, ingredients, and cabinet inventory.
 ## Language
 
 **Bottle**:
-A named spirit, liqueur, or other bottled cocktail ingredient, with characteristics such as bottle volume and alcohol strength.
+A named spirit, liqueur, or other bottled cocktail ingredient, with characteristics such as bottle volume and alcohol strength; referencing a bottle does not imply it is owned. For example, Angostura Bitters is a bottle whose ingredient type is Aromatic Bitters.
 _Avoid_: Product
 
 **Ingredient category**:

@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-124 ingredient types, 26 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+124 ingredient types, 26 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -134,3 +134,11 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | White Blended Rum | Rum | Spirit |
 | Whole Egg | — | — |
 | Yellow Herbal Liqueur | Herbal Liqueur | Liqueur |
+
+## Reference bottles
+
+Named bottles can be linked in recipes without asserting that they are owned. Record stock on the existing bottle note when needed.
+
+| Bottle | Ingredient type | Availability |
+| --- | --- | --- |
+| Angostura Bitters | Aromatic Bitters | Unknown |

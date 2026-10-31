@@ -144,6 +144,11 @@ family('Bitters', undefined, 'Concentrated bitters used in small cocktail season
 	['Aromatic Bitters', 'Concentrated aromatic bitters used in dashes or other small seasoning amounts.'], ['Orange Bitters', 'Concentrated orange-flavored bitters used as cocktail seasoning.'],
 	['Creole Bitters', 'Creole-style aromatic bitters for recipes that specify that profile.'], ['Chocolate Bitters', 'Concentrated chocolate-flavored bitters used as cocktail seasoning.'],
 ]);
+entries.push({
+	id: 'bottle/Angostura Bitters', kind: 'bottle', name: 'Angostura Bitters', parent: 'Aromatic Bitters',
+	description: 'Angostura aromatic bitters. Recipes can name this bottle specifically or call for its Aromatic Bitters type. Set availability or quantities to record your stock.',
+	properties: { aliases: ['Angostura Aromatic Bitters'], [PROP.stockTracking]: 'status', [PROP.availability]: 'Unknown', [PROP.shoppingList]: false },
+});
 family('Citrus Juice', 'Juice', 'Fresh citrus juices by default. Bottled juice can be recorded as a source of the same ingredient.', [
 	['Lime Juice', 'Fresh lime juice by default. A bottled source can be recorded without changing recipe links.'],
 	['Lemon Juice', 'Lemon juice, assumed freshly squeezed; purchased juice can supply the same ingredient.'], ['Orange Juice', 'Orange juice, assumed freshly squeezed unless a different preparation is specified.'],
@@ -200,8 +205,10 @@ export const STARTER_CATALOG: readonly CatalogEntry[] = entries;
 export function catalogDraft(root: string, entry: CatalogEntry, paths: ReadonlyMap<string, string> = new Map()): NoteDraft {
 	const properties: Properties = { ...entry.properties, [PROP.catalogId]: entry.id };
 	if (entry.parent) {
-		const kind = entry.kind === 'family' ? 'category' : 'family';
-		properties[kind === 'category' ? PROP.category : PROP.family] = [wikiLink(paths.get(`${kind}/${fileName(entry.parent)}`) || notePath(root, kind, entry.parent), entry.parent)];
+		const kind = entry.kind === 'family' ? 'category' : entry.kind === 'bottle' ? 'type' : 'family';
+		const property = kind === 'category' ? PROP.category : kind === 'type' ? PROP.type : PROP.family;
+		const link = wikiLink(paths.get(`${kind}/${fileName(entry.parent)}`) || notePath(root, kind, entry.parent), entry.parent);
+		properties[property] = entry.kind === 'bottle' ? link : [link];
 	}
 	return { ...entry, properties };
 }
