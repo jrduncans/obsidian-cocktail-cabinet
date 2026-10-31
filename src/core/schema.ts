@@ -4,17 +4,35 @@ export type PropertyValue = string | number | boolean | null | string[];
 export type Properties = Record<string, PropertyValue>;
 
 export const FOLDERS: Record<NoteKind, string> = {
-	category: 'Categories', family: 'Families', type: 'Types',
-	bottle: 'Bottles', ingredient: 'Ingredients', recipe: 'Recipes',
+	category: 'Categories',
+	family: 'Families',
+	type: 'Types',
+	bottle: 'Bottles',
+	ingredient: 'Ingredients',
+	recipe: 'Recipes',
 };
 
 export const PROP = {
-	kind: 'cc-kind', name: 'cc-name', category: 'cc-category', family: 'cc-family',
-	types: 'cc-types', provides: 'cc-provides', catalogId: 'cc-catalog-id',
-	brix: 'cc-brix', volume: 'cc-volume-ml', abv: 'cc-abv',
-	open: 'cc-open-fraction', unopened: 'cc-unopened',
-	availability: 'cc-availability', form: 'cc-form',
-	sugarWaterRatio: 'cc-sugar-water-ratio', schemaVersion: 'cc-schema-version',
+	kind: 'cc-kind',
+	name: 'cc-name',
+	category: 'cc-category',
+	family: 'cc-family',
+	types: 'cc-types',
+	provides: 'cc-provides',
+	catalogId: 'cc-catalog-id',
+	brix: 'cc-brix',
+	volume: 'cc-volume-ml',
+	abv: 'cc-abv',
+	stockTracking: 'cc-stock-tracking',
+	open: 'cc-open-ml',
+	unopened: 'cc-unopened',
+	remaining: 'cc-remaining-ml',
+	availability: 'cc-availability',
+	form: 'cc-form',
+	lastPurchasePrice: 'cc-last-purchase-price',
+	shoppingList: 'cc-shopping-list',
+	sugarWaterRatio: 'cc-sugar-water-ratio',
+	schemaVersion: 'cc-schema-version',
 } as const;
 
 export interface CabinetNote {

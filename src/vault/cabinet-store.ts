@@ -6,21 +6,30 @@ import { relatedTargets } from '../core/relationships';
 import { starterPlan } from '../core/setup';
 import type { SetupPreview } from '../core/setup';
 
+const PARENT_PROPERTIES: Partial<Record<NoteKind, string>> = {
+	family: PROP.category,
+	type: PROP.family,
+	bottle: PROP.types,
+	ingredient: PROP.provides,
+};
+
 export class CabinetStore {
 	private writing = false;
 
 	constructor(readonly app: App, private folder: () => string) {}
 
-	get root(): string { return cabinetFolder(this.folder()); }
+	get root(): string {
+		return cabinetFolder(this.folder());
+	}
 
 	notes(): CabinetNote[] {
-		const files = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(`${this.root}/`));
+		const root = this.root;
+		const files = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(`${root}/`));
 		const notes = files.flatMap(file => {
 			const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 			const kind: unknown = frontmatter?.[PROP.kind];
 			if (!KINDS.some(value => value === kind)) return [];
-			const parentProperty = kind === 'family' ? PROP.category : kind === 'type' ? PROP.family
-				: kind === 'bottle' ? PROP.types : kind === 'ingredient' ? PROP.provides : null;
+			const parentProperty = PARENT_PROPERTIES[kind as NoteKind];
 			const parents = (parentProperty ? [parentProperty] : []).flatMap(key => {
 				const value: unknown = frontmatter?.[key];
 				return (Array.isArray(value) ? value : [value]).flatMap((link: unknown) => {
@@ -32,7 +41,13 @@ export class CabinetStore {
 			const properName: unknown = frontmatter?.[PROP.name];
 			const name = typeof properName === 'string' && properName.trim() && !/[|[\]\r\n]/.test(properName)
 				? properName.trim() : file.basename;
-			return [{ path: file.path, name, kind: kind as NoteKind, parents, aliases: parseFrontMatterAliases(frontmatter) || [] }];
+			return [{
+				path: file.path,
+				name,
+				kind: kind as NoteKind,
+				parents,
+				aliases: parseFrontMatterAliases(frontmatter) || [],
+			}];
 		}).sort((left, right) => left.name.localeCompare(right.name));
 		const byPath = new Map(notes.map(note => [note.path, note]));
 		for (const note of notes) {
@@ -60,7 +75,10 @@ export class CabinetStore {
 		const byLowerPath = new Map(allFiles.map(file => [file.path.toLowerCase(), file]));
 		const catalogPaths = new Map<string, string>();
 		// Read current content rather than relying on a cache immediately after a write or rename.
-		for (const file of allFiles.filter(file => file.extension === 'md' && file.path.startsWith(`${root}/`))) {
+		const markdownFiles = allFiles.filter(file =>
+			file.extension === 'md' && file.path.startsWith(`${root}/`),
+		);
+		for (const file of markdownFiles) {
 			const properties = await this.frontmatter(file);
 			const id = properties[PROP.catalogId];
 			if (typeof id !== 'string') continue;
@@ -71,12 +89,18 @@ export class CabinetStore {
 			const parts = planned.path.split('/');
 			for (let depth = 1; depth < parts.length; depth++) {
 				const parent = parts.slice(0, depth).join('/');
-				const existing = this.app.vault.getAbstractFileByPath(parent) || byLowerPath.get(parent.toLowerCase());
+				const existing = this.app.vault.getAbstractFileByPath(parent)
+					|| byLowerPath.get(parent.toLowerCase());
 				if (existing && !(existing instanceof TFolder)) result.conflicts.push(parent);
 			}
-			const existing = this.app.vault.getAbstractFileByPath(planned.path) || byLowerPath.get(planned.path.toLowerCase());
-			if (!existing) { result.create.push(planned); continue; }
-			if (existing instanceof TFile && existing.path === planned.path && planned.kind === 'base' && existing.extension === 'base') {
+			const existing = this.app.vault.getAbstractFileByPath(planned.path)
+				|| byLowerPath.get(planned.path.toLowerCase());
+			if (!existing) {
+				result.create.push(planned);
+				continue;
+			}
+			if (existing instanceof TFile && existing.path === planned.path
+				&& planned.kind === 'base' && existing.extension === 'base') {
 				result.keep.push(existing.path);
 				continue;
 			}
@@ -98,7 +122,10 @@ export class CabinetStore {
 		return this.write(async () => {
 			// Recheck at apply time; no existing file is ever overwritten.
 			const preview = await this.previewSetup(folder);
-			if (preview.conflicts.length) throw new Error(`Setup conflicts with existing files: ${preview.conflicts.slice(0, 3).join(', ')}. Choose a different cabinet folder.`);
+			if (preview.conflicts.length) {
+				const conflicts = preview.conflicts.slice(0, 3).join(', ');
+				throw new Error(`Setup conflicts with existing files: ${conflicts}. Choose a different cabinet folder.`);
+			}
 			for (const file of preview.create) {
 				await this.ensureFolder(file.path.slice(0, file.path.lastIndexOf('/')));
 				await this.app.vault.create(file.path, file.content);
@@ -111,7 +138,10 @@ export class CabinetStore {
 		return this.write(async () => {
 			if (!await this.isSetUp()) throw new Error('Set up a cabinet before adding notes.');
 			const file = renderNote(this.root, draft, localDate());
-			if (this.app.vault.getAllLoadedFiles().some(existing => existing.path.toLowerCase() === file.path.toLowerCase())) {
+			const exists = this.app.vault.getAllLoadedFiles().some(existing =>
+				existing.path.toLowerCase() === file.path.toLowerCase(),
+			);
+			if (exists) {
 				throw new Error('A note with that name already exists in this part of the cabinet. Choose another name.');
 			}
 			await this.ensureFolder(file.path.slice(0, file.path.lastIndexOf('/')));
@@ -136,7 +166,9 @@ export class CabinetStore {
 		return found.filter((note): note is CabinetNote => note !== null);
 	}
 
-	link(note: CabinetNote): string { return wikiLink(note.path, note.name); }
+	link(note: CabinetNote): string {
+		return wikiLink(note.path, note.name);
+	}
 
 	async open(path: string): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(path);
@@ -149,7 +181,8 @@ export class CabinetStore {
 		const source = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
 		if (!source) return {};
 		const parsed: unknown = parseYaml(source);
-		return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+		return parsed as Record<string, unknown>;
 	}
 
 	private async ensureFolder(path: string): Promise<void> {
@@ -165,7 +198,10 @@ export class CabinetStore {
 	private async write<T>(operation: () => Promise<T>): Promise<T> {
 		if (this.writing) throw new Error('Another cabinet change is still running. Try again when it finishes.');
 		this.writing = true;
-		try { return await operation(); }
-		finally { this.writing = false; }
+		try {
+			return await operation();
+		} finally {
+			this.writing = false;
+		}
 	}
 }

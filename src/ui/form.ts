@@ -18,8 +18,8 @@ export abstract class CabinetForm extends Modal {
 		this.errorEl = this.contentEl.createEl('p', { cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 	}
 
-	protected text(label: string, value: string, change: (value: string) => void, description = '') {
-		return new Setting(this.contentEl).setName(label).setDesc(description)
+	protected text(label: string, value: string, change: (value: string) => void, description = '', container = this.contentEl) {
+		return new Setting(container).setName(label).setDesc(description)
 			.addText(text => text.setValue(value).onChange(change));
 	}
 
@@ -31,9 +31,14 @@ export abstract class CabinetForm extends Modal {
 			});
 	}
 
-	protected select(label: string, options: Record<string, string>, value: string, change: (value: string) => void) {
-		return new Setting(this.contentEl).setName(label)
+	protected select(label: string, options: Record<string, string>, value: string, change: (value: string) => void, container = this.contentEl) {
+		return new Setting(container).setName(label)
 			.addDropdown(dropdown => dropdown.addOptions(options).setValue(value).onChange(change));
+	}
+
+	protected toggle(label: string, value: boolean, change: (value: boolean) => void) {
+		return new Setting(this.contentEl).setName(label)
+			.addToggle(toggle => toggle.setValue(value).onChange(change));
 	}
 
 	protected choose(label: string, notes: () => CabinetNote[], change: (notes: CabinetNote[]) => void, multiple = false) {

@@ -1,8 +1,8 @@
 # Resource schemas
 
-Schemas for Cocktail Cabinet resources, including approved stock-tracking and purchasing changes awaiting implementation. The `cc-` prefix means Cocktail Cabinet; it namespaces properties without implying that every resource is a cocktail recipe. Obsidian's standard `aliases` property and the existing recipe properties `created`, `source`, and `rating` keep their unprefixed names.
+Schemas for Cocktail Cabinet resources. The `cc-` prefix means Cocktail Cabinet; it namespaces properties without implying that every resource is a cocktail recipe. Obsidian's standard `aliases` property and the existing recipe properties `created`, `source`, and `rating` keep their unprefixed names.
 
-The stock schema is the agreed next design: per-record volume or status tracking, mL remaining, last purchase price, and shopping-list flags. The current creation UI still records bottle fractions and qualitative other-stock availability; it does not yet write the new mode, mL, purchasing, or shopping-list fields. Consumption operations and the combined shopping-list view also remain to be implemented. Other resource behavior below describes the existing implementation. No runtime schema validator or compatibility layer is introduced by this document.
+Creation forms implement per-record volume or status tracking, mL remaining, last purchase price, and shopping-list flags. Consumption operations and the combined shopping-list view remain future work. The plugin validates creation inputs, not every manually edited property; existing notes are preserved rather than automatically migrated.
 
 ## Reading the schemas
 
@@ -58,13 +58,13 @@ A recipe-facing kind of ingredient, such as Rye Whiskey, Lime Juice, or Simple S
 | `cc-family` | `link<Ingredient family>[]` | `false` | Broader groupings read for linked-resource browsing and related-recipe traversal. Missing families are valid. A narrow type does not gain sibling types as alternatives merely by sharing a family. |
 | `cc-brix` | `number \| null` | `false` | Sugar concentration from 0 to 100; blank form input stores `null`. Starter syrup values are nominal definitions, not batch measurements. Recorded for viewing and editing; no current sweetness calculations use it. |
 | `cc-sugar-water-ratio` | `string` | `false` | Authored on the three starter simple/demerara syrup types, such as `2:1 by weight`. Records the ratio and its weight basis. No dedicated form input, runtime parser, or calculation currently uses it. |
-| `cc-shopping-list` | `boolean` | `false` | Approved planned field: marks a generic need for this ingredient type when `true`, without selecting a bottle or source. Missing means `false`. Included in the planned combined shopping-list view; independent of flags and stock levels on linked bottles or sources. |
+| `cc-shopping-list` | `boolean` | `false` | Marks a generic need for this ingredient type when `true`, without selecting a bottle or source. Missing means `false`. Included in the planned combined shopping-list view; independent of flags and stock levels on linked bottles or sources. |
 
 Descriptions and optional Preparation instructions live in the body. They are not parsed as frontmatter properties or preparation batches.
 
 ## Bottle
 
-A named bottling, together with its recorded stock. A resource represents a bottling rather than one physical bottle. New notes are placed in `<root>/Bottles/`. Stock tracking and purchasing fields in this section are the approved design; the creation UI has not yet implemented them.
+A named bottling, together with its recorded stock. A resource represents a bottling rather than one physical bottle. New notes are placed in `<root>/Bottles/`. The creation form writes the selected stock mode and its applicable fields.
 
 | Property | Type | Required | Description and use |
 | --- | --- | --- | --- |
@@ -72,12 +72,12 @@ A named bottling, together with its recorded stock. A resource represents a bott
 | `cc-name` | `string` | `false` | Proper display name for plugin UI and new links. Generated from the required Name input; falls back to the filename if absent or unusable. |
 | `aliases` | `string[]` | `false` | Alternate names included in picker search and available to Obsidian links. |
 | `cc-types` | `link<Ingredient type>[]` | `false` | Classifies the bottling for linked-resource browsing and related-recipe discovery. Bottles sharing an explicitly linked type can appear as same-type alternatives; sharing a family alone is insufficient. Empty lists are valid. |
-| `cc-stock-tracking` | `StockTracking` | `true` | Selects `volume` or `status` for this bottle record. This choice determines the applicable stock fields below. The planned creation default is `volume`, saved explicitly rather than inferred from a missing property. |
-| `cc-volume-ml` | `number \| null` | `false` | Full volume of one bottle in milliliters, greater than zero when known, such as `750`. A missing or null value is unknown. Used by planned bottle rollover and optional percentage-to-mL initialization; remains useful descriptive metadata in status mode. |
+| `cc-stock-tracking` | `StockTracking` | `true` | Selects `volume` or `status` for this bottle record. This choice determines the applicable stock fields below. The creation default is `volume`, saved explicitly rather than inferred from a missing property. |
+| `cc-volume-ml` | `number \| null` | `false` | Full volume of one bottle in milliliters, greater than zero when known, such as `750`. A missing or null value is unknown. Reserved for future bottle rollover; remains useful descriptive metadata in status mode. |
 | `cc-abv` | `number \| null` | `false` | Alcohol strength as a fraction from 0 to 1. The existing form accepts 0–100 percent, so `40` stores `0.4`; blank stores `null`. Stock tracking changes do not change the representation of ABV. |
 | `cc-open-ml` | `number \| null` | `false` | **Volume mode only.** Nonnegative mL remaining in the open bottle, excluding unopened bottles. Must not exceed the known full bottle volume. Missing or null means unknown; zero explicitly means no open stock. Planned consumption deducts mL directly. |
 | `cc-unopened` | `integer \| null` | `false` | **Volume mode only.** Nonnegative count of unopened bottles. Missing or null means unknown. Planned rollover uses this count and full bottle volume when another bottle must be opened. |
-| `cc-availability` | `Availability` | `false` | **Status mode only.** Manual `Unknown`, `Have`, `Low`, or `Out`; missing means `Unknown`. Planned creation writes the chosen status explicitly. Pours do not automatically decrement or change this status. |
+| `cc-availability` | `Availability` | `false` | **Status mode only.** Manual `Unknown`, `Have`, `Low`, or `Out`; missing means `Unknown`. Creation writes the chosen status explicitly. Pours do not automatically decrement or change this status. |
 | `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative numeric amount last paid for one bottle of this bottling, with zero valid and missing or null meaning unknown. Purchasing metadata, independent of stock mode. No price history, currency conversion, or cost calculations are defined. |
 | `cc-shopping-list` | `boolean` | `false` | Explicitly marks this particular bottling for purchase when `true`. Missing means `false`. Independent of current stock level and of any flag on its ingredient types; eligible for the planned combined shopping-list view. |
 
@@ -87,7 +87,7 @@ When all quantities are known, total volume is `open mL + unopened count × bott
 
 ## Other stock
 
-A source that supplies ingredient types, such as fresh fruit, prepared juice, or homemade syrup. This resource uses the stored kind `ingredient`; it is distinct from an ingredient type. New notes are placed in `<root>/Ingredients/`. Stock tracking and purchasing fields in this section are the approved design; the creation UI has not yet implemented them.
+A source that supplies ingredient types, such as fresh fruit, prepared juice, or homemade syrup. This resource uses the stored kind `ingredient`; it is distinct from an ingredient type. New notes are placed in `<root>/Ingredients/`. The creation form writes the selected stock mode and its applicable fields.
 
 | Property | Type | Required | Description and use |
 | --- | --- | --- | --- |
@@ -96,9 +96,9 @@ A source that supplies ingredient types, such as fresh fruit, prepared juice, or
 | `aliases` | `string[]` | `false` | Alternate names included in cabinet picker search and available to Obsidian links. |
 | `cc-provides` | `link<Ingredient type>[]` | `false` | Types supplied by this source. Read for linked-resource browsing and related-recipe traversal, allowing fresh and bottled juice to supply the same type. Empty lists are valid. This relationship does not itself establish that the source is stocked. |
 | `cc-form` | `StockForm` | `false` | Describes how the ingredient is supplied. The existing form defaults to `Fresh ingredient`. Independent of tracking mode: homemade syrup, prepared juice, or purchased juice can each use volume or status tracking. |
-| `cc-stock-tracking` | `StockTracking` | `true` | Selects `volume` or `status` for this source. The planned creation default is `status`, saved explicitly. The resource's form does not constrain its choice of mode. |
+| `cc-stock-tracking` | `StockTracking` | `true` | Selects `volume` or `status` for this source. The creation default is `status`, saved explicitly. The resource's form does not constrain its choice of mode. |
 | `cc-remaining-ml` | `number \| null` | `false` | **Volume mode only.** Nonnegative total mL remaining in this source, such as `500` mL of homemade syrup or prepared juice. Missing or null means unknown; zero explicitly means empty. Planned consumption deducts measured mL from this value. |
-| `cc-availability` | `Availability` | `false` | **Status mode only.** Manual `Unknown`, `Have`, `Low`, or `Out`; missing means `Unknown`. Planned creation writes the chosen status explicitly. It does not establish an exact quantity or automatically change after each use. |
+| `cc-availability` | `Availability` | `false` | **Status mode only.** Manual `Unknown`, `Have`, `Low`, or `Out`; missing means `Unknown`. Creation writes the chosen status explicitly. It does not establish an exact quantity or automatically change after each use. |
 | `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative amount paid for the most recent purchase of this source, using the user's consistent currency convention. Zero is valid; missing or null means unknown. The purchased quantity is not modeled, so this field does not imply a per-mL price. Optional for homemade or otherwise unpurchased sources. |
 | `cc-shopping-list` | `boolean` | `false` | Marks this source for purchase or replenishment when `true`. Missing means `false`. Eligible for the planned combined shopping-list view, independently of stock mode, status, and flags on the provided types. |
 
@@ -115,9 +115,20 @@ A source that supplies ingredient types, such as fresh fruit, prepared juice, or
 
 The mode is the sole authority for stock: inactive-mode fields must not be written by creation or a mode change, and must not influence future stock calculations if manually left behind. Changing modes must be an explicit user action that initializes the new mode; it must not infer a numerical amount from `Have`, or silently choose a qualitative status from the previous volume. A missing mode is incomplete stock configuration, not an invitation to guess from the resource kind. General note browsing may still recognize the resource through `cc-kind`.
 
-Volume is stored as mL remaining. The mL used is an input to a consumption operation, not a cumulative stock field. Estimated starting quantities are allowed; an optional bottle-percentage input can convert an estimate once using a known full bottle volume, without persisting a fraction. Switching an existing record to volume tracking requires entering its starting quantity; a new record may explicitly start with unknown quantities.
+Volume is stored as mL remaining. The mL used is an input to a consumption operation, not a cumulative stock field. Estimated starting quantities are allowed. The creation form accepts mL directly; a percentage input could be added later as a convenience when full bottle volume is known, without persisting a fraction. The creation form resets stock inputs to unknown when switching modes. Existing notes are edited through Obsidian properties or Bases: explicitly initialize the new mode and remove inactive stock fields when changing modes; no dedicated mode-editing command is provided. A record may explicitly have unknown quantities.
 
 Status tracking has no automatic Low threshold or depletion. Fresh fruit in status mode does not acquire an inferred juice yield. Replenishing an existing source updates its current stock; this schema does not require a batch record for each syrup preparation.
+
+## Upgrading early stock notes
+
+Setup preserves existing notes and views. It does not convert the initial fraction schema automatically. Before recording more stock in an early cabinet:
+
+1. For each old bottle, set `cc-stock-tracking` to `volume`. Convert a known `cc-open-fraction` using `cc-open-ml = cc-open-fraction × cc-volume-ml` (for example, `0.5 × 750 = 375`). Keep `cc-unopened`, full bottle volume, and ABV unchanged. Remove `cc-open-fraction` after conversion.
+2. Preserve unknown stock: a missing or null fraction remains unknown (`cc-open-ml: null`). A known zero fraction becomes zero mL. If the fraction is positive but full volume is unknown, find the full volume or enter a current mL estimate before replacing that quantity; do not invent a volume. Review invalid fractions or amounts exceeding full volume instead of converting them blindly.
+3. For each old other-stock source using qualitative availability, set `cc-stock-tracking` to `status` and retain its status; missing availability means Unknown. Do not infer mL from Have or Low.
+4. In existing Bases, replace the fraction column with `cc-open-ml` and add tracking mode, remaining mL, status, and purchasing columns as needed. Existing home notes are user-owned: remove obsolete stock-unit advice and link to the resource views. Rerunning setup only adds missing files.
+
+Prices and shopping flags are optional; omitted prices stay unknown and omitted flags mean false.
 
 ## Purchasing and the shopping list
 
@@ -185,13 +196,13 @@ The cabinet landing note, written at exactly `<root>/Cocktail Cabinet.md`. Setup
 | `cc-name` | `string` | `false` | Written as `Cocktail Cabinet`. No current runtime behavior reads the home note's display name. |
 | `cc-schema-version` | `integer` | `false` | Written as `1`. No runtime reader checks it; it does not select a parser, run migrations, or enable compatibility handling. It has no current behavioral requirement. |
 
-The body starts with command-palette guidance for adding stock and recipes, then embeds bottles, other stock, and recipes before the ingredient reference catalog. It links to all six resource Bases in `<root>/Views/` and also embeds ingredient types. It explains that catalog membership does not imply owned stock, how to edit the tables, and how to find related recipes. These views query current notes rather than enumerate the starter catalog. Setup creates the home when missing and preserves it when present; older home notes need their new Base links or embeds added manually.
+The body starts with command-palette guidance for adding stock and recipes, then introduces bottles, other stock, and recipes before the ingredient reference catalog. It links to all six resource Bases in `<root>/Views/` as it explains the concepts, with types, families, and categories in order. It explains that catalog membership does not imply owned stock, how to edit the tables, and how to find related recipes. It contains no embedded tables or stock-unit instructions; the linked views query current notes rather than enumerate the starter catalog. Setup creates the home when missing and preserves it when present; older home notes need their new Base links added manually.
 
 ## Resource Bases
 
 Setup creates `Ingredient categories.base`, `Ingredient families.base`, `Ingredient types.base`, `Bottles.base`, `Other stock.base`, and `Recipes.base` in `<root>/Views/`. These files are core Obsidian Bases configuration, with no frontmatter resource marker and no plugin runtime dependency. Each filters Markdown files inside the cabinet root by the corresponding `cc-kind`; parent properties and catalog IDs are not required. The cabinet home is not a seventh resource Base.
 
-Table columns show note links, proper names, and the resource's current creation fields. Missing optional values stay empty. The bottle view labels ABV and open stock as fractions to reflect the current stored representation. These columns will need to follow the approved stock schema when it is implemented. Users can edit filters and columns in Obsidian; setup keeps existing `.base` files at these paths, even when their configuration has changed.
+Table columns show note links, proper names, and the resource's current creation fields. Missing optional values stay empty. Stock views show the selected mode, mL quantities, availability, price, and shopping flags. Ingredient types show their shopping flag too. ABV is labeled as a fraction; open stock is labeled in mL. New notes populate only the selected mode’s stock fields; Bases also display inactive fields if a user manually leaves them behind. Users can edit filters and columns in Obsidian; setup keeps existing `.base` files at these paths, even when their configuration has changed.
 
 ## Naming and starter identity
 
@@ -218,4 +229,5 @@ Settings are saved in the plugin's `data.json`, outside note frontmatter.
 - [Catalog IDs, relationships, syrup metadata, and authored aliases](../src/catalog/catalog.ts).
 - [Runtime property readers and setup recognition](../src/vault/cabinet-store.ts).
 - [Hierarchy traversal and same-type bottle discovery](../src/core/relationships.ts).
+- [Stock validation and mode-specific properties](../src/core/stock.ts).
 - [Bottle and other-stock inputs](../src/ui/stock-modal.ts), [ingredient inputs](../src/ui/ingredient-modal.ts), and [recipe inputs](../src/ui/recipe-modal.ts).

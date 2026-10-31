@@ -8,73 +8,68 @@ export function starterPlan(folder: string, paths: ReadonlyMap<string, string> =
 	const root = cabinetFolder(folder);
 	const files = STARTER_CATALOG.map(entry => ({
 		...renderNote(root, catalogDraft(root, entry, paths), localDate()),
-		path: paths.get(entry.id) || notePath(root, entry.kind, entry.name), catalogId: entry.id,
+		path: paths.get(entry.id) || notePath(root, entry.kind, entry.name),
+		catalogId: entry.id,
 	}));
+	return [...files, ...resourceBases(root), cabinetHome(root)];
+}
+
+function cabinetHome(root: string): PlannedFile {
 	const viewLink = (name: string) => wikiLink(basePath(root, name), name);
-	const embed = (name: string) => `!${wikiLink(basePath(root, name))}`;
-	return [...files, ...resourceBases(root), {
-		path: `${root}/Cocktail Cabinet.md`, kind: 'cabinet',
-		content: markdown({ [PROP.kind]: 'cabinet', [PROP.name]: 'Cocktail Cabinet', [PROP.schemaVersion]: 1 },
-`# Cocktail Cabinet
+	const properties = {
+		[PROP.kind]: 'cabinet',
+		[PROP.name]: 'Cocktail Cabinet',
+		[PROP.schemaVersion]: 1,
+	};
+	return {
+		path: `${root}/Cocktail Cabinet.md`,
+		kind: 'cabinet',
+		content: markdown(properties, `# Cocktail Cabinet
 
-Your bottles, ingredients, and cocktail recipes in one place. The ingredient catalog provides a starting reference; your collection grows as you add what you have and the recipes you want to keep.
+Your bottles, ingredients, and cocktail recipes in one place. Start with one bottle or a favorite recipe and build your cabinet gradually.
 
-## Start here
-
-Open Obsidian’s command palette and search for **Cocktail Cabinet**. Start with one bottle or a favorite recipe—you can build the rest gradually.
-
-- **Cocktail Cabinet: Add a bottle** — name a bottling you own and select its ingredient type, such as rye whiskey. Enter the stock you have; leave amounts blank when you don’t know them.
-- **Cocktail Cabinet: Add other stock** — record fresh ingredients, juice, or homemade and purchased syrups. Select the ingredient types they provide and their availability.
-- **Cocktail Cabinet: Create a cocktail recipe** — save a recipe with its amounts and method. Select ingredient links as you go; you can name a type, a broader family such as rum, or a specific bottle.
-
-An ingredient type describes what a recipe calls for, such as lime juice. Other stock records your source of it, such as fresh limes or prepared juice.
+Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below.
 
 ## Your collection
 
-These tables update as you add or edit notes. Select a note link to open it, or edit a property in a table. Open a full view to adjust its filters, sorting, and columns.
-
-If the tables don’t display, enable **Bases** in **Settings → Core plugins**.
-
 ### Bottles
 
-${viewLink('Bottles')}
-
-Bottle sizes, strengths, and recorded stock. In the ABV and open-bottle columns, 0.5 means 50%; blank amounts mean unknown.
-
-${embed('Bottles')}
+${viewLink('Bottles')} records the bottlings you own and their stock. Use **Cocktail Cabinet: Add a bottle**, name the bottling, and select the ingredient types it supplies.
 
 ### Other stock
 
-${viewLink('Other stock')}
+${viewLink('Other stock')} records fresh ingredients, juice, syrups, and other sources. Use **Cocktail Cabinet: Add other stock** and select the ingredient types the source provides.
 
-Fresh ingredients, juice, syrups, and other ingredient sources, with their recorded availability.
-
-${embed('Other stock')}
+An ingredient type describes what a recipe calls for, such as lime juice. Stock records your source of it, such as fresh limes or prepared juice. Ingredient definitions alone don’t mean you have anything in stock.
 
 ### Recipes
 
-${viewLink('Recipes')}
+${viewLink('Recipes')} holds the cocktails you want to keep. Use **Cocktail Cabinet: Create a cocktail recipe** to save amounts and a method. Ingredients can name a type, a broader family such as rum, or a specific bottle.
 
-Your saved cocktail recipes. To find recipes related to an ingredient or bottle, open that note and run **Cocktail Cabinet: Browse related recipes**.
-
-${embed('Recipes')}
+To find recipes related to an ingredient or bottle, open that note and run **Cocktail Cabinet: Browse related recipes**.
 
 ## Ingredient catalog
 
-${viewLink('Ingredient types')}
+### Types
 
-Ingredient definitions and preparation notes. Catalog entries don’t mean you have an ingredient in stock. Use **Cocktail Cabinet: Add ingredient type** if something you need is missing, or **New type** while creating a recipe.
+${viewLink('Ingredient types')} contains ingredient definitions and preparation notes. Every type appears here, including those without a family. Use **Cocktail Cabinet: Add ingredient type** if something you need is missing, or **New type** while creating a recipe.
 
-${embed('Ingredient types')}
+### Families
 
-Browse broader groupings: ${viewLink('Ingredient families')} · ${viewLink('Ingredient categories')}. These groupings are optional; every ingredient type appears in the view above, including types without a family.
+${viewLink('Ingredient families')} groups types when a shared recipe reference or grouping is useful, such as Rum. Types can stand alone. Use **Cocktail Cabinet: Add ingredient family** to create a grouping.
+
+### Categories
+
+${viewLink('Ingredient categories')} groups families into broader classifications, such as Spirit. Families can stand alone too. Use **Cocktail Cabinet: Add ingredient category** when a broader grouping helps.
 
 ## Make it yours
 
-Edit this page, the ingredient notes, and the views to suit your cabinet. Setup preserves existing files when you run it again.
+Open a linked view to browse your current notes, edit properties, or customize filters, sorting, and columns. Enable **Bases** in **Settings → Core plugins** to use these views.
 
-Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The live tables need only Obsidian’s core Bases plugin.`),
-	}];
+Edit this page, ingredient notes, and views to suit your cabinet. Setup preserves existing files when you run it again.
+
+Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The views need only Obsidian’s core Bases plugin.`),
+	};
 }
 
 export interface SetupPreview {

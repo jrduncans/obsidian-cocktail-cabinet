@@ -94,7 +94,7 @@ void test('starter groupings are optional at both parent levels', () => {
 	}
 });
 
-void test('home links to all six resource Bases and embeds live collection views', () => {
+void test('home introduces all six resource Bases in context without embeds or stock-unit advice', () => {
 	const files = starterPlan('Drinks/Cabinet');
 	const home = files.find(file => file.kind === 'cabinet')!;
 	const bases = files.filter(file => file.kind === 'base');
@@ -104,9 +104,12 @@ void test('home links to all six resource Bases and embeds live collection views
 		assert.ok(bases.some(file => file.path === path));
 		assert.ok(home.content.includes(wikiLink(path, resource.name)));
 	}
-	for (const name of ['Ingredient types', 'Bottles', 'Other stock', 'Recipes']) {
-		assert.ok(home.content.includes(`!${wikiLink(basePath('Drinks/Cabinet', name))}`));
-	}
+	assert.ok(!home.content.includes('![['));
+	assert.ok(!home.content.includes('0.5'));
+	assert.ok(!home.content.includes('fraction'));
+	assert.ok(home.content.indexOf('## Your collection') < home.content.indexOf('## Ingredient catalog'));
+	assert.ok(home.content.indexOf('### Types') < home.content.indexOf('### Families'));
+	assert.ok(home.content.indexOf('### Families') < home.content.indexOf('### Categories'));
 	assert.ok(!home.content.includes('/Types/'));
 });
 
@@ -264,4 +267,24 @@ void test('cycles and missing parents from manual edits terminate safely', () =>
 
 void test('created date uses the local calendar day', () => {
 	assert.equal(localDate(new Date(2026, 9, 29, 23, 59)), '2026-10-29');
+});
+
+void test('resource Bases expose mL stock, tracking choices, and independent purchasing fields', () => {
+	const bases = starterPlan('Cocktails').filter(file => file.kind === 'base');
+	const bottle = bases.find(file => file.path.endsWith('/Bottles.base'))!.content;
+	const source = bases.find(file => file.path.endsWith('/Other stock.base'))!.content;
+	const types = bases.find(file => file.path.endsWith('/Ingredient types.base'))!.content;
+	assert.ok(bottle.includes('note.cc-open-ml:'));
+	assert.ok(bottle.includes('Open bottle (mL)'));
+	assert.ok(!bottle.includes('cc-open-fraction'));
+	assert.ok(source.includes('note.cc-remaining-ml:'));
+	for (const content of [bottle, source]) {
+		for (const key of [PROP.stockTracking, PROP.availability, PROP.lastPurchasePrice, PROP.shoppingList]) {
+			assert.ok(content.includes(`note.${key}:`));
+		}
+	}
+	assert.ok(types.includes('note.cc-shopping-list:'));
+	for (const base of bases.filter(file => /families|categories|Recipes/i.test(file.path))) {
+		assert.ok(!base.content.includes(PROP.shoppingList));
+	}
 });

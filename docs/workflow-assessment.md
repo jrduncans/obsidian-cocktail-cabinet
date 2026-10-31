@@ -1,6 +1,6 @@
 # Cocktail workflow assessment
 
-Captured on 2026-10-29 from [Assess cocktail workflow automation](thread://01a189d2-6af0-74f3-9ebb-859418fe6291?hostId=local). This records the earlier analysis and recommendations for future planning. The user's confirmed project choices are recorded in `AGENTS.md`; the architecture and implementation order below remain proposals.
+Captured on 2026-10-29 from the initial cocktail workflow automation assessment. This records the earlier analysis and recommendations for future planning. The user's confirmed project choices are recorded in `AGENTS.md`; the architecture and implementation order below remain proposals.
 
 ## Why build a plugin
 
