@@ -26,12 +26,23 @@ export interface StockInput {
 	volume: string;
 	abv: string;
 	open: string;
+	openUnit?: string;
 	unopened: string;
 	remaining: string;
 	availability: string;
 	form: string;
 	lastPurchasePrice: string;
 	shoppingList: boolean;
+}
+
+/** Accept an estimate or measured mL without storing the input unit. */
+export function openBottleMl(value: string, unit: string, volume: number | null): number | null {
+	if (unit !== 'ml' && unit !== 'percent') throw new Error('Select percent full or mL.');
+	if (unit === 'ml') return optionalNumber(value, 'Remaining in open bottle', 0, volume ?? Infinity);
+	const percent = optionalNumber(value, 'Percent full', 0, 100);
+	if (percent === null || percent === 0) return percent;
+	if (volume === null) throw new Error('Enter the bottle volume to use a percentage estimate.');
+	return volume * (percent / 100);
 }
 
 /** Validate creation inputs and write only the selected mode's stock fields. */
@@ -60,8 +71,7 @@ export function stockProperties(input: StockInput): Properties {
 		properties[PROP.availability] = input.availability;
 	} else if (input.kind === 'bottle') {
 		const volume = properties[PROP.volume];
-		const maximum = typeof volume === 'number' ? volume : Infinity;
-		properties[PROP.open] = optionalNumber(input.open, 'Remaining in open bottle', 0, maximum);
+		properties[PROP.open] = openBottleMl(input.open, input.openUnit ?? 'ml', typeof volume === 'number' ? volume : null);
 		properties[PROP.unopened] = optionalNumber(input.unopened, 'Unopened bottles', 0, Infinity, true);
 	} else {
 		properties[PROP.remaining] = optionalNumber(input.remaining, 'Remaining volume', 0);

@@ -9,6 +9,9 @@ export function markdown(properties: Properties, body: string): string {
 export function renderNote(root: string, draft: NoteDraft, date: string): PlannedFile {
 	const name = noteName(draft.name).normalize('NFC');
 	const properties: Properties = { ...draft.properties, [PROP.kind]: draft.kind, [PROP.name]: name };
+	if (draft.kind === 'bottle' && properties[PROP.type] !== undefined && typeof properties[PROP.type] !== 'string') {
+		throw new Error('Select one ingredient type for a bottle, or leave it unclassified.');
+	}
 	if (fileName(name) !== name) {
 		const aliases = properties.aliases;
 		properties.aliases = [...new Set([...(Array.isArray(aliases) ? aliases : typeof aliases === 'string' ? [aliases] : []), name])];

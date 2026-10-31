@@ -124,7 +124,7 @@ These distinctions can remain sibling types beneath Rum within the existing Spir
 
 The current schema has no type-to-type parent relationship. Adding a broad Moderately Aged Rum type would not automatically make Barbados or Aged Column Still its children. Broad matching across such roles would need deliberate classification choices or a separately designed mechanism; it should not be promised through naming alone.
 
-Bottle notes support multiple types, but sharing any type currently makes bottles candidates for the same-type related-recipe behavior. Assigning every aged rum an additional broad type could therefore widen bottle alternatives. Do not introduce that as an incidental fix for vocabulary overlap.
+Bottle notes now have at most one ingredient type. Sharing that type makes bottles candidates for the same-type related-recipe behavior. Broader rum roles must not be introduced by assigning extra types to bottles; overlapping roles would need a separately designed mechanism.
 
 The agreed Black Jamaican Rum name and description, the separate aged and unaged overproof Jamaican types, the Light Rum and White Blended Rum roles, Demerara 151 Rum, Blended Overproof Rum, Aged Barbados Rum, Aged Column Still Rum, the clarified Aged Blended Rum role, Pineapple Rum, the consistent age-based agricole names with French aliases, the separate Haitian roles, Unaged Mexican Rum, and Mister Fogg as a Blended Overproof Rum example have been applied to the starter catalog. The separate non-overproof Unaged Jamaican Rum starter entry has been removed. Naming refinements and adoption questions remain recorded above. Settings and knowledge-vault notes were not changed.
 

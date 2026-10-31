@@ -34,7 +34,7 @@ Open Obsidian’s command palette and search for **Cocktail Cabinet** to find th
 
 ### Bottles
 
-${viewLink('Bottles')} records your bottles and their stock. Use **Cocktail Cabinet: Add a bottle**, enter its name, and select the ingredient types it supplies.
+${viewLink('Bottles')} records your bottles and their stock. Use **Cocktail Cabinet: Add a bottle**, enter its name, and select its ingredient type, if known.
 
 ### Other stock
 

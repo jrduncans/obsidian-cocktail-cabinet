@@ -9,7 +9,7 @@ import type { SetupPreview } from '../core/setup';
 const PARENT_PROPERTIES: Partial<Record<NoteKind, string>> = {
 	family: PROP.category,
 	type: PROP.family,
-	bottle: PROP.types,
+	bottle: PROP.type,
 	ingredient: PROP.provides,
 };
 
@@ -32,7 +32,8 @@ export class CabinetStore {
 			const parentProperty = PARENT_PROPERTIES[kind as NoteKind];
 			const parents = (parentProperty ? [parentProperty] : []).flatMap(key => {
 				const value: unknown = frontmatter?.[key];
-				return (Array.isArray(value) ? value : [value]).flatMap((link: unknown) => {
+				const links = kind === 'bottle' ? [value] : Array.isArray(value) ? value : [value];
+				return links.flatMap((link: unknown) => {
 					if (typeof link !== 'string') return [];
 					const target = this.resolve(link, file.path);
 					return target ? [target.path] : [];

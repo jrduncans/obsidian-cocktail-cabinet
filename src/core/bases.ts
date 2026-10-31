@@ -35,7 +35,7 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 		kind: 'bottle',
 		name: 'Bottles',
 		columns: [
-			[PROP.types, 'Ingredient types'],
+			[PROP.type, 'Ingredient type'],
 			[PROP.volume, 'Bottle volume (mL)'],
 			[PROP.abv, 'ABV (fraction)'],
 			[PROP.stockTracking, 'Stock tracking'],

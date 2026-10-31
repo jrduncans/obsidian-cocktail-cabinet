@@ -3,6 +3,7 @@ import test from 'node:test';
 import { PROP } from '../src/core/schema';
 import { renderNote } from '../src/core/notes';
 import { stockProperties } from '../src/core/stock';
+import { BottleAmount } from '../src/core/bottle-amount';
 import type { StockInput } from '../src/core/stock';
 
 function input(overrides: Partial<StockInput> = {}): StockInput {
@@ -98,4 +99,105 @@ void test('invalid stock modes, statuses, source quantities, forms, and prices a
 	]) {
 		assert.throws(() => stockProperties(input(overrides)), JSON.stringify(overrides));
 	}
+});
+
+void test('new bottle starts full once a valid volume is entered and follows volume changes', () => {
+	const amount = new BottleAmount();
+	assert.equal(amount.toMl(), null);
+	for (const volume of ['', '0', '-750', 'unknown', 'Infinity']) {
+		amount.setVolume(volume);
+		assert.equal(amount.value, '');
+	}
+	amount.setVolume('750');
+	assert.equal(amount.value, '100');
+	assert.equal(amount.toMl(), 750);
+	amount.setUnit('ml');
+	assert.equal(amount.value, '750');
+	amount.setVolume('1000');
+	assert.equal(amount.value, '1000');
+	amount.setUnit('percent');
+	assert.equal(amount.value, '100');
+	assert.equal(amount.toMl(), 1000);
+});
+
+void test('existing bottle percentage estimates save only the calculated mL', () => {
+	const amount = new BottleAmount();
+	amount.setVolume('750');
+	amount.setValue('50');
+	const properties = stockProperties(input({ open: amount.value, openUnit: amount.unit }));
+	assert.equal(properties[PROP.open], 375);
+	assert.ok(!('openUnit' in properties));
+	const note = renderNote('Cocktails', { kind: 'bottle', name: 'Half full', description: '', properties }, '2026-10-31');
+	assert.ok(note.content.includes('cc-open-ml: 375\n'));
+	assert.ok(!note.content.includes('cc-open-fraction'));
+	amount.setVolume('1000');
+	assert.equal(amount.value, '50');
+	assert.equal(amount.toMl(), 500);
+	assert.equal(stockProperties(input({ open: '25', openUnit: 'percent' }))[PROP.open], 187.5);
+});
+
+void test('direct mL and percent entries preserve the quantity when switching units', () => {
+	const amount = new BottleAmount();
+	amount.setVolume('750');
+	amount.setValue('50');
+	amount.setUnit('ml');
+	assert.equal(amount.value, '375');
+	amount.setValue('150');
+	amount.setUnit('percent');
+	assert.equal(amount.value, '20');
+	amount.setUnit('ml');
+	amount.setVolume('1000');
+	assert.equal(amount.value, '150');
+	assert.equal(amount.toMl(), 150);
+});
+
+void test('cleared and zero amounts survive volume edits and unit changes without becoming full', () => {
+	for (const value of ['', '0']) {
+		const amount = new BottleAmount();
+		amount.setVolume('750');
+		amount.setValue(value);
+		amount.setVolume('1000');
+		amount.setUnit('ml');
+		amount.setUnit('percent');
+		assert.equal(amount.value, value);
+		assert.equal(amount.toMl(), value === '' ? null : 0);
+		assert.equal(stockProperties(input({ open: value, openUnit: 'percent', volume: '' }))[PROP.open], value === '' ? null : 0);
+	}
+});
+
+void test('percentage validation requires volume and keeps invalid input when a unit change fails', () => {
+	for (const open of ['-1', '101', 'Infinity', 'NaN']) {
+		assert.throws(() => stockProperties(input({ open, openUnit: 'percent' })), /Percent full/);
+	}
+	assert.throws(() => stockProperties(input({ open: '50', openUnit: 'percent', volume: '' })), /bottle volume/);
+	assert.throws(() => stockProperties(input({ openUnit: 'ounces' })), /Select percent full or mL/);
+	const amount = new BottleAmount();
+	amount.setUnit('ml');
+	amount.setValue('150');
+	assert.throws(() => amount.setUnit('percent'), /bottle volume/);
+	assert.equal(amount.unit, 'ml');
+	assert.equal(amount.value, '150');
+	amount.setVolume('100');
+	assert.throws(() => amount.setUnit('percent'), /Remaining in open bottle/);
+	assert.equal(amount.value, '150');
+	amount.setVolume('750');
+	amount.setUnit('percent');
+	amount.setValue('101');
+	assert.throws(() => amount.setUnit('ml'), /Percent full/);
+	assert.equal(amount.unit, 'percent');
+	assert.equal(amount.value, '101');
+});
+
+void test('stock mode resets preserve unknown instead of restoring a full bottle', () => {
+	const amount = new BottleAmount();
+	amount.setVolume('750');
+	amount.setValue('50');
+	amount.reset();
+	amount.setVolume('1000');
+	amount.setUnit('ml');
+	assert.equal(amount.value, '');
+	assert.equal(amount.toMl(), null);
+	const properties = stockProperties(input({ tracking: 'status', open: 'invalid', openUnit: 'percent' }));
+	assert.ok(!(PROP.open in properties));
+	assert.equal(properties[PROP.availability], 'Unknown');
 });

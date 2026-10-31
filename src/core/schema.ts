@@ -17,7 +17,7 @@ export const PROP = {
 	name: 'cc-name',
 	category: 'cc-category',
 	family: 'cc-family',
-	types: 'cc-types',
+	type: 'cc-type',
 	provides: 'cc-provides',
 	catalogId: 'cc-catalog-id',
 	brix: 'cc-brix',

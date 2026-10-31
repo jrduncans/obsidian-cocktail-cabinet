@@ -89,6 +89,15 @@ void test('unparented types are valid notes', () => {
 	assert.ok(!note.content.includes('cc-family:'));
 });
 
+void test('bottle creation stores one type or leaves it unclassified and rejects lists', () => {
+	const type = wikiLink('Cocktails/Types/Aged Jamaican Rum.md');
+	const draft = { kind: 'bottle' as const, name: 'Example Rum', description: '' };
+	const classified = renderNote('Cocktails', { ...draft, properties: { [PROP.type]: type } }, '2026-10-31');
+	assert.ok(classified.content.includes(`cc-type: ${JSON.stringify(type)}\n`));
+	assert.ok(!renderNote('Cocktails', draft, '2026-10-31').content.includes('cc-type:'));
+	assert.throws(() => renderNote('Cocktails', { ...draft, properties: { [PROP.type]: [type] } }, '2026-10-31'), /Select one ingredient type/);
+});
+
 void test('starter groupings are optional at both parent levels', () => {
 	const files = starterPlan('Cocktails');
 	const bitters = files.find(file => file.path === 'Cocktails/Families/Bitters.md');
@@ -285,6 +294,9 @@ void test('resource Bases expose mL stock, tracking choices, and independent pur
 	const bottle = bases.find(file => file.path.endsWith('/Bottles.base'))!.content;
 	const source = bases.find(file => file.path.endsWith('/Other stock.base'))!.content;
 	const types = bases.find(file => file.path.endsWith('/Ingredient types.base'))!.content;
+	assert.ok(bottle.includes('note.cc-type:'));
+	assert.ok(bottle.includes('Ingredient type'));
+	assert.ok(!bottle.includes('cc-types'));
 	assert.ok(bottle.includes('note.cc-open-ml:'));
 	assert.ok(bottle.includes('Open bottle (mL)'));
 	assert.ok(!bottle.includes('cc-open-fraction'));

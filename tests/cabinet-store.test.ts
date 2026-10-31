@@ -3,6 +3,7 @@ import test from 'node:test';
 import type { App } from 'obsidian';
 import { CabinetStore } from '../src/vault/cabinet-store';
 import { starterPlan } from '../src/core/setup';
+import { relatedTargets } from '../src/core/relationships';
 import { TFile, TFolder } from './obsidian-stub';
 
 function fixture() {
@@ -98,4 +99,38 @@ void test('setup rejects a Base path with different casing', async () => {
 	contents.set('Cocktails/Views/bottles.base', contents.get(original)!);
 	contents.delete(original);
 	await assert.rejects(store.setup('Cocktails'), /Setup conflicts/);
+});
+
+void test('bottle classification reads one scalar type without broadening, while other stock can provide several', () => {
+	const first = 'Cocktails/Types/Aged Jamaican Rum.md';
+	const second = 'Cocktails/Types/Aged Barbados Rum.md';
+	const bottle = 'Cocktails/Bottles/Example.md';
+	const alternatives = 'Cocktails/Bottles/Alternative.md';
+	const frontmatters = new Map<string, Record<string, unknown>>([
+		[first, { 'cc-kind': 'type', 'cc-name': 'Aged Jamaican Rum' }],
+		[second, { 'cc-kind': 'type', 'cc-name': 'Aged Barbados Rum' }],
+		[bottle, { 'cc-kind': 'bottle', 'cc-name': 'Example', 'cc-type': `[[${first}]]` }],
+		[alternatives, { 'cc-kind': 'bottle', 'cc-name': 'Alternative', 'cc-type': `[[${first}]]` }],
+		['Cocktails/Ingredients/Other.md', { 'cc-kind': 'ingredient', 'cc-name': 'Other', 'cc-provides': [`[[${first}]]`, `[[${second}]]`] }],
+	]);
+	const app = {
+		vault: { getMarkdownFiles: () => [...frontmatters.keys()].map(path => new TFile(path)) },
+		metadataCache: {
+			getFileCache: (file: TFile) => ({ frontmatter: frontmatters.get(file.path) }),
+			getFirstLinkpathDest: (path: string) => frontmatters.has(path) ? new TFile(path) : null,
+		},
+	} as unknown as App;
+	const store = new CabinetStore(app, () => 'Cocktails');
+	const read = () => store.notes().find(note => note.path === bottle)!;
+	assert.deepEqual(read().parents, [first]);
+	assert.deepEqual(store.notes().find(note => note.kind === 'ingredient')?.parents, [first, second]);
+	assert.ok(relatedTargets(store.notes(), read()).has(alternatives));
+	assert.ok(!relatedTargets(store.notes(), read()).has(second));
+	for (const value of [undefined, null, [], [`[[${first}]]`], [`[[${first}]]`, `[[${second}]]`], `[[${bottle}]]`, '[[Missing]]']) {
+		frontmatters.set(bottle, { 'cc-kind': 'bottle', 'cc-name': 'Example', 'cc-type': value });
+		assert.deepEqual(read().parents, []);
+		assert.ok(!relatedTargets(store.notes(), read()).has(alternatives));
+	}
+	frontmatters.set(bottle, { 'cc-kind': 'bottle', 'cc-name': 'Example', 'cc-types': [`[[${first}]]`, `[[${second}]]`] });
+	assert.deepEqual(read().parents, []);
 });
