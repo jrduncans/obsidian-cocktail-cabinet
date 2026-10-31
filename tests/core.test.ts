@@ -63,10 +63,10 @@ void test('starter catalog supplies definitions without implying owned stock or 
 	assert.ok(files.filter(file => file.kind !== 'base').every(file => !file.content.includes(`${PROP.open}:`) && !file.content.includes(`${PROP.availability}:`)));
 });
 
-void test('three default sugar syrups retain distinct identities and concentrations', () => {
+void test('three default sugar syrups retain distinct identities, ratios, and preparation instructions', () => {
 	const syrups = STARTER_CATALOG.filter(entry => ['Simple Syrup (1 to 1)', 'Simple Syrup (2 to 1)', 'Demerara Syrup (2 to 1)'].includes(entry.name));
 	assert.equal(syrups.length, 3);
-	assert.deepEqual(syrups.map(entry => entry.properties?.[PROP.brix]), [50, 66.7, 66.7]);
+	assert.deepEqual(syrups.map(entry => entry.properties?.[PROP.sugarWaterRatio]), ['1:1 by weight', '2:1 by weight', '2:1 by weight']);
 	assert.ok(syrups.every(entry => entry.method?.includes('by weight') && entry.description));
 });
 

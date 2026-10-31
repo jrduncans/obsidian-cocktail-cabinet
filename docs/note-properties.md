@@ -56,11 +56,10 @@ A recipe-facing kind of ingredient, such as Rye Whiskey, Lime Juice, or Simple S
 | `aliases` | `string[]` | `false` | Synonyms included in picker search, such as `Rhum Agricole Blanc` for Unaged Rhum Agricole. Aliases identify the same ingredient rather than declaring substitutions. |
 | `cc-catalog-id` | `string` | `false` | Starter identity based on the current catalog name, such as `type/Apple Brandy` or `family/Apple Brandy Family`. Setup reads IDs for recognition across renames, missing-page recovery, and duplicate detection. Omitted on user-created types. |
 | `cc-family` | `link<Ingredient family>[]` | `false` | Broader groupings read for linked-resource browsing and related-recipe traversal. Missing families are valid. A narrow type does not gain sibling types as alternatives merely by sharing a family. |
-| `cc-brix` | `number \| null` | `false` | Sugar concentration from 0 to 100; blank form input stores `null`. Starter syrup values are nominal definitions, not batch measurements. Recorded for viewing and editing; no current sweetness calculations use it. |
 | `cc-sugar-water-ratio` | `string` | `false` | Authored on the three starter simple/demerara syrup types, such as `2:1 by weight`. Records the ratio and its weight basis. No dedicated form input, runtime parser, or calculation currently uses it. |
 | `cc-shopping-list` | `boolean` | `false` | Marks a generic need for this ingredient type when `true`, without selecting a bottle or source. Missing means `false`. Included in the planned combined shopping-list view; independent of flags and stock levels on linked bottles or sources. |
 
-Descriptions and optional Preparation instructions live in the body. They are not parsed as frontmatter properties or preparation batches.
+Descriptions, optional concentration details, and Preparation instructions live in the body. They are not parsed as frontmatter properties or preparation batches. Brix is not a built-in property or default Base column. Earlier notes may retain `cc-brix` as a custom property; the plugin does not remove it. Existing Bases are preserved too, so remove their Brix column manually if desired.
 
 ## Bottle
 

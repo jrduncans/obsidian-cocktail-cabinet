@@ -9,7 +9,7 @@ An Obsidian plugin for building and maintaining your own cocktail recipes and in
 3. Choose a folder and select **Preview** to inspect creation counts and conflicts, then **Create cabinet**.
 4. Follow the links in the cabinet note to the live views. Add ingredients, bottles, other stock, and cocktail recipes from the command palette.
 
-The starter catalog includes ingredient descriptions, with optional **Family** and **Category** groupings where they help. A type can stand alone, and a family can have no category. The three default sugar syrups have nominal Brix and optional preparation instructions. It supplies ingredient definitions, with no owned inventory or cocktail recipes. See the [draft starter hierarchy](docs/starter-hierarchy.md) for the complete list.
+The starter catalog includes ingredient descriptions, with optional **Family** and **Category** groupings where they help. A type can stand alone, and a family can have no category. The three default sugar syrups record ratios by weight and include preparation instructions. It supplies ingredient definitions, with no owned inventory or cocktail recipes. See the [draft starter hierarchy](docs/starter-hierarchy.md) for the complete list.
 
 Setup creates ordinary Markdown notes and six `.base` files in a `Views` subfolder inside the chosen folder. The cabinet note explains your collection and the ingredient hierarchy, linking to each Base as it introduces the concept. Their tables reflect current notes rather than a snapshot of the starter catalog.
 
@@ -20,7 +20,7 @@ For a cabinet created before Bases support, rerun **Set up cabinet** to add miss
 ## Create and browse
 
 - **Open cabinet**: open the cabinet home note, with guidance and links to all six resource Bases. Ingredient types appear whether or not they have a family. Select a note link to open it, follow its classification links, or edit properties directly in a Base. Customize filtering, sorting, and columns using Obsidian.
-- **Add ingredient type**: create an ingredient with an optional family, description, Brix, and preparation instructions. Use **Add ingredient family** and **Add ingredient category** for optional groupings.
+- **Add ingredient type**: create an ingredient with an optional family, description, and preparation instructions. Use **Add ingredient family** and **Add ingredient category** for optional groupings.
 - **Add a bottle**: select its optional ingredient type and enter full bottle volume and ABV. Choose volume tracking (open mL and unopened count) or a manual status. Bottles default to volume tracking and 100% full once bottle volume is entered. Estimate an existing bottle as percent full or enter mL directly; the form shows the resulting mL. Clear the amount if unknown. One note tracks a named bottle and its stock, including unopened bottles of the same size and strength.
 - **Add other stock**: record fresh ingredients, prepared or bottled juice, homemade or purchased syrup, and other sources. Select the ingredient types they provide. Choose status tracking (Unknown, Have, Low, or Out) or volume tracking (remaining mL). Other stock defaults to status. One source can provide several ingredients.
 - **Create a cocktail recipe**: enter ingredient amounts as written, select a bottle or any hierarchy level, or leave an ingredient as plain text. **New type** creates and selects a missing type without losing the recipe form. Source and rating remain on the recipe; the creation date is resolved locally.

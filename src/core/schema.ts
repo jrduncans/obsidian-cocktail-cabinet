@@ -20,7 +20,6 @@ export const PROP = {
 	type: 'cc-type',
 	provides: 'cc-provides',
 	catalogId: 'cc-catalog-id',
-	brix: 'cc-brix',
 	volume: 'cc-volume-ml',
 	abv: 'cc-abv',
 	stockTracking: 'cc-stock-tracking',

@@ -184,15 +184,15 @@ ingredientTypes(undefined, [
 ]);
 
 const sugar = [
-	['Simple Syrup (1 to 1)', 50, '1:1', 'white sugar'],
-	['Simple Syrup (2 to 1)', 66.7, '2:1', 'white sugar'],
-	['Demerara Syrup (2 to 1)', 66.7, '2:1', 'demerara sugar'],
+	['Simple Syrup (1 to 1)', '1:1', 'white sugar'],
+	['Simple Syrup (2 to 1)', '2:1', 'white sugar'],
+	['Demerara Syrup (2 to 1)', '2:1', 'demerara sugar'],
 ] as const;
-for (const [name, brix, ratio, ingredient] of sugar) {
+for (const [name, ratio, ingredient] of sugar) {
 	const entry = entries.find(item => item.name === name);
 	if (!entry) throw new Error(`Missing starter syrup: ${name}`);
-	entry.properties = { [PROP.brix]: brix, [PROP.sugarWaterRatio]: `${ratio} by weight` };
-	entry.method = `Combine ${ratio === '1:1' ? 'equal weights of' : 'two parts by weight of'} ${ingredient} and ${ratio === '1:1' ? '' : 'one part by weight of '}water. This ratio is by weight. Stir until dissolved. The listed Brix is nominal, not a measurement of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).`;
+	entry.properties = { [PROP.sugarWaterRatio]: `${ratio} by weight` };
+	entry.method = `Combine ${ratio === '1:1' ? 'equal weights of' : 'two parts by weight of'} ${ingredient} and ${ratio === '1:1' ? '' : 'one part by weight of '}water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).`;
 }
 
 export const STARTER_CATALOG: readonly CatalogEntry[] = entries;
