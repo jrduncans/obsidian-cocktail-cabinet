@@ -38,7 +38,7 @@ export interface NoteDraft {
 export interface PlannedFile {
 	path: string;
 	content: string;
-	kind: NoteKind | 'cabinet';
+	kind: NoteKind | 'cabinet' | 'base';
 	catalogId?: string;
 }
 

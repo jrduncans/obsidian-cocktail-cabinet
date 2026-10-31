@@ -6,6 +6,7 @@ import type { CabinetNote } from '../src/core/schema';
 import { ingredientSection, localDate, renderNote } from '../src/core/notes';
 import { isWithin, relatedTargets } from '../src/core/relationships';
 import { starterPlan } from '../src/core/setup';
+import { basePath, RESOURCE_BASES } from '../src/core/bases';
 
 void test('cabinet paths remain inside a visible vault folder', () => {
 	assert.equal(cabinetFolder(' Drinks/Cabinet/ '), 'Drinks/Cabinet');
@@ -54,8 +55,8 @@ void test('catalog properties avoid URL schemes while distinguishing identical n
 void test('starter catalog supplies definitions without implying owned stock or supplying cocktail recipes', () => {
 	const files = starterPlan('Cocktails');
 	assert.ok(files.filter(file => file.kind === 'type').length >= 90);
-	assert.ok(files.every(file => ['category', 'family', 'type', 'cabinet'].includes(file.kind)));
-	assert.ok(files.every(file => !file.content.includes(`${PROP.open}:`) && !file.content.includes(`${PROP.availability}:`)));
+	assert.ok(files.every(file => ['category', 'family', 'type', 'cabinet', 'base'].includes(file.kind)));
+	assert.ok(files.filter(file => file.kind !== 'base').every(file => !file.content.includes(`${PROP.open}:`) && !file.content.includes(`${PROP.availability}:`)));
 });
 
 void test('three default sugar syrups retain distinct identities and concentrations', () => {
@@ -65,13 +66,12 @@ void test('three default sugar syrups retain distinct identities and concentrati
 	assert.ok(syrups.every(entry => entry.method?.includes('by weight') && entry.description));
 });
 
-void test('renamed catalog pages remain the target of new parent links and the home page', () => {
+void test('renamed catalog pages remain the target of new parent links', () => {
 	const paths = new Map([['family/Rum', 'Cocktails/Families/My Rum.md'], ['category/Spirit', 'Cocktails/Categories/Spirits.md']]);
 	const files = starterPlan('Cocktails', paths);
 	assert.ok(files.some(file => file.path === 'Cocktails/Families/My Rum.md'));
 	const jamaican = files.find(file => file.path.endsWith('/Aged Jamaican Rum.md'));
 	assert.ok(jamaican?.content.includes('[[Cocktails/Families/My Rum|Rum]]'));
-	assert.ok(files.at(-1)?.content.includes('[[Cocktails/Categories/Spirits|Spirit]]'));
 });
 
 void test('unparented types are valid notes', () => {
@@ -94,13 +94,31 @@ void test('starter groupings are optional at both parent levels', () => {
 	}
 });
 
-void test('starter home exposes every parentless family and type, including renamed pages', () => {
-	const renamed = new Map([['family/Bitters', 'Cocktails/Families/My Bitters.md'], ['type/Egg White', 'Cocktails/Types/My Egg White.md']]);
-	const files = starterPlan('Cocktails', renamed);
-	const home = files.find(file => file.kind === 'cabinet');
-	assert.ok(home?.content.includes('All ingredient types'));
-	for (const entry of STARTER_CATALOG.filter(entry => !entry.parent)) {
-		assert.ok(home?.content.includes(wikiLink(renamed.get(entry.id) || notePath('Cocktails', entry.kind, entry.name), entry.name)), entry.name);
+void test('home links to all six resource Bases and embeds live collection views', () => {
+	const files = starterPlan('Drinks/Cabinet');
+	const home = files.find(file => file.kind === 'cabinet')!;
+	const bases = files.filter(file => file.kind === 'base');
+	assert.equal(bases.length, 6);
+	for (const resource of RESOURCE_BASES) {
+		const path = basePath('Drinks/Cabinet', resource.name);
+		assert.ok(bases.some(file => file.path === path));
+		assert.ok(home.content.includes(wikiLink(path, resource.name)));
+	}
+	for (const name of ['Ingredient types', 'Bottles', 'Other stock', 'Recipes']) {
+		assert.ok(home.content.includes(`!${wikiLink(basePath('Drinks/Cabinet', name))}`));
+	}
+	assert.ok(!home.content.includes('/Types/'));
+});
+
+void test('Bases use the selected root and kind without requiring parents or catalog membership', () => {
+	const root = "My cabinet's/Drinks";
+	const bases = starterPlan(root).filter(file => file.kind === 'base');
+	for (const [index, base] of bases.entries()) {
+		const filters = base.content.split('properties:')[0]!.split('\n')
+			.filter(line => line.startsWith('    - ')).map(line => JSON.parse(line.slice(6)) as string);
+		assert.deepEqual(filters, [`file.inFolder(${JSON.stringify(root)})`, 'file.ext == "md"', `note["cc-kind"] == "${RESOURCE_BASES[index]!.kind}"`]);
+		assert.ok(!base.content.includes(PROP.catalogId));
+		assert.ok(base.content.includes('note.cc-name:'));
 	}
 });
 

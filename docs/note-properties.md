@@ -8,7 +8,7 @@ The stock schema is the agreed next design: per-record volume or status tracking
 
 Each resource below lists its own frontmatter properties with a **Type**, a boolean **Required** flag, and a description of its use.
 
-- `Required: true` means the property is required by the resource schema. `false` means omission is supported. For stock resources, the selected mode is required for stock behavior; the current lightweight browser only checks the kind marker. Creation forms can require additional input, and generated notes can include optional properties; those rules are described explicitly.
+- `Required: true` means the property is required by the resource schema. `false` means omission is supported. For stock resources, the selected mode is required for stock behavior; general resource browsing only checks the root scope and kind marker. Creation forms can require additional input, and generated notes can include optional properties; those rules are described explicitly.
 - `string` is YAML text. `number` is a YAML number. `integer` is a whole number. `date` is a local calendar date stored as `YYYY-MM-DD`.
 - `T[]` is a list of values of type `T`. `link<Resource>` is a quoted wiki-link string pointing to a cabinet resource of that type. For example: `"[[Cocktails/Families/Rum|Rum]]"`. Generated relationships are lists; the reader also accepts one link string.
 - `null` is an explicit unknown value, distinct from zero. Optional properties may be absent; a type containing `null` additionally permits an explicit null value.
@@ -185,7 +185,13 @@ The cabinet landing note, written at exactly `<root>/Cocktail Cabinet.md`. Setup
 | `cc-name` | `string` | `false` | Written as `Cocktail Cabinet`. No current runtime behavior reads the home note's display name. |
 | `cc-schema-version` | `integer` | `false` | Written as `1`. No runtime reader checks it; it does not select a parser, run migrations, or enable compatibility handling. It has no current behavioral requirement. |
 
-The body contains navigation links to starter categories and parentless families and types, plus usage instructions. Setup creates it when missing and preserves it when present; it does not refresh existing home-note links.
+The body starts with command-palette guidance for adding stock and recipes, then embeds bottles, other stock, and recipes before the ingredient reference catalog. It links to all six resource Bases in `<root>/Views/` and also embeds ingredient types. It explains that catalog membership does not imply owned stock, how to edit the tables, and how to find related recipes. These views query current notes rather than enumerate the starter catalog. Setup creates the home when missing and preserves it when present; older home notes need their new Base links or embeds added manually.
+
+## Resource Bases
+
+Setup creates `Ingredient categories.base`, `Ingredient families.base`, `Ingredient types.base`, `Bottles.base`, `Other stock.base`, and `Recipes.base` in `<root>/Views/`. These files are core Obsidian Bases configuration, with no frontmatter resource marker and no plugin runtime dependency. Each filters Markdown files inside the cabinet root by the corresponding `cc-kind`; parent properties and catalog IDs are not required. The cabinet home is not a seventh resource Base.
+
+Table columns show note links, proper names, and the resource's current creation fields. Missing optional values stay empty. The bottle view labels ABV and open stock as fractions to reflect the current stored representation. These columns will need to follow the approved stock schema when it is implemented. Users can edit filters and columns in Obsidian; setup keeps existing `.base` files at these paths, even when their configuration has changed.
 
 ## Naming and starter identity
 
@@ -207,6 +213,7 @@ Settings are saved in the plugin's `data.json`, outside note frontmatter.
 
 - [Property constants and resource kinds](../src/core/schema.ts).
 - [Note rendering, naming, aliases, and recipe sections](../src/core/notes.ts).
+- [Core Bases definitions](../src/core/bases.ts).
 - [Starter setup and home-note metadata](../src/core/setup.ts).
 - [Catalog IDs, relationships, syrup metadata, and authored aliases](../src/catalog/catalog.ts).
 - [Runtime property readers and setup recognition](../src/vault/cabinet-store.ts).

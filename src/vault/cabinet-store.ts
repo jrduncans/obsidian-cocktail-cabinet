@@ -76,6 +76,10 @@ export class CabinetStore {
 			}
 			const existing = this.app.vault.getAbstractFileByPath(planned.path) || byLowerPath.get(planned.path.toLowerCase());
 			if (!existing) { result.create.push(planned); continue; }
+			if (existing instanceof TFile && existing.path === planned.path && planned.kind === 'base' && existing.extension === 'base') {
+				result.keep.push(existing.path);
+				continue;
+			}
 			if (existing instanceof TFile && existing.extension === 'md' && existing.path === planned.path) {
 				const properties = await this.frontmatter(existing);
 				if (properties[PROP.kind] === planned.kind &&
@@ -94,7 +98,7 @@ export class CabinetStore {
 		return this.write(async () => {
 			// Recheck at apply time; no existing file is ever overwritten.
 			const preview = await this.previewSetup(folder);
-			if (preview.conflicts.length) throw new Error(`Setup conflicts with existing notes: ${preview.conflicts.slice(0, 3).join(', ')}. Choose a different cabinet folder.`);
+			if (preview.conflicts.length) throw new Error(`Setup conflicts with existing files: ${preview.conflicts.slice(0, 3).join(', ')}. Choose a different cabinet folder.`);
 			for (const file of preview.create) {
 				await this.ensureFolder(file.path.slice(0, file.path.lastIndexOf('/')));
 				await this.app.vault.create(file.path, file.content);
