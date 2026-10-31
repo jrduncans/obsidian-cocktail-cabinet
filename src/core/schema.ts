@@ -9,11 +9,12 @@ export const FOLDERS: Record<NoteKind, string> = {
 };
 
 export const PROP = {
-	kind: 'cocktail-kind', name: 'cocktail-name', category: 'cocktail-category', family: 'cocktail-family',
-	types: 'cocktail-types', provides: 'cocktail-provides', catalogId: 'cocktail-catalog-id',
-	brix: 'cocktail-brix', volume: 'cocktail-volume-ml', abv: 'cocktail-abv',
-	open: 'cocktail-open-fraction', unopened: 'cocktail-unopened',
-	availability: 'cocktail-availability', form: 'cocktail-form',
+	kind: 'cc-kind', name: 'cc-name', category: 'cc-category', family: 'cc-family',
+	types: 'cc-types', provides: 'cc-provides', catalogId: 'cc-catalog-id',
+	brix: 'cc-brix', volume: 'cc-volume-ml', abv: 'cc-abv',
+	open: 'cc-open-fraction', unopened: 'cc-unopened',
+	availability: 'cc-availability', form: 'cc-form',
+	sugarWaterRatio: 'cc-sugar-water-ratio', schemaVersion: 'cc-schema-version',
 } as const;
 
 export interface CabinetNote {

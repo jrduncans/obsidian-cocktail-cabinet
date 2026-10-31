@@ -39,3 +39,8 @@
 .cocktail-cabinet-modal {
 	width: min(48rem, calc(100vw - 2rem));
 }
+
+/* Leave room for the property prefix, only in cabinet property panels. */
+.metadata-container:has(.metadata-property[data-property-key="cc-kind"]) {
+	--metadata-label-width: min(14em, 45%);
+}

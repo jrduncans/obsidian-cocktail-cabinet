@@ -17,7 +17,7 @@ export function starterPlan(folder: string, paths: ReadonlyMap<string, string> =
 		`### ${section.heading}\n\n${section.entries.map(entry => `- ${wikiLink(paths.get(entry.id) || notePath(root, entry.kind, entry.name), entry.name)}`).join('\n')}`).join('\n\n');
 	return [...files, {
 		path: `${root}/Cocktail Cabinet.md`, kind: 'cabinet',
-		content: markdown({ [PROP.kind]: 'cabinet', [PROP.name]: 'Cocktail Cabinet', 'cocktail-schema-version': 1 },
+		content: markdown({ [PROP.kind]: 'cabinet', [PROP.name]: 'Cocktail Cabinet', [PROP.schemaVersion]: 1 },
 			`# Cocktail Cabinet\n\nUse **Cocktail Cabinet: Open cabinet** from the command palette or select the glass icon to browse and add notes.\n\n`
 			+ `## Ingredients\n\nBrowse **All ingredient types** in **Open cabinet** to find every type, with or without a family. Families and categories are optional navigation shortcuts.\n\n${sections}\n\n`
 			+ `## Your collection\n\nThe starter catalog describes ingredients. Add bottles and other stock to record what you have, and create your own cocktail recipes.\n\n`

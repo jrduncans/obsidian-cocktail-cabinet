@@ -20,6 +20,8 @@ The installed `obsidian` type definitions were checked when capturing this note:
 
 ## Existing behavior to preserve deliberately
 
+The [approved stock design](cabinet-design.md#approved-stock-and-purchasing-design) now selects mL storage and per-record volume or status tracking for the plugin. Fraction-based storage below describes the source workflow and does not override that newer schema decision.
+
 Paths below are relative to the `knowledge` vault; read the current sources before implementing a port.
 
 | Source | Behavior or reference value |

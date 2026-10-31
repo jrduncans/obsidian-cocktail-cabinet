@@ -21,6 +21,18 @@ A specific kind of ingredient, such as rye whiskey, lime juice, or 2:1 demerara 
 **Recipe ingredient**:
 An ingredient requirement in a cocktail recipe, which may name a bottle, an ingredient type, or a broader classification such as rum.
 
+**Stock tracking**:
+The method chosen for a bottle or ingredient source to describe how much is available: volume tracking or status tracking.
+
+**Volume tracking**:
+Stock recorded as milliliters remaining, with measured consumption deducted from that quantity. Bottles can additionally have unopened stock.
+
+**Status tracking**:
+Stock described by a manually maintained Unknown, Have, Low, or Out status, without asserting an exact quantity.
+
+**Shopping list item**:
+An ingredient type, bottle, or other ingredient source explicitly marked for purchase or replenishment, independently of its stock level.
+
 **Brandy**:
 French-style grape brandy in this cabinet's colloquial vocabulary, including Cognac and Armagnac. Apple brandy has a separate family.
 

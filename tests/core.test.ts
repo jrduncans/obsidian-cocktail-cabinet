@@ -10,14 +10,14 @@ import { starterPlan } from '../src/core/setup';
 void test('cabinet paths remain inside a visible vault folder', () => {
 	assert.equal(cabinetFolder(' Drinks/Cabinet/ '), 'Drinks/Cabinet');
 	for (const root of ['', '/', '/tmp/cabinet', '../Cabinet', 'Cocktails/../Other', '.obsidian', 'A//B', 'C:\\Cabinet', 'Cocktails/NUL']) {
-		assert.throws(() => cabinetFolder(root), undefined, root);
+		assert.throws(() => cabinetFolder(root), root);
 	}
 });
 
 void test('names cannot escape their folder or alter wiki-link syntax', () => {
 	assert.equal(noteName(' Lime Juice '), 'Lime Juice');
 	for (const name of ['../Outside', 'A/B', 'A\\B', 'A#Heading', 'A|Alias', '[Link]', 'A^block', 'A\nB', 'CON', 'a.', '.hidden']) {
-		assert.throws(() => notePath('Cocktails', 'type', name), undefined, name);
+		assert.throws(() => notePath('Cocktails', 'type', name), name);
 	}
 });
 
@@ -41,6 +41,16 @@ void test('starter notes have unique identities and valid, complete parent links
 	}
 });
 
+void test('catalog properties avoid URL schemes while distinguishing identical names at different levels', () => {
+	const files = starterPlan('Cocktails');
+	for (const file of files.filter(file => file.catalogId)) {
+		assert.ok(!/^[a-z][a-z0-9+.-]*:/i.test(file.catalogId!), file.catalogId);
+		assert.ok(file.content.includes(`${PROP.catalogId}: ${JSON.stringify(file.catalogId)}`));
+	}
+	assert.ok(files.some(file => file.catalogId === 'family/Apple Brandy'));
+	assert.ok(files.some(file => file.catalogId === 'type/Apple Brandy'));
+});
+
 void test('starter catalog supplies definitions without implying owned stock or supplying cocktail recipes', () => {
 	const files = starterPlan('Cocktails');
 	assert.ok(files.filter(file => file.kind === 'type').length >= 90);
@@ -56,7 +66,7 @@ void test('three default sugar syrups retain distinct identities and concentrati
 });
 
 void test('renamed catalog pages remain the target of new parent links and the home page', () => {
-	const paths = new Map([['family:Rum', 'Cocktails/Families/My Rum.md'], ['category:Spirit', 'Cocktails/Categories/Spirits.md']]);
+	const paths = new Map([['family/Rum', 'Cocktails/Families/My Rum.md'], ['category/Spirit', 'Cocktails/Categories/Spirits.md']]);
 	const files = starterPlan('Cocktails', paths);
 	assert.ok(files.some(file => file.path === 'Cocktails/Families/My Rum.md'));
 	const jamaican = files.find(file => file.path.endsWith('/Aged Jamaican Rum.md'));
@@ -66,8 +76,8 @@ void test('renamed catalog pages remain the target of new parent links and the h
 
 void test('unparented types are valid notes', () => {
 	const note = renderNote('Cocktails', { kind: 'type', name: 'My Ingredient', description: 'A personal ingredient.' }, '2026-10-29');
-	assert.ok(note.content.includes('cocktail-kind: "type"'));
-	assert.ok(!note.content.includes('cocktail-family:'));
+	assert.ok(note.content.includes('cc-kind: "type"'));
+	assert.ok(!note.content.includes('cc-family:'));
 });
 
 void test('starter groupings are optional at both parent levels', () => {
@@ -85,7 +95,7 @@ void test('starter groupings are optional at both parent levels', () => {
 });
 
 void test('starter home exposes every parentless family and type, including renamed pages', () => {
-	const renamed = new Map([['family:Bitters', 'Cocktails/Families/My Bitters.md'], ['type:Egg White', 'Cocktails/Types/My Egg White.md']]);
+	const renamed = new Map([['family/Bitters', 'Cocktails/Families/My Bitters.md'], ['type/Egg White', 'Cocktails/Types/My Egg White.md']]);
 	const files = starterPlan('Cocktails', renamed);
 	const home = files.find(file => file.kind === 'cabinet');
 	assert.ok(home?.content.includes('All ingredient types'));
@@ -116,7 +126,7 @@ void test('Latin diacritics and ligatures produce plain filenames with predictab
 void test('proper names survive in properties, page headings, aliases, and link display text', () => {
 	const note = renderNote('Cocktails', { kind: 'type', name: 'Bénédictine', description: 'Herbal liqueur.', properties: { aliases: ['My herbal liqueur'] } }, '2026-10-29');
 	assert.equal(note.path, 'Cocktails/Types/Benedictine.md');
-	assert.ok(note.content.includes('cocktail-name: "Bénédictine"'));
+	assert.ok(note.content.includes('cc-name: "Bénédictine"'));
 	assert.ok(note.content.includes('# Bénédictine\n'));
 	assert.ok(note.content.includes('aliases: ["My herbal liqueur","Bénédictine"]'));
 	assert.equal(wikiLink(note.path, 'Bénédictine'), '[[Cocktails/Types/Benedictine|Bénédictine]]');
@@ -137,8 +147,8 @@ void test('agricole starter notes preserve both French names as aliases for dist
 
 void test('accented starter names keep their catalog identity and plain parent filenames', () => {
 	const files = starterPlan('Cocktails');
-	const cachaca = files.find(file => file.catalogId === 'family:Cachaca');
-	const aged = files.find(file => file.catalogId === 'type:Aged Cachaca');
+	const cachaca = files.find(file => file.catalogId === 'family/Cachaca');
+	const aged = files.find(file => file.catalogId === 'type/Aged Cachaca');
 	assert.equal(cachaca?.path, 'Cocktails/Families/Cachaca.md');
 	assert.ok(cachaca?.content.includes('# Cachaça'));
 	assert.ok(aged?.content.includes('[[Cocktails/Families/Cachaca|Cachaça]]'));
@@ -185,7 +195,7 @@ void test('recipe rendering preserves broad references, free text, source, and r
 });
 
 void test('frontmatter safely contains punctuation and newlines in entered values', () => {
-	const source = 'Quote " and colon: value\n---\ncocktail-kind: bottle';
+	const source = 'Quote " and colon: value\n---\ncc-kind: bottle';
 	const note = renderNote('Cocktails', { kind: 'recipe', name: 'Example', description: '', properties: { source } }, '2026-10-29');
 	const line = note.content.split('\n').find(line => line.startsWith('source: '));
 	assert.equal(JSON.parse(line?.slice('source: '.length) || 'null'), source);

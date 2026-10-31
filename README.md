@@ -26,7 +26,7 @@ A recipe may reference **Rum**, **Aged Jamaican Rum**, or a particular bottle. B
 
 Edit notes and properties directly in Obsidian. Browsing uses current metadata when opened or refreshed and requires neither Dataview nor Bases. Ordinary links and notes remain usable with the plugin disabled.
 
-New notes use plain Latin filenames and retain their proper name in `cocktail-name` and the page heading. Generated links display that proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`. Accented names also become Obsidian aliases; the plugin's ingredient picker includes both spellings when they differ. Existing notes without `cocktail-name` use their filename as the displayed name.
+New notes use plain Latin filenames and retain their proper name in `cc-name` and the page heading. Generated links display that proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`. Accented names also become Obsidian aliases; the plugin's ingredient picker includes both spellings when they differ. Existing notes without `cc-name` use their filename as the displayed name.
 
 The Apple Brandy family includes Apple Brandy, Bonded Apple Brandy, Applejack, and Calvados. Classify your bottles deliberately. The Brandy family uses the common French-style grape-brandy meaning and contains Cognac and Armagnac. Pisco is left to users to add and classify.
 
@@ -37,6 +37,7 @@ Herbal, floral, spice, and nut liqueurs have separate families. Coffee Liqueur, 
 - Existing personal collections using the old `Subcategory`, `Type`, and `base` conventions need a future adoption/migration flow. Setup does not convert them. Choose a fresh cabinet folder to experiment.
 - Stock is recorded and editable; consumption calculations, drink logging, imports, and agent integration are future work.
 - Non-bottle stock currently uses availability and form, with no preparation batches, measured juice yields, or consumption tracking.
+- The [approved stock and purchasing schema](docs/note-properties.md#stock-tracking-rules) plans per-record volume or status tracking, mL bottle stock, last purchase prices, and shopping-list flags on types, bottles, and other stock. The creation UI and combined shopping-list view have not yet implemented that design.
 - Syrup filenames spell ratios as “1 to 1” and “2 to 1” for cross-platform filenames; their descriptions and ratio property use 1:1 and 2:1 by weight.
 - The runtime declares Obsidian 1.4.0 as its minimum for the APIs used. Manual verification has been on desktop Obsidian 1.14.5; real iOS and Android testing remains outstanding.
 
@@ -44,7 +45,9 @@ Herbal, floral, spice, and nut liqueurs have separate families. Coffee Liqueur, 
 
 All runtime operations stay in the selected vault. The plugin makes no network requests and collects no telemetry. External reference links on ingredient pages open only when selected.
 
-Notes use `cocktail-kind` to identify their role and cocktail-prefixed properties to avoid common vault property conflicts. Links include vault-relative folder paths. See [the current schema and design](docs/cabinet-design.md) and [domain glossary](GLOSSARY.md).
+Notes use `cc-kind` to identify their role and `cc-`-prefixed properties to avoid common vault property conflicts. Links include vault-relative folder paths. See the [resource schemas](docs/note-properties.md) for each property's purpose, stored values, and current use, the [cabinet design](docs/cabinet-design.md) for design decisions, and the [domain glossary](GLOSSARY.md) for terminology.
+
+The `cc-` property prefix stands for Cocktail Cabinet. Cabinet property panels allow modestly wider labels for longer fields, with a responsive width limit. New starter notes use catalog IDs such as `family/Aquavit` so they display as text rather than URL schemes.
 
 ## Development
 

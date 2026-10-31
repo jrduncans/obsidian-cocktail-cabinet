@@ -10,15 +10,15 @@ type TypeDefinition = [name: string, description: string, properties?: Propertie
 
 const entries: CatalogEntry[] = [];
 function category(name: string, description: string) {
-	entries.push({ id: `category:${fileName(name)}`, kind: 'category', name, description });
+	entries.push({ id: `category/${fileName(name)}`, kind: 'category', name, description });
 }
 function ingredientTypes(parent: string | undefined, types: TypeDefinition[]) {
 	for (const [name, description, properties] of types) {
-		entries.push({ id: `type:${fileName(name)}`, kind: 'type', name, parent, description, properties });
+		entries.push({ id: `type/${fileName(name)}`, kind: 'type', name, parent, description, properties });
 	}
 }
 function family(name: string, parent: string | undefined, description: string, types: TypeDefinition[]) {
-	entries.push({ id: `family:${fileName(name)}`, kind: 'family', name, parent, description });
+	entries.push({ id: `family/${fileName(name)}`, kind: 'family', name, parent, description });
 	ingredientTypes(name, types);
 }
 
@@ -186,7 +186,7 @@ const sugar = [
 for (const [name, brix, ratio, ingredient] of sugar) {
 	const entry = entries.find(item => item.name === name);
 	if (!entry) throw new Error(`Missing starter syrup: ${name}`);
-	entry.properties = { [PROP.brix]: brix, 'cocktail-sugar-water-ratio': `${ratio} by weight` };
+	entry.properties = { [PROP.brix]: brix, [PROP.sugarWaterRatio]: `${ratio} by weight` };
 	entry.method = `Combine ${ratio === '1:1' ? 'equal weights of' : 'two parts by weight of'} ${ingredient} and ${ratio === '1:1' ? '' : 'one part by weight of '}water. This ratio is by weight. Stir until dissolved. The listed Brix is nominal, not a measurement of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).`;
 }
 
@@ -196,7 +196,7 @@ export function catalogDraft(root: string, entry: CatalogEntry, paths: ReadonlyM
 	const properties: Properties = { ...entry.properties, [PROP.catalogId]: entry.id };
 	if (entry.parent) {
 		const kind = entry.kind === 'family' ? 'category' : 'family';
-		properties[kind === 'category' ? PROP.category : PROP.family] = [wikiLink(paths.get(`${kind}:${fileName(entry.parent)}`) || notePath(root, kind, entry.parent), entry.parent)];
+		properties[kind === 'category' ? PROP.category : PROP.family] = [wikiLink(paths.get(`${kind}/${fileName(entry.parent)}`) || notePath(root, kind, entry.parent), entry.parent)];
 	}
 	return { ...entry, properties };
 }
