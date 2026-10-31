@@ -54,7 +54,7 @@ A recipe-facing kind of ingredient, such as Rye Whiskey, Lime Juice, or Simple S
 | `cc-kind` | `"type"` | `true` | Identifies an ingredient type. Every type appears in All ingredient types, including those with no family. |
 | `cc-name` | `string` | `false` | Proper display name for plugin UI and new links; for example, `Bénédictine` can be stored separately from `Benedictine.md`. Generated from the required Name input; falls back to the filename if absent or unusable. |
 | `aliases` | `string[]` | `false` | Synonyms included in picker search, such as `Rhum Agricole Blanc` for Unaged Rhum Agricole. Aliases identify the same ingredient rather than declaring substitutions. |
-| `cc-catalog-id` | `string` | `false` | Starter identity, such as `type/Apple Brandy`. The level distinguishes it from `family/Apple Brandy`. Setup reads it for recognition across renames, missing-page recovery, and duplicate detection. Omitted on user-created types. |
+| `cc-catalog-id` | `string` | `false` | Starter identity based on the current catalog name, such as `type/Apple Brandy` or `family/Apple Brandy Family`. Setup reads IDs for recognition across renames, missing-page recovery, and duplicate detection. Omitted on user-created types. |
 | `cc-family` | `link<Ingredient family>[]` | `false` | Broader groupings read for linked-resource browsing and related-recipe traversal. Missing families are valid. A narrow type does not gain sibling types as alternatives merely by sharing a family. |
 | `cc-brix` | `number \| null` | `false` | Sugar concentration from 0 to 100; blank form input stores `null`. Starter syrup values are nominal definitions, not batch measurements. Recorded for viewing and editing; no current sweetness calculations use it. |
 | `cc-sugar-water-ratio` | `string` | `false` | Authored on the three starter simple/demerara syrup types, such as `2:1 by weight`. Records the ratio and its weight basis. No dedicated form input, runtime parser, or calculation currently uses it. |
@@ -64,22 +64,22 @@ Descriptions and optional Preparation instructions live in the body. They are no
 
 ## Bottle
 
-A named bottling, together with its recorded stock. A resource represents a bottling rather than one physical bottle. New notes are placed in `<root>/Bottles/`. The creation form writes the selected stock mode and its applicable fields.
+A named bottle, together with its recorded stock. One note tracks the open amount and any unopened bottles of the same size and strength. New notes are placed in `<root>/Bottles/`. The creation form writes the selected stock mode and its applicable fields.
 
 | Property | Type | Required | Description and use |
 | --- | --- | --- | --- |
 | `cc-kind` | `"bottle"` | `true` | Identifies a bottle for cabinet browsing and recipe ingredient selection. |
 | `cc-name` | `string` | `false` | Proper display name for plugin UI and new links. Generated from the required Name input; falls back to the filename if absent or unusable. |
 | `aliases` | `string[]` | `false` | Alternate names included in picker search and available to Obsidian links. |
-| `cc-types` | `link<Ingredient type>[]` | `false` | Classifies the bottling for linked-resource browsing and related-recipe discovery. Bottles sharing an explicitly linked type can appear as same-type alternatives; sharing a family alone is insufficient. Empty lists are valid. |
+| `cc-types` | `link<Ingredient type>[]` | `false` | Classifies the bottle for linked-resource browsing and related-recipe discovery. Bottles sharing an explicitly linked type can appear as same-type alternatives; sharing a family alone is insufficient. Empty lists are valid. |
 | `cc-stock-tracking` | `StockTracking` | `true` | Selects `volume` or `status` for this bottle record. This choice determines the applicable stock fields below. The creation default is `volume`, saved explicitly rather than inferred from a missing property. |
 | `cc-volume-ml` | `number \| null` | `false` | Full volume of one bottle in milliliters, greater than zero when known, such as `750`. A missing or null value is unknown. Reserved for future bottle rollover; remains useful descriptive metadata in status mode. |
 | `cc-abv` | `number \| null` | `false` | Alcohol strength as a fraction from 0 to 1. The existing form accepts 0–100 percent, so `40` stores `0.4`; blank stores `null`. Stock tracking changes do not change the representation of ABV. |
 | `cc-open-ml` | `number \| null` | `false` | **Volume mode only.** Nonnegative mL remaining in the open bottle, excluding unopened bottles. Must not exceed the known full bottle volume. Missing or null means unknown; zero explicitly means no open stock. Planned consumption deducts mL directly. |
 | `cc-unopened` | `integer \| null` | `false` | **Volume mode only.** Nonnegative count of unopened bottles. Missing or null means unknown. Planned rollover uses this count and full bottle volume when another bottle must be opened. |
 | `cc-availability` | `Availability` | `false` | **Status mode only.** Manual `Unknown`, `Have`, `Low`, or `Out`; missing means `Unknown`. Creation writes the chosen status explicitly. Pours do not automatically decrement or change this status. |
-| `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative numeric amount last paid for one bottle of this bottling, with zero valid and missing or null meaning unknown. Purchasing metadata, independent of stock mode. No price history, currency conversion, or cost calculations are defined. |
-| `cc-shopping-list` | `boolean` | `false` | Explicitly marks this particular bottling for purchase when `true`. Missing means `false`. Independent of current stock level and of any flag on its ingredient types; eligible for the planned combined shopping-list view. |
+| `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative numeric amount last paid for one bottle, with zero valid and missing or null meaning unknown. Purchasing metadata, independent of stock mode. No price history, currency conversion, or cost calculations are defined. |
+| `cc-shopping-list` | `boolean` | `false` | Explicitly marks this bottle for purchase when `true`. Missing means `false`. Independent of current stock level and of any flag on its ingredient types; eligible for the planned combined shopping-list view. |
 
 Only the selected mode's stock fields apply: volume mode has open mL and unopened count; status mode has qualitative availability. Full bottle volume, ABV, price, and the shopping flag remain independent metadata in either mode. The description lives in the body.
 
@@ -134,7 +134,7 @@ Prices and shopping flags are optional; omitted prices stay unknown and omitted 
 
 Types, bottles, and other-stock sources share `cc-shopping-list: boolean`, optional with an effective default of `false`. It records purchase intent, independently of tracking mode and stock state. Empty stock does not automatically set it, and positive stock does not automatically clear it.
 
-The planned combined view includes recognized cabinet resources of kind `type`, `bottle`, or `ingredient` whose `cc-shopping-list` is exactly `true`. A type-level entry means a generic need, such as Lime Juice; a bottle-level entry names the particular bottling; an other-stock entry names that source. Flags do not propagate between linked resources. If both a type and its bottle are explicitly flagged, both entries remain visible rather than one being silently hidden or merged.
+The planned combined view includes recognized cabinet resources of kind `type`, `bottle`, or `ingredient` whose `cc-shopping-list` is exactly `true`. A type-level entry means a generic need, such as Lime Juice; a bottle-level entry names the particular bottle; an other-stock entry names that source. Flags do not propagate between linked resources. If both a type and its bottle are explicitly flagged, both entries remain visible rather than one being silently hidden or merged.
 
 `cc-last-purchase-price` belongs to actual bottle or other-stock records. Ingredient types remain classifications and generic shopping needs rather than holders of a particular purchase's price. Prices are plain numeric amounts in the user's consistent currency convention, without currency symbols, inferred currency, or automatic conversion. Missing prices remain unknown, and shopping entries do not require a price. Mixed-currency accounting, purchase history, pack pricing, and automatic clearing of shopping flags on purchase are outside this schema change.
 

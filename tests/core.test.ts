@@ -35,6 +35,7 @@ void test('blank stock is unknown, zero is explicit, invalid stock is rejected',
 void test('starter notes have unique identities and valid, complete parent links', () => {
 	const files = starterPlan('Drinks/Cabinet');
 	assert.equal(new Set(files.map(file => file.path.toLowerCase())).size, files.length);
+	assert.equal(new Set(STARTER_CATALOG.map(entry => entry.name.toLowerCase())).size, STARTER_CATALOG.length);
 	assert.equal(new Set(STARTER_CATALOG.map(entry => entry.id)).size, STARTER_CATALOG.length);
 	const paths = new Set(files.map(file => file.path.replace(/\.md$/, '')));
 	for (const file of files) {
@@ -42,14 +43,17 @@ void test('starter notes have unique identities and valid, complete parent links
 	}
 });
 
-void test('catalog properties avoid URL schemes while distinguishing identical names at different levels', () => {
+void test('catalog identities use current starter names without URL schemes', () => {
 	const files = starterPlan('Cocktails');
+	for (const entry of STARTER_CATALOG) assert.equal(entry.id, `${entry.kind}/${fileName(entry.name)}`);
 	for (const file of files.filter(file => file.catalogId)) {
 		assert.ok(!/^[a-z][a-z0-9+.-]*:/i.test(file.catalogId!), file.catalogId);
 		assert.ok(file.content.includes(`${PROP.catalogId}: ${JSON.stringify(file.catalogId)}`));
 	}
-	assert.ok(files.some(file => file.catalogId === 'family/Apple Brandy'));
+	assert.ok(files.some(file => file.catalogId === 'family/Apple Brandy Family'));
 	assert.ok(files.some(file => file.catalogId === 'type/Apple Brandy'));
+	assert.equal(files.find(file => file.catalogId === 'family/Apple Brandy Family')?.path, 'Cocktails/Families/Apple Brandy Family.md');
+	assert.equal(files.find(file => file.catalogId === 'family/Amaro Family')?.path, 'Cocktails/Families/Amaro Family.md');
 });
 
 void test('starter catalog supplies definitions without implying owned stock or supplying cocktail recipes', () => {
@@ -67,11 +71,16 @@ void test('three default sugar syrups retain distinct identities and concentrati
 });
 
 void test('renamed catalog pages remain the target of new parent links', () => {
-	const paths = new Map([['family/Rum', 'Cocktails/Families/My Rum.md'], ['category/Spirit', 'Cocktails/Categories/Spirits.md']]);
+	const paths = new Map([
+		['family/Rum', 'Cocktails/Families/My Rum.md'], ['category/Spirit', 'Cocktails/Categories/Spirits.md'],
+		['family/Apple Brandy Family', 'Cocktails/Families/My Apple Brandies.md'], ['family/Amaro Family', 'Cocktails/Families/My Amari.md'],
+	]);
 	const files = starterPlan('Cocktails', paths);
 	assert.ok(files.some(file => file.path === 'Cocktails/Families/My Rum.md'));
 	const jamaican = files.find(file => file.path.endsWith('/Aged Jamaican Rum.md'));
 	assert.ok(jamaican?.content.includes('[[Cocktails/Families/My Rum|Rum]]'));
+	assert.ok(files.find(file => file.catalogId === 'type/Apple Brandy')?.content.includes('[[Cocktails/Families/My Apple Brandies|Apple Brandy Family]]'));
+	assert.ok(files.find(file => file.catalogId === 'type/Amaro')?.content.includes('[[Cocktails/Families/My Amari|Amaro Family]]'));
 });
 
 void test('unparented types are valid notes', () => {
@@ -176,29 +185,31 @@ void test('accented starter names keep their catalog identity and plain parent f
 	assert.ok(files.every(file => Array.from(file.path).every(character => character.charCodeAt(0) < 128)));
 });
 
-void test('Apple Brandy is a broad family with explicitly chosen recipe-facing types', () => {
-	const apple = STARTER_CATALOG.find(entry => entry.kind === 'family' && entry.name === 'Apple Brandy');
+void test('Apple Brandy Family groups regular apple brandy with the other recipe-facing types', () => {
+	const apple = STARTER_CATALOG.find(entry => entry.kind === 'family' && entry.name === 'Apple Brandy Family');
 	assert.ok(apple);
 	assert.deepEqual(STARTER_CATALOG.filter(entry => entry.kind === 'type' && entry.parent === apple.name).map(entry => entry.name).sort(), ['Apple Brandy', 'Applejack', 'Bonded Apple Brandy', 'Calvados']);
 	assert.deepEqual(STARTER_CATALOG.filter(entry => entry.kind === 'type' && entry.parent === 'Brandy').map(entry => entry.name).sort(), ['Armagnac', 'Cognac']);
 	assert.ok(!STARTER_CATALOG.some(entry => entry.name === 'Pisco' || entry.name === 'Grape Brandy'));
-	assert.notEqual(notePath('Cocktails', 'family', apple.name), notePath('Cocktails', 'type', apple.name));
+	assert.notEqual(notePath('Cocktails', 'family', apple.name), notePath('Cocktails', 'type', 'Apple Brandy'));
 });
 
 void test('reviewed liqueur groupings and the default Vodka type replace the initial catch-all entries', () => {
 	const expected: [string, string | undefined][] = [
 		['Green Herbal Liqueur', 'Herbal Liqueur'], ['Yellow Herbal Liqueur', 'Herbal Liqueur'], ['Bénédictine', 'Herbal Liqueur'],
+		['Crème de Menthe', 'Herbal Liqueur'], ['Contemporary Gin', 'Gin'],
+		['Vermouth Amaro', 'Vermouth'], ['Vanilla Syrup', 'Flavored Syrup'],
 		['Elderflower Liqueur', 'Floral Liqueur'], ['Violet Liqueur', 'Floral Liqueur'],
 		['Allspice Dram', 'Spice Liqueur'], ['Falernum', 'Spice Liqueur'], ['Amaretto', 'Nut Liqueur'],
 		['Coffee Liqueur', undefined], ['Crème de Cacao', undefined], ['Vodka', undefined],
-		['Red Bitter Liqueur', 'Amaro'], ['Orange Bitter Liqueur', 'Amaro'], ['Gentian Liqueur', 'Amaro'], ['Fernet', 'Amaro'], ['Artichoke Amaro', 'Amaro'],
+		['Amaro', 'Amaro Family'], ['Red Bitter Liqueur', 'Amaro Family'], ['Orange Bitter Liqueur', 'Amaro Family'], ['Gentian Liqueur', 'Amaro Family'], ['Fernet', 'Amaro Family'], ['Artichoke Amaro', 'Amaro Family'],
 	];
 	for (const [name, parent] of expected) {
 		const entry = STARTER_CATALOG.find(entry => entry.kind === 'type' && entry.name === name);
 		assert.ok(entry, name);
 		assert.equal(entry.parent, parent, name);
 	}
-	for (const name of ['Herbal and Floral Liqueur', 'Nut and Dessert Liqueur', 'Unflavored Vodka', 'Bitter Liqueur', 'Red Bitter Aperitif', 'Gentian Aperitif']) {
+	for (const name of ['Herbal and Floral Liqueur', 'Nut and Dessert Liqueur', 'Unflavored Vodka', 'Bitter Liqueur', 'Red Bitter Aperitif', 'Gentian Aperitif', 'Swedish Punsch', 'Sloe Gin', 'Coconut Rum']) {
 		assert.ok(!STARTER_CATALOG.some(entry => entry.name === name), name);
 	}
 	assert.ok(!STARTER_CATALOG.some(entry => entry.kind === 'family' && entry.name === 'Vodka'));

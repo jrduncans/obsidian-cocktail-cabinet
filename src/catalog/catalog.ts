@@ -30,11 +30,11 @@ category('Juice', 'Fruit and vegetable juices. Fruit juice means fresh juice unl
 category('Syrup', 'Liquid sweeteners and flavored syrups. Concentration is part of an ingredient when it affects a recipe.');
 
 family('Whiskey', 'Spirit', 'Whiskey styles used in cocktail recipes.', [
-	['Bourbon', 'Bourbon whiskey; choose the bottling and strength appropriate to your recipe.'],
+	['Bourbon', 'Bourbon whiskey; choose the bottle and strength appropriate to your recipe.'],
 	['Rye Whiskey', 'Rye whiskey used when a recipe calls for rye.'],
 	['Blended Scotch', 'Scotch whisky in a blended style; choose the smoke profile and strength to suit your recipe.'],
-	['Single Malt Scotch', 'Single malt Scotch whisky; smoke and strength vary by bottling.'],
-	['Irish Whiskey', 'Irish whiskey; select a bottling to suit the recipe.'],
+	['Single Malt Scotch', 'Single malt Scotch whisky; smoke and strength vary by bottle.'],
+	['Irish Whiskey', 'Irish whiskey; select a bottle to suit the recipe.'],
 ]);
 family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine them to fit your recipes.', [
 	['Light Rum', 'Lightly aged rum filtered to remove color, with a relatively restrained flavor profile; Don Q Cristal is an example. Distinct from White Blended Rum.'],
@@ -45,7 +45,7 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 	['Aged Jamaican Rum', 'Barrel-aged Jamaican rum, kept distinct from unaged and explicitly overproof styles.'],
 	['Aged Overproof Jamaican Rum', 'High-strength barrel-aged Jamaican rum for recipes specifying this role, distinct from Unaged Overproof Jamaican Rum and standard-strength Aged Jamaican Rum.'],
 	['Unaged Overproof Jamaican Rum', 'High-strength unaged Jamaican rum for recipes specifying this role, distinct from Aged Overproof Jamaican Rum.'],
-	['Demerara Rum', 'Demerara rum; choose a bottling and strength to suit the recipe.'],
+	['Demerara Rum', 'Demerara rum; choose a bottle and strength to suit the recipe.'],
 	['Demerara 151 Rum', 'Demerara rum bottled at 151 US proof (75.5% ABV), for recipes specifying this strength and style. Distinct from standard-strength Demerara Rum and multi-region overproof blends.'],
 	['Blended Overproof Rum', 'High-strength rum blends, including O.F.T.D., Hamilton Zombie Blend, and Planteray Mister Fogg. Their strengths and flavor profiles differ; recipes often specify a particular bottle.'],
 	['Unaged Rhum Agricole', 'Unaged sugarcane-juice rhum in the agricole style, also called rhum agricole blanc. Kept distinct from Aged Rhum Agricole.', { aliases: ['Rhum Agricole Blanc'] }],
@@ -61,7 +61,8 @@ family('Cachaça', 'Spirit', 'Brazilian sugarcane spirits, kept separate from th
 	['Aged Cachaça', 'Barrel-aged cachaça, kept distinct when the recipe specifies an aged style.'],
 ]);
 family('Gin', 'Spirit', 'Gin and related styles; a broad Gin reference does not select a particular style.', [
-	['London Dry Gin', 'Juniper-led dry gin for recipes that specify London dry.'], ['Old Tom Gin', 'Gin in the Old Tom style, typically sweeter than dry gin; bottlings vary.'],
+	['London Dry Gin', 'Juniper-led dry gin for recipes that specify London dry.'], ['Old Tom Gin', 'Gin in the Old Tom style, typically sweeter than dry gin; bottles vary.'],
+	['Contemporary Gin', 'Gin with prominent citrus, floral, herbal, or other botanical notes, in a recipe role distinct from London Dry Gin. Individual gins can differ substantially; preserve a recipe’s named bottle when specified.'],
 	['Plymouth Gin', 'Plymouth gin for recipes that specify it.'],
 	['Navy Strength Gin', 'High-strength gin; strength affects the cocktail recipe.'],
 	['Genever', 'Genever for recipes that specify this style.'],
@@ -69,15 +70,15 @@ family('Gin', 'Spirit', 'Gin and related styles; a broad Gin reference does not 
 ingredientTypes(undefined, [['Vodka', 'A neutral, unflavored spirit for recipes calling for vodka. Flavored vodkas can be added as distinct ingredients.']]);
 family('Agave Spirit', 'Spirit', 'Tequila, mezcal, and related agave spirits.', [
 	['Blanco Tequila', 'Tequila in the blanco style, distinct from barrel-aged tequila in recipes.'], ['Reposado Tequila', 'Barrel-rested tequila in the reposado style.'],
-	['Añejo Tequila', 'Aged tequila in the añejo style, kept distinct from blanco and reposado.'], ['Mezcal', 'Mezcal; agave variety and bottling can change the result.'],
+	['Añejo Tequila', 'Aged tequila in the añejo style, kept distinct from blanco and reposado.'], ['Mezcal', 'Mezcal; agave variety and bottle can change the result.'],
 ]);
 family('Brandy', 'Spirit', 'French-style grape brandy in common cocktail usage, including Cognac and Armagnac. Apple brandy has a separate family.', [
 	['Cognac', 'French grape brandy from the Cognac region, used in brandy cocktails.'], ['Armagnac', 'French grape brandy from the Armagnac region; keep distinct when a recipe specifies it.'],
 ]);
-family('Apple Brandy', 'Spirit', 'Apple brandy and applejack styles used in recipes. Decide which types describe your bottles; a broad family reference can use any of these types.', [
-	['Apple Brandy', 'Apple brandy for recipes specifying an apple-based spirit without a narrower style. Classify bottles to suit your recipes.'],
+family('Apple Brandy Family', 'Spirit', 'Apple brandy and applejack styles used in recipes. A family reference can use any of these types; the Apple Brandy type means regular apple brandy.', [
+	['Apple Brandy', 'Regular apple brandy as a recipe ingredient, alongside the separate Bonded Apple Brandy, Applejack, and Calvados types. Use Apple Brandy Family when a recipe permits any of the included styles.'],
 	['Bonded Apple Brandy', 'Apple brandy for recipes specifying bonded apple brandy, typically at 100 US proof (50% ABV). Assign bottles deliberately; proof alone does not establish bonded status.'],
-	['Applejack', 'Applejack as named in recipes. Bottlings vary; decide which bottles fit the recipe style you intend.'],
+	['Applejack', 'Applejack as named in recipes. Bottles vary; decide which bottles fit the recipe style you intend.'],
 	['Calvados', 'Calvados for recipes specifying this apple brandy style. Decide which of your bottles fit the recipe requirement.'],
 ]);
 family('Aquavit', 'Spirit', 'Aquavit styles.', [
@@ -96,9 +97,10 @@ family('Fruit Liqueur', 'Liqueur', 'Fruit-flavored liqueurs.', [
 	['Banana Liqueur', 'Sweet banana-flavored liqueur used as a cocktail modifier.'],
 ]);
 family('Herbal Liqueur', 'Liqueur', 'Herbal liqueurs; select a type or bottle when the recipe specifies a particular profile.', [
-	['Green Herbal Liqueur', 'Green herbal liqueur; use a specific bottle reference when a particular bottling is intended.'],
+	['Crème de Menthe', 'Sweet mint liqueur, including clear expressions such as Menthe-Pastille. Kept distinct from the Green Herbal Liqueur recipe role; color alone does not determine membership.'],
+	['Green Herbal Liqueur', 'Green herbal liqueur; link a specific bottle when the recipe names one.'],
 	['Yellow Herbal Liqueur', 'Yellow herbal liqueur; use a specific bottle reference when needed.'],
-	['Bénédictine', 'A sweet herbal and spiced liqueur; link a bottle for the specific bottling you own.'],
+	['Bénédictine', 'A sweet herbal and spiced liqueur; add a bottle to record what you own.'],
 ]);
 family('Floral Liqueur', 'Liqueur', 'Flower-flavored liqueurs used as cocktail modifiers.', [
 	['Elderflower Liqueur', 'Sweet floral liqueur flavored with elderflower.'],
@@ -106,9 +108,10 @@ family('Floral Liqueur', 'Liqueur', 'Flower-flavored liqueurs used as cocktail m
 ]);
 family('Spice Liqueur', 'Liqueur', 'Spice-led liqueurs; each type retains its distinct recipe role.', [
 	['Allspice Dram', 'Allspice liqueur, also called pimento dram.'],
-	['Falernum', 'Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottling.'],
+	['Falernum', 'Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottle.'],
 ]);
-family('Amaro', 'Liqueur', 'Bitter liqueurs grouped as amaro for cocktail browsing. Styles vary in sweetness, strength, and bitterness; choose a type or bottle when it matters.', [
+family('Amaro Family', 'Liqueur', 'Bitter liqueurs grouped as amaro for cocktail browsing. Includes the Amaro type and specialized styles; choose a type or bottle when the recipe requires one.', [
+	['Amaro', 'A general amaro ingredient type for bottles such as Averna, Montenegro, Meletti, Lucano, and Nonino. Their flavor profiles, sweetness, and strengths differ; use a specific bottle reference when a recipe names one. Use the specialized types for red or orange bitter liqueurs, gentian liqueurs, fernet, and artichoke amaro.'],
 	['Red Bitter Liqueur', 'Campari-style bitter liqueur, distinct from the Aperol-style Orange Bitter Liqueur recipe role. Color alone does not determine membership.'],
 	['Orange Bitter Liqueur', 'Aperol-style bitter liqueur, distinct from the Campari-style Red Bitter Liqueur recipe role and from Orange Liqueur. Color alone does not determine membership.'],
 	['Gentian Liqueur', 'Bitter liqueurs in the gentian recipe role, including Salers, Suze, Avèze, and, in this cabinet, Bitter Bianco. Formulations and strengths vary; select a bottle when needed.'], ['Fernet', 'A strongly bitter herbal liqueur in the fernet style.'],
@@ -118,7 +121,7 @@ family('Nut Liqueur', 'Liqueur', 'Nut-flavored liqueurs. Add other nut styles wh
 	['Amaretto', 'Sweet almond-flavored liqueur in the amaretto style.'],
 ]);
 ingredientTypes(undefined, [
-	['Coffee Liqueur', 'Sweet coffee-flavored liqueur; sugar content and strength vary by bottling.'],
+	['Coffee Liqueur', 'Sweet coffee-flavored liqueur; sugar content and strength vary by bottle.'],
 	['Crème de Cacao', 'Chocolate liqueur; specify light or dark when the recipe needs that distinction.'],
 ]);
 family('Still Wine', 'Wine', 'Non-sparkling wine ingredients.', [
@@ -126,11 +129,12 @@ family('Still Wine', 'Wine', 'Non-sparkling wine ingredients.', [
 ]);
 family('Sparkling Wine', 'Wine', 'Sparkling wines used to lengthen cocktails.', [
 	['Dry Sparkling Wine', 'Dry sparkling wine when no narrower style is specified.'],
-	['Champagne', 'Sparkling wine from Champagne; record the specific bottling when its style matters.'], ['Prosecco', 'Prosecco; sweetness varies by bottling.'],
+	['Champagne', 'Sparkling wine from Champagne; record the specific bottle when its style matters.'], ['Prosecco', 'Prosecco; sweetness varies by bottle.'],
 ]);
 family('Vermouth', 'Fortified Wine', 'Vermouth styles distinguished by their recipe roles.', [
 	['Sweet Vermouth', 'Sweet aromatized fortified wine for recipes calling for sweet vermouth.'], ['Dry Vermouth', 'Dry aromatized fortified wine for recipes calling for dry vermouth.'],
 	['Blanc Vermouth', 'Sweet white vermouth, also called bianco or blanc.'],
+	['Vermouth Amaro', 'Bitter vermouth in the recipe role represented by Punt e Mes and Cocchi Dopo Teatro, kept distinct from ordinary Sweet Vermouth. Preserve a recipe’s named bottle when specified.'],
 ]);
 family('Sherry', 'Fortified Wine', 'Sherry styles.', [
 	['Fino Sherry', 'Dry sherry in the fino style.'], ['Amontillado Sherry', 'Dry sherry in the amontillado style.'],
@@ -158,6 +162,7 @@ family('Sugar Syrup', 'Syrup', 'Syrups made from sugar, honey, or agave without 
 	['Agave Syrup', 'Agave-based sweetener. Document whether it is diluted.'],
 ]);
 family('Flavored Syrup', 'Syrup', 'Syrups flavored with fruit, nuts, spices, or other added ingredients. Recipe details and concentration belong on the ingredient page.', [
+	['Vanilla Syrup', 'Vanilla-flavored sugar syrup. Record the preparation and sugar concentration you use; vanilla extracts and liqueurs are different ingredients.'],
 	['Orgeat', 'Almond syrup; concentration and flavor vary by preparation.'],
 	['Grenadine', 'Pomegranate syrup; document the preparation or purchased source you use.'],
 	['Falernum Syrup', 'Nonalcoholic spiced falernum syrup, distinct from Falernum liqueur. Record the preparation or purchased source you use.'],

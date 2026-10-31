@@ -2,11 +2,15 @@
 
 Compared the live `knowledge` hierarchy with the plugin catalog committed as `6e51eca` on 2026-10-29. This focuses on choices that could change your existing classifications, ingredient meanings, or links when adopting the plugin. It does not list ingredients absent from the starter catalog. Properties and UI are for the next review.
 
+For the current bottle-by-bottle comparison, see the [knowledge bottle coverage review](knowledge-bottle-coverage-review.md), audited on 2026-10-31. It accounts for all 165 bottle notes, proposes types and families for uncovered bottles, distinguishes existing omissions from new starter/local-extension proposals, and flags ambiguous assignments. The snapshot tables below retain their original scope.
+
 Follow-up decisions on 2026-10-30: split the bitter-liqueur recipe roles into Red Bitter Liqueur (Campari/Crimson Snap) and Orange Bitter Liqueur (Aperol/Mari Gold), include Bitter Bianco alongside Salers in Gentian Liqueur, and retain the broad Orange Liqueur type. See the [substitution review](knowledge-substitutions-review.md) for the recorded relationships and adoption implications. The tables below otherwise describe the original comparison snapshot.
 
 Further starter review on 2026-10-30 resolves the Falernum naming question: the starter uses **Falernum Syrup** for the nonalcoholic syrup and **Falernum** for the liqueur. Existing knowledge links to Falernum therefore correspond to Falernum Syrup; existing Falernum Liqueur links correspond to Falernum. This is an agreed naming distinction, not an automatic migration. Honey Syrup now retains its Sugar Syrup family, joined by Agave Syrup. Coconut Rum is no longer a starter entry, and Cream of Coconut has been added as a standalone type. The snapshot rows below predate these changes.
 
 The important distinction: **the starter catalog is a set of defaults, not a required taxonomy.** The reader accepts custom categories, families, and types. Most reclassifications below are choices to revisit before migration, rather than changes your vault must accept. The fixed relationship levels, optional parents, and naming policy are the broader design commitments.
+
+Follow-up on 2026-10-31: the starter now includes a general **Amaro** type within **Amaro Family** for Averna, Montenegro, Meletti, Lucano, Nonino, and similar bottles. The specialized types remain. The general type is not intended to be assigned to every family member; existing broad Amaro bottle classifications still need deliberate review during adoption. The two families are now named **Amaro Family** and **Apple Brandy Family** to avoid duplicate page names with their types. **Apple Brandy** means regular apple brandy; the family permits any of its included styles. Other family names remain unchanged. Catalog IDs match the revised family names; the development vault is updated directly, without compatibility mappings for earlier starter versions.
 
 ## Give these the most attention
 

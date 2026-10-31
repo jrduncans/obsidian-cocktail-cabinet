@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-119 ingredient types, 26 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+124 ingredient types, 26 families, and 6 categories. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -23,15 +23,16 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Aged Rhum Agricole | Rum | Spirit |
 | Allspice Dram | Spice Liqueur | Liqueur |
 | Amaretto | Nut Liqueur | Liqueur |
+| Amaro | Amaro Family | Liqueur |
 | Amontillado Sherry | Sherry | Fortified Wine |
 | Añejo Tequila | Agave Spirit | Spirit |
-| Apple Brandy | Apple Brandy | Spirit |
+| Apple Brandy | Apple Brandy Family | Spirit |
 | Apple Juice | Other Fruit Juice | Juice |
-| Applejack | Apple Brandy | Spirit |
+| Applejack | Apple Brandy Family | Spirit |
 | Apricot Liqueur | Fruit Liqueur | Liqueur |
 | Armagnac | Brandy | Spirit |
 | Aromatic Bitters | Bitters | — |
-| Artichoke Amaro | Amaro | Liqueur |
+| Artichoke Amaro | Amaro Family | Liqueur |
 | Banana Liqueur | Fruit Liqueur | Liqueur |
 | Bénédictine | Herbal Liqueur | Liqueur |
 | Black Jamaican Rum | Rum | Spirit |
@@ -40,9 +41,9 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Blanco Tequila | Agave Spirit | Spirit |
 | Blended Overproof Rum | Rum | Spirit |
 | Blended Scotch | Whiskey | Spirit |
-| Bonded Apple Brandy | Apple Brandy | Spirit |
+| Bonded Apple Brandy | Apple Brandy Family | Spirit |
 | Bourbon | Whiskey | Spirit |
-| Calvados | Apple Brandy | Spirit |
+| Calvados | Apple Brandy Family | Spirit |
 | Champagne | Sparkling Wine | Wine |
 | Cherry Liqueur | Fruit Liqueur | Liqueur |
 | Chocolate Bitters | Bitters | — |
@@ -51,9 +52,11 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Coffee Liqueur | — | — |
 | Cognac | Brandy | Spirit |
 | Cola | Carbonated Mixer | — |
+| Contemporary Gin | Gin | Spirit |
 | Cranberry Juice | Other Fruit Juice | Juice |
 | Cream of Coconut | — | — |
 | Crème de Cacao | — | — |
+| Crème de Menthe | Herbal Liqueur | Liqueur |
 | Creole Bitters | Bitters | — |
 | Demerara 151 Rum | Rum | Spirit |
 | Demerara Rum | Rum | Spirit |
@@ -65,10 +68,10 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Elderflower Liqueur | Floral Liqueur | Liqueur |
 | Falernum | Spice Liqueur | Liqueur |
 | Falernum Syrup | Flavored Syrup | Syrup |
-| Fernet | Amaro | Liqueur |
+| Fernet | Amaro Family | Liqueur |
 | Fino Sherry | Sherry | Fortified Wine |
 | Genever | Gin | Spirit |
-| Gentian Liqueur | Amaro | Liqueur |
+| Gentian Liqueur | Amaro Family | Liqueur |
 | Ginger Ale | Carbonated Mixer | — |
 | Ginger Beer | Carbonated Mixer | — |
 | Ginger Syrup | Flavored Syrup | Syrup |
@@ -91,7 +94,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Navy Strength Gin | Gin | Spirit |
 | Old Tom Gin | Gin | Spirit |
 | Oloroso Sherry | Sherry | Fortified Wine |
-| Orange Bitter Liqueur | Amaro | Liqueur |
+| Orange Bitter Liqueur | Amaro Family | Liqueur |
 | Orange Bitters | Bitters | — |
 | Orange Juice | Citrus Juice | Juice |
 | Orange Liqueur | Fruit Liqueur | Liqueur |
@@ -106,7 +109,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Pineapple Rum | Rum | Spirit |
 | Plymouth Gin | Gin | Spirit |
 | Prosecco | Sparkling Wine | Wine |
-| Red Bitter Liqueur | Amaro | Liqueur |
+| Red Bitter Liqueur | Amaro Family | Liqueur |
 | Red Wine | Still Wine | Wine |
 | Reposado Tequila | Agave Spirit | Spirit |
 | Rye Whiskey | Whiskey | Spirit |
@@ -124,6 +127,8 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Unaged Mexican Rum | Rum | Spirit |
 | Unaged Overproof Jamaican Rum | Rum | Spirit |
 | Unaged Rhum Agricole | Rum | Spirit |
+| Vanilla Syrup | Flavored Syrup | Syrup |
+| Vermouth Amaro | Vermouth | Fortified Wine |
 | Violet Liqueur | Floral Liqueur | Liqueur |
 | Vodka | — | — |
 | White Blended Rum | Rum | Spirit |

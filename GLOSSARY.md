@@ -5,7 +5,7 @@ Language for cocktail recipes, ingredients, and cabinet inventory.
 ## Language
 
 **Bottle**:
-A named bottling of a spirit, liqueur, or other bottled cocktail ingredient, with characteristics such as bottle volume and alcohol strength.
+A named spirit, liqueur, or other bottled cocktail ingredient, with characteristics such as bottle volume and alcohol strength.
 _Avoid_: Product
 
 **Ingredient category**:
@@ -36,11 +36,17 @@ An ingredient type, bottle, or other ingredient source explicitly marked for pur
 **Brandy**:
 French-style grape brandy in this cabinet's colloquial vocabulary, including Cognac and Armagnac. Apple brandy has a separate family.
 
-**Apple Brandy (family)**:
+**Apple Brandy Family**:
 The broader grouping of apple brandy and applejack styles, including Bonded Apple Brandy, Applejack, and Calvados.
 
-**Apple Brandy (type)**:
-The generic apple-brandy ingredient type, alongside the more specific types in the Apple Brandy family.
+**Apple Brandy**:
+Regular apple brandy as an ingredient type, alongside Bonded Apple Brandy, Applejack, and Calvados in Apple Brandy Family.
+
+**Amaro Family**:
+A grouping of bitter liqueur types, including the general Amaro type and specialized styles such as Fernet and Artichoke Amaro.
+
+**Amaro**:
+A general bitter herbal liqueur ingredient type for bottles such as Averna, Montenegro, Meletti, Lucano, and Nonino. Their flavors, sweetness, and strengths vary.
 
 **Red Bitter Liqueur**:
 The Campari-style bitter-liqueur recipe role, separate from the Aperol-style role. Color alone does not determine membership.
@@ -53,3 +59,15 @@ The gentian bitter-liqueur recipe role, including Salers, Suze, Avèze, and, in 
 
 **Orange Liqueur**:
 A broad ingredient type encompassing triple sec, curaçao, and brandy- or rum-based orange liqueurs, without ranking bottles as closer alternatives to one another.
+
+**Contemporary Gin**:
+A gin ingredient type emphasizing distinctive citrus, floral, herbal, or other botanical profiles outside the London Dry recipe role.
+
+**Crème de Menthe**:
+A sweet mint liqueur, including clear expressions such as Menthe-Pastille, with a distinct recipe role from Green Herbal Liqueur.
+
+**Vermouth Amaro**:
+A bitter-vermouth ingredient type represented by Punt e Mes and Cocchi Dopo Teatro, distinct from ordinary Sweet Vermouth.
+
+**Vanilla Syrup**:
+A vanilla-flavored sugar syrup whose preparation and concentration can vary.
