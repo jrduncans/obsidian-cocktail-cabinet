@@ -137,6 +137,19 @@ Agreed on 2026-11-03 while scoping [roadmap](roadmap.md) Phase 1.
   - The preview and shortfall check follow the current selections; apply writes exactly what is shown. Recording substitutions is out of scope for now.
 - **Stock editing deferred.** Bottle creation plus hand edits of stock fields are enough to start real use.
 
+## Classification principles
+
+Agreed on 2026-11-03 while building the [knowledge adoption mapping](knowledge-adoption-mapping.md), which applies them.
+
+- A type exists so its bottles can be swapped; a narrower type needs several real near-substitutes.
+- Products without near-substitutes go in their family's catch-all type, as amari do in Amaro. Bottles always have a type.
+- Never create a type only one product could belong to; recipes link that bottle directly, with an unowned bottle note if needed. A kind of product with one owned bottle is still a valid type.
+- Families are navigation: choose a reasonable home and merge families whose boundary would be arbitrary.
+- Classify by recipe role, not production detail.
+- Catch-all names must not read as "any": Specialty Bitters, Flavored Rum.
+- Migration keeps a recipe link's existing meaning unless its wording says something more specific.
+- Directional substitutions are not modeled as types; the logging picker's "Choose another bottle…" covers them until a substitution feature exists.
+
 ## Open decisions
 
 - The classification rules within the category, family, and type levels.

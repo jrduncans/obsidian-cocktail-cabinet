@@ -1,5 +1,7 @@
 # Knowledge bottle coverage review
 
+> Superseded for adoption by [the knowledge adoption mapping](knowledge-adoption-mapping.md), which records the decisions taken on this review's open items. This report is kept as background.
+
 Reviewed 2026-10-31 against the working [starter catalog](../src/catalog/catalog.ts): **124 types, 26 families, 6 categories**. The follow-up review approved four starter additions and confirmed the omissions recorded below. Other classifications remain proposals; the personal vault has not been migrated. Product facts are sourced separately in the [primary-source research notes](knowledge-bottle-product-research.md); the classification and inclusion recommendations here are judgments for review.
 
 ## Findings
