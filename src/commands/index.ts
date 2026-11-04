@@ -1,12 +1,32 @@
 import type CocktailCabinetPlugin from '../main';
-import { MarkdownView, Notice } from 'obsidian';
+import { PROP } from '../core/schema';
+import { MarkdownView, Notice, Platform } from 'obsidian';
 import { IngredientModal } from '../ui/ingredient-modal';
 import { StockModal } from '../ui/stock-modal';
 import { RecipeModal } from '../ui/recipe-modal';
 import { SetupModal } from '../ui/setup-modal';
 import { NotePicker } from '../ui/picker';
+import { LoggingModal } from '../ui/logging-modal';
+import { LoggingStore } from '../vault/logging-store';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
+	const logger = new LoggingStore(plugin.app, plugin.store);
+	plugin.addCommand({
+		id: 'log-this-cocktail',
+		name: 'Log this cocktail',
+		checkCallback: checking => {
+			if (Platform.isMobile) return false;
+			const file = plugin.app.workspace.getActiveFile();
+			if (!file || file.extension !== 'md' || !file.path.startsWith(`${plugin.store.root}/`)) return false;
+			const kind: unknown = plugin.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind];
+			if (kind !== 'recipe') return false;
+			if (!checking) {
+				const recipe = plugin.store.notes().find(note => note.path === file.path && note.kind === 'recipe');
+				if (recipe) new LoggingModal(plugin, logger, recipe).open();
+			}
+			return true;
+		},
+	});
 	const ready = async (action: () => void | Promise<void>) => {
 		if (!await plugin.store.isSetUp()) {
 			new SetupModal(plugin).open();

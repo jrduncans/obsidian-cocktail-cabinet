@@ -26,10 +26,24 @@ export class CabinetStore {
 	}
 
 	notes(): CabinetNote[] {
-		const root = this.root;
-		const files = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(`${root}/`));
+		const files = this.cabinetFiles();
+		return this.notesFrom(files, new Map(files.map(file => [file.path, this.app.metadataCache.getFileCache(file)?.frontmatter])));
+	}
+
+	/** Logging needs current properties even while a recent write invalidates the metadata cache. */
+	async readNotes(): Promise<CabinetNote[]> {
+		const files = this.cabinetFiles();
+		const properties = await Promise.all(files.map(async file => [file.path, await this.frontmatter(file)] as const));
+		return this.notesFrom(files, new Map(properties));
+	}
+
+	private cabinetFiles(): TFile[] {
+		return this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(`${this.root}/`));
+	}
+
+	private notesFrom(files: TFile[], properties: ReadonlyMap<string, Record<string, unknown> | undefined>): CabinetNote[] {
 		const notes = files.flatMap(file => {
-			const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+			const frontmatter = properties.get(file.path);
 			const kind: unknown = frontmatter?.[PROP.kind];
 			if (!KINDS.some(value => value === kind)) return [];
 			const parentProperty = PARENT_PROPERTIES[kind as NoteKind];
@@ -221,7 +235,7 @@ export class CabinetStore {
 
 	private async frontmatter(file: TFile): Promise<Record<string, unknown>> {
 		const content = await this.app.vault.read(file);
-		const source = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
+		const source = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
 		if (!source) return {};
 		const parsed: unknown = parseYaml(source);
 		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};

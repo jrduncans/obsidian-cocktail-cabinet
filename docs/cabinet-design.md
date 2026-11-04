@@ -56,7 +56,7 @@ The plugin should help users keep their cocktail system clean, clear, and workin
 
 ## Approved stock and purchasing design
 
-The [resource schemas](note-properties.md) specify the fields and constraints. Creation forms and resource Bases implement mode-based mL stock, purchasing fields, and shopping flags. Consumption behavior and the combined shopping-list view remain future work. Existing early notes need the documented manual conversion; setup preserves their contents.
+The [resource schemas](note-properties.md) specify the fields and constraints. Creation forms and resource Bases implement mode-based mL stock, purchasing fields, and shopping flags. Desktop consumption is implemented by **Log this cocktail**; the combined shopping-list view remains future work. Existing early notes need the documented manual conversion; setup preserves their contents.
 
 - Each bottle or other-stock source explicitly selects `cc-stock-tracking: volume` or `status`. The source's form does not determine its mode; homemade syrup, fresh or purchased juice, and bottles can use either. Creation defaults are volume for bottles and status for other stock.
 - Volume tracking stores mL remaining. Bottles use `cc-open-ml` for the open bottle and retain full bottle volume and unopened count; other stock uses `cc-remaining-ml`. Bottle fractions are replaced in new notes. ABV continues to be stored as a fraction. Unknown quantities remain distinct from known zero.
@@ -137,6 +137,14 @@ Agreed on 2026-11-03 while scoping [roadmap](roadmap.md) Phase 1.
   - The preview and shortfall check follow the current selections; apply writes exactly what is shown. Recording substitutions is out of scope for now.
 - **Stock editing deferred.** Bottle creation plus hand edits of stock fields are enough to start real use.
 
+### Desktop logging implementation
+
+**Log this cocktail** is available only on active cabinet recipe notes on desktop. The review starts at one serving with a numeric control. The initial picker includes matching measured other-stock sources through `cc-provides`, alongside bottles. Every link on one ingredient line is a possible alternative for that single pour, including parenthetical links. Status-only requirements are listed as not drawn down; selecting a status-tracked bottle through the exception picker also leaves it unchanged.
+
+Daily notes uses the core plugin’s configured folder, format, and native template-based creation. One serving writes `Made a/an [[path|Recipe]].`; other positive serving counts write `Made 2 servings of [[path|Recipe]].` Existing Made entries turn the daily-entry control off by default, with an explicit option for another round. Disabled Daily notes or unusable configuration blocks daily-entry apply; clearing the control permits inventory-only changes.
+
+Preview and apply use fresh note properties, including immediately after a write while Obsidian’s metadata cache is rebuilding. Apply preflights all selected stock before writing and checks each source again inside `processFrontMatter`, changing only applicable stock fields. Shortfalls prevent all writes. Stock writes precede the daily entry. An I/O failure after writes begin reports confirmed changes and disables further Apply in that review; operation IDs and recovery remain Phase 2.
+
 ## Classification principles
 
 Agreed on 2026-11-03 while building the [knowledge adoption mapping](knowledge-adoption-mapping.md), which applies them.
@@ -185,3 +193,5 @@ These are concrete implementation choices for trying the first cabinet flow, rat
 Verified in Cocktail Cabinet Dev on desktop Obsidian 1.14.5: setup, no-op retries, conflict preservation, renamed and customized family preservation, missing-page recovery using a renamed parent, bottle creation, fresh/bottled ingredient sources, broad recipe creation, and related recipe browsing. Bases verification also covered all six queries, live stock and recipe additions, renamed unparented types, scope exclusions, no-op setup retries, and core view rendering with Cocktail Cabinet disabled. This earlier manual pass predates the mL creation forms and the linked home layout. The synthetic verification cabinet was removed afterward. Source tests cover catalog integrity, hierarchy behavior, recipe rendering, input validation, and Base preservation and conflict handling. The mL form pass on desktop Obsidian verified direct mL validation, mode changes and resets, volume-tracked syrup, zero purchase price, and stock/type shopping flags using synthetic drafts captured in memory, with no vault writes. Real mobile-device testing remains pending.
 
 The current vault hierarchy and templates are reference material, not a finalized plugin schema. Earlier architecture proposals remain proposals unless confirmed here or in a subsequent decision.
+
+Desktop logging verified in Cocktail Cabinet Dev using synthetic notes: ambiguous selections and named-bottle defaults, measured other stock, skipped unmeasured and status-only lines, live servings and same-source aggregation, multi-bottle rollover, shortfall blocking, stale-preview refresh immediately after a stock edit, exceptional source selection, native Daily notes folder/format/template creation, duplicate-entry defaults, an intentional second round, and disabled Apply after simulated stock and daily-entry failures. Synthetic fixtures were removed and temporary Daily notes settings restored afterward. Unit tests additionally exercise unknown stock, missing volumes, malformed inputs, write ordering, partial stock failures, and a daily-entry failure after successful inventory writes.

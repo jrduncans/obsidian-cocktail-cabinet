@@ -8,7 +8,7 @@ Frequency is taken from the `knowledge` vault. In 2026 the daily notes have abou
 
 | Workflow | How often today | Status | To call it done |
 | --- | --- | --- | --- |
-| Log a drink | Several times a week | Not started; needed on day one | Pick recipe and servings, review and adjust bottle choices, preview the mL drawn down, write the daily-note line, and be safe to retry. See [the workflow assessment](workflow-assessment.md#logging-needs-operation-level-retry-protection). |
+| Log a drink | Several times a week | Desktop review and apply built; retry recovery deferred to Phase 2 | Pick recipe and servings, review and adjust bottle choices, preview the mL drawn down, write the daily-note line, and be safe to retry. See [the workflow assessment](workflow-assessment.md#logging-needs-operation-level-retry-protection). |
 | Update stock | Weekly | Creation only; hand edits suffice for now | Open a new bottle, restock, adjust level, or mark finished without hand-editing `cc-open-ml` or `cc-unopened`. Shopping flags appear in one combined list. |
 | Add a recipe | Weekly | Core works | Prep tags (`#shaken`, `#stirred`, …) and rating during review, a duplicate-recipe check, and the sources actually used: Bevnap CSV and web pages. Relink plain-text ingredients once a matching note exists (for example, the dev vault's Black Manhattan still has plain-text Angostura Bitters). |
 | See related recipes | While browsing | Command only | Shown on the bottle or type note itself, as the vault's DataviewJS block does today, instead of a command to remember. |
@@ -23,7 +23,7 @@ Frequency is taken from the `knowledge` vault. In 2026 the daily notes have abou
 Drink logging must work on the day the `knowledge` vault switches over; bridging the current fraction-based skill is not worth it.
 
 1. **Classification mapping.** One table, approved before any vault write: each old note's new type, family, and filename. It settles the twelve bottle-level decisions and every recipe link whose meaning changes (Falernum, the old Amaro and Other Herbal Liqueur catch-alls, cacao color, syrup concentration, the generic Coconut Rum requirement, FALSE IDOL's Navy Strength). Anything the starter does not cover becomes a local type under an existing starter family where one fits.
-2. **Log this cocktail.** A desktop command on the recipe note: servings, a bottle-review screen, mL preview with rollover into unopened bottles, all-or-nothing apply on shortfall, and the daily-note line. Matches the current skill's behavior; see the decisions for the review screen.
+2. **Log this cocktail.** A desktop command on the recipe note: servings, a bottle-review screen, mL preview with rollover into unopened bottles, all-or-nothing apply on shortfall, and the daily-note line. Implemented on desktop with measured other-stock sources, explicit alternatives, stale-preview checks, and native Daily notes templates. Operation-level retry protection remains Phase 2; see the decisions for the review screen.
 3. **Migration script.** One-off, in this repo, reusing plugin code. Dry-run report, rehearsal on a copy in the dev vault, then `git diff` on the real vault. Rewrites every ingredient link to the plugin's link style.
 4. **Cutover.** Run the script; retire `cocktail-inventory-update`, the old Bases, and the templates; update the vault's `AGENTS.md`. Other breakage (the query and import skills, the DataviewJS views) is fixed as it is hit.
 

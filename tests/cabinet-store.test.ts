@@ -229,3 +229,13 @@ void test('editor newline normalization does not make an unchanged note appear s
 	await store.enhanceRecipe({ path, content: '2 oz Gin\n\nStir with ice.' }, enhancementDraft);
 	assert.ok(contents.get(path)?.includes('### Method'));
 });
+
+void test('fresh cabinet reads retain a just-edited resource while metadata cache is temporarily missing', async () => {
+	const { app, contents, store } = fixture();
+	const original = 'Cocktails/Bottles/Cache race.md';
+	contents.set(original, `\uFEFF---\n${JSON.stringify({ 'cc-kind': 'bottle', 'cc-name': 'Cache race', 'cc-open-ml': 25 })}\n---\n`);
+	app.vault.getMarkdownFiles = () => [...contents.keys()].filter(path => path.endsWith('.md')).map(path => new TFile(path)) as unknown as ReturnType<typeof app.vault.getMarkdownFiles>;
+	Object.assign(app, { metadataCache: { getFileCache: () => undefined, getFirstLinkpathDest: () => null } });
+	assert.deepEqual(store.notes(), []);
+	assert.equal((await store.readNotes()).find(note => note.path === original)?.name, 'Cache race');
+});

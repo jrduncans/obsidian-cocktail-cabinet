@@ -103,3 +103,21 @@
 .metadata-container:has(.metadata-property[data-property-key="cc-kind"]) {
 	--metadata-label-width: min(14em, 45%);
 }
+
+.cocktail-cabinet-log-preview {
+	width: 100%;
+	border-collapse: collapse;
+}
+.cocktail-cabinet-log-preview th,
+.cocktail-cabinet-log-preview td {
+	text-align: start;
+	padding: var(--size-4-2);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.cocktail-cabinet-log-line {
+	overflow-wrap: anywhere;
+}
+.cocktail-cabinet-log-notice:not(:empty) {
+	padding: var(--size-4-2);
+	border: 1px solid var(--background-modifier-border);
+}
