@@ -103,7 +103,7 @@ void test('shortfall prevents all writes even if another selected source can cov
 	f.properties.get(f.b.path)![PROP.unopened] = 0;
 	const review = await f.logger.review(f.recipe);
 	const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map((line, index) => [line.id, index ? f.b.path : f.a.path])), 1);
-	await assert.rejects(f.logger.apply(review, plan, true), /Resolve every selection/);
+	await assert.rejects(f.logger.apply(review, plan, true), /Select what you used/);
 	assert.deepEqual(f.events, []);
 });
 void test('a changed recipe requires another review without writing stock', async () => {
@@ -142,7 +142,7 @@ void test('daily note failure reports successful inventory and never repeats it'
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	f.failDaily();
-	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Stock updates succeeded.*do not retry inventory/.test(error.message));
+	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Your stock was updated.*Do not log this drink again/.test(error.message));
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
 	assert.equal(f.contents.has(f.dailyPath), false);
 	assert.equal(f.events.filter(event => event === f.a.path).length, 1);
@@ -153,7 +153,7 @@ void test('partial bottle failure stops subsequent writes and leaves daily notes
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	f.failBottle(f.b.path);
-	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Confirmed updates: Test A.*Daily note untouched/.test(error.message));
+	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Already updated: Test A.*daily note was not changed/.test(error.message));
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
 	assert.equal(f.properties.get(f.b.path)![PROP.open], 80);
 	assert.deepEqual(f.events, [f.a.path, f.b.path]);
@@ -190,7 +190,7 @@ void test('a stock change during processFrontMatter is checked before assigning 
 		f.properties.get(file.path)![PROP.open] = 75;
 		return original(file, transform);
 	};
-	await assert.rejects(f.logger.apply(review, plan, true), /Stock changed during apply/);
+	await assert.rejects(f.logger.apply(review, plan, true), /recorded amount changed while saving/);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 75);
 	assert.equal(f.contents.has(f.dailyPath), false);
 });
@@ -208,4 +208,26 @@ void test('stock changed during Daily notes preflight is caught before any inven
 	assert.equal((await f.logger.apply(review, plan, true)).status, 'stale');
 	assert.deepEqual(f.events, []);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 80);
+});
+
+
+void test('logging treats blank unopened counts as zero and leaves the stored blank alone', async () => {
+	for (const blank of [undefined, null, '', '  ']) {
+		const f = fixture();
+		if (blank === undefined) delete f.properties.get(f.a.path)![PROP.unopened];
+		else f.properties.get(f.a.path)![PROP.unopened] = blank;
+		const { review, plan } = await ready(f);
+		assert.equal((await f.logger.apply(review, plan, false)).status, 'applied');
+		assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
+		assert.equal(f.properties.get(f.a.path)![PROP.unopened], blank);
+	}
+});
+
+void test('changing an empty unopened count to explicit zero does not invalidate the review', async () => {
+	const f = fixture();
+	delete f.properties.get(f.a.path)![PROP.unopened];
+	const { review, plan } = await ready(f);
+	f.properties.get(f.a.path)![PROP.unopened] = 0;
+	assert.equal((await f.logger.apply(review, plan, false)).status, 'applied');
+	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
 });

@@ -1,7 +1,7 @@
 import { optionalNumber, PROP } from './schema';
 import type { Properties } from './schema';
 
-export const STOCK_TRACKING = { volume: 'Volume', status: 'Status' } as const;
+export const STOCK_TRACKING = { volume: 'Amount (mL)', status: 'Availability' } as const;
 export type StockTracking = keyof typeof STOCK_TRACKING;
 
 export const AVAILABILITY = {
@@ -48,7 +48,7 @@ export function openBottleMl(value: string, unit: string, volume: number | null)
 /** Validate creation inputs and write only the selected mode's stock fields. */
 export function stockProperties(input: StockInput): Properties {
 	if (input.tracking !== 'volume' && input.tracking !== 'status') {
-		throw new Error('Select volume or status stock tracking.');
+		throw new Error('Select how to track stock.');
 	}
 	const properties: Properties = {
 		[PROP.stockTracking]: input.tracking,
@@ -72,7 +72,7 @@ export function stockProperties(input: StockInput): Properties {
 	} else if (input.kind === 'bottle') {
 		const volume = properties[PROP.volume];
 		properties[PROP.open] = openBottleMl(input.open, input.openUnit ?? 'ml', typeof volume === 'number' ? volume : null);
-		properties[PROP.unopened] = optionalNumber(input.unopened, 'Unopened bottles', 0, Infinity, true);
+		properties[PROP.unopened] = optionalNumber(input.unopened, 'Unopened bottles', 0, Infinity, true) ?? 0;
 	} else {
 		properties[PROP.remaining] = optionalNumber(input.remaining, 'Remaining volume', 0);
 	}

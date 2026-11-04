@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { classifyLoggingLines } from '../src/core/logging-lines';
-import { dailyLogLine, hasDailyLog, indefiniteArticle } from '../src/core/logging-daily';
+import { dailyLogLine, dailyLogText, hasDailyLog, indefiniteArticle } from '../src/core/logging-daily';
 import { planLogging } from '../src/core/logging-plan';
 import { isStocked, planDrawdown, sameStock, stockSnapshot } from '../src/core/logging-stock';
 import { PROP } from '../src/core/schema';
@@ -72,12 +72,12 @@ void test('unlinked, unmeasured, ambiguous, and status-only requirements have ex
 	const lines = classify('- 30 ml gin\n- 2 dashes [[First Gin]]\n- to taste [[First Gin]]\n- 1–2 oz (30 ml) [[First Gin]]\n- 15 ml [[Fresh limes]]\n- 10 ml [[Missing]]', [bottle(), status()]);
 	assert.equal(lines.counted.length, 0);
 	assert.equal(lines.skipped.length, 6);
-	assert.match(lines.skipped[0]!.reason, /No cabinet link/);
-	assert.match(lines.skipped[4]!.reason, /Status-tracked/);
-	assert.match(lines.skipped[5]!.reason, /do not resolve/);
+	assert.match(lines.skipped[0]!.reason, /Not linked/);
+	assert.match(lines.skipped[4]!.reason, /Tracks availability/);
+	assert.match(lines.skipped[5]!.reason, /could not be found/);
 });
 void test('a type with only status-tracked sources is not drawn down', () => {
-	assert.match(classify('- 20 ml [[Lime Juice]]', [status()]).skipped[0]!.reason, /Status-tracked/);
+	assert.match(classify('- 20 ml [[Lime Juice]]', [status()]).skipped[0]!.reason, /Tracks availability/);
 });
 void test('explicit nonvolume equivalents use recipeVolumeMl while bare barspoons are skipped', () => {
 	const lines = classify('- 1 barspoon (1/8 oz) [[First Gin]]\n- 1 barspoon [[First Gin]]');
@@ -114,33 +114,33 @@ void test('exact finishing leaves zero open stock without opening an extra bottl
 });
 void test('shortfall invalidates a plan even when another bottle has enough', () => {
 	const plan = planDrawdown([bottle(a, 20), bottle(b, 100)], [{ path: a.path, ml: 30 }, { path: b.path, ml: 30 }], 1);
-	assert.match(plan.errors.join(), /Shortfall: 10 mL/);
+	assert.match(plan.errors.join(), /10 mL more needed/);
 });
 void test('unknown open amount can open known unopened stock; unknown stock never invents volume', () => {
 	assert.deepEqual(planDrawdown([bottle(a, null, 2, 100)], [{ path: a.path, ml: 120 }], 1).changes[0]!.updates,
 		{ [PROP.open]: 80, [PROP.unopened]: 0 });
-	assert.match(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /unknown.*no unopened/);
-	assert.match(planDrawdown([bottle(a, 0, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /Shortfall: 1/);
+	assert.match(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /Add the amount left in the open bottle/);
+	assert.match(planDrawdown([bottle(a, 0, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /1 mL more needed/);
 });
 void test('missing full bottle volume blocks rollover but is unnecessary for a known sufficient open amount', () => {
-	assert.match(planDrawdown([bottle(a, 20, 1, null)], [{ path: a.path, ml: 30 }], 1).errors.join(), /volume is unknown/);
+	assert.match(planDrawdown([bottle(a, 20, 1, null)], [{ path: a.path, ml: 30 }], 1).errors.join(), /Add the bottle size/);
 	assert.deepEqual(planDrawdown([bottle(a, 20, null, null)], [{ path: a.path, ml: 10 }], 1).changes[0]!.updates, { [PROP.open]: 10 });
 });
-void test('unknown unopened count is preserved when unused and blocks necessary rollover', () => {
+void test('empty unopened count means zero and cannot cover a pour beyond the open amount', () => {
 	assert.deepEqual(planDrawdown([bottle(a, 20, null)], [{ path: a.path, ml: 10 }], 1).changes[0]!.updates, { [PROP.open]: 10 });
-	assert.match(planDrawdown([bottle(a, 20, null)], [{ path: a.path, ml: 30 }], 1).errors.join(), /Unopened count is unknown/);
+	assert.match(planDrawdown([bottle(a, 20, null)], [{ path: a.path, ml: 30 }], 1).errors.join(), /10 mL more needed/);
 });
 void test('volume other stock decrements remaining with no rollover and keeps unknown separate from zero', () => {
 	assert.deepEqual(planDrawdown([ingredient()], [{ path: prepared.path, ml: 25 }], 2).changes[0]!.updates, { [PROP.remaining]: 150 });
-	assert.match(planDrawdown([ingredient(prepared, null)], [{ path: prepared.path, ml: 1 }], 1).errors.join(), /unknown/);
-	assert.match(planDrawdown([ingredient(prepared, 0)], [{ path: prepared.path, ml: 1 }], 1).errors.join(), /Shortfall/);
+	assert.match(planDrawdown([ingredient(prepared, null)], [{ path: prepared.path, ml: 1 }], 1).errors.join(), /Add the amount you have/);
+	assert.match(planDrawdown([ingredient(prepared, 0)], [{ path: prepared.path, ml: 1 }], 1).errors.join(), /more needed/);
 });
 void test('an explicitly selected status-tracked bottle stays unchanged and appears as not drawn down', () => {
 	const lines = classify('- 30 ml [[London Dry Gin]]', [bottle(), status(b)]);
 	const plan = planLogging(lines, [bottle(), status(b)], new Map([[lines.counted[0]!.id, b.path]]), 1);
 	assert.deepEqual(plan.errors, []);
 	assert.deepEqual(plan.changes, []);
-	assert.match(plan.skipped[0]!.reason, /status tracking/);
+	assert.match(plan.skipped[0]!.reason, /tracks availability/);
 });
 void test('stock snapshots detect quantity, mode, volume, and kind changes but ignore purchasing metadata', () => {
 	assert.equal(sameStock(bottle(a, null), bottle(a, 0)), false);
@@ -167,6 +167,8 @@ void test('article choice follows common spoken beginnings', () => {
 void test('daily lines use proper names and path links, with the approved multiple-serving wording', () => {
 	const recipe = note('Old Fashioned', 'recipe');
 	assert.equal(dailyLogLine(recipe, 1), `Made an [[Cocktails/recipe/Old Fashioned|Old Fashioned]].`);
+	assert.equal(dailyLogText(recipe, 1), 'Made an Old Fashioned.');
+	assert.equal(dailyLogText(recipe, 2), 'Made 2 servings of Old Fashioned.');
 	assert.equal(dailyLogLine(recipe, 2), `Made 2 servings of [[Cocktails/recipe/Old Fashioned|Old Fashioned]].`);
 	assert.equal(dailyLogLine(recipe, 0.5), `Made 0.5 servings of [[Cocktails/recipe/Old Fashioned|Old Fashioned]].`);
 });
@@ -182,7 +184,7 @@ void test('duplicate detection recognizes bare and path links, aliases, multiple
 void test('missing tracking mode never infers volume stock, and inactive status quantities are ignored', () => {
 	const unknownMode = stockSnapshot(a, { [PROP.kind]: 'bottle', [PROP.open]: 100, [PROP.unopened]: 1, [PROP.volume]: 750 });
 	assert.equal(isStocked(unknownMode), false);
-	assert.match(planDrawdown([unknownMode], [{ path: a.path, ml: 10 }], 1).errors.join(), /volume-tracked/);
+	assert.match(planDrawdown([unknownMode], [{ path: a.path, ml: 10 }], 1).errors.join(), /No amount is recorded in mL/);
 	const manual = stockSnapshot(a, { ...bottle().fields, [PROP.stockTracking]: 'status', [PROP.availability]: 'Have' });
 	assert.equal(isStocked(manual), false);
 	assert.equal(manual.fields[PROP.open], undefined);
@@ -198,4 +200,20 @@ void test('rounded ounce/mL recipe amounts produce counted lines, pickers, and m
 	const plan = planLogging(lines, sources, new Map(lines.counted.map(line => [line.id, line.initialSelection!])), 1);
 	assert.deepEqual(plan.errors, []);
 	assert.deepEqual(plan.changes.map(change => change.updates), [{ [PROP.open]: 40 }, { [PROP.remaining]: 192.5 }]);
+});
+
+
+void test('missing, null, and empty unopened counts behave like zero without changing unknown open amounts', () => {
+	for (const unopened of [undefined, null, '', '  ', 0]) {
+		const source = stockSnapshot(a, { ...bottle(a, 20).fields, [PROP.unopened]: unopened });
+		assert.equal(source.fields[PROP.unopened], 0);
+		assert.equal(sameStock(source, bottle(a, 20, 0)), true);
+		assert.equal(sameStock(source, bottle(a, 20, 1)), false);
+		assert.deepEqual(planDrawdown([source], [{ path: a.path, ml: 20 }], 1).changes[0]!.updates, { [PROP.open]: 0 });
+		assert.match(planDrawdown([source], [{ path: a.path, ml: 30 }], 1).errors.join(), /10 mL more needed/);
+		const unmeasured = stockSnapshot(a, { ...source.fields, [PROP.open]: null });
+		assert.equal(isStocked(unmeasured), false);
+		assert.match(planDrawdown([unmeasured], [{ path: a.path, ml: 1 }], 1).errors.join(), /Add the amount left/);
+		assert.equal(sameStock(unmeasured, bottle(a, 0)), false);
+	}
 });

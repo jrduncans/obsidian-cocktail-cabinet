@@ -41,14 +41,14 @@ export function classifyLoggingLines(
 		}))];
 		const ml = recipeVolumeMl(splitIngredient(text).amount);
 		let reason: string | undefined;
-		if (!links.length) reason = 'No cabinet link.';
-		else if (!targets.length) reason = 'Links do not resolve to cabinet ingredients.';
-		else if (ml === null) reason = 'No precise volume; unmeasured or ambiguous amount.';
+		if (!links.length) reason = 'Not linked to an ingredient in your cabinet.';
+		else if (!targets.length) reason = 'The linked ingredient could not be found in your cabinet.';
+		else if (ml === null) reason = 'No measured amount, such as mL or oz.';
 		if (reason) { skipped.push({ text, reason }); continue; }
 		const linked = targets.map(path => notes.find(note => note.path === path)!);
 		const matching = sources.filter(source => linked.some(target => fitsLine(notes, source.note, target)));
 		if (matching.length && matching.every(source => source.fields[PROP.stockTracking] === 'status')) {
-			skipped.push({ text, reason: 'Status-tracked sources only; quantities are not drawn down.' });
+			skipped.push({ text, reason: 'Tracks availability only, without an amount in mL.' });
 			continue;
 		}
 		const candidates = matching.filter(isStocked).map(source => source.note.path);

@@ -27,7 +27,7 @@ export class LoggingDaily {
 		const internal = (this.app as App & { internalPlugins?: { plugins: Record<string, DailyPlugin> } }).internalPlugins;
 		const plugin = internal?.plugins['daily-notes'];
 		if (!plugin?.enabled || !plugin.instance || typeof plugin.instance.getDailyNote !== 'function'
-			|| typeof plugin.instance.getFormat !== 'function') throw new Error('Enable Daily notes in Settings → Core plugins to add a daily note line.');
+			|| typeof plugin.instance.getFormat !== 'function') throw new Error('Turn on Daily notes in Settings → Core plugins to add this drink to today’s note.');
 		return plugin.instance;
 	}
 
@@ -42,10 +42,10 @@ export class LoggingDaily {
 			const folder = instance.options.folder
 				? this.app.vault.getAbstractFileByPath(normalizePath(instance.options.folder))
 				: this.app.fileManager.getNewFileParent('');
-			if (!(folder instanceof TFolder)) throw new Error('The configured Daily notes folder does not exist.');
+			if (!(folder instanceof TFolder)) throw new Error('Your daily note folder could not be found. Check Settings → Daily notes.');
 			const name = date.format(instance.getFormat()).trim();
 			if (!name || /[\\:*?"<>|]/.test(name) || name.split('/').some(part => !part || part === '.' || part === '..')) {
-				throw new Error('The Daily notes date format does not produce a valid note path.');
+				throw new Error('The date format cannot be used as a note name. Check Settings → Daily notes.');
 			}
 			result.path = normalizePath(`${folder.path}/${name}.md`);
 			// Match native case-insensitive discovery, and retain the actual existing path.
@@ -59,7 +59,7 @@ export class LoggingDaily {
 				const templatePath = instance.options.template;
 				if (templatePath) {
 					const template = this.app.vault.getAbstractFileByPath(normalizePath(templatePath.endsWith('.md') ? templatePath : `${templatePath}.md`));
-					if (!(template instanceof TFile)) throw new Error('The configured Daily notes template does not exist.');
+					if (!(template instanceof TFile)) throw new Error('Your daily note template could not be found. Check Settings → Daily notes.');
 					await this.app.vault.read(template);
 				}
 				const parts = result.path.split('/');
@@ -75,10 +75,10 @@ export class LoggingDaily {
 	async append(preview: DailyPreview, recipe: CabinetNote, line: string): Promise<boolean> {
 		const instance = this.instance();
 		if (preview.configuration !== JSON.stringify(instance.options) || preview.date !== moment().format('YYYY-MM-DD')) {
-			throw new Error('Daily notes settings or the calendar date changed. Add the shown line manually.');
+			throw new Error('The date or your daily note settings changed. Add the entry to your note yourself.');
 		}
 		const file = await instance.getDailyNote(moment(preview.date, 'YYYY-MM-DD'));
-		if (!(file instanceof TFile) || file.path !== preview.path) throw new Error('Could not create or locate the previewed daily note.');
+		if (!(file instanceof TFile) || file.path !== preview.path) throw new Error('Could not open or create today’s daily note.');
 		let appended = false;
 		await this.app.vault.process(file, content => {
 			if (!preview.duplicate && hasDailyLog(content, recipe, link => this.resolve(link, file.path))) return content;

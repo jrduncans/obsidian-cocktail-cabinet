@@ -15,7 +15,7 @@ export class StockModal extends CabinetForm {
 	onOpen() {
 		this.begin(
 			this.bottle ? 'Add a bottle' : 'Add other stock',
-			'Record what you have using volume or a manual availability status. Blank amounts stay unknown.',
+			'Record how much you have, or mark it as Have, Low, or Out. Leave measured amounts blank if you haven’t checked them.',
 		);
 		let name = this.initialName, description = '', volume = '', abv = '';
 		let unopened = '', remaining = '', lastPurchasePrice = '';
@@ -42,7 +42,7 @@ export class StockModal extends CabinetForm {
 		} else {
 			this.select('Form', STOCK_FORMS, form, value => { form = value; });
 		}
-		this.select('Stock tracking', STOCK_TRACKING, tracking, value => {
+		this.select('Track stock by', STOCK_TRACKING, tracking, value => {
 			tracking = value;
 			// Initialize the new representation explicitly; do not infer stock across modes.
 			open.reset();
@@ -97,7 +97,7 @@ export class StockModal extends CabinetForm {
 				refreshOpen();
 				this.text('Unopened bottles', unopened, value => {
 					unopened = value;
-				}, '', stockEl);
+				}, 'Leave blank if you have none.', stockEl);
 			} else {
 				this.text('Remaining volume (mL)', remaining, value => {
 					remaining = value;

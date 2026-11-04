@@ -16,10 +16,10 @@ export function planLogging(lines: LoggingLines, sources: readonly StockSource[]
 	for (const line of lines.counted) {
 		const path = selections.get(line.id);
 		const source = sources.find(item => item.note.path === path);
-		if (!source) { errors.push(`Select a bottle or measured source for: ${line.text}`); continue; }
+		if (!source) { errors.push(`Select what you used for: ${line.text}`); continue; }
 		selected.set(source.note.path, source);
 		if (source.fields[PROP.stockTracking] === 'status') {
-			skipped.push({ text: line.text, reason: `${source.note.name} uses status tracking; stock will not change.` });
+			skipped.push({ text: line.text, reason: `${source.note.name} tracks availability only, without an amount in mL.` });
 		} else pours.push({ path: source.note.path, ml: line.ml });
 	}
 	const plan = planDrawdown(sources, pours, servings);

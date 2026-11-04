@@ -1,6 +1,6 @@
 import { Modal, Notice, Setting } from 'obsidian';
 import type { ButtonComponent } from 'obsidian';
-import { dailyLogLine } from '../core/logging-daily';
+import { dailyLogText } from '../core/logging-daily';
 import { planLogging } from '../core/logging-plan';
 import { formatMl } from '../core/logging-stock';
 import { PROP } from '../core/schema';
@@ -76,19 +76,19 @@ export class LoggingModal extends Modal {
 				this.refreshPreview();
 			});
 		});
-		this.contentEl.createEl('h3', { text: 'Counted lines' });
-		if (!review.lines.counted.length) this.contentEl.createEl('p', { text: 'No measured ingredients will be drawn down.' });
+		this.contentEl.createEl('h3', { text: 'Ingredients' });
+		if (!review.lines.counted.length) this.contentEl.createEl('p', { text: 'No ingredient amounts will be subtracted.' });
 		for (const line of review.lines.counted) {
 			const row = new Setting(this.contentEl).setName(ingredientLabel(line.text));
-			row.setDesc(`${formatMl(line.ml)} mL per serving${line.targets.length > 1 ? ' · Select one alternative for this pour.' : ''}`);
+			row.setDesc(`${formatMl(line.ml)} mL per serving${line.targets.length > 1 ? ' · Select what you used.' : ''}`);
 			row.addDropdown(dropdown => {
-				dropdown.addOption('', 'Select a bottle or source');
+				dropdown.addOption('', 'Select what you used');
 				const selected = this.selections.get(line.id);
 				const paths = [...line.candidates];
 				if (selected && !paths.includes(selected)) paths.push(selected);
 				for (const path of paths) {
 					const source = review.sources.find(source => source.note.path === path)!;
-					dropdown.addOption(path, `${source.note.name}${source.note.kind === 'ingredient' ? ' · Other stock' : ''}`);
+					dropdown.addOption(path, source.note.name);
 				}
 				dropdown.addOption('__another__', 'Choose another bottle…');
 				dropdown.setValue(selected ?? '');
@@ -111,8 +111,8 @@ export class LoggingModal extends Modal {
 			});
 		}
 		this.previewEl = this.contentEl.createDiv();
-		new Setting(this.contentEl).setName('Add daily note line')
-			.setDesc(review.daily.duplicate ? 'Today’s daily note already has a Made entry for this recipe. Select to record another round.' : 'Append after all stock updates succeed.')
+		new Setting(this.contentEl).setName('Add to today’s daily note')
+			.setDesc(review.daily.duplicate ? 'This cocktail is already in today’s note. Turn this on to add another round.' : 'Add this entry after updating your stock.')
 			.addToggle(toggle => toggle.setValue(this.addDaily).onChange(value => {
 				if (this.busy || this.terminal) { toggle.setValue(this.addDaily); return; }
 				this.addDaily = value; this.refreshPreview();
@@ -120,7 +120,7 @@ export class LoggingModal extends Modal {
 		new Setting(this.contentEl)
 			.addButton(button => button.setButtonText('Close').onClick(() => this.close()))
 			.addButton(button => {
-				this.applyButton = button.setButtonText('Apply').setCta().onClick(() => { void this.apply(); });
+				this.applyButton = button.setButtonText('Log cocktail').setCta().onClick(() => { void this.apply(); });
 			});
 		this.refreshPreview();
 	}
@@ -130,38 +130,38 @@ export class LoggingModal extends Modal {
 		const review = this.review;
 		const plan = planLogging(review.lines, review.sources, this.selections, this.servings);
 		this.previewEl.empty();
-		this.previewEl.createEl('h3', { text: 'Stock preview' });
+		this.previewEl.createEl('h3', { text: 'Stock after this drink' });
 		if (plan.changes.length) {
 			const table = this.previewEl.createEl('table', { cls: 'cocktail-cabinet-log-preview' });
 			const head = table.createEl('thead').createEl('tr');
-			for (const text of ['Source', 'Draw down', 'After apply']) head.createEl('th', { text });
+			for (const text of ['Ingredient', 'Used', 'Remaining']) head.createEl('th', { text });
 			const body = table.createEl('tbody');
 			for (const change of plan.changes) {
 				const row = body.createEl('tr');
 				row.createEl('td', { text: change.source.note.name });
 				row.createEl('td', { text: `${formatMl(change.consumedMl)} mL` });
 				const unopened = change.updates[PROP.unopened] ?? change.source.fields[PROP.unopened];
-				const unopenedLabel = typeof unopened === 'number' ? String(unopened) : 'unknown';
+				const unopenedLabel = typeof unopened === 'number' ? String(unopened) : '0';
 				const after = change.source.note.kind === 'bottle'
-					? `${formatMl(change.updates[PROP.open]!)} mL open; ${unopenedLabel} unopened${change.opened ? ` (opens ${change.opened})` : ''}`
+					? `${formatMl(change.updates[PROP.open]!)} mL in open bottle; ${unopenedLabel} unopened ${unopenedLabel === '1' ? 'bottle' : 'bottles'}${change.opened ? ` (opens ${change.opened} ${change.opened === 1 ? 'bottle' : 'bottles'})` : ''}`
 					: `${formatMl(change.updates[PROP.remaining]!)} mL remaining`;
 				row.createEl('td', { text: after });
 			}
-		} else this.previewEl.createEl('p', { text: 'No stock changes.' });
+		} else this.previewEl.createEl('p', { text: 'Your stock will stay the same.' });
 		if (plan.errors.length) {
 			const errors = this.previewEl.createDiv({ cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 			for (const error of plan.errors) errors.createEl('p', { text: ingredientLabel(error) });
 		}
-		this.previewEl.createEl('h3', { text: 'Not drawn down' });
+		this.previewEl.createEl('h3', { text: 'Not subtracted' });
 		if (!plan.skipped.length) this.previewEl.createEl('p', { text: 'None.' });
 		else {
 			const list = this.previewEl.createEl('ul');
 			for (const line of plan.skipped) list.createEl('li', { text: `${ingredientLabel(line.text)} — ${line.reason}` });
 		}
 		this.previewEl.createEl('h3', { text: 'Daily note' });
-		if (review.daily.path) this.previewEl.createEl('p', { text: review.daily.path });
+		if (review.daily.path) this.previewEl.createEl('p', { text: review.daily.path.replace(/\.md$/, '') });
 		if (Number.isFinite(this.servings) && this.servings > 0) {
-			this.previewEl.createEl('p', { text: dailyLogLine(review.recipe, this.servings), cls: 'cocktail-cabinet-log-line' });
+			this.previewEl.createEl('p', { text: dailyLogText(review.recipe, this.servings), cls: 'cocktail-cabinet-log-line' });
 		}
 		if (review.daily.error) this.previewEl.createEl('p', { text: review.daily.error, cls: this.addDaily ? 'cocktail-cabinet-error' : '' });
 		this.applyButton?.setDisabled(this.busy || this.terminal || plan.errors.length > 0

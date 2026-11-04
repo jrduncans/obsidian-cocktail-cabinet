@@ -37,7 +37,7 @@ void test('unknown amounts and prices remain distinct from known zero in both re
 		const expected = value === '' ? null : 0;
 		const bottle = stockProperties(input({ open: value, unopened: value, volume: '', abv: value, lastPurchasePrice: value }));
 		assert.equal(bottle[PROP.open], expected);
-		assert.equal(bottle[PROP.unopened], expected);
+		assert.equal(bottle[PROP.unopened], 0);
 		assert.equal(bottle[PROP.volume], null);
 		assert.equal(bottle[PROP.abv], expected);
 		assert.equal(bottle[PROP.lastPurchasePrice], expected);

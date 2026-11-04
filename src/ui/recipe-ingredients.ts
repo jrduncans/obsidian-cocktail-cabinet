@@ -20,7 +20,7 @@ export class RecipeIngredients {
 	constructor(private plugin: CocktailCabinetPlugin, container: HTMLElement, initial: IngredientRow[]) {
 		this.notes = recipeIngredientNotes(plugin.store.notes());
 		new Setting(container).setName('Ingredients').setHeading();
-		container.createEl('p', { text: 'Link to the specificity the recipe calls for. Plain text is fine for garnishes or ingredients you do not want to catalog. Links help with related recipes and future logging.' });
+		container.createEl('p', { text: 'Link to the specificity the recipe calls for. Plain text is fine for garnishes or ingredients you do not want to catalog. Links help you find related recipes and log the ingredients you use.' });
 		this.rowsEl = container.createDiv({ cls: 'cocktail-cabinet-ingredients' });
 		for (const data of initial.length ? initial : [{ amount: '', text: '' }]) this.add(data);
 		new Setting(container).addButton(button => button.setButtonText('Add ingredient').onClick(() => this.add({ amount: '', text: '' })));

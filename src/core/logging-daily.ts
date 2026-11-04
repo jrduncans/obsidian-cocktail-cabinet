@@ -13,10 +13,18 @@ export function indefiniteArticle(name: string): 'a' | 'an' {
 	return /^[aeiou]/i.test(plain) ? 'an' : 'a';
 }
 
+function dailySentence(recipe: CabinetNote, servings: number, display: string): string {
+	if (!Number.isFinite(servings) || servings <= 0) throw new Error('Enter more than 0 servings.');
+	return servings === 1 ? `Made ${indefiniteArticle(recipe.name)} ${display}.` : `Made ${servings} servings of ${display}.`;
+}
+
 export function dailyLogLine(recipe: CabinetNote, servings: number): string {
-	if (!Number.isFinite(servings) || servings <= 0) throw new Error('Servings must be greater than zero.');
-	const link = wikiLink(recipe.path, recipe.name);
-	return servings === 1 ? `Made ${indefiniteArticle(recipe.name)} ${link}.` : `Made ${servings} servings of ${link}.`;
+	return dailySentence(recipe, servings, wikiLink(recipe.path, recipe.name));
+}
+
+/** Readable preview and failure guidance; stored daily entries retain their links. */
+export function dailyLogText(recipe: CabinetNote, servings: number): string {
+	return dailySentence(recipe, servings, recipe.name);
 }
 
 /** Restrict duplicate matching to made-cocktail sentences, on the same line as the recipe link. */
