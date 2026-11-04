@@ -147,6 +147,14 @@ Daily notes uses the core plugin’s configured folder, format, and native templ
 
 Preview and apply use fresh note properties, including immediately after a write while Obsidian’s metadata cache is rebuilding. Apply preflights all selected stock before writing and checks each source again inside `processFrontMatter`, changing only applicable stock fields. Shortfalls prevent all writes. Stock writes precede the daily entry. An I/O failure after writes begin reports confirmed changes and disables further logging in that review; operation IDs and recovery are in the roadmap's "Harden logging" phase.
 
+## Homemade stock
+
+Agreed on 2026-11-04, after managing syrups in the dev vault meant an other-stock note named the same as its type (Simple Syrup (1 to 1) providing Simple Syrup (1 to 1)).
+
+- **One rule, no stocked types.** Types stay what recipes call for; stock is always a bottle or other-stock source under a type. Letting a type carry its own stock was considered and rejected: people buy some syrups and make others, and switch over time (bought simple syrup first, homemade later), so stock on the type would mean moving it between note kinds, and a type could hold stock and have bottles at once.
+- **The collision is a naming problem.** Bought products have their own names (a brand); only homemade sources end up named after their type. The Homemade syrup and Prepared juice forms default the name to "House <type>", for example House Simple Syrup (1 to 1) or House Lime Juice, and the user can change it.
+- **Add stock from the type note.** A command on a type note opens the bottle or other-stock form with the type or Provides filled in, so the separate source note rarely needs opening; the type's Stock section already shows it.
+
 ## Navigation in notes
 
 Agreed on 2026-11-04, after testing logging in the dev vault showed that moving around the hierarchy was missing.
