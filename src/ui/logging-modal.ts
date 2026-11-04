@@ -1,6 +1,7 @@
 import { Modal, Notice, Setting } from 'obsidian';
 import type { ButtonComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
+import { SKIP_LINE } from '../core/logging-lines';
 import { planLogging } from '../core/logging-plan';
 import { formatMl } from '../core/logging-stock';
 import { PROP } from '../core/schema';
@@ -26,6 +27,7 @@ export class LoggingModal extends Modal {
 	private previewEl!: HTMLElement;
 	private messageEl!: HTMLElement;
 	private applyButton!: ButtonComponent;
+	private dailySetting?: Setting;
 
 	constructor(plugin: CocktailCabinetPlugin, private logger: LoggingStore, private recipe: CabinetNote) { super(plugin.app); }
 
@@ -33,7 +35,7 @@ export class LoggingModal extends Modal {
 		this.titleEl.setText('Log this cocktail');
 		this.modalEl.addClass('cocktail-cabinet-modal');
 		this.contentEl.addClass('cocktail-cabinet-form');
-		this.contentEl.createEl('p', { text: 'Loading stock and today’s daily note…' });
+		this.contentEl.createEl('p', { text: 'Loading…' });
 		void this.load();
 	}
 
@@ -44,7 +46,7 @@ export class LoggingModal extends Modal {
 			this.acceptReview(review, true);
 			this.render();
 		} catch (error) {
-			if (!this.closed) this.contentEl.setText(error instanceof Error ? error.message : 'Could not open the logging review.');
+			if (!this.closed) this.contentEl.setText(error instanceof Error ? error.message : 'Couldn’t open this recipe for logging.');
 		}
 	}
 
@@ -54,7 +56,7 @@ export class LoggingModal extends Modal {
 		const keepSelections = !initial && old?.content === review.content;
 		this.selections = new Map(review.lines.counted.flatMap(line => {
 			const previous = keepSelections ? this.selections.get(line.id) : undefined;
-			const path = previous && review.sources.some(source => source.note.path === previous) ? previous : line.initialSelection;
+			const path = previous && (previous === SKIP_LINE || review.sources.some(source => source.note.path === previous)) ? previous : line.initialSelection;
 			return path ? [[line.id, path] as const] : [];
 		}));
 		if (initial || review.daily.duplicate !== old?.daily.duplicate) this.addDaily = !review.daily.duplicate;
@@ -63,7 +65,7 @@ export class LoggingModal extends Modal {
 	private render() {
 		const review = this.review!;
 		this.contentEl.empty();
-		this.contentEl.createEl('p', { text: review.recipe.name });
+		this.titleEl.setText(`Log ${review.recipe.name}`);
 		this.messageEl = this.contentEl.createEl('p', { cls: 'cocktail-cabinet-log-notice', attr: { role: 'status' }, text: this.notice });
 		new Setting(this.contentEl).setName('Servings').addText(input => {
 			input.inputEl.type = 'number';
@@ -76,21 +78,20 @@ export class LoggingModal extends Modal {
 				this.refreshPreview();
 			});
 		});
-		this.contentEl.createEl('h3', { text: 'Ingredients' });
-		if (!review.lines.counted.length) this.contentEl.createEl('p', { text: 'No ingredient amounts will be subtracted.' });
+		if (review.lines.counted.length) new Setting(this.contentEl).setName('Used').setHeading();
 		for (const line of review.lines.counted) {
 			const row = new Setting(this.contentEl).setName(ingredientLabel(line.text));
-			row.setDesc(`${formatMl(line.ml)} mL per serving${line.targets.length > 1 ? ' · Select what you used.' : ''}`);
 			row.addDropdown(dropdown => {
-				dropdown.addOption('', 'Select what you used');
+				dropdown.addOption('', 'Select…');
 				const selected = this.selections.get(line.id);
 				const paths = [...line.candidates];
-				if (selected && !paths.includes(selected)) paths.push(selected);
+				if (selected && selected !== SKIP_LINE && !paths.includes(selected)) paths.push(selected);
 				for (const path of paths) {
 					const source = review.sources.find(source => source.note.path === path)!;
 					dropdown.addOption(path, source.note.name);
 				}
-				dropdown.addOption('__another__', 'Choose another bottle…');
+				dropdown.addOption('__another__', 'Other bottle…');
+				dropdown.addOption(SKIP_LINE, 'Don’t subtract');
 				dropdown.setValue(selected ?? '');
 				dropdown.selectEl.setAttribute('aria-label', ingredientLabel(line.text));
 				dropdown.onChange(path => {
@@ -111,16 +112,15 @@ export class LoggingModal extends Modal {
 			});
 		}
 		this.previewEl = this.contentEl.createDiv();
-		new Setting(this.contentEl).setName('Add to today’s daily note')
-			.setDesc(review.daily.duplicate ? 'This cocktail is already in today’s note. Turn this on to add another round.' : 'Add this entry after updating your stock.')
+		this.dailySetting = new Setting(this.contentEl).setName('Add to daily note')
 			.addToggle(toggle => toggle.setValue(this.addDaily).onChange(value => {
 				if (this.busy || this.terminal) { toggle.setValue(this.addDaily); return; }
 				this.addDaily = value; this.refreshPreview();
 			}));
 		new Setting(this.contentEl)
-			.addButton(button => button.setButtonText('Close').onClick(() => this.close()))
+			.addButton(button => button.setButtonText('Cancel').onClick(() => this.close()))
 			.addButton(button => {
-				this.applyButton = button.setButtonText('Log cocktail').setCta().onClick(() => { void this.apply(); });
+				this.applyButton = button.setButtonText('Log').setCta().onClick(() => { void this.apply(); });
 			});
 		this.refreshPreview();
 	}
@@ -130,41 +130,39 @@ export class LoggingModal extends Modal {
 		const review = this.review;
 		const plan = planLogging(review.lines, review.sources, this.selections, this.servings);
 		this.previewEl.empty();
-		this.previewEl.createEl('h3', { text: 'Stock after this drink' });
 		if (plan.changes.length) {
+			new Setting(this.previewEl).setName('Stock').setHeading();
 			const table = this.previewEl.createEl('table', { cls: 'cocktail-cabinet-log-preview' });
 			const head = table.createEl('thead').createEl('tr');
-			for (const text of ['Ingredient', 'Used', 'Remaining']) head.createEl('th', { text });
+			for (const text of ['', 'Used', 'Left']) head.createEl('th', { text });
 			const body = table.createEl('tbody');
 			for (const change of plan.changes) {
 				const row = body.createEl('tr');
 				row.createEl('td', { text: change.source.note.name });
 				row.createEl('td', { text: `${formatMl(change.consumedMl)} mL` });
 				const unopened = change.updates[PROP.unopened] ?? change.source.fields[PROP.unopened];
-				const unopenedLabel = typeof unopened === 'number' ? String(unopened) : '0';
 				const after = change.source.note.kind === 'bottle'
-					? `${formatMl(change.updates[PROP.open]!)} mL in open bottle; ${unopenedLabel} unopened ${unopenedLabel === '1' ? 'bottle' : 'bottles'}${change.opened ? ` (opens ${change.opened} ${change.opened === 1 ? 'bottle' : 'bottles'})` : ''}`
-					: `${formatMl(change.updates[PROP.remaining]!)} mL remaining`;
+					? `${formatMl(change.updates[PROP.open]!)} mL open, ${typeof unopened === 'number' ? unopened : 0} unopened${change.opened ? ` · opens ${change.opened}` : ''}`
+					: `${formatMl(change.updates[PROP.remaining]!)} mL`;
 				row.createEl('td', { text: after });
 			}
-		} else this.previewEl.createEl('p', { text: 'Your stock will stay the same.' });
+		}
 		if (plan.errors.length) {
 			const errors = this.previewEl.createDiv({ cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 			for (const error of plan.errors) errors.createEl('p', { text: ingredientLabel(error) });
 		}
-		this.previewEl.createEl('h3', { text: 'Not subtracted' });
-		if (!plan.skipped.length) this.previewEl.createEl('p', { text: 'None.' });
-		else {
-			const list = this.previewEl.createEl('ul');
-			for (const line of plan.skipped) list.createEl('li', { text: `${ingredientLabel(line.text)} — ${line.reason}` });
+		if (plan.skipped.length) {
+			new Setting(this.previewEl).setName('Not subtracted').setHeading();
+			const list = this.previewEl.createEl('ul', { cls: 'cocktail-cabinet-log-skipped' });
+			for (const line of plan.skipped) list.createEl('li', { text: `${ingredientLabel(line.text)}: ${line.reason}` });
 		}
-		this.previewEl.createEl('h3', { text: 'Daily note' });
-		if (review.daily.path) this.previewEl.createEl('p', { text: review.daily.path.replace(/\.md$/, '') });
-		if (Number.isFinite(this.servings) && this.servings > 0) {
-			this.previewEl.createEl('p', { text: dailyLogText(review.recipe, this.servings), cls: 'cocktail-cabinet-log-line' });
+		if (this.dailySetting) {
+			const valid = Number.isFinite(this.servings) && this.servings > 0;
+			const desc = review.daily.error ?? [valid ? dailyLogText(review.recipe, this.servings) : '', review.daily.duplicate ? 'Already in today’s note.' : ''].filter(Boolean).join(' ');
+			this.dailySetting.setDesc(desc);
+			this.dailySetting.descEl.toggleClass('cocktail-cabinet-error', !!review.daily.error && this.addDaily);
 		}
-		if (review.daily.error) this.previewEl.createEl('p', { text: review.daily.error, cls: this.addDaily ? 'cocktail-cabinet-error' : '' });
-		this.applyButton?.setDisabled(this.busy || this.terminal || plan.errors.length > 0
+		this.applyButton?.setDisabled(this.busy || this.terminal || plan.errors.length > 0 || plan.unselected > 0
 			|| (this.addDaily && !!review.daily.error) || (!this.addDaily && !plan.changes.length));
 	}
 
@@ -172,7 +170,7 @@ export class LoggingModal extends Modal {
 		if (this.busy || this.terminal || !this.review) return;
 		const review = this.review;
 		const plan = planLogging(review.lines, review.sources, this.selections, this.servings);
-		if (plan.errors.length || (this.addDaily && review.daily.error)) return;
+		if (plan.errors.length || plan.unselected || (this.addDaily && review.daily.error)) return;
 		this.busy = true;
 		this.refreshPreview();
 		try {
@@ -188,7 +186,7 @@ export class LoggingModal extends Modal {
 			}
 		} catch (error) {
 			if (error instanceof LoggingWriteError) this.terminal = true;
-			this.notice = error instanceof Error ? error.message : 'Could not log the cocktail.';
+			this.notice = error instanceof Error ? error.message : 'Couldn’t log the cocktail.';
 			if (!this.closed) this.messageEl.setText(this.notice);
 			else new Notice(this.notice, 0);
 		} finally {

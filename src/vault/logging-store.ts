@@ -34,7 +34,7 @@ export class LoggingStore {
 
 	private file(path: string): TFile {
 		const file = this.app.vault.getAbstractFileByPath(path);
-		if (!(file instanceof TFile)) throw new Error(`${path} was moved or removed. Reopen the review.`);
+		if (!(file instanceof TFile)) throw new Error(`${path} was moved or deleted.`);
 		return file;
 	}
 
@@ -42,14 +42,14 @@ export class LoggingStore {
 		const content = await this.app.vault.read(this.file(note.path));
 		const yaml = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
 		const properties: unknown = yaml ? parseYaml(yaml) : {};
-		if (!properties || typeof properties !== 'object' || Array.isArray(properties)) throw new Error(`Could not read the stock recorded for ${note.name}.`);
+		if (!properties || typeof properties !== 'object' || Array.isArray(properties)) throw new Error(`Couldn’t read the stock for ${note.name}.`);
 		return stockSnapshot(note, properties as Record<string, unknown>);
 	}
 
 	async review(recipe: CabinetNote): Promise<LoggingReview> {
 		const notes = await this.cabinet.readNotes();
 		const currentRecipe = notes.find(note => note.path === recipe.path && note.kind === 'recipe');
-		if (!currentRecipe) throw new Error('This note is no longer a cabinet recipe. Reopen a recipe to log it.');
+		if (!currentRecipe) throw new Error('This note isn’t a cabinet recipe.');
 		recipe = currentRecipe;
 		const content = await this.app.vault.read(this.file(recipe.path));
 		const sources = await Promise.all(notes.filter(note => note.kind === 'bottle' || note.kind === 'ingredient').map(note => this.readSource(note)));
@@ -58,9 +58,9 @@ export class LoggingStore {
 	}
 
 	async apply(review: LoggingReview, plan: LoggingPlan, addDaily: boolean): Promise<ApplyLogResult> {
-		if (this.writing) throw new Error('Another cocktail is being logged. Wait for it to finish.');
-		if (plan.errors.length) throw new Error('Select what you used and check the amounts before logging.');
-		if (!plan.changes.length && !addDaily) throw new Error('Select ingredients or turn on the daily note entry to log this drink.');
+		if (this.writing) throw new Error('Another cocktail is still being logged.');
+		if (plan.errors.length || plan.unselected) throw new Error('Select what you used and check the amounts.');
+		if (!plan.changes.length && !addDaily) throw new Error('Nothing to log.');
 		this.writing = true;
 		try { return await this.applyReviewed(review, plan, addDaily); }
 		finally { this.writing = false; }
@@ -68,43 +68,43 @@ export class LoggingStore {
 
 	private async applyReviewed(review: LoggingReview, plan: LoggingPlan, addDaily: boolean): Promise<ApplyLogResult> {
 		if (await this.app.vault.read(this.file(review.recipe.path)) !== review.content) {
-			return { status: 'stale', review: await this.review(review.recipe), notice: 'The recipe changed. Check the updated ingredients before logging.' };
+			return { status: 'stale', review: await this.review(review.recipe), notice: 'The recipe changed. Nothing saved; check and log again.' };
 		}
 		if (addDaily) {
 			const daily = await this.daily.preview(review.recipe);
 			if (daily.error) throw new Error(daily.error);
 			if (daily.path !== review.daily.path || daily.configuration !== review.daily.configuration
 				|| daily.date !== review.daily.date || daily.duplicate !== review.daily.duplicate) {
-				return { status: 'stale', review: await this.review(review.recipe), notice: 'Your daily note or its settings changed. Nothing was saved. Check the updated details.' };
+				return { status: 'stale', review: await this.review(review.recipe), notice: 'Your daily note changed. Nothing saved; check and log again.' };
 			}
 		}
 		// Re-read all selections before the first write, never using metadata-cache stock.
 		const current = await Promise.all(plan.selected.map(source => this.readSource(source.note)));
 		if (plan.selected.some((source, index) => !sameStock(source, current[index]!))) {
-			return { status: 'stale', review: await this.review(review.recipe), notice: 'Your stock changed. Nothing was saved. Check the updated amounts before logging.' };
+			return { status: 'stale', review: await this.review(review.recipe), notice: 'Stock changed. Nothing saved; check and log again.' };
 		}
 		const written: string[] = [];
 		for (const change of plan.changes) {
 			try {
 				await this.app.fileManager.processFrontMatter(this.file(change.source.note.path), (properties: Record<string, unknown>) => {
 					// Protect edits that race the preflight while another bottle is being written.
-					if (!sameStock(change.source, stockSnapshot(change.source.note, properties))) throw new Error('The recorded amount changed while saving.');
+					if (!sameStock(change.source, stockSnapshot(change.source.note, properties))) throw new Error('Its stock changed while saving.');
 					Object.assign(properties, change.updates);
 				});
 				written.push(change.source.note.name);
 			} catch (error) {
-				const reason = error instanceof Error ? error.message : 'The write failed.';
-				throw new LoggingWriteError(`Could not save ${change.source.note.name}. ${reason} Already updated: ${written.join(', ') || 'none'}. Your daily note was not changed. Check these amounts before trying again so the same drink is not subtracted twice.`);
+				const reason = (error instanceof Error ? error.message : 'write failed').replace(/\.$/, '');
+				throw new LoggingWriteError(`Couldn’t save ${change.source.note.name} (${reason}). Already updated: ${written.join(', ') || 'none'}. Daily note unchanged. Check those bottles before logging again, or this drink is subtracted twice.`);
 			}
 		}
 		if (addDaily) {
 			try {
 				const appended = await this.daily.append(review.daily, review.recipe, dailyLogLine(review.recipe, plan.servings));
-				return { status: 'applied', notice: appended ? 'Cocktail logged.' : 'Stock updated. This cocktail is already in today’s note, so no extra entry was added.' };
+				return { status: 'applied', notice: appended ? 'Cocktail logged.' : 'Stock updated. Already in today’s note.' };
 			} catch (error) {
-				throw new LoggingWriteError(`Your stock was updated, but the daily note entry could not be saved. ${error instanceof Error ? error.message : 'Please check the note.'} Add the entry to your note yourself. Do not log this drink again, or it will be subtracted twice. Entry: ${dailyLogText(review.recipe, plan.servings)}`);
+				throw new LoggingWriteError(`Stock updated, but the daily note wasn’t (${(error instanceof Error ? error.message : 'unknown error').replace(/\.$/, '')}). Add “${dailyLogText(review.recipe, plan.servings)}” yourself; don’t log again, or the stock is subtracted twice.`);
 			}
 		}
-		return { status: 'applied', notice: 'Stock updated. Daily note unchanged.' };
+		return { status: 'applied', notice: 'Stock updated.' };
 	}
 }

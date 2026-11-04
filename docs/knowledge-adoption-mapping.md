@@ -16,7 +16,7 @@ These came out of the review and decide most cases; they are also recorded in [t
 6. **Catch-all names must not read as "any".** A generic recipe "bitters" means aromatic, so the bitters catch-all is Specialty Bitters; a generic "rum" means any rum, so the rum catch-all is Flavored Rum.
 7. **Recipe links keep the source's meaning.** Change a link only where the wording says something specific (2:1, Velvet, bonded); otherwise preserve what the vault means today.
 
-Directional substitutions (rich simple → Demerara 2:1, O.F.T.D. → Demerara 151) are not expressible as types. In Phase 1 they use the logging picker's **Choose another bottle…**; they are the motivating cases for a future substitution feature.
+Directional substitutions (rich simple → Demerara 2:1, O.F.T.D. → Demerara 151) are not expressible as types. In Phase 1 they use the logging picker's **Other bottle…**; they are the motivating cases for a future substitution feature.
 
 ## Starter catalog changes
 

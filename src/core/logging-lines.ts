@@ -15,6 +15,8 @@ export interface CountedLine {
 	initialSelection: string | null;
 }
 export interface SkippedLine { text: string; reason: string; }
+/** Selection value for a line the user chose not to subtract. */
+export const SKIP_LINE = '__skip__';
 export interface LoggingLines { counted: CountedLine[]; skipped: SkippedLine[]; }
 
 /** A named bottle widens only to bottles with its explicitly assigned type. */
@@ -41,20 +43,21 @@ export function classifyLoggingLines(
 		}))];
 		const ml = recipeVolumeMl(splitIngredient(text).amount);
 		let reason: string | undefined;
-		if (!links.length) reason = 'Not linked to an ingredient in your cabinet.';
-		else if (!targets.length) reason = 'The linked ingredient could not be found in your cabinet.';
-		else if (ml === null) reason = 'No measured amount, such as mL or oz.';
+		if (!links.length) reason = 'Not linked';
+		else if (!targets.length) reason = 'Link not found';
+		else if (ml === null) reason = 'No mL or oz amount';
 		if (reason) { skipped.push({ text, reason }); continue; }
 		const linked = targets.map(path => notes.find(note => note.path === path)!);
 		const matching = sources.filter(source => linked.some(target => fitsLine(notes, source.note, target)));
 		if (matching.length && matching.every(source => source.fields[PROP.stockTracking] === 'status')) {
-			skipped.push({ text, reason: 'Tracks availability only, without an amount in mL.' });
+			skipped.push({ text, reason: 'Not tracked in mL' });
 			continue;
 		}
 		const candidates = matching.filter(isStocked).map(source => source.note.path);
 		const named = linked.filter(target => (target.kind === 'bottle' || target.kind === 'ingredient') && candidates.includes(target.path));
 		counted.push({ id, text, ml: ml!, targets, candidates,
-			initialSelection: named.length === 1 ? named[0]!.path : candidates.length === 1 ? candidates[0]! : null,
+			// Nothing in the cabinet stocks this (e.g. fresh juice): default to not subtracting, still adjustable.
+			initialSelection: !matching.length ? SKIP_LINE : named.length === 1 ? named[0]!.path : candidates.length === 1 ? candidates[0]! : null,
 		});
 	}
 	return { counted, skipped };

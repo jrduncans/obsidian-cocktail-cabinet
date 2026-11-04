@@ -132,14 +132,14 @@ Agreed on 2026-11-03 while scoping [roadmap](roadmap.md) Phase 1.
 - **Logging entry point.** **Log this cocktail** is an Obsidian command on the recipe note. Desktop is sufficient at first; mobile follows.
 - **No hard-coded substitution rules.** The vault skill's always-ask-for-Green-Chartreuse rule is not built in. Instead, every counted ingredient line in the review can be changed before apply:
   - The picker first lists owned bottles that fit the line in the hierarchy: a type's bottles; any bottle of a type in a referenced family; or a referenced bottle plus the other bottles of its type.
-  - A final **Choose another bottle…** option searches every bottle in the cabinet for exceptional substitutions.
+  - A final **Other bottle…** option searches every bottle in the cabinet for exceptional substitutions.
   - A line with one candidate, or naming a specific owned bottle, is pre-selected. A line with several candidates starts unselected, and apply is disabled until each such line is chosen.
   - The preview and shortfall check follow the current selections; apply writes exactly what is shown. Recording substitutions is out of scope for now.
 - **Stock editing deferred.** Bottle creation plus hand edits of stock fields are enough to start real use.
 
 ### Desktop logging implementation
 
-Logging uses everyday labels such as Ingredients, Used, Remaining, and Not subtracted, with **Log cocktail** as the save action. Daily entries are shown as readable sentences; stored entries retain their recipe links. Stock errors name the amount to check rather than exposing property keys.
+Logging is used several times a week, so its text is terse: the title is “Log <recipe>”, sections are Used, Stock, Not subtracted, and the daily-note toggle, empty sections are hidden, and the save action is **Log**. Errors name the bottle and the problem in a few words (“Campari: 15 mL short.”) rather than exposing property keys. Every picker also offers **Don’t subtract**, the default for a line nothing in the cabinet stocks (fresh juice, for example), so untracked ingredients never block logging.
 
 **Log this cocktail** is available only on active cabinet recipe notes on desktop. The review starts at one serving with a numeric control. Parenthetical volume equivalents such as `2 oz (60 ml)` and `¼ oz (7.5 ml)` use the stated mL for the pour, including rounded conversions; ranges and qualified quantities remain unmeasured. The initial picker includes matching measured other-stock sources through `cc-provides`, alongside bottles. Every link on one ingredient line is a possible alternative for that single pour, including parenthetical links. Status-only requirements are listed as not drawn down; selecting a status-tracked bottle through the exception picker also leaves it unchanged.
 
@@ -158,7 +158,7 @@ Agreed on 2026-11-03 while building the [knowledge adoption mapping](knowledge-a
 - Classify by recipe role, not production detail.
 - Catch-all names must not read as "any": Specialty Bitters, Flavored Rum.
 - Migration keeps a recipe link's existing meaning unless its wording says something more specific.
-- Directional substitutions are not modeled as types; the logging picker's "Choose another bottle…" covers them until a substitution feature exists.
+- Directional substitutions are not modeled as types; the logging picker's "Other bottle…" covers them until a substitution feature exists.
 
 ## Open decisions
 

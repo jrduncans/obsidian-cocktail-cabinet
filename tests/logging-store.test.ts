@@ -142,7 +142,7 @@ void test('daily note failure reports successful inventory and never repeats it'
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	f.failDaily();
-	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Your stock was updated.*Do not log this drink again/.test(error.message));
+	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Stock updated, but the daily note wasn’t.*don’t log again/.test(error.message));
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
 	assert.equal(f.contents.has(f.dailyPath), false);
 	assert.equal(f.events.filter(event => event === f.a.path).length, 1);
@@ -153,7 +153,7 @@ void test('partial bottle failure stops subsequent writes and leaves daily notes
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	f.failBottle(f.b.path);
-	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Already updated: Test A.*daily note was not changed/.test(error.message));
+	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Already updated: Test A\. Daily note unchanged/.test(error.message));
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
 	assert.equal(f.properties.get(f.b.path)![PROP.open], 80);
 	assert.deepEqual(f.events, [f.a.path, f.b.path]);
@@ -190,7 +190,7 @@ void test('a stock change during processFrontMatter is checked before assigning 
 		f.properties.get(file.path)![PROP.open] = 75;
 		return original(file, transform);
 	};
-	await assert.rejects(f.logger.apply(review, plan, true), /recorded amount changed while saving/);
+	await assert.rejects(f.logger.apply(review, plan, true), /stock changed while saving/);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 75);
 	assert.equal(f.contents.has(f.dailyPath), false);
 });
