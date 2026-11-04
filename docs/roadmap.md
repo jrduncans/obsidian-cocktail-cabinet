@@ -1,6 +1,6 @@
 # Development roadmap
 
-Drafted on 2026-11-03 from a review of the plugin at `2d4462f` and of the cocktail workflows the `knowledge` vault uses today. It is written from the user's side: what each workflow needs before it can be called done, and the order that lets the plugin replace the vault's skills soonest. Phases and their contents are a plan, not approved implementation scope; record decisions in [the cabinet design](cabinet-design.md). Phase 1 was revised and agreed on 2026-11-03; see [adoption and logging decisions](cabinet-design.md#adoption-and-logging-decisions).
+Drafted on 2026-11-03 from a review of the plugin at `2d4462f` and of the cocktail workflows the `knowledge` vault uses today. It is written from the user's side: what each workflow needs before it can be called done, and the order that lets the plugin replace the vault's skills soonest. Phases and their contents are a plan, not approved implementation scope; record decisions in [the cabinet design](cabinet-design.md). Phase 1 was revised and agreed on 2026-11-03; see [adoption and logging decisions](cabinet-design.md#adoption-and-logging-decisions). Updated on 2026-11-04 with friction found testing logging in the dev vault: editing, browsing, and the starter's lack of examples.
 
 ## Where each workflow stands
 
@@ -8,11 +8,12 @@ Frequency is taken from the `knowledge` vault. In 2026 the daily notes have abou
 
 | Workflow | How often today | Status | To call it done |
 | --- | --- | --- | --- |
-| Log a drink | Several times a week | Desktop review and apply built; retry recovery deferred to Phase 2 | Pick recipe and servings, review and adjust bottle choices, preview the mL drawn down, write the daily-note line, and be safe to retry. See [the workflow assessment](workflow-assessment.md#logging-needs-operation-level-retry-protection). |
-| Update stock | Weekly | Creation only; hand edits suffice for now | Open a new bottle, restock, adjust level, or mark finished without hand-editing `cc-open-ml` or `cc-unopened`. Shopping flags appear in one combined list. |
+| Log a drink | Several times a week | Built and tested on desktop; retry recovery deferred | Pick recipe and servings, review and adjust bottle choices, preview the mL drawn down, write the daily-note line, and be safe to retry. See [the workflow assessment](workflow-assessment.md#logging-needs-operation-level-retry-protection). |
+| Update stock | Weekly | Creation only; hand edits are error-prone | Open a new bottle, restock, adjust level, or mark finished without hand-editing `cc-open-ml` or `cc-unopened`. Switch a source between mL and availability tracking; by hand it is unclear which fields to add, clear, or convert. Shopping flags appear in one combined list. |
+| Edit or rename a note | Whenever something is wrong | Not started | Rename a recipe, bottle, or ingredient once and have the file name, H1, `cc-name`, aliases, and incoming links follow; today a recipe rename takes three hand edits. Edit an existing note's fields with the same form that created it. |
 | Add a recipe | Weekly | Core works | Prep tags (`#shaken`, `#stirred`, …) and rating during review, a duplicate-recipe check, and the sources actually used: Bevnap CSV and web pages. Relink plain-text ingredients once a matching note exists (for example, the dev vault's Black Manhattan still has plain-text Angostura Bitters). |
-| See related recipes | While browsing | Command only | Shown on the bottle or type note itself, as the vault's DataviewJS block does today, instead of a command to remember. |
-| Set up cabinet | Once | Built | Done for a new cabinet. Still needs a check on real iOS and Android devices. |
+| Browse the hierarchy | While browsing | Built for new notes (embedded Bases); the migration script adds it to adopted notes | Each category, family, type, and bottle note shows, in the note itself, its parent, its children (families, types, or bottles), and the recipes that use it, as the vault's DataviewJS blocks do today. Those blocks read the old properties, so they stop working at cutover (about 300 notes). |
+| Set up cabinet | Once | Built; no worked example | Done for a new cabinet, but nothing shows how the pieces fit. The starter should include a small working example: limes and lemons as availability-tracked other stock providing Lime Juice and Lemon Juice, a homemade syrup tracked in mL, and one or two recipes they complete. Still needs a check on real iOS and Android devices. |
 | Adopt the `knowledge` vault | Once; blocks real use | Not started | Classify everything to match the starter where they overlap, with local types for the rest; migrate bottles, types, and recipe links with a one-off script. Open inputs: the twelve bottle-level decisions in [the bottle coverage review](knowledge-bottle-coverage-review.md#twelve-bottle-level-decisions-before-adoption), the Falernum rename, and recipe links whose meaning changes. |
 | What can I make / what am I missing | Inside LLM sessions | Later | One resolver across bottles, other stock, and types that keeps missing separate from untracked; agents call it through a CLI handler. |
 
@@ -29,20 +30,28 @@ Drink logging must work on the day the `knowledge` vault switches over; bridging
 
 Steps 1 and 2 are independent; step 3 needs step 1's table.
 
-Not in this phase: stock-editing actions (add-a-bottle exists and other changes are hand edits) and a general adoption flow (at most building blocks, if ever).
+Not in this phase: stock-editing actions and renaming (Phase 2), and a general adoption flow (at most building blocks, if ever).
 
-### 2. Harden logging
+### 2. Live in it: browse and edit without hand edits
+
+Found while testing logging on 2026-11-04. Order within the phase is open. Navigation was built first, because cutover breaks the vault's DataviewJS navigation.
+
+- Built: hierarchy navigation embedded in category, family, type, bottle, and other-stock notes through a shared core Base; see [navigation in notes](cabinet-design.md#navigation-in-notes). The migration script must add the embeds to adopted notes.
+- New: **Rename** for cabinet notes, keeping file name, H1, `cc-name`, aliases, and links in step.
+- New: **Edit stock** on a bottle or other stock: open a bottle, restock, set the level, mark finished, and switch tracking mode with an explicit conversion (mL to availability keeps nothing numeric; availability to mL asks for the amounts).
+- New: a worked example in the starter: Limes and Lemons (availability, providing the juice types), a homemade syrup in mL, and one or two recipes they complete, so a new cabinet can log a drink on day one. Decide whether example stock starts as Unknown or with sample amounts, and how setup treats examples a user deletes.
+
+### 3. Harden logging
 
 - New: each logging operation identified so retries and partial failures are recoverable.
 - Finish: a mobile test pass.
 
-### 3. Everyday polish: less command-hunting
+### 4. Everyday polish: less command-hunting
 
-- Finish: related recipes rendered on the ingredient or bottle note.
 - Finish: recipe review adds tags and rating, warns about duplicates, and supports relinking later.
 - Finish: the combined shopping-list Base.
 
-### 4. Reach: retire the remaining skills
+### 5. Reach: retire the remaining skills
 
 - New: Bevnap CSV and web-page recipe import, following the source-fidelity rules of `cocktail-recipe-import`.
 - New: availability queries (what can I make, what am I missing).

@@ -1,0 +1,150 @@
+import { basePath } from './bases';
+import { cabinetFolder, PROP } from './schema';
+import type { NoteKind, PlannedFile } from './schema';
+
+/**
+ * One shared core Base, embedded in each resource note through `this`, so navigation
+ * renders without the plugin. Its recipe rule mirrors `relatedTargets`.
+ */
+export const NAVIGATION_BASE = 'Related';
+
+/**
+ * Fingerprints of every earlier released version of the navigation Base. When the generated
+ * content changes, add the previous version's `managedFingerprint` here so setup updates it.
+ */
+export const PREVIOUS_NAVIGATION_VERSIONS: readonly string[] = [];
+
+export const NAVIGATION_VIEWS = {
+	families: 'Families',
+	types: 'Types',
+	stock: 'Stock',
+	sameType: 'Same type',
+	recipes: 'Recipes',
+} as const;
+type View = typeof NAVIGATION_VIEWS[keyof typeof NAVIGATION_VIEWS];
+
+const SECTIONS: Partial<Record<NoteKind, readonly View[]>> = {
+	category: [NAVIGATION_VIEWS.families, NAVIGATION_VIEWS.recipes],
+	family: [NAVIGATION_VIEWS.types, NAVIGATION_VIEWS.stock, NAVIGATION_VIEWS.recipes],
+	type: [NAVIGATION_VIEWS.stock, NAVIGATION_VIEWS.recipes],
+	bottle: [NAVIGATION_VIEWS.sameType, NAVIGATION_VIEWS.recipes],
+	ingredient: [NAVIGATION_VIEWS.sameType, NAVIGATION_VIEWS.recipes],
+};
+
+const PARENT_KEYS = [PROP.type, PROP.provides, PROP.family, PROP.category];
+const q = (key: string) => JSON.stringify(key);
+/** YAML single-quoted scalar, so formulas stay readable when users edit the Base. */
+const yaml = (text: string) => `'${text.replace(/'/g, "''")}'`;
+
+/** Parent files of each file in `list` (or of the row itself when `list` is omitted). */
+function parentsOf(list?: string): string {
+	const read = (key: string) => list ? `list(value.properties[${q(key)}])` : `list(note[${q(key)}])`;
+	const links = `[${PARENT_KEYS.map(read).join(', ')}]`;
+	const flat = list ? `${list}.map(${links}).flat().flat()` : `${links}.flat()`;
+	return `${flat}.filter(value).map(link(value).asFile()).filter(value)`;
+}
+
+function thisParentsOf(list?: string): string {
+	if (list) return parentsOf(list);
+	const links = `[${PARENT_KEYS.map(key => `list(this.file.properties[${q(key)}])`).join(', ')}]`;
+	return `${links}.flat().filter(value).map(link(value).asFile()).filter(value)`;
+}
+
+const kindIs = (...kinds: NoteKind[]) => kinds.map(kind => `note[${q(PROP.kind)}] == ${q(kind)}`).join(' || ');
+
+const FORMULAS: Record<string, string> = {
+	name: `file.asLink(if(note[${q(PROP.name)}], note[${q(PROP.name)}], file.name))`,
+	// The hierarchy is at most three levels above a bottle: type, family, category.
+	parents: parentsOf(),
+	up2: parentsOf('formula.parents'),
+	up3: parentsOf('formula.up2'),
+	ancestors: '[formula.parents, formula.up2, formula.up3].flat().map(value.path)',
+	parentPaths: 'formula.parents.map(value.path)',
+	parentLinks: `formula.parents.map(value.asLink(if(value.properties[${q(PROP.name)}], value.properties[${q(PROP.name)}], value.name)))`,
+	thisUp1: thisParentsOf(),
+	thisUp2: thisParentsOf('formula.thisUp1'),
+	thisUp3: thisParentsOf('formula.thisUp2'),
+	thisLineage: '[formula.thisUp1, formula.thisUp2, formula.thisUp3].flat().map(value.path)',
+	thisParents: 'formula.thisUp1.map(value.path)',
+	// Recipes: every link anywhere in the note, followed up the hierarchy.
+	linked: 'file.links.map(value.asFile()).filter(value)',
+	linkedUp1: parentsOf('formula.linked'),
+	linkedUp2: parentsOf('formula.linkedUp1'),
+	linkedUp3: parentsOf('formula.linkedUp2'),
+	uses: '[formula.linked, formula.linkedUp1, formula.linkedUp2, formula.linkedUp3].flat().map(value.path)',
+	related: [
+		// The recipe calls for this note or something under it.
+		'formula.uses.contains(this.file.path)',
+		// The recipe calls for something broader than this note.
+		'formula.linked.filter(formula.thisLineage.contains(value.path)).length > 0',
+		// A bottle also serves recipes that name another bottle of its type.
+		`(this.file.properties[${q(PROP.kind)}] == "bottle" && formula.linkedUp1.filter(formula.thisParents.contains(value.path)).length > 0)`,
+	].join(' || '),
+	stock: `if(note[${q(PROP.stockTracking)}] == "status", if(note[${q(PROP.availability)}], note[${q(PROP.availability)}], "Unknown"), `
+		+ `if(note[${q(PROP.stockTracking)}] != "volume", "", if(note[${q(PROP.kind)}] == "bottle", `
+		+ `if(note[${q(PROP.open)}] == null, "?", note[${q(PROP.open)}].round()) + " mL open, " + if(note[${q(PROP.unopened)}], note[${q(PROP.unopened)}], 0) + " unopened", `
+		+ `if(note[${q(PROP.remaining)}] == null, "?", note[${q(PROP.remaining)}].round()) + " mL")))`,
+	// Ratings are numbers 1–5; anything else is shown as written.
+	rating: 'if(note.rating.isType("number"), "⭐️".repeat(note.rating.round()), note.rating)',
+};
+
+type Sort = [property: string, direction: 'ASC' | 'DESC'];
+interface ViewDefinition { name: View; type: 'list' | 'table'; filter: string; columns: [string, string][]; sort?: Sort[]; }
+
+const stockColumns: [string, string][] = [['formula.name', 'Name'], ['formula.parentLinks', 'Type'], ['formula.stock', 'Stock']];
+
+const VIEWS: readonly ViewDefinition[] = [
+	{ name: NAVIGATION_VIEWS.families, type: 'list', filter: `(${kindIs('family')}) && formula.parentPaths.contains(this.file.path)`, columns: [['formula.name', 'Name']] },
+	{ name: NAVIGATION_VIEWS.types, type: 'list', filter: `(${kindIs('type')}) && formula.parentPaths.contains(this.file.path)`, columns: [['formula.name', 'Name']] },
+	{ name: NAVIGATION_VIEWS.stock, type: 'table', filter: `(${kindIs('bottle', 'ingredient')}) && formula.ancestors.contains(this.file.path)`, columns: stockColumns },
+	{
+		name: NAVIGATION_VIEWS.sameType,
+		type: 'table',
+		filter: `(${kindIs('bottle', 'ingredient')}) && file.path != this.file.path && formula.parents.filter(formula.thisParents.contains(value.path)).length > 0`,
+		columns: stockColumns,
+	},
+	{
+		name: NAVIGATION_VIEWS.recipes,
+		// A table lines ratings up, so the drop from 5 to 4 stars is easy to scan.
+		type: 'table',
+		filter: `(${kindIs('recipe')}) && formula.related`,
+		columns: [['formula.name', 'Name'], ['formula.rating', 'Rating']],
+		// Unrated recipes sort after rated ones.
+		sort: [['note.rating', 'DESC'], ['file.name', 'ASC']],
+	},
+];
+
+export function navigationBase(root: string): PlannedFile {
+	root = cabinetFolder(root);
+	const labels = new Map(VIEWS.flatMap(view => view.columns));
+	const lines = [
+		'filters:',
+		'  and:',
+		`    - ${yaml(`file.inFolder(${q(root)})`)}`,
+		`    - ${yaml('file.ext == "md"')}`,
+		'formulas:',
+		...Object.entries(FORMULAS).map(([name, expression]) => `  ${name}: ${yaml(expression)}`),
+		'properties:',
+		...[...labels].map(([property, label]) => `  ${property}:\n    displayName: ${q(label)}`),
+		'views:',
+		...VIEWS.flatMap(view => [
+			`  - type: ${view.type}`,
+			`    name: ${q(view.name)}`,
+			'    filters:',
+			'      and:',
+			`        - ${yaml(view.filter)}`,
+			'    order:',
+			...view.columns.map(([property]) => `      - ${property}`),
+			'    sort:',
+			...(view.sort ?? [['file.name', 'ASC']]).flatMap(([property, direction]) => [`      - property: ${property}`, `        direction: ${direction}`]),
+		]),
+		'',
+	];
+	return { path: basePath(root, NAVIGATION_BASE), kind: 'base', content: lines.join('\n'), managed: PREVIOUS_NAVIGATION_VERSIONS };
+}
+
+/** Embed lines for a resource note; empty for recipes and other kinds. */
+export function navigationEmbeds(root: string, kind: NoteKind): string {
+	const path = basePath(cabinetFolder(root), NAVIGATION_BASE);
+	return (SECTIONS[kind] ?? []).map(view => `![[${path}#${view}]]`).join('\n\n');
+}

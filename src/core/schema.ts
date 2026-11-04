@@ -57,6 +57,22 @@ export interface PlannedFile {
 	content: string;
 	kind: NoteKind | 'cabinet' | 'base';
 	catalogId?: string;
+	/**
+	 * Plugin-managed file: fingerprints of earlier generated versions (see `managedFingerprint`).
+	 * Setup replaces a file that still matches one; any other content is the user's and is kept.
+	 */
+	managed?: readonly string[];
+}
+
+/** Root-independent FNV-1a fingerprint of generated content, so versions match across cabinet folders. */
+export function managedFingerprint(content: string, root: string): string {
+	const text = content.replace(/\r\n/g, '\n').split(root).join('{root}');
+	let hash = 0x811c9dc5;
+	for (let index = 0; index < text.length; index++) {
+		hash ^= text.charCodeAt(index);
+		hash = Math.imul(hash, 0x01000193) >>> 0;
+	}
+	return `${text.length}-${hash.toString(16).padStart(8, '0')}`;
 }
 
 export function cabinetFolder(value: string): string {
@@ -113,4 +129,23 @@ export function optionalNumber(value: string, label: string, min: number, max = 
 		throw new Error(`${label} must be ${integer ? 'a whole number' : 'a number'} ${max === Infinity ? `of at least ${min}` : `between ${min} and ${max}`}.`);
 	}
 	return number;
+}
+
+export const RATING_MAX = 5;
+
+/**
+ * Recipe ratings are whole numbers from 1 to 5. Accepts that number, a numeric string,
+ * or a run of star emoji (the older vault convention). Returns undefined when the value
+ * is present but cannot be read, so callers can decide whether to keep it.
+ */
+export function parseRating(value: unknown): number | null | undefined {
+	if (value === null || value === undefined || (typeof value === 'string' && !value.trim())) return null;
+	let number: number | undefined;
+	if (typeof value === 'number') number = value;
+	else if (typeof value === 'string') {
+		const text = value.trim();
+		if (/^\d+$/.test(text)) number = Number(text);
+		else if (/^(?:⭐️?\s*)+$/u.test(text)) number = [...text.matchAll(/⭐/gu)].length;
+	}
+	return number !== undefined && Number.isInteger(number) && number >= 1 && number <= RATING_MAX ? number : undefined;
 }

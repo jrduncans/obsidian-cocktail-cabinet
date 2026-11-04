@@ -4,6 +4,8 @@ import type { App } from 'obsidian';
 import { CabinetStore } from '../src/vault/cabinet-store';
 import { starterPlan } from '../src/core/setup';
 import { relatedTargets } from '../src/core/relationships';
+import { managedFingerprint } from '../src/core/schema';
+import { PREVIOUS_NAVIGATION_VERSIONS } from '../src/core/navigation';
 import { TFile, TFolder } from './obsidian-stub';
 
 function fixture() {
@@ -51,7 +53,7 @@ function fixture() {
 void test('setup preserves a complete cabinet', async () => {
 	const { contents, store } = fixture();
 	const before = [...contents];
-	assert.deepEqual(await store.setup('Cocktails'), { created: 0, kept: contents.size });
+	assert.deepEqual(await store.setup('Cocktails'), { created: 0, updated: 0, kept: contents.size, customized: [] });
 	assert.deepEqual([...contents], before);
 });
 
@@ -95,6 +97,34 @@ void test('setup adds missing Bases to an older cabinet and preserves the home a
 	assert.equal(contents.get(customized), 'views: []\n# My custom view\n');
 	assert.equal(contents.get('Cocktails/Cocktail Cabinet.md'), home);
 	assert.equal((await store.setup('Cocktails')).created, 0);
+});
+
+void test('setup updates the managed navigation Base only while it matches an earlier generated version', async () => {
+	const { contents, store } = fixture();
+	const path = 'Cocktails/Views/Related.base';
+	const current = contents.get(path)!;
+	const earlier = 'filters:\n  and:\n    - \'file.inFolder("Cocktails")\'\n# an earlier generated version\n';
+	const previous = PREVIOUS_NAVIGATION_VERSIONS as string[];
+	previous.push(managedFingerprint(earlier, 'Cocktails'));
+	try {
+		assert.deepEqual((await store.previewSetup('Cocktails')).update, []);
+		contents.set(path, earlier);
+		const preview = await store.previewSetup('Cocktails');
+		assert.deepEqual(preview.update.map(file => file.path), [path]);
+		assert.deepEqual(preview.customized, []);
+		assert.equal((await store.setup('Cocktails')).updated, 1);
+		assert.equal(contents.get(path), current);
+		contents.set(path, `${earlier}# my change\n`);
+		const result = await store.setup('Cocktails');
+		assert.equal(result.updated, 0);
+		assert.deepEqual(result.customized, [path]);
+		assert.equal(contents.get(path), `${earlier}# my change\n`);
+	} finally { previous.pop(); }
+});
+
+void test('managed fingerprints ignore the cabinet folder and line endings', () => {
+	assert.equal(managedFingerprint('a "Cocktails" b\n', 'Cocktails'), managedFingerprint('a "Drinks/Bar" b\r\n', 'Drinks/Bar'));
+	assert.notEqual(managedFingerprint('a', 'Cocktails'), managedFingerprint('b', 'Cocktails'));
 });
 
 void test('a file blocking the Views folder stops setup before any files are created', async () => {
@@ -150,6 +180,32 @@ void test('bottle classification reads one scalar type without broadening, while
 	assert.deepEqual(read().parents, []);
 });
 
+void test('types and families read one scalar parent and ignore lists', () => {
+	const family = 'Cocktails/Families/Rum.md';
+	const category = 'Cocktails/Categories/Spirit.md';
+	const type = 'Cocktails/Types/Light Rum.md';
+	const frontmatters = new Map<string, Record<string, unknown>>([
+		[category, { 'cc-kind': 'category', 'cc-name': 'Spirit' }],
+		[family, { 'cc-kind': 'family', 'cc-name': 'Rum', 'cc-category': `[[${category}]]` }],
+		[type, { 'cc-kind': 'type', 'cc-name': 'Light Rum', 'cc-family': `[[${family}]]` }],
+	]);
+	const app = {
+		vault: { getMarkdownFiles: () => [...frontmatters.keys()].map(path => new TFile(path)) },
+		metadataCache: {
+			getFileCache: (file: TFile) => ({ frontmatter: frontmatters.get(file.path) }),
+			getFirstLinkpathDest: (path: string) => frontmatters.has(path) ? new TFile(path) : null,
+		},
+	} as unknown as App;
+	const store = new CabinetStore(app, () => 'Cocktails');
+	const parents = (path: string) => store.notes().find(note => note.path === path)!.parents;
+	assert.deepEqual(parents(type), [family]);
+	assert.deepEqual(parents(family), [category]);
+	frontmatters.set(type, { 'cc-kind': 'type', 'cc-name': 'Light Rum', 'cc-family': [`[[${family}]]`] });
+	frontmatters.set(family, { 'cc-kind': 'family', 'cc-name': 'Rum', 'cc-category': [`[[${category}]]`] });
+	assert.deepEqual(parents(type), []);
+	assert.deepEqual(parents(family), []);
+});
+
 const enhancementDraft = {
 	kind: 'recipe' as const, name: 'A clipped recipe',
 	ingredients: ['2 oz [[Cocktails/Families/Gin|Gin (Cold River)]]'],
@@ -176,6 +232,15 @@ void test('enhancing an existing page moves it into Recipes and preserves metada
 	assert.deepEqual(properties.custom, { nested: [1, 2] });
 	assert.ok(saved.includes('### Method\n\nStir with ice.'));
 	assert.ok(saved.includes('Personal annotation.'));
+});
+
+void test('enhancement converts a star rating to a number', async () => {
+	const { store, contents } = fixture();
+	const path = 'Clippings/Starred.md';
+	const original = `---\n${JSON.stringify({ rating: '⭐️⭐️⭐️⭐️' })}\n---\n2 oz Gin`;
+	contents.set(path, original);
+	const result = await store.enhanceRecipe({ path, content: original }, enhancementDraft);
+	assert.equal((JSON.parse(contents.get(result.path)!.split('---\n')[1]!) as Record<string, unknown>).rating, 4);
 });
 
 void test('enhancement retains the location of a note already inside the cabinet', async () => {

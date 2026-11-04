@@ -218,7 +218,7 @@ export function catalogDraft(root: string, entry: CatalogEntry, paths: ReadonlyM
 		const kind = entry.kind === 'family' ? 'category' : entry.kind === 'bottle' ? 'type' : 'family';
 		const property = kind === 'category' ? PROP.category : kind === 'type' ? PROP.type : PROP.family;
 		const link = wikiLink(paths.get(`${kind}/${fileName(entry.parent)}`) || notePath(root, kind, entry.parent), entry.parent);
-		properties[property] = entry.kind === 'bottle' ? link : [link];
+		properties[property] = link;
 	}
 	return { ...entry, properties };
 }

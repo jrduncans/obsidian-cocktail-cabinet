@@ -46,11 +46,14 @@ Renamed types are rewritten automatically (see the types table). These depend on
 
 - **Categories:** Fruit Juice → Juice. Bitters is retired as a category; the Bitters family has none.
 - **Subcategories → families:** same-named ones map directly. Herbal Liqueur and Spice Liqueur → Herbal & Spice Liqueur. All bitters subcategories → Bitters. Fruit Syrup, Infused Syrup, and Orgeat → Flavored Syrup. Aperitif Wine → the new Aperitif Wine family. Fruit Brandy and Other Liqueur are retired.
+- **Parent links** are written as single link strings (`cc-type`, `cc-family`, `cc-category`); only `cc-provides` is a list.
 - **Parents** follow the starter where it differs (for example Pastis → Anise Spirit, Coffee Liqueur → none). See [the hierarchy review](knowledge-hierarchy-adoption-review.md#same-name-types-whose-parent-changes).
 - **Substitutes For** is dropped. Every declared pair now shares a type, so the logging picker lists them first.
 - **Bottle stock:** `Volume` "750 mL" → `cc-volume-ml` 750; `Remaining in Open Bottle` × volume → `cc-open-ml`; `Unopened Bottles` → `cc-unopened`; `ABV`, `Last Purchase Price`, and `Shopping List` carry over; all bottles use volume tracking. An empty open amount stays unknown rather than zero.
+- **Recipe ratings:** ⭐️ strings → `rating` 1–5 by star count; blank stays blank.
 - **Fresh Lemons, Limes, and Oranges** become other-stock sources providing their juices, with status tracking and availability carried over.
-- **Old-schema views and notes** (the `.base` files, `Shopping.md`, DataviewJS blocks, templates) are handled at cutover, not here.
+- **DataviewJS related-recipe blocks** on bottle, type, and subcategory notes are replaced with the plugin's navigation embeds for the note's kind (see [navigation in notes](cabinet-design.md#navigation-in-notes)), and `Related.base` is added to Views.
+- **Other old-schema views and notes** (the `.base` files, `Shopping.md`, templates) are handled at cutover, not here.
 
 ## Ingredient types
 

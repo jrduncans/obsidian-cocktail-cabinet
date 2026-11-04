@@ -18,7 +18,7 @@ export class IngredientModal extends CabinetForm {
 		this.area('Description', description, value => { description = value; });
 		if (this.kind !== 'category') {
 			const parentKind: NoteKind = this.kind === 'family' ? 'category' : 'family';
-			this.choose(`Ingredient ${parentKind} (optional)`, () => this.plugin.store.notes().filter(note => note.kind === parentKind), notes => { parents = notes; }, true);
+			this.choose(`Ingredient ${parentKind} (optional)`, () => this.plugin.store.notes().filter(note => note.kind === parentKind), notes => { parents = notes; });
 		}
 		if (this.kind === 'type') {
 			this.area('Preparation (optional)', preparation, value => { preparation = value; });
@@ -26,7 +26,7 @@ export class IngredientModal extends CabinetForm {
 		}
 		this.submit('Create note', async () => {
 			const properties: Properties = {};
-			if (this.kind !== 'category') properties[this.kind === 'family' ? PROP.category : PROP.family] = parents.map(note => this.plugin.store.link(note));
+			if (this.kind !== 'category' && parents[0]) properties[this.kind === 'family' ? PROP.category : PROP.family] = this.plugin.store.link(parents[0]);
 			if (this.kind === 'type') {
 				properties[PROP.shoppingList] = shoppingList;
 			}

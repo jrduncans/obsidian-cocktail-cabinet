@@ -1,6 +1,6 @@
 import { parseYaml, stringifyYaml } from 'obsidian';
 import { localDate, recipeBody } from '../core/notes';
-import { noteName, PROP } from '../core/schema';
+import { noteName, parseRating, PROP } from '../core/schema';
 import type { NoteDraft } from '../core/schema';
 
 export function readRecipeDocument(content: string): { body: string; metadata: Record<string, unknown> } {
@@ -13,7 +13,7 @@ export function readRecipeDocument(content: string): { body: string; metadata: R
 	return { body: content.slice(frontmatter[0].length), metadata: (parsed || {}) as Record<string, unknown> };
 }
 
-/** Keep existing metadata, including nested properties, rating, aliases, and creation date. */
+/** Keep existing metadata, including nested properties, aliases, and creation date. A readable rating becomes a number; anything else is kept as written. */
 export function enhancedRecipeContent(original: string, draft: NoteDraft): string {
 	if (draft.kind !== 'recipe' || !draft.ingredients?.length) throw new Error('Add at least one ingredient before saving the recipe.');
 	const { metadata } = readRecipeDocument(original);
@@ -22,7 +22,7 @@ export function enhancedRecipeContent(original: string, draft: NoteDraft): strin
 	const properties = {
 		...metadata, [PROP.kind]: 'recipe', [PROP.name]: name,
 		source: draft.properties?.source ?? null,
-		created: metadata.created ?? localDate(), rating: metadata.rating ?? null,
+		created: metadata.created ?? localDate(), rating: parseRating(metadata.rating) ?? metadata.rating ?? null,
 	};
 	return `---\n${stringifyYaml(properties).trimEnd()}\n---\n# ${name}\n\n${recipeBody(draft)}\n`;
 }

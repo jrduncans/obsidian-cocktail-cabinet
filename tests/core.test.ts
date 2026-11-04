@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { STARTER_CATALOG } from '../src/catalog/catalog';
-import { cabinetFolder, fileName, noteName, notePath, optionalNumber, PROP, wikiLink } from '../src/core/schema';
+import { cabinetFolder, fileName, noteName, notePath, optionalNumber, parseRating, PROP, wikiLink } from '../src/core/schema';
 import type { CabinetNote } from '../src/core/schema';
 import { ingredientSection, localDate, renderNote } from '../src/core/notes';
 import { isWithin, relatedTargets } from '../src/core/relationships';
 import { starterPlan } from '../src/core/setup';
 import { basePath, RESOURCE_BASES } from '../src/core/bases';
+import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } from '../src/core/navigation';
 
 void test('cabinet paths remain inside a visible vault folder', () => {
 	assert.equal(cabinetFolder(' Drinks/Cabinet/ '), 'Drinks/Cabinet');
@@ -39,9 +40,9 @@ void test('starter notes have unique identities and valid, complete parent links
 	assert.equal(new Set(STARTER_CATALOG.map(entry => entry.id)).size, STARTER_CATALOG.length);
 	const families = new Set(STARTER_CATALOG.filter(entry => entry.kind === 'family').map(entry => entry.name.toLowerCase()));
 	assert.ok(!STARTER_CATALOG.some(entry => entry.kind === 'type' && families.has(entry.name.toLowerCase())), 'types do not share a family name');
-	const paths = new Set(files.map(file => file.path.replace(/\.md$/, '')));
+	const paths = new Set(files.flatMap(file => [file.path, file.path.replace(/\.md$/, '')]));
 	for (const file of files) {
-		for (const match of file.content.matchAll(/\[\[([^\]]+)\]\]/g)) assert.ok(paths.has(match[1]?.split('|')[0] || ''), `${file.path}: ${match[1]}`);
+		for (const match of file.content.matchAll(/\[\[([^\]]+)\]\]/g)) assert.ok(paths.has(match[1]?.split('|')[0]?.split('#')[0] || ''), `${file.path}: ${match[1]}`);
 	}
 });
 
@@ -113,6 +114,15 @@ void test('bottle creation stores one type or leaves it unclassified and rejects
 	assert.throws(() => renderNote('Cocktails', { ...draft, properties: { [PROP.type]: [type] } }, '2026-10-31'), /Select one ingredient type/);
 });
 
+void test('types and families store one parent link and reject lists', () => {
+	const family = wikiLink('Cocktails/Families/Rum.md');
+	const type = renderNote('Cocktails', { kind: 'type', name: 'Example Rum', description: '', properties: { [PROP.family]: family } }, '2026-11-04');
+	assert.ok(type.content.includes(`cc-family: ${JSON.stringify(family)}\n`));
+	assert.throws(() => renderNote('Cocktails', { kind: 'type', name: 'Example Rum', description: '', properties: { [PROP.family]: [family] } }, '2026-11-04'), /one ingredient family/);
+	assert.throws(() => renderNote('Cocktails', { kind: 'family', name: 'Example', description: '', properties: { [PROP.category]: [wikiLink('Cocktails/Categories/Spirit.md')] } }, '2026-11-04'), /one ingredient category/);
+	for (const file of starterPlan('Cocktails')) assert.ok(!/cc-(family|category): \[/.test(file.content), file.path);
+});
+
 void test('starter groupings are optional at both parent levels', () => {
 	const files = starterPlan('Cocktails');
 	const bitters = files.find(file => file.path === 'Cocktails/Families/Bitters.md');
@@ -131,7 +141,8 @@ void test('home introduces all six resource Bases in context without embeds or s
 	const files = starterPlan('Drinks/Cabinet');
 	const home = files.find(file => file.kind === 'cabinet')!;
 	const bases = files.filter(file => file.kind === 'base');
-	assert.equal(bases.length, 6);
+	assert.equal(bases.length, 7);
+	assert.ok(bases.some(file => file.path === basePath('Drinks/Cabinet', NAVIGATION_BASE)));
 	for (const resource of RESOURCE_BASES) {
 		const path = basePath('Drinks/Cabinet', resource.name);
 		assert.ok(bases.some(file => file.path === path));
@@ -148,7 +159,8 @@ void test('home introduces all six resource Bases in context without embeds or s
 
 void test('Bases use the selected root and kind without requiring parents or catalog membership', () => {
 	const root = "My cabinet's/Drinks";
-	const bases = starterPlan(root).filter(file => file.kind === 'base');
+	const bases = starterPlan(root).filter(file => file.kind === 'base' && !file.path.endsWith(`/${NAVIGATION_BASE}.base`));
+	assert.equal(bases.length, RESOURCE_BASES.length);
 	for (const [index, base] of bases.entries()) {
 		const filters = base.content.split('properties:')[0]!.split('\n')
 			.filter(line => line.startsWith('    - ')).map(line => JSON.parse(line.slice(6)) as string);
@@ -327,4 +339,39 @@ void test('resource Bases expose mL stock, tracking choices, and independent pur
 	for (const base of bases.filter(file => /families|categories|Recipes/i.test(file.path))) {
 		assert.ok(!base.content.includes(PROP.shoppingList));
 	}
+});
+
+void test('the navigation Base is scoped to the root and serves every embedded view', () => {
+	const root = "My cabinet's/Drinks";
+	const base = navigationBase(root);
+	assert.equal(base.path, basePath(root, NAVIGATION_BASE));
+	assert.ok(base.content.includes(`- 'file.inFolder("My cabinet''s/Drinks")'`));
+	assert.ok(base.managed, 'the navigation Base is plugin-managed');
+	assert.ok(base.content.includes('direction: DESC'), 'recipes sort by rating');
+	for (const view of Object.values(NAVIGATION_VIEWS)) assert.ok(base.content.includes(`name: "${view}"`), view);
+	assert.ok(!base.content.includes(PROP.catalogId));
+	// Every formula line is one YAML single-quoted scalar.
+	for (const line of base.content.split('formulas:\n')[1]!.split('properties:')[0]!.trimEnd().split('\n')) assert.match(line, /^ {2}\w+: '.*'$/);
+});
+
+void test('resource notes embed their navigation sections; recipes do not', () => {
+	const embed = (view: string) => `![[Cocktails/Views/${NAVIGATION_BASE}.base#${view}]]`;
+	assert.equal(navigationEmbeds('Cocktails', 'category'), [NAVIGATION_VIEWS.families, NAVIGATION_VIEWS.recipes].map(embed).join('\n\n'));
+	assert.equal(navigationEmbeds('Cocktails', 'family'), [NAVIGATION_VIEWS.types, NAVIGATION_VIEWS.stock, NAVIGATION_VIEWS.recipes].map(embed).join('\n\n'));
+	assert.equal(navigationEmbeds('Cocktails', 'type'), [NAVIGATION_VIEWS.stock, NAVIGATION_VIEWS.recipes].map(embed).join('\n\n'));
+	for (const kind of ['bottle', 'ingredient'] as const) assert.equal(navigationEmbeds('Cocktails', kind), [NAVIGATION_VIEWS.sameType, NAVIGATION_VIEWS.recipes].map(embed).join('\n\n'));
+	assert.equal(navigationEmbeds('Cocktails', 'recipe'), '');
+	const type = renderNote('Cocktails', { kind: 'type', name: 'Example', description: 'About it.' }, '2026-11-04');
+	assert.ok(type.content.endsWith(`About it.\n\n${navigationEmbeds('Cocktails', 'type')}\n`));
+	const recipe = renderNote('Cocktails', { kind: 'recipe', name: 'Example', description: '' }, '2026-11-04');
+	assert.ok(!recipe.content.includes(NAVIGATION_BASE));
+});
+
+void test('ratings read numbers, numeric strings, and star runs from 1 to 5', () => {
+	assert.equal(parseRating(4), 4);
+	assert.equal(parseRating('3'), 3);
+	assert.equal(parseRating('⭐️⭐️⭐️⭐️'), 4);
+	assert.equal(parseRating('⭐⭐'), 2);
+	for (const value of [null, undefined, '', '  ']) assert.equal(parseRating(value), null);
+	for (const value of [0, 6, 3.5, 'great', '⭐️ good', ['⭐️']]) assert.equal(parseRating(value), undefined);
 });

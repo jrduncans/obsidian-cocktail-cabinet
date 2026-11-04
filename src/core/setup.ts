@@ -2,6 +2,7 @@ import { STARTER_CATALOG, catalogDraft } from '../catalog/catalog';
 import { localDate, markdown, renderNote } from './notes';
 import { cabinetFolder, notePath, PROP, wikiLink } from './schema';
 import { basePath, resourceBases } from './bases';
+import { NAVIGATION_BASE, navigationBase } from './navigation';
 import type { PlannedFile } from './schema';
 
 export function starterPlan(folder: string, paths: ReadonlyMap<string, string> = new Map()): PlannedFile[] {
@@ -11,7 +12,7 @@ export function starterPlan(folder: string, paths: ReadonlyMap<string, string> =
 		path: paths.get(entry.id) || notePath(root, entry.kind, entry.name),
 		catalogId: entry.id,
 	}));
-	return [...files, ...resourceBases(root), cabinetHome(root)];
+	return [...files, ...resourceBases(root), navigationBase(root), cabinetHome(root)];
 }
 
 function cabinetHome(root: string): PlannedFile {
@@ -68,6 +69,8 @@ Open a linked view to browse your current notes, edit properties, or customize f
 
 Edit this page, ingredient notes, and views to suit your cabinet. Setup preserves existing files when you run it again.
 
+${viewLink(NAVIGATION_BASE)} is the exception: it supplies the sections shown in each ingredient and bottle note, and setup keeps it current. Changes to it affect every note, and setup stops updating it once you change it.
+
 Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The views need only Obsidian’s core Bases plugin.`),
 	};
 }
@@ -75,6 +78,10 @@ Your notes, links, and properties remain usable with Cocktail Cabinet disabled. 
 export interface SetupPreview {
 	root: string;
 	create: PlannedFile[];
+	/** Plugin-managed files still matching an earlier generated version. */
+	update: PlannedFile[];
 	keep: string[];
+	/** Plugin-managed files the user has changed; kept as they are. */
+	customized: string[];
 	conflicts: string[];
 }

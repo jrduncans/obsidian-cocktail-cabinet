@@ -2,6 +2,7 @@ import { Setting } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { parseRecipeText } from '../core/recipe-import';
 import type { RecipeImport } from '../core/recipe-import';
+import { parseRating } from '../core/schema';
 import type { NoteDraft } from '../core/schema';
 import { readRecipeDocument } from '../vault/recipe-document';
 import type { RecipeSnapshot } from '../vault/cabinet-store';
@@ -79,7 +80,7 @@ export class RecipeModal extends CabinetForm {
 			const draft: NoteDraft = {
 				kind: 'recipe', name: recipe.name, ingredients: ingredients.lines(), method: recipe.method,
 				description: recipe.description, tastingNotes: recipe.tastingNotes,
-				properties: { source: recipe.source.trim() || null, rating: typeof metadata.rating === 'number' ? metadata.rating : null },
+				properties: { source: recipe.source.trim() || null, rating: parseRating(metadata.rating) ?? null },
 			};
 			const file = this.snapshot ? await this.plugin.store.enhanceRecipe(this.snapshot, draft) : await this.plugin.store.create(draft);
 			this.close();

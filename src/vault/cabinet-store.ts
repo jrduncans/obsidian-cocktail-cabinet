@@ -1,5 +1,5 @@
 import { App, TFile, TFolder, parseFrontMatterAliases, parseYaml } from 'obsidian';
-import { cabinetFolder, KINDS, PROP, wikiLink } from '../core/schema';
+import { cabinetFolder, KINDS, managedFingerprint, PROP, wikiLink } from '../core/schema';
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { ingredientSection, localDate, renderNote } from '../core/notes';
 import { relatedTargets } from '../core/relationships';
@@ -49,7 +49,8 @@ export class CabinetStore {
 			const parentProperty = PARENT_PROPERTIES[kind as NoteKind];
 			const parents = (parentProperty ? [parentProperty] : []).flatMap(key => {
 				const value: unknown = frontmatter?.[key];
-				const links = kind === 'bottle' ? [value] : Array.isArray(value) ? value : [value];
+				// Hierarchy parents are single links; only other stock provides several types.
+				const links = kind === 'ingredient' && Array.isArray(value) ? value : [value];
 				return links.flatMap((link: unknown) => {
 					if (typeof link !== 'string') return [];
 					const target = this.resolve(link, file.path);
@@ -88,7 +89,7 @@ export class CabinetStore {
 
 	async previewSetup(folder: string): Promise<SetupPreview> {
 		const root = cabinetFolder(folder);
-		const result: SetupPreview = { root, create: [], keep: [], conflicts: [] };
+		const result: SetupPreview = { root, create: [], update: [], keep: [], customized: [], conflicts: [] };
 		const allFiles = this.app.vault.getFiles();
 		const byLowerPath = new Map(allFiles.map(file => [file.path.toLowerCase(), file]));
 		const catalogPaths = new Map<string, string>();
@@ -119,7 +120,12 @@ export class CabinetStore {
 			}
 			if (existing instanceof TFile && existing.path === planned.path
 				&& planned.kind === 'base' && existing.extension === 'base') {
-				result.keep.push(existing.path);
+				if (planned.managed) {
+					const current = await this.app.vault.read(existing);
+					if (current === planned.content) result.keep.push(existing.path);
+					else if (planned.managed.includes(managedFingerprint(current, root))) result.update.push(planned);
+					else { result.keep.push(existing.path); result.customized.push(existing.path); }
+				} else result.keep.push(existing.path);
 				continue;
 			}
 			if (existing instanceof TFile && existing.extension === 'md' && existing.path === planned.path) {
@@ -136,9 +142,9 @@ export class CabinetStore {
 		return result;
 	}
 
-	async setup(folder: string): Promise<{ created: number; kept: number }> {
+	async setup(folder: string): Promise<{ created: number; updated: number; kept: number; customized: string[] }> {
 		return this.write(async () => {
-			// Recheck at apply time; no existing file is ever overwritten.
+			// Recheck at apply time; only unchanged plugin-managed files are ever replaced.
 			const preview = await this.previewSetup(folder);
 			if (preview.conflicts.length) {
 				const conflicts = preview.conflicts.slice(0, 3).join(', ');
@@ -148,7 +154,18 @@ export class CabinetStore {
 				await this.ensureFolder(file.path.slice(0, file.path.lastIndexOf('/')));
 				await this.app.vault.create(file.path, file.content);
 			}
-			return { created: preview.create.length, kept: preview.keep.length };
+			let updated = 0;
+			for (const file of preview.update) {
+				const existing = this.app.vault.getAbstractFileByPath(file.path);
+				if (!(existing instanceof TFile)) continue;
+				await this.app.vault.process(existing, current => {
+					// A user edit since the preview wins.
+					if (!file.managed?.includes(managedFingerprint(current, preview.root))) return current;
+					updated++;
+					return file.content;
+				});
+			}
+			return { created: preview.create.length, updated, kept: preview.keep.length, customized: preview.customized };
 		});
 	}
 

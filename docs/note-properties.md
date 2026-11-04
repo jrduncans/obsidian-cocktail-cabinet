@@ -10,7 +10,7 @@ Each resource below lists its own frontmatter properties with a **Type**, a bool
 
 - `Required: true` means the property is required by the resource schema. `false` means omission is supported. For stock resources, the selected mode is required for stock behavior; general resource browsing only checks the root scope and kind marker. Creation forms can require additional input, and generated notes can include optional properties; those rules are described explicitly.
 - `string` is YAML text. `number` is a YAML number. `integer` is a whole number. `date` is a local calendar date stored as `YYYY-MM-DD`.
-- `T[]` is a list of values of type `T`. `link<Resource>` is a quoted wiki-link string pointing to a cabinet resource of that type. For example: `"[[Cocktails/Families/Rum|Rum]]"`. Bottle classification uses a single link string. Other generated relationships are lists; their reader also accepts one link string.
+- `T[]` is a list of values of type `T`. `link<Resource>` is a quoted wiki-link string pointing to a cabinet resource of that type. For example: `"[[Cocktails/Families/Rum|Rum]]"`. Hierarchy parents (`cc-type`, `cc-family`, `cc-category`) are single link strings: each note has one home. Only `cc-provides` is a list, because one piece of other stock can provide several types (limes provide lime juice and lime peel).
 - `null` is an explicit unknown value, distinct from zero, except that an empty unopened-bottle count means zero. Optional properties may be absent; a type containing `null` additionally permits an explicit null value.
 - `unknown` identifies a field whose value type has not yet been defined. It is not a claim that a value has been validated.
 
@@ -41,7 +41,7 @@ An optional grouping of ingredient types, such as Rum or Bitters. A family may b
 | `cc-name` | `string` | `false` | Proper display name for plugin UI and new links. Generated from the required Name input; falls back to the filename if absent or unusable. |
 | `aliases` | `string[]` | `false` | Alternate names included in picker search and available to Obsidian links. |
 | `cc-catalog-id` | `string` | `false` | Starter identity, such as `family/Aquavit`. Setup uses it to recognize renamed starter resources and reject duplicates. User-created families do not need one. |
-| `cc-category` | `link<Ingredient category>[]` | `false` | Broader classifications. Read for linked-resource browsing and related-recipe traversal. No category is inferred from the family name. |
+| `cc-category` | `link<Ingredient category>` | `false` | The family's category. Read for linked-resource browsing and related-recipe traversal. No category is inferred from the family name. |
 
 The description lives in the body. Missing categories do not make a family incomplete or invalid.
 
@@ -55,7 +55,7 @@ A recipe-facing kind of ingredient, such as Rye Whiskey, Lime Juice, or Simple S
 | `cc-name` | `string` | `false` | Proper display name for plugin UI and new links; for example, `Bénédictine` can be stored separately from `Benedictine.md`. Generated from the required Name input; falls back to the filename if absent or unusable. |
 | `aliases` | `string[]` | `false` | Synonyms included in picker search, such as `Rhum Agricole Blanc` for Unaged Rhum Agricole. Aliases identify the same ingredient rather than declaring substitutions. |
 | `cc-catalog-id` | `string` | `false` | Starter identity based on the current catalog name, such as `type/Apple Brandy` or `family/Apple Brandy Family`. Setup reads IDs for recognition across renames, missing-page recovery, and duplicate detection. Omitted on user-created types. |
-| `cc-family` | `link<Ingredient family>[]` | `false` | Broader groupings read for linked-resource browsing and related-recipe traversal. Missing families are valid. A narrow type does not gain sibling types as alternatives merely by sharing a family. |
+| `cc-family` | `link<Ingredient family>` | `false` | The type's family, read for linked-resource browsing and related-recipe traversal. Missing families are valid. A narrow type does not gain sibling types as alternatives merely by sharing a family. |
 | `cc-sugar-water-ratio` | `string` | `false` | Authored on the three starter simple/demerara syrup types, such as `2:1 by weight`. Records the ratio and its weight basis. No dedicated form input, runtime parser, or calculation currently uses it. |
 | `cc-shopping-list` | `boolean` | `false` | Marks a generic need for this ingredient type when `true`, without selecting a bottle or source. Missing means `false`. Included in the planned combined shopping-list view; independent of flags and stock levels on linked bottles or sources. |
 
@@ -79,6 +79,8 @@ A named bottle, together with its recorded stock. One note tracks the open amoun
 | `cc-availability` | `Availability` | `false` | **Status mode only.** Manual `Unknown`, `Have`, `Low`, or `Out`; missing means `Unknown`. Creation writes the chosen status explicitly. Pours do not automatically decrement or change this status. |
 | `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative numeric amount last paid for one bottle, with zero valid and missing or null meaning unknown. Purchasing metadata, independent of stock mode. No price history, currency conversion, or cost calculations are defined. |
 | `cc-shopping-list` | `boolean` | `false` | Explicitly marks this bottle for purchase when `true`. Missing means `false`. Independent of current stock level and of any flag on its ingredient type; eligible for the planned combined shopping-list view. |
+
+Earlier development notes that store `cc-family` or `cc-category` as a list need the same conversion to one quoted link string; a list is ignored, leaving the note without a parent.
 
 Earlier development notes using `cc-types` need manual conversion: select one ingredient type, store its quoted wiki link as the scalar `cc-type`, and remove `cc-types`. The reader does not fall back to the old property or choose between multiple types. Update preserved bottle Bases to use `note.cc-type` in their property configuration and column order; setup does not overwrite them.
 
@@ -176,7 +178,7 @@ A cocktail's requirements, method, description, and tasting notes. New notes are
 | `aliases` | `string[]` | `false` | Alternate names included in cabinet picker search and available to Obsidian links. |
 | `created` | `date` | `false` | Resolved to the local calendar date during creation; enhancement retains an existing creation date. For example, `2026-10-30`. Recorded metadata; no current date-based behavior reads it. Generated recipes always include it. |
 | `source` | `string \| null` | `false` | Provenance such as a URL, book, or attribution. The form trims text and stores `null` when blank. Recorded only; no fetching or interpretation. |
-| `rating` | `unknown` | `false` | Reserved rating metadata, initialized to `null`; copied-text creation retains a numeric source rating; enhancement preserves an existing rating of any shape. The scale has not been defined or validated. No rating form input, sorting, or filtering currently uses it. |
+| `rating` | `integer \| null` | `false` | Whole number from 1 to 5; null or missing means unrated. Shown as stars and sorted highest first in each note's Recipes section, unrated last. Copied-text creation and enhancement convert a numeric string or a run of ⭐️ (the older convention) to the number; enhancement keeps any other existing value as written. No rating form input yet. |
 
 Recipe requirements are Markdown body content rather than frontmatter properties:
 
