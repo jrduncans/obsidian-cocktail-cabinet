@@ -37,6 +37,8 @@ void test('starter notes have unique identities and valid, complete parent links
 	assert.equal(new Set(files.map(file => file.path.toLowerCase())).size, files.length);
 	assert.equal(new Set(STARTER_CATALOG.map(entry => entry.name.toLowerCase())).size, STARTER_CATALOG.length);
 	assert.equal(new Set(STARTER_CATALOG.map(entry => entry.id)).size, STARTER_CATALOG.length);
+	const families = new Set(STARTER_CATALOG.filter(entry => entry.kind === 'family').map(entry => entry.name.toLowerCase()));
+	assert.ok(!STARTER_CATALOG.some(entry => entry.kind === 'type' && families.has(entry.name.toLowerCase())), 'types do not share a family name');
 	const paths = new Set(files.map(file => file.path.replace(/\.md$/, '')));
 	for (const file of files) {
 		for (const match of file.content.matchAll(/\[\[([^\]]+)\]\]/g)) assert.ok(paths.has(match[1]?.split('|')[0] || ''), `${file.path}: ${match[1]}`);
@@ -218,11 +220,13 @@ void test('Apple Brandy Family groups regular apple brandy with the other recipe
 
 void test('reviewed liqueur groupings and the default Vodka type replace the initial catch-all entries', () => {
 	const expected: [string, string | undefined][] = [
-		['Green Herbal Liqueur', 'Herbal Liqueur'], ['Yellow Herbal Liqueur', 'Herbal Liqueur'], ['Bénédictine', 'Herbal Liqueur'],
-		['Crème de Menthe', 'Herbal Liqueur'], ['Contemporary Gin', 'Gin'],
+		['Green Herbal Liqueur', 'Herbal & Spice Liqueur'], ['Yellow Herbal Liqueur', 'Herbal & Spice Liqueur'], ['Herbal Liqueur', 'Herbal & Spice Liqueur'],
+		['Crème de Menthe', 'Herbal & Spice Liqueur'], ['Contemporary Gin', 'Gin'],
 		['Vermouth Amaro', 'Vermouth'], ['Vanilla Syrup', 'Flavored Syrup'],
 		['Elderflower Liqueur', 'Floral Liqueur'], ['Violet Liqueur', 'Floral Liqueur'],
-		['Allspice Dram', 'Spice Liqueur'], ['Falernum', 'Spice Liqueur'], ['Amaretto', 'Nut Liqueur'],
+		['Allspice Dram', 'Herbal & Spice Liqueur'], ['Falernum', 'Herbal & Spice Liqueur'], ['Vanilla Liqueur', 'Herbal & Spice Liqueur'], ['Spice Liqueur', 'Herbal & Spice Liqueur'], ['Amaretto', 'Nut Liqueur'],
+		['Flavored Rum', 'Rum'], ['Specialty Bitters', 'Bitters'], ['Tiki Bitters', 'Bitters'], ['Grapefruit Bitters', 'Bitters'],
+		['Pineapple Liqueur', 'Fruit Liqueur'], ['Melon Liqueur', 'Fruit Liqueur'], ['Bergamot Liqueur', 'Fruit Liqueur'], ['Bitter Aperitif Wine', 'Aperitif Wine'],
 		['Coffee Liqueur', undefined], ['Crème de Cacao', undefined], ['Vodka', undefined],
 		['Amaro', 'Amaro Family'], ['Red Bitter Liqueur', 'Amaro Family'], ['Orange Bitter Liqueur', 'Amaro Family'], ['Gentian Liqueur', 'Amaro Family'], ['Fernet', 'Amaro Family'], ['Artichoke Amaro', 'Amaro Family'],
 	];
@@ -231,7 +235,7 @@ void test('reviewed liqueur groupings and the default Vodka type replace the ini
 		assert.ok(entry, name);
 		assert.equal(entry.parent, parent, name);
 	}
-	for (const name of ['Herbal and Floral Liqueur', 'Nut and Dessert Liqueur', 'Unflavored Vodka', 'Bitter Liqueur', 'Red Bitter Aperitif', 'Gentian Aperitif', 'Swedish Punsch', 'Sloe Gin', 'Coconut Rum']) {
+	for (const name of ['Herbal and Floral Liqueur', 'Nut and Dessert Liqueur', 'Unflavored Vodka', 'Bitter Liqueur', 'Red Bitter Aperitif', 'Gentian Aperitif', 'Swedish Punsch', 'Sloe Gin', 'Coconut Rum', 'Bénédictine']) {
 		assert.ok(!STARTER_CATALOG.some(entry => entry.name === name), name);
 	}
 	assert.ok(!STARTER_CATALOG.some(entry => entry.kind === 'family' && entry.name === 'Vodka'));

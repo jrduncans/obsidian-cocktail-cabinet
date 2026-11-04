@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-124 ingredient types, 26 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+134 ingredient types, 26 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -21,7 +21,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Aged Jamaican Rum | Rum | Spirit |
 | Aged Overproof Jamaican Rum | Rum | Spirit |
 | Aged Rhum Agricole | Rum | Spirit |
-| Allspice Dram | Spice Liqueur | Liqueur |
+| Allspice Dram | Herbal & Spice Liqueur | Liqueur |
 | Amaretto | Nut Liqueur | Liqueur |
 | Amaro | Amaro Family | Liqueur |
 | Amontillado Sherry | Sherry | Fortified Wine |
@@ -34,7 +34,8 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Aromatic Bitters | Bitters | — |
 | Artichoke Amaro | Amaro Family | Liqueur |
 | Banana Liqueur | Fruit Liqueur | Liqueur |
-| Bénédictine | Herbal Liqueur | Liqueur |
+| Bergamot Liqueur | Fruit Liqueur | Liqueur |
+| Bitter Aperitif Wine | Aperitif Wine | Fortified Wine |
 | Black Jamaican Rum | Rum | Spirit |
 | Blackcurrant Liqueur | Fruit Liqueur | Liqueur |
 | Blanc Vermouth | Vermouth | Fortified Wine |
@@ -56,7 +57,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Cranberry Juice | Other Fruit Juice | Juice |
 | Cream of Coconut | — | — |
 | Crème de Cacao | — | — |
-| Crème de Menthe | Herbal Liqueur | Liqueur |
+| Crème de Menthe | Herbal & Spice Liqueur | Liqueur |
 | Creole Bitters | Bitters | — |
 | Demerara 151 Rum | Rum | Spirit |
 | Demerara Rum | Rum | Spirit |
@@ -66,19 +67,22 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Dry White Wine | Still Wine | Wine |
 | Egg White | — | — |
 | Elderflower Liqueur | Floral Liqueur | Liqueur |
-| Falernum | Spice Liqueur | Liqueur |
+| Falernum | Herbal & Spice Liqueur | Liqueur |
 | Falernum Syrup | Flavored Syrup | Syrup |
 | Fernet | Amaro Family | Liqueur |
 | Fino Sherry | Sherry | Fortified Wine |
+| Flavored Rum | Rum | Spirit |
 | Genever | Gin | Spirit |
 | Gentian Liqueur | Amaro Family | Liqueur |
 | Ginger Ale | Carbonated Mixer | — |
 | Ginger Beer | Carbonated Mixer | — |
 | Ginger Syrup | Flavored Syrup | Syrup |
+| Grapefruit Bitters | Bitters | — |
 | Grapefruit Juice | Citrus Juice | Juice |
-| Green Herbal Liqueur | Herbal Liqueur | Liqueur |
+| Green Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Grenadine | Flavored Syrup | Syrup |
 | Heavy Cream | — | — |
+| Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Honey Syrup | Sugar Syrup | Syrup |
 | Irish Whiskey | Whiskey | Spirit |
 | Lemon Juice | Citrus Juice | Juice |
@@ -88,6 +92,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Lime Peel | — | — |
 | London Dry Gin | Gin | Spirit |
 | Maraschino Liqueur | Fruit Liqueur | Liqueur |
+| Melon Liqueur | Fruit Liqueur | Liqueur |
 | Mezcal | Agave Spirit | Spirit |
 | Milk | — | — |
 | Mint | — | — |
@@ -106,6 +111,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Peach Liqueur | Fruit Liqueur | Liqueur |
 | Pedro Ximénez Sherry | Sherry | Fortified Wine |
 | Pineapple Juice | Other Fruit Juice | Juice |
+| Pineapple Liqueur | Fruit Liqueur | Liqueur |
 | Pineapple Rum | Rum | Spirit |
 | Plymouth Gin | Gin | Spirit |
 | Prosecco | Sparkling Wine | Wine |
@@ -118,7 +124,10 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Simple Syrup (2 to 1) | Sugar Syrup | Syrup |
 | Single Malt Scotch | Whiskey | Spirit |
 | Soda Water | Carbonated Mixer | — |
+| Specialty Bitters | Bitters | — |
+| Spice Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Sweet Vermouth | Vermouth | Fortified Wine |
+| Tiki Bitters | Bitters | — |
 | Tomato Juice | Vegetable Juice | Juice |
 | Tonic Water | Carbonated Mixer | — |
 | Unaged Aquavit | Aquavit | Spirit |
@@ -127,13 +136,14 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Unaged Mexican Rum | Rum | Spirit |
 | Unaged Overproof Jamaican Rum | Rum | Spirit |
 | Unaged Rhum Agricole | Rum | Spirit |
+| Vanilla Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Vanilla Syrup | Flavored Syrup | Syrup |
 | Vermouth Amaro | Vermouth | Fortified Wine |
 | Violet Liqueur | Floral Liqueur | Liqueur |
 | Vodka | — | — |
 | White Blended Rum | Rum | Spirit |
 | Whole Egg | — | — |
-| Yellow Herbal Liqueur | Herbal Liqueur | Liqueur |
+| Yellow Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 
 ## Reference bottles
 
