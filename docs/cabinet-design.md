@@ -122,6 +122,21 @@ The remaining branches retain their previous draft classifications for later foc
 
 The hierarchy table is generated from the catalog with `npm run catalog:docs`; `npm test` checks it for drift. Tests also assert selected reviewed classifications so that a synchronized table cannot silently reintroduce those old defaults.
 
+## Adoption and logging decisions
+
+Agreed on 2026-11-03 while scoping [roadmap](roadmap.md) Phase 1.
+
+- **Match the starter.** The `knowledge` vault adopts the starter classification wherever the two overlap, rather than preserving its own types locally. Bottle-level decisions and meaning-changing recipe links are settled before migration. Types the starter does not cover become local types in the plugin schema, under an existing starter family where one fits.
+- **One-off migration.** The `knowledge` vault is migrated by a one-off script with a dry-run report, rehearsed on a copy first. A general in-plugin adoption flow is not planned; reusable building blocks may be offered later.
+- **Plugin link style.** Migration rewrites every ingredient link to the generated style (vault-relative path with display text), replacing the vault's bare-link convention.
+- **Logging entry point.** **Log this cocktail** is an Obsidian command on the recipe note. Desktop is sufficient at first; mobile follows.
+- **No hard-coded substitution rules.** The vault skill's always-ask-for-Green-Chartreuse rule is not built in. Instead, every counted ingredient line in the review can be changed before apply:
+  - The picker first lists owned bottles that fit the line in the hierarchy: a type's bottles; any bottle of a type in a referenced family; or a referenced bottle plus the other bottles of its type.
+  - A final **Choose another bottle…** option searches every bottle in the cabinet for exceptional substitutions.
+  - A line with one candidate, or naming a specific owned bottle, is pre-selected. A line with several candidates starts unselected, and apply is disabled until each such line is chosen.
+  - The preview and shortfall check follow the current selections; apply writes exactly what is shown. Recording substitutions is out of scope for now.
+- **Stock editing deferred.** Bottle creation plus hand edits of stock fields are enough to start real use.
+
 ## Open decisions
 
 - The classification rules within the category, family, and type levels.
