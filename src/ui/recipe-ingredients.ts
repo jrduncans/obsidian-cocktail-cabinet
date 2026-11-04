@@ -46,7 +46,7 @@ export class RecipeIngredients {
 		let nameInput!: TextComponent;
 		const describe = () => {
 			const ml = recipeVolumeMl(data.amount);
-			const amount = ml === null ? 'Amount kept as written; review it when logging.' : `Volume recognized: ${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) ? ' (US fl oz)' : ''}.`;
+			const amount = ml === null ? 'Amount kept as written; review it when logging.' : `Volume recognized: ${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) && !/ml|millilit(?:er|re)s?/i.test(data.amount) ? ' (US fl oz)' : ''}.`;
 			status.setText(`${data.note ? `Linked to ${data.note.kind}: ${data.note.name}.` : /\[\[/.test(data.text) ? 'Existing Markdown links kept as written.' : 'Plain text; no cabinet link.'} ${amount}`);
 		};
 		const choose = (note: CabinetNote) => {

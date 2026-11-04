@@ -69,7 +69,7 @@ void test('matching volume-tracked other stock participates through provides and
 	assert.deepEqual(classify('- 15 ml [[Prepared juice]]', [ingredient()]).counted[0]?.candidates, [prepared.path]);
 });
 void test('unlinked, unmeasured, ambiguous, and status-only requirements have explicit skip reasons', () => {
-	const lines = classify('- 30 ml gin\n- 2 dashes [[First Gin]]\n- to taste [[First Gin]]\n- 1 oz (30 ml) [[First Gin]]\n- 15 ml [[Fresh limes]]\n- 10 ml [[Missing]]', [bottle(), status()]);
+	const lines = classify('- 30 ml gin\n- 2 dashes [[First Gin]]\n- to taste [[First Gin]]\n- 1–2 oz (30 ml) [[First Gin]]\n- 15 ml [[Fresh limes]]\n- 10 ml [[Missing]]', [bottle(), status()]);
 	assert.equal(lines.counted.length, 0);
 	assert.equal(lines.skipped.length, 6);
 	assert.match(lines.skipped[0]!.reason, /No cabinet link/);
@@ -186,4 +186,16 @@ void test('missing tracking mode never infers volume stock, and inactive status 
 	const manual = stockSnapshot(a, { ...bottle().fields, [PROP.stockTracking]: 'status', [PROP.availability]: 'Have' });
 	assert.equal(isStocked(manual), false);
 	assert.equal(manual.fields[PROP.open], undefined);
+});
+
+
+void test('rounded ounce/mL recipe amounts produce counted lines, pickers, and mL draw-down', () => {
+	const sources = [bottle(), ingredient()];
+	const lines = classify('- 2 oz (60 ml) [[First Gin]]\n- ¼ oz (7.5 ml) [[Lime Juice]]\n- 3 dashes [[First Gin]]', sources);
+	assert.deepEqual(lines.counted.map(line => line.ml), [60, 7.5]);
+	assert.deepEqual(lines.counted.map(line => line.initialSelection), [a.path, prepared.path]);
+	assert.equal(lines.skipped.length, 1);
+	const plan = planLogging(lines, sources, new Map(lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+	assert.deepEqual(plan.errors, []);
+	assert.deepEqual(plan.changes.map(change => change.updates), [{ [PROP.open]: 40 }, { [PROP.remaining]: 192.5 }]);
 });

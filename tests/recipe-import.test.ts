@@ -28,7 +28,7 @@ void test('plain ingredient lists, existing links, alternatives, and unsupported
 	for (const ingredient of ingredients) assert.ok(note.content.includes(`- ${ingredient}`));
 	assert.ok(result.warnings[0]?.includes('No Ingredients heading'));
 	assert.equal(recipeVolumeMl(result.ingredients[0]!.amount), null);
-	assert.equal(recipeVolumeMl(result.ingredients[2]!.amount), null);
+	assert.equal(recipeVolumeMl(result.ingredients[2]!.amount), 30);
 });
 
 void test('unrecognized headings and indented continuations are retained for review', () => {
@@ -61,7 +61,7 @@ void test('familiar amounts remain text while only single precise volumes are re
 		['30 mL', 30], ['3 cl', 30], ['1 oz', 29.5735295625], ['1½ fl. oz.', 44.36029434375],
 		['1 1/2 ounces', 44.36029434375], ['¾ oz', 22.180147171875], ['.5 oz', 14.78676478125], ['2,5 cl', 25],
 	] as const) assert.ok(Math.abs(recipeVolumeMl(amount)! - expected) < 1e-9, amount);
-	for (const amount of ['', '2 dashes', '1 barspoon', '1–2 oz', 'about 30 ml', '1 oz (30 ml)', '1 part', '0 ml', '1/0 oz', '-1 oz', '2 oz + 1 oz']) {
+	for (const amount of ['', '2 dashes', '1 barspoon', '1–2 oz', 'about 30 ml', '1 oz (about 30 ml)', '1 part', '0 ml', '1/0 oz', '-1 oz', '2 oz + 1 oz']) {
 		assert.equal(recipeVolumeMl(amount), null, amount);
 	}
 	for (const line of ['1½ oz Gin', '1 1/2 ounces Gin', '2 dashes bitters', '1–2 oz Gin', '1 oz (30 ml) Gin', 'a splash of Gin', '1 lime wheel']) {
@@ -173,4 +173,18 @@ void test('a method without a heading stays in order before explicitly headed st
 	const result = parseRecipeText('## Ingredients\n- 2 oz Gin\n\nStir with ice.\n## Method\nStrain.');
 	assert.equal(result.ingredients.length, 1);
 	assert.equal(result.method, 'Stir with ice.\nStrain.');
+});
+
+void test('parenthetical ounce and mL equivalents prefer the printed mL while preserving source text', () => {
+	for (const [amount, expected] of [
+		['2 oz (60 ml)', 60], ['2oz (60ml)', 60], ['¼ oz (7.5 ml)', 7.5], ['60 ml (2 oz)', 60],
+		['1 1/2 ounces (45 milliliters)', 45], ['1½ fl. oz. (45 mL)', 45], ['¼ oz (7,5 ml)', 7.5],
+	] as const) {
+		assert.equal(recipeVolumeMl(amount), expected, amount);
+		assert.deepEqual(splitIngredient(`${amount} Bourbon`), { amount, text: 'Bourbon' });
+	}
+	for (const amount of ['1–2 oz (30 ml)', '2 oz (30–60 ml)', '1 oz (about 30 ml)',
+		'1/0 oz (30 ml)', '0 oz (30 ml)', '1 oz (0 ml)', '1 oz (30 ml + 5 ml)', '1 oz (2 oz)', '30 ml (45 ml)']) {
+		assert.equal(recipeVolumeMl(amount), null, amount);
+	}
 });
