@@ -8,6 +8,7 @@ Turn the cocktail workflows already implemented as skills, scripts, and template
 - This repository is also the intended home for the supporting cocktail scripts as they are migrated from the vault.
 - Before planning ingredient resolution, logging, imports, or agent integration, read [the workflow assessment](docs/workflow-assessment.md) for existing behavior, known gaps, and proposed architecture. Its recommendations are proposals, not an approved implementation scope.
 - Before changing cabinet setup, hierarchy, note schemas, recipe creation, or ingredient resolution, read [the cabinet design](docs/cabinet-design.md) for agreed behavior, the collection-coherence goal, and current implementation choices. Use [the glossary](GLOSSARY.md) for domain terms.
+- When choosing what to work on next, consult [the development roadmap](docs/roadmap.md) for workflow status and phase order. It is a plan, not approved scope.
 
 This project spans three workspace folders:
 
