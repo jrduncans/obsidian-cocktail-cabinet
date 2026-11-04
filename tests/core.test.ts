@@ -8,6 +8,7 @@ import { isWithin, relatedTargets } from '../src/core/relationships';
 import { starterPlan } from '../src/core/setup';
 import { basePath, RESOURCE_BASES } from '../src/core/bases';
 import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } from '../src/core/navigation';
+import { SHOPPING_BASE, SHOPPING_VIEWS, shoppingBase, shoppingNote, shoppingNotePath } from '../src/core/shopping';
 
 void test('cabinet paths remain inside a visible vault folder', () => {
 	assert.equal(cabinetFolder(' Drinks/Cabinet/ '), 'Drinks/Cabinet');
@@ -62,7 +63,7 @@ void test('catalog identities use current starter names without URL schemes', ()
 void test('starter catalog supplies definitions without implying owned stock or supplying cocktail recipes', () => {
 	const files = starterPlan('Cocktails');
 	assert.ok(files.filter(file => file.kind === 'type').length >= 90);
-	assert.ok(files.every(file => ['category', 'family', 'type', 'bottle', 'cabinet', 'base'].includes(file.kind)));
+	assert.ok(files.every(file => ['category', 'family', 'type', 'bottle', 'cabinet', 'shopping', 'base'].includes(file.kind)));
 	assert.ok(files.filter(file => file.kind !== 'base').every(file => !file.content.includes(`${PROP.open}:`) && !file.content.includes(`${PROP.unopened}:`)));
 	const bottles = files.filter(file => file.kind === 'bottle');
 	assert.ok(bottles.length > 0);
@@ -141,8 +142,10 @@ void test('home introduces all six resource Bases in context without embeds or s
 	const files = starterPlan('Drinks/Cabinet');
 	const home = files.find(file => file.kind === 'cabinet')!;
 	const bases = files.filter(file => file.kind === 'base');
-	assert.equal(bases.length, 7);
+	assert.equal(bases.length, 8);
 	assert.ok(bases.some(file => file.path === basePath('Drinks/Cabinet', NAVIGATION_BASE)));
+	assert.ok(bases.some(file => file.path === basePath('Drinks/Cabinet', SHOPPING_BASE)));
+	assert.ok(home.content.includes(wikiLink(shoppingNotePath('Drinks/Cabinet'), 'Shopping list')));
 	for (const resource of RESOURCE_BASES) {
 		const path = basePath('Drinks/Cabinet', resource.name);
 		assert.ok(bases.some(file => file.path === path));
@@ -159,7 +162,7 @@ void test('home introduces all six resource Bases in context without embeds or s
 
 void test('Bases use the selected root and kind without requiring parents or catalog membership', () => {
 	const root = "My cabinet's/Drinks";
-	const bases = starterPlan(root).filter(file => file.kind === 'base' && !file.path.endsWith(`/${NAVIGATION_BASE}.base`));
+	const bases = starterPlan(root).filter(file => file.kind === 'base' && RESOURCE_BASES.some(resource => file.path === basePath(root, resource.name)));
 	assert.equal(bases.length, RESOURCE_BASES.length);
 	for (const [index, base] of bases.entries()) {
 		const filters = base.content.split('properties:')[0]!.split('\n')
@@ -374,4 +377,17 @@ void test('ratings read numbers, numeric strings, and star runs from 1 to 5', ()
 	assert.equal(parseRating('⭐⭐'), 2);
 	for (const value of [null, undefined, '', '  ']) assert.equal(parseRating(value), null);
 	for (const value of [0, 6, 3.5, 'great', '⭐️ good', ['⭐️']]) assert.equal(parseRating(value), undefined);
+});
+
+void test('the shopping list is a user-owned Base with a section per kind, embedded in its own note', () => {
+	const base = shoppingBase('Cocktails');
+	assert.equal(base.path, 'Cocktails/Views/Shopping list.base');
+	assert.ok(!base.managed);
+	for (const view of Object.values(SHOPPING_VIEWS)) assert.ok(base.content.includes(`name: "${view}"`), view);
+	assert.equal((base.content.match(/note\["cc-shopping-list"\] == true/g) ?? []).length, 3);
+	for (const label of ['Type', 'Provides', 'Have', 'Not in stock', 'Last price']) assert.ok(base.content.includes(`displayName: "${label}"`), label);
+	const note = shoppingNote('Cocktails');
+	assert.equal(note.path, 'Cocktails/Shopping list.md');
+	assert.ok(note.content.startsWith('---\ncc-kind: "shopping"\n---\n# Shopping list\n'));
+	for (const view of Object.values(SHOPPING_VIEWS)) assert.ok(note.content.includes(`![[Cocktails/Views/Shopping list.base#${view}]]`), view);
 });

@@ -55,7 +55,7 @@ export interface NoteDraft {
 export interface PlannedFile {
 	path: string;
 	content: string;
-	kind: NoteKind | 'cabinet' | 'base';
+	kind: NoteKind | 'cabinet' | 'shopping' | 'base';
 	catalogId?: string;
 	/**
 	 * Plugin-managed file: fingerprints of earlier generated versions (see `managedFingerprint`).

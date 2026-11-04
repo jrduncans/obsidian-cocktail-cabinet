@@ -53,7 +53,7 @@ Renamed types are rewritten automatically (see the types table). These depend on
 - **Recipe ratings:** ⭐️ strings → `rating` 1–5 by star count; blank stays blank.
 - **Fresh Lemons, Limes, and Oranges** become other-stock sources providing their juices, with status tracking and availability carried over.
 - **DataviewJS related-recipe blocks** on bottle, type, and subcategory notes are replaced with the plugin's navigation embeds for the note's kind (see [navigation in notes](cabinet-design.md#navigation-in-notes)), and `Related.base` is added to Views.
-- **Other old-schema views and notes** (the `.base` files, `Shopping.md`, templates) are handled at cutover, not here.
+- **Other old-schema views and notes** (the `.base` files, `Shopping.md`, templates) are handled at cutover, not here. `Shopping.md` is replaced by the plugin's **Shopping list** note.
 
 ## Ingredient types
 

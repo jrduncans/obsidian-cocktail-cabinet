@@ -9,7 +9,7 @@ Frequency is taken from the `knowledge` vault. In 2026 the daily notes have abou
 | Workflow | How often today | Status | To call it done |
 | --- | --- | --- | --- |
 | Log a drink | Several times a week | Built and tested on desktop; retry recovery deferred | Pick recipe and servings, review and adjust bottle choices, preview the mL drawn down, write the daily-note line, and be safe to retry. See [the workflow assessment](workflow-assessment.md#logging-needs-operation-level-retry-protection). |
-| Update stock | Weekly | Creation only; hand edits are error-prone | Open a new bottle, restock, adjust level, or mark finished without hand-editing `cc-open-ml` or `cc-unopened`. Switch a source between mL and availability tracking; by hand it is unclear which fields to add, clear, or convert. Shopping flags appear in one combined list. |
+| Update stock | Weekly | Creation only; hand edits are error-prone | Open a new bottle, restock, adjust level, or mark finished without hand-editing `cc-open-ml` or `cc-unopened`. Switch a source between mL and availability tracking; by hand it is unclear which fields to add, clear, or convert. |
 | Edit or rename a note | Whenever something is wrong | Not started | Rename a recipe, bottle, or ingredient once and have the file name, H1, `cc-name`, aliases, and incoming links follow; today a recipe rename takes three hand edits. Edit an existing note's fields with the same form that created it. |
 | Add a recipe | Weekly | Core works | Prep tags (`#shaken`, `#stirred`, …) and rating during review, a duplicate-recipe check, and the sources actually used: Bevnap CSV and web pages. Relink plain-text ingredients once a matching note exists (for example, the dev vault's Black Manhattan still has plain-text Angostura Bitters). |
 | Browse the hierarchy | While browsing | Built for new notes (embedded Bases); the migration script adds it to adopted notes | Each category, family, type, and bottle note shows, in the note itself, its parent, its children (families, types, or bottles), and the recipes that use it, as the vault's DataviewJS blocks do today. Those blocks read the old properties, so they stop working at cutover (about 300 notes). |
@@ -39,6 +39,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 - Built: hierarchy navigation embedded in category, family, type, bottle, and other-stock notes through a shared core Base; see [navigation in notes](cabinet-design.md#navigation-in-notes). The migration script must add the embeds to adopted notes.
 - New: **Rename** for cabinet notes, keeping file name, H1, `cc-name`, aliases, and links in step.
 - New: **Edit stock** on a bottle or other stock: open a bottle, restock, set the level, mark finished, and switch tracking mode with an explicit conversion (mL to availability keeps nothing numeric; availability to mL asks for the amounts).
+- Built: the **Shopping list** note, with sections for flagged bottles, types, and other stock; see [purchasing and the shopping list](note-properties.md#purchasing-and-the-shopping-list).
 - New: a worked example in the starter: Limes and Lemons (availability, providing the juice types), a homemade syrup in mL, and one or two recipes they complete, so a new cabinet can log a drink on day one. Decide whether example stock starts as Unknown or with sample amounts, and how setup treats examples a user deletes.
 
 ### 3. Harden logging
@@ -49,7 +50,6 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 ### 4. Everyday polish: less command-hunting
 
 - Finish: recipe review adds tags and rating, warns about duplicates, and supports relinking later.
-- Finish: the combined shopping-list Base.
 
 ### 5. Reach: retire the remaining skills
 

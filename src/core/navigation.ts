@@ -1,4 +1,6 @@
 import { basePath } from './bases';
+import { COMMON_FORMULAS, kindIs, parentsOf, q, renderFormulaBase, thisParentsOf } from './base-formulas';
+import type { FormulaView } from './base-formulas';
 import { cabinetFolder, PROP } from './schema';
 import type { NoteKind, PlannedFile } from './schema';
 
@@ -31,36 +33,15 @@ const SECTIONS: Partial<Record<NoteKind, readonly View[]>> = {
 	ingredient: [NAVIGATION_VIEWS.sameType, NAVIGATION_VIEWS.recipes],
 };
 
-const PARENT_KEYS = [PROP.type, PROP.provides, PROP.family, PROP.category];
-const q = (key: string) => JSON.stringify(key);
-/** YAML single-quoted scalar, so formulas stay readable when users edit the Base. */
-const yaml = (text: string) => `'${text.replace(/'/g, "''")}'`;
-
-/** Parent files of each file in `list` (or of the row itself when `list` is omitted). */
-function parentsOf(list?: string): string {
-	const read = (key: string) => list ? `list(value.properties[${q(key)}])` : `list(note[${q(key)}])`;
-	const links = `[${PARENT_KEYS.map(read).join(', ')}]`;
-	const flat = list ? `${list}.map(${links}).flat().flat()` : `${links}.flat()`;
-	return `${flat}.filter(value).map(link(value).asFile()).filter(value)`;
-}
-
-function thisParentsOf(list?: string): string {
-	if (list) return parentsOf(list);
-	const links = `[${PARENT_KEYS.map(key => `list(this.file.properties[${q(key)}])`).join(', ')}]`;
-	return `${links}.flat().filter(value).map(link(value).asFile()).filter(value)`;
-}
-
-const kindIs = (...kinds: NoteKind[]) => kinds.map(kind => `note[${q(PROP.kind)}] == ${q(kind)}`).join(' || ');
-
 const FORMULAS: Record<string, string> = {
-	name: `file.asLink(if(note[${q(PROP.name)}], note[${q(PROP.name)}], file.name))`,
+	name: COMMON_FORMULAS.name,
 	// The hierarchy is at most three levels above a bottle: type, family, category.
-	parents: parentsOf(),
+	parents: COMMON_FORMULAS.parents,
 	up2: parentsOf('formula.parents'),
 	up3: parentsOf('formula.up2'),
 	ancestors: '[formula.parents, formula.up2, formula.up3].flat().map(value.path)',
 	parentPaths: 'formula.parents.map(value.path)',
-	parentLinks: `formula.parents.map(value.asLink(if(value.properties[${q(PROP.name)}], value.properties[${q(PROP.name)}], value.name)))`,
+	parentLinks: COMMON_FORMULAS.parentLinks,
 	thisUp1: thisParentsOf(),
 	thisUp2: thisParentsOf('formula.thisUp1'),
 	thisUp3: thisParentsOf('formula.thisUp2'),
@@ -80,16 +61,11 @@ const FORMULAS: Record<string, string> = {
 		// A bottle also serves recipes that name another bottle of its type.
 		`(this.file.properties[${q(PROP.kind)}] == "bottle" && formula.linkedUp1.filter(formula.thisParents.contains(value.path)).length > 0)`,
 	].join(' || '),
-	stock: `if(note[${q(PROP.stockTracking)}] == "status", if(note[${q(PROP.availability)}], note[${q(PROP.availability)}], "Unknown"), `
-		+ `if(note[${q(PROP.stockTracking)}] != "volume", "", if(note[${q(PROP.kind)}] == "bottle", `
-		+ `if(note[${q(PROP.open)}] == null, "?", note[${q(PROP.open)}].round()) + " mL open, " + if(note[${q(PROP.unopened)}], note[${q(PROP.unopened)}], 0) + " unopened", `
-		+ `if(note[${q(PROP.remaining)}] == null, "?", note[${q(PROP.remaining)}].round()) + " mL")))`,
-	// Ratings are numbers 1–5; anything else is shown as written.
-	rating: 'if(note.rating.isType("number"), "⭐️".repeat(note.rating.round()), note.rating)',
+	stock: COMMON_FORMULAS.stock,
+	rating: COMMON_FORMULAS.rating,
 };
 
-type Sort = [property: string, direction: 'ASC' | 'DESC'];
-interface ViewDefinition { name: View; type: 'list' | 'table'; filter: string; columns: [string, string][]; sort?: Sort[]; }
+interface ViewDefinition extends FormulaView { name: View; }
 
 const stockColumns: [string, string][] = [['formula.name', 'Name'], ['formula.parentLinks', 'Type'], ['formula.stock', 'Stock']];
 
@@ -116,31 +92,7 @@ const VIEWS: readonly ViewDefinition[] = [
 
 export function navigationBase(root: string): PlannedFile {
 	root = cabinetFolder(root);
-	const labels = new Map(VIEWS.flatMap(view => view.columns));
-	const lines = [
-		'filters:',
-		'  and:',
-		`    - ${yaml(`file.inFolder(${q(root)})`)}`,
-		`    - ${yaml('file.ext == "md"')}`,
-		'formulas:',
-		...Object.entries(FORMULAS).map(([name, expression]) => `  ${name}: ${yaml(expression)}`),
-		'properties:',
-		...[...labels].map(([property, label]) => `  ${property}:\n    displayName: ${q(label)}`),
-		'views:',
-		...VIEWS.flatMap(view => [
-			`  - type: ${view.type}`,
-			`    name: ${q(view.name)}`,
-			'    filters:',
-			'      and:',
-			`        - ${yaml(view.filter)}`,
-			'    order:',
-			...view.columns.map(([property]) => `      - ${property}`),
-			'    sort:',
-			...(view.sort ?? [['file.name', 'ASC']]).flatMap(([property, direction]) => [`      - property: ${property}`, `        direction: ${direction}`]),
-		]),
-		'',
-	];
-	return { path: basePath(root, NAVIGATION_BASE), kind: 'base', content: lines.join('\n'), managed: PREVIOUS_NAVIGATION_VERSIONS };
+	return { path: basePath(root, NAVIGATION_BASE), kind: 'base', content: renderFormulaBase(root, FORMULAS, VIEWS), managed: PREVIOUS_NAVIGATION_VERSIONS };
 }
 
 /** Embed lines for a resource note; empty for recipes and other kinds. */

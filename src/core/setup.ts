@@ -3,6 +3,7 @@ import { localDate, markdown, renderNote } from './notes';
 import { cabinetFolder, notePath, PROP, wikiLink } from './schema';
 import { basePath, resourceBases } from './bases';
 import { NAVIGATION_BASE, navigationBase } from './navigation';
+import { SHOPPING_NOTE, shoppingBase, shoppingNote, shoppingNotePath } from './shopping';
 import type { PlannedFile } from './schema';
 
 export function starterPlan(folder: string, paths: ReadonlyMap<string, string> = new Map()): PlannedFile[] {
@@ -12,7 +13,7 @@ export function starterPlan(folder: string, paths: ReadonlyMap<string, string> =
 		path: paths.get(entry.id) || notePath(root, entry.kind, entry.name),
 		catalogId: entry.id,
 	}));
-	return [...files, ...resourceBases(root), navigationBase(root), cabinetHome(root)];
+	return [...files, ...resourceBases(root), navigationBase(root), shoppingBase(root), shoppingNote(root), cabinetHome(root)];
 }
 
 function cabinetHome(root: string): PlannedFile {
@@ -42,6 +43,10 @@ ${viewLink('Bottles')} records named bottles and their stock. Starter bottle ref
 ${viewLink('Other stock')} records fresh ingredients, juice, syrups, and other sources. Use **Cocktail Cabinet: Add other stock** and select the ingredient types the source provides.
 
 An ingredient type describes what a recipe calls for, such as lime juice. Stock records your source of it, such as fresh limes or prepared juice. Ingredient definitions alone don’t mean you have anything in stock.
+
+### Shopping list
+
+${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} lists every bottle, ingredient type, and other stock marked **Add to shopping list**.
 
 ### Recipes
 

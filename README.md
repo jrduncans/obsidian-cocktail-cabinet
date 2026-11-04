@@ -41,7 +41,7 @@ Each Base includes Markdown notes anywhere under the selected cabinet root with 
 
 New notes use plain Latin filenames and retain their proper name in `cc-name` and the page heading. Generated links display that proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`. Accented names also become Obsidian aliases; the plugin's ingredient picker includes both spellings when they differ. Existing notes without `cc-name` use their filename as the displayed name.
 
-Types, bottles, and other stock can be marked **Add to shopping list** independently of stock level. Bottles and other stock also accept an optional nonnegative **Last purchase price**, without a currency symbol. These fields are editable in the resource Bases; the combined shopping-list view is future work.
+Types, bottles, and other stock can be marked **Add to shopping list** independently of stock level. Bottles and other stock also accept an optional nonnegative **Last purchase price**, without a currency symbol. These fields are editable in the resource Bases. The **Shopping list** note, linked from the cabinet home, has a section each for flagged bottles (type, stock, last price), types (which bottles of that type you have and which aren't in stock), and other stock. Its `Views/Shopping list.base` is yours to customize; setup only creates it when missing.
 
 ## Log a cocktail
 

@@ -2,7 +2,7 @@
 
 Schemas for Cocktail Cabinet resources. The `cc-` prefix means Cocktail Cabinet; it namespaces properties without implying that every resource is a cocktail recipe. Obsidian's standard `aliases` property and the existing recipe properties `created`, `source`, and `rating` keep their unprefixed names.
 
-Creation forms implement per-record volume or status tracking, mL remaining, last purchase price, and shopping-list flags. Desktop consumption is available through **Log this cocktail**; the combined shopping-list view remains future work. The plugin validates creation inputs and selected stock during logging, not every manually edited property; existing notes are preserved rather than automatically migrated.
+Creation forms implement per-record volume or status tracking, mL remaining, last purchase price, and shopping-list flags. Desktop consumption is available through **Log this cocktail**; flagged resources appear in the **Shopping list** note. The plugin validates creation inputs and selected stock during logging, not every manually edited property; existing notes are preserved rather than automatically migrated.
 
 ## Reading the schemas
 
@@ -57,7 +57,7 @@ A recipe-facing kind of ingredient, such as Rye Whiskey, Lime Juice, or Simple S
 | `cc-catalog-id` | `string` | `false` | Starter identity based on the current catalog name, such as `type/Apple Brandy` or `family/Apple Brandy Family`. Setup reads IDs for recognition across renames, missing-page recovery, and duplicate detection. Omitted on user-created types. |
 | `cc-family` | `link<Ingredient family>` | `false` | The type's family, read for linked-resource browsing and related-recipe traversal. Missing families are valid. A narrow type does not gain sibling types as alternatives merely by sharing a family. |
 | `cc-sugar-water-ratio` | `string` | `false` | Authored on the three starter simple/demerara syrup types, such as `2:1 by weight`. Records the ratio and its weight basis. No dedicated form input, runtime parser, or calculation currently uses it. |
-| `cc-shopping-list` | `boolean` | `false` | Marks a generic need for this ingredient type when `true`, without selecting a bottle or source. Missing means `false`. Included in the planned combined shopping-list view; independent of flags and stock levels on linked bottles or sources. |
+| `cc-shopping-list` | `boolean` | `false` | Marks a generic need for this ingredient type when `true`, without selecting a bottle or source. Missing means `false`. Listed in the shopping list's Types section, with the bottles and other stock of that type split into Have and Not in stock; independent of flags and stock levels on linked bottles or sources. |
 
 Descriptions, optional concentration details, and Preparation instructions live in the body. They are not parsed as frontmatter properties or preparation batches. Brix is not a built-in property or default Base column. Earlier notes may retain `cc-brix` as a custom property; the plugin does not remove it. Existing Bases are preserved too, so remove their Brix column manually if desired.
 
@@ -78,7 +78,7 @@ A named bottle, together with its recorded stock. One note tracks the open amoun
 | `cc-unopened` | `integer \| null` | `false` | **Volume mode only.** Nonnegative count of unopened bottles. Missing, null, or blank means zero. Creation saves zero when the input is empty. Logging uses this count and full bottle volume when another bottle must be opened; it preserves an existing blank if the count does not change. |
 | `cc-availability` | `Availability` | `false` | **Status mode only.** Manual `Unknown`, `Have`, `Low`, or `Out`; missing means `Unknown`. Creation writes the chosen status explicitly. Pours do not automatically decrement or change this status. |
 | `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative numeric amount last paid for one bottle, with zero valid and missing or null meaning unknown. Purchasing metadata, independent of stock mode. No price history, currency conversion, or cost calculations are defined. |
-| `cc-shopping-list` | `boolean` | `false` | Explicitly marks this bottle for purchase when `true`. Missing means `false`. Independent of current stock level and of any flag on its ingredient type; eligible for the planned combined shopping-list view. |
+| `cc-shopping-list` | `boolean` | `false` | Explicitly marks this bottle for purchase when `true`. Missing means `false`. Independent of current stock level and of any flag on its ingredient type; listed in the shopping list's Bottles section. |
 
 Earlier development notes that store `cc-family` or `cc-category` as a list need the same conversion to one quoted link string; a list is ignored, leaving the note without a parent.
 
@@ -105,7 +105,7 @@ A source that supplies ingredient types, such as fresh fruit, prepared juice, or
 | `cc-remaining-ml` | `number \| null` | `false` | **Volume mode only.** Nonnegative total mL remaining in this source, such as `500` mL of homemade syrup or prepared juice. Missing or null means unknown; zero explicitly means empty. Logging deducts measured mL from this value. |
 | `cc-availability` | `Availability` | `false` | **Status mode only.** Manual `Unknown`, `Have`, `Low`, or `Out`; missing means `Unknown`. Creation writes the chosen status explicitly. It does not establish an exact quantity or automatically change after each use. |
 | `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative amount paid for the most recent purchase of this source, using the user's consistent currency convention. Zero is valid; missing or null means unknown. The purchased quantity is not modeled, so this field does not imply a per-mL price. Optional for homemade or otherwise unpurchased sources. |
-| `cc-shopping-list` | `boolean` | `false` | Marks this source for purchase or replenishment when `true`. Missing means `false`. Eligible for the planned combined shopping-list view, independently of stock mode, status, and flags on the provided types. |
+| `cc-shopping-list` | `boolean` | `false` | Marks this source for purchase or replenishment when `true`. Missing means `false`. Listed in the shopping list's Other stock section, independently of stock mode, status, and flags on the provided types. |
 
 `StockForm` is one of `Fresh ingredient`, `Prepared juice`, `Bottled juice`, `Homemade syrup`, `Purchased syrup`, or `Other`. The source description lives in the body. Measured juice yields, individual preparation batches, and multiple container sizes are not defined by this schema.
 
@@ -139,7 +139,7 @@ Prices and shopping flags are optional; omitted prices stay unknown and omitted 
 
 Types, bottles, and other-stock sources share `cc-shopping-list: boolean`, optional with an effective default of `false`. It records purchase intent, independently of tracking mode and stock state. Empty stock does not automatically set it, and positive stock does not automatically clear it.
 
-The planned combined view includes recognized cabinet resources of kind `type`, `bottle`, or `ingredient` whose `cc-shopping-list` is exactly `true`. A type-level entry means a generic need, such as Lime Juice; a bottle-level entry names the particular bottle; an other-stock entry names that source. Flags do not propagate between linked resources. If both a type and its bottle are explicitly flagged, both entries remain visible rather than one being silently hidden or merged.
+The **Shopping list** note (`<root>/Shopping list.md`, embedding `Views/Shopping list.base`) includes recognized cabinet resources of kind `type`, `bottle`, or `ingredient` whose `cc-shopping-list` is exactly `true`. A type-level entry means a generic need, such as Lime Juice; a bottle-level entry names the particular bottle; an other-stock entry names that source. Flags do not propagate between linked resources. If both a type and its bottle are explicitly flagged, both entries remain visible rather than one being silently hidden or merged. A source counts as in stock when volume-tracked with a positive open, unopened, or remaining amount, or status-tracked as Have or Low; Unknown and Out are not in stock.
 
 `cc-last-purchase-price` belongs to actual bottle or other-stock records. Ingredient types remain classifications and generic shopping needs rather than holders of a particular purchase's price. Prices are plain numeric amounts in the user's consistent currency convention, without currency symbols, inferred currency, or automatic conversion. Missing prices remain unknown, and shopping entries do not require a price. Mixed-currency accounting, purchase history, pack pricing, and automatic clearing of shopping flags on purchase are outside this schema change.
 
