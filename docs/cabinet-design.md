@@ -149,10 +149,11 @@ Preview and apply use fresh note properties, including immediately after a write
 
 ## Homemade stock
 
-Agreed on 2026-11-04, after managing syrups in the dev vault meant an other-stock note named the same as its type (Simple Syrup (1 to 1) providing Simple Syrup (1 to 1)).
+Agreed on 2026-11-04, after managing syrups in the dev vault meant an other-stock note named the same as its type (Simple Syrup (1 to 1) providing Simple Syrup (1 to 1), before the ratio names below).
 
 - **One rule, no stocked types.** Types stay what recipes call for; stock is always a bottle or other-stock source under a type. Letting a type carry its own stock was considered and rejected: people buy some syrups and make others, and switch over time (bought simple syrup first, homemade later), so stock on the type would mean moving it between note kinds, and a type could hold stock and have bottles at once.
-- **The collision is a naming problem.** Bought products have their own names (a brand); only homemade sources end up named after their type. The Homemade syrup and Prepared juice forms default the name to "House <type>", for example House Simple Syrup (1 to 1) or House Lime Juice, and the user can change it.
+- **The collision is a naming problem.** Bought products have their own names (a brand); only homemade sources end up named after their type. The Homemade syrup and Prepared juice forms default the name to "House <type>", for example House Simple Syrup (1:1) or House Lime Juice, and the user can change it.
+- **Ratio names for syrups.** Decided the same day: sugar syrup types are named by ratio, Simple Syrup (1:1), Simple Syrup (2:1), and Demerara Syrup (2:1), with the everyday names (Simple Syrup, Rich Simple Syrup, Demerara Syrup, Rich Demerara Syrup) as aliases. "Rich" isn't a fixed ratio, and the type name mostly appears in pickers, stock tables, and the shopping list, where the ratio matters; recipes keep their own wording as link text. The filename rule spells the ratio out (`Simple Syrup (2 to 1).md`), exactly as accents fold, so filenames and catalog IDs are unchanged. The earlier "(2 to 1)" names were a filename workaround from before names and filenames were separate.
 - **Add stock from the type note.** A command on a type note opens the bottle or other-stock form with the type or Provides filled in, so the separate source note rarely needs opening; the type's Stock section already shows it.
 
 ## Navigation in notes

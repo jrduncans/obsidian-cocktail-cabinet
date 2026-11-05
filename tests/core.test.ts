@@ -77,7 +77,7 @@ void test('starter catalog supplies definitions without implying owned stock or 
 });
 
 void test('three default sugar syrups retain distinct identities, ratios, and preparation instructions', () => {
-	const syrups = STARTER_CATALOG.filter(entry => ['Simple Syrup (1 to 1)', 'Simple Syrup (2 to 1)', 'Demerara Syrup (2 to 1)'].includes(entry.name));
+	const syrups = STARTER_CATALOG.filter(entry => ['Simple Syrup (1:1)', 'Simple Syrup (2:1)', 'Demerara Syrup (2:1)'].includes(entry.name));
 	assert.equal(syrups.length, 3);
 	assert.deepEqual(syrups.map(entry => entry.properties?.[PROP.sugarWaterRatio]), ['1:1 by weight', '2:1 by weight', '2:1 by weight']);
 	assert.ok(syrups.every(entry => entry.method?.includes('by weight') && entry.description));
@@ -198,6 +198,8 @@ void test('filenames are derived by rule from names with numbers and initialisms
 	assert.equal(fileName('Maison Rouge Cognac V.S.'), 'Maison Rouge Cognac VS');
 	assert.equal(fileName('Mr. Bali Hai Tribute'), 'Mr. Bali Hai Tribute');
 	assert.equal(fileName('F.B.I. Sour'), 'F.B.I. Sour');
+	assert.equal(fileName('Simple Syrup (2:1)'), 'Simple Syrup (2 to 1)');
+	assert.throws(() => fileName('Note: draft'));
 	for (const name of ['A#Heading', 'Done.']) assert.throws(() => fileName(name), name);
 	const note = renderNote('Cocktails', { kind: 'recipe', name: 'Tuxedo #2', description: '' }, '2026-11-04');
 	assert.equal(note.path, 'Cocktails/Recipes/Tuxedo No 2.md');
@@ -404,4 +406,14 @@ void test('the shopping list is a user-owned Base with a section per kind, embed
 	assert.equal(note.path, 'Cocktails/Shopping list.md');
 	assert.ok(note.content.startsWith('---\ncc-kind: "shopping"\n---\n# Shopping list\n'));
 	for (const view of Object.values(SHOPPING_VIEWS)) assert.ok(note.content.includes(`![[Cocktails/Views/Shopping list.base#${view}]]`), view);
+});
+
+void test('starter syrups use ratio names, keep their filenames and IDs, and alias the everyday names', () => {
+	const files = starterPlan('Cocktails');
+	const rich = files.find(file => file.catalogId === 'type/Simple Syrup (2 to 1)')!;
+	assert.equal(rich.path, 'Cocktails/Types/Simple Syrup (2 to 1).md');
+	assert.ok(rich.content.includes('cc-name: "Simple Syrup (2:1)"'));
+	assert.ok(rich.content.includes('"Rich Simple Syrup"') && rich.content.includes('"Simple Syrup (2:1)"'));
+	assert.ok(files.find(file => file.catalogId === 'type/Simple Syrup (1 to 1)')!.content.includes('"Simple Syrup"'));
+	assert.ok(files.find(file => file.catalogId === 'type/Demerara Syrup (2 to 1)')!.content.includes('"Rich Demerara Syrup"'));
 });

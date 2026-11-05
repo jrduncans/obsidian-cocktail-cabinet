@@ -29,8 +29,8 @@ Directional substitutions (rich simple → Demerara 2:1, O.F.T.D. → Demerara 1
 
 Renamed types are rewritten automatically (see the types table). These depend on the recipe:
 
-- **Simple Syrup (78):** Bourbon Renewal, Old Fashioned, Wibble, Lion's Tail, Whiskey Sour, and Amaro Daiquiri say 2:1 or rich → Simple Syrup (2 to 1); the rest → Simple Syrup (1 to 1).
-- **Demerara Syrup (12):** all → Demerara Syrup (2 to 1).
+- **Simple Syrup (78):** Bourbon Renewal, Old Fashioned, Wibble, Lion's Tail, Whiskey Sour, and Amaro Daiquiri say 2:1 or rich → Simple Syrup (2:1); the rest → Simple Syrup (1:1).
+- **Demerara Syrup (12):** all → Demerara Syrup (2:1).
 - **Falernum (21):** keeps its syrup meaning → Falernum Syrup, except Certain Ratio and Drunken Helmsman ("Velvet") and Drunk in the August Sun ("Maggie's Farm") → Falernum. The old `Falernum` note becomes Falernum Syrup and the old `Falernum Liqueur` note becomes Falernum.
 - **Apple Brandy (12):** generic lines → Apple Brandy Family, displayed "Apple Brandy"; Kingston Black, New English Negroni, and Star Daisy say bonded or 100-proof → Bonded Apple Brandy. Calvados links stay Calvados.
 - **Falernum Liqueur (2):** → Falernum.
@@ -51,7 +51,7 @@ Renamed types are rewritten automatically (see the types table). These depend on
 - **Substitutes For** is dropped. Every declared pair now shares a type, so the logging picker lists them first.
 - **Bottle stock:** `Volume` "750 mL" → `cc-volume-ml` 750; `Remaining in Open Bottle` × volume → `cc-open-ml`; `Unopened Bottles` → `cc-unopened`; `ABV`, `Last Purchase Price`, and `Shopping List` carry over; all bottles use volume tracking. An empty open amount stays unknown rather than zero.
 - **Recipe ratings:** ⭐️ strings → `rating` 1–5 by star count; blank stays blank.
-- **Homemade syrups** kept as bottle notes become other stock, per [homemade stock](cabinet-design.md#homemade-stock): Simple Syrup, 1 to 1 → **House Simple Syrup (1 to 1)** and Demerara Syrup, 2 to 1 → **House Demerara Syrup (2 to 1)**, form Homemade syrup, tracked in mL (open + unopened × volume), old names kept as aliases. Bought syrups stay bottles.
+- **Homemade syrups** kept as bottle notes become other stock, per [homemade stock](cabinet-design.md#homemade-stock): Simple Syrup, 1 to 1 → **House Simple Syrup (1:1)** and Demerara Syrup, 2 to 1 → **House Demerara Syrup (2:1)**, form Homemade syrup, tracked in mL (open + unopened × volume), old names kept as aliases. Bought syrups stay bottles.
 - **Filenames** follow the plugin's naming rules, so Tuxedo #2, Biloxi Deluxe #2, Maison Rouge Cognac V.S., and Last Wørd get `No 2`, `VS`, and `Woerd` filenames while keeping their names.
 - **Types with no prose of their own** take the starter description.
 - **Fresh Lemons, Limes, and Oranges** become other-stock sources providing their juices, with status tracking and availability carried over.
@@ -108,7 +108,7 @@ Every current type note. **Starter**: ships today. **Starter addition**: added t
 | Crème de Menthe | same | Herbal & Spice Liqueur | Starter | 9 |
 | Demerara 151 Rum | same | Rum | Starter | 5 |
 | Demerara Rum | same | Rum | Starter | 9 |
-| Demerara Syrup | Demerara Syrup (2 to 1) | Sugar Syrup | Starter (renamed) | 12 |
+| Demerara Syrup | Demerara Syrup (2:1) | Sugar Syrup | Starter (renamed) | 12 |
 | Dill Aquavit | same | Aquavit | Local | 0 |
 | Dry Vermouth | same | Vermouth | Starter | 23 |
 | Falernum | Falernum Syrup | Flavored Syrup | Starter (renamed) | 21 |
@@ -156,7 +156,7 @@ Every current type note. **Starter**: ships today. **Starter addition**: added t
 | Rhum Agricole Blanc | Unaged Rhum Agricole | Rum | Starter (renamed) | 1 |
 | Rye Whiskey | same | Whiskey | Starter | 20 |
 | Sea Buckthorn Liqueur | same | Fruit Liqueur | Local | 1 |
-| Simple Syrup | Simple Syrup (1 to 1) | Sugar Syrup | Starter (renamed) | 78 |
+| Simple Syrup | Simple Syrup (1:1) | Sugar Syrup | Starter (renamed) | 78 |
 | Sloe Gin | same | Fruit Liqueur | Local | 4 |
 | Spiced Pear Liqueur | same | Fruit Liqueur | Local | 1 |
 | Strawberry Liqueur | same | Fruit Liqueur | Local | 1 |
@@ -195,7 +195,7 @@ Other bottles keep a type with the same name as today. Each bottle gets exactly 
 | Tempus Fugit Crème de Cacao a la Vinelle | Crème de Cacao (dark) | Crème de Cacao | — | 1 |
 | Peychaud's Bitters | New Orleans-Style Bitters | Creole Bitters | Bitters | 15 |
 | Scrappy's Orleans Bitters | New Orleans-Style Bitters | Creole Bitters | Bitters | 0 |
-| Demerara Syrup, 2 to 1 | Demerara Syrup | Demerara Syrup (2 to 1) | Sugar Syrup | 6 |
+| Demerara Syrup, 2 to 1 | Demerara Syrup | Demerara Syrup (2:1) | Sugar Syrup | 6 |
 | Avuá Falernum | Falernum Liqueur | Falernum | Herbal & Spice Liqueur | 2 |
 | Velvet Falernum | Falernum Liqueur | Falernum | Herbal & Spice Liqueur | 3 |
 | Latitude 29 Falernum | Falernum | Falernum Syrup | Flavored Syrup | 0 |
@@ -219,7 +219,7 @@ Other bottles keep a type with the same name as today. Each bottle gets exactly 
 | Lustau Pedro Ximénez San Emilio | PX Sherry | Pedro Ximénez Sherry | Sherry | 0 |
 | Campari | Amaro | Red Bitter Liqueur | Amaro Family | 19 |
 | Crimson Snap | Amaro | Red Bitter Liqueur | Amaro Family | 2 |
-| Simple Syrup, 1 to 1 | Simple Syrup | Simple Syrup (1 to 1) | Sugar Syrup | 3 |
+| Simple Syrup, 1 to 1 | Simple Syrup | Simple Syrup (1:1) | Sugar Syrup | 3 |
 | Bar Keep Chinese Bitters | Chinese Bitters | Specialty Bitters | Bitters | 1 |
 | Bittercube Bolivar Bitters | Bolivar Bitters | Specialty Bitters | Bitters | 1 |
 | Bittercube Cherry Bark Vanilla Bitters | Cherry Bark Vanilla Bitters | Specialty Bitters | Bitters | 0 |

@@ -41,8 +41,8 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 - New: **Edit stock** on a bottle or other stock: open a bottle, restock, set the level, mark finished, and switch tracking mode with an explicit conversion (mL to availability keeps nothing numeric; availability to mL asks for the amounts).
 - Built: the **Shopping list** note, with sections for flagged bottles, types, and other stock; see [purchasing and the shopping list](note-properties.md#purchasing-and-the-shopping-list).
 - New: **Add stock for this type**, a command on a type note that opens the bottle or other-stock form with the type or Provides filled in. See [homemade stock](cabinet-design.md#homemade-stock).
-- New: the Homemade syrup and Prepared juice forms default the other-stock name to "House <type>" (House Simple Syrup (1 to 1)), so it doesn't share its type's name.
-- New: a worked example in the starter: Limes and Lemons (availability, providing the juice types), House Simple Syrup (1 to 1) in mL, and one or two recipes they complete, so a new cabinet can log a drink on day one. Decide whether example stock starts as Unknown or with sample amounts, and how setup treats examples a user deletes.
+- New: the Homemade syrup and Prepared juice forms default the other-stock name to "House <type>" (House Simple Syrup (1:1)), so it doesn't share its type's name.
+- New: a worked example in the starter: Limes and Lemons (availability, providing the juice types), House Simple Syrup (1:1) in mL, and one or two recipes they complete, so a new cabinet can log a drink on day one. Decide whether example stock starts as Unknown or with sample amounts, and how setup treats examples a user deletes.
 
 ### 3. Harden logging
 

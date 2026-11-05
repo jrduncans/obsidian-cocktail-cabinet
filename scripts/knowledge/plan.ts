@@ -32,7 +32,7 @@ function starterDescription(body: string): string {
 }
 
 /** Homemade syrups kept as bottle notes become House other stock (see the mapping's mechanical changes). */
-const HOUSE: Record<string, string> = { 'Simple Syrup, 1 to 1': 'Simple Syrup (1 to 1)', 'Demerara Syrup, 2 to 1': 'Demerara Syrup (2 to 1)' };
+const HOUSE: Record<string, string> = { 'Simple Syrup, 1 to 1': 'Simple Syrup (1:1)', 'Demerara Syrup, 2 to 1': 'Demerara Syrup (2:1)' };
 
 const FRUIT: Record<string, string> = { 'Fresh Lemons': 'Lemon Juice', 'Fresh Limes': 'Lime Juice', 'Fresh Oranges': 'Orange Juice' };
 

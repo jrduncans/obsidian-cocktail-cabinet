@@ -44,7 +44,7 @@ export function readMapping(document: string): AdoptionMapping {
 	const add = (recipes: string[], target: string, kind: NoteKind, name: string) => {
 		links.push(...recipes.map(recipe => ({ recipe, target, destination: { kind, name } })));
 	};
-	add(['Bourbon Renewal', 'Old Fashioned', 'Wibble', "Lion's Tail", 'Whiskey Sour', 'Amaro Daiquiri'], 'Simple Syrup', 'type', 'Simple Syrup (2 to 1)');
+	add(['Bourbon Renewal', 'Old Fashioned', 'Wibble', "Lion's Tail", 'Whiskey Sour', 'Amaro Daiquiri'], 'Simple Syrup', 'type', 'Simple Syrup (2:1)');
 	add(['Certain Ratio', 'Drunken Helmsman', 'Drunk in the August Sun'], 'Falernum', 'type', 'Falernum');
 	add(['Kingston Black', 'New English Negroni', 'Star Daisy'], 'Apple Brandy', 'type', 'Bonded Apple Brandy');
 	add(['FALSE IDOL'], 'Navy Strength Rum', 'bottle', 'Smith & Cross');

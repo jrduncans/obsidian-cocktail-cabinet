@@ -47,7 +47,7 @@ The description lives in the body. Missing categories do not make a family incom
 
 ## Ingredient type
 
-A recipe-facing kind of ingredient, such as Rye Whiskey, Lime Juice, or Simple Syrup (2 to 1). A type may have families or stand alone. New notes are placed in `<root>/Types/`.
+A recipe-facing kind of ingredient, such as Rye Whiskey, Lime Juice, or Simple Syrup (2:1). A type may have families or stand alone. New notes are placed in `<root>/Types/`.
 
 | Property | Type | Required | Description and use |
 | --- | --- | --- | --- |
@@ -149,7 +149,7 @@ For example, these are two representations of the same source with different boo
 cc-kind: ingredient
 cc-name: Homemade simple syrup
 cc-provides:
-  - "[[Cocktails/Types/Simple Syrup (2 to 1)|Simple Syrup (2 to 1)]]"
+  - "[[Cocktails/Types/Simple Syrup (2 to 1)|Simple Syrup (2:1)]]"
 cc-form: Homemade syrup
 cc-stock-tracking: volume
 cc-remaining-ml: 500
@@ -160,7 +160,7 @@ cc-shopping-list: false
 cc-kind: ingredient
 cc-name: Homemade simple syrup
 cc-provides:
-  - "[[Cocktails/Types/Simple Syrup (2 to 1)|Simple Syrup (2 to 1)]]"
+  - "[[Cocktails/Types/Simple Syrup (2 to 1)|Simple Syrup (2:1)]]"
 cc-form: Homemade syrup
 cc-stock-tracking: status
 cc-availability: Have

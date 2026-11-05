@@ -85,12 +85,13 @@ export function cabinetFolder(value: string): string {
 }
 
 /**
- * A proper name, shown in `cc-name`, headings, and link display text. It may contain `#` and
- * periods (Tuxedo #2, Maison Rouge Cognac V.S.); `fileName` derives a safe filename from it.
+ * A proper name, shown in `cc-name`, headings, and link display text. It may contain `#`,
+ * periods, and ratio colons (Tuxedo #2, Maison Rouge Cognac V.S., Simple Syrup (2:1));
+ * `fileName` derives a safe filename from it.
  */
 export function noteName(value: string): string {
 	const name = value.trim();
-	if (!name || /[/\\:*?"<>|[\]^]/.test(name)
+	if (!name || /[/\\*?"<>|[\]^]/.test(name)
 		|| Array.from(name).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) {
 		throw new Error('Enter a name without slashes, colons, brackets, or other special characters.');
 	}
@@ -104,7 +105,8 @@ export function notePath(root: string, kind: NoteKind, name: string): string {
 /**
  * Plain Latin filename derived from a proper name, by rule rather than per-note exceptions:
  * diacritics are removed and ligatures transliterated (ø → oe, as in Scandinavian usage),
- * `#2` becomes `No 2`, and a trailing initialism loses its periods (V.S. → VS).
+ * `#2` becomes `No 2`, a ratio is spelled out (2:1 → 2 to 1), and a trailing initialism
+ * loses its periods (V.S. → VS).
  */
 export function fileName(value: string): string {
 	const replacements: Record<string, string> = {
@@ -115,6 +117,7 @@ export function fileName(value: string): string {
 	const name = noteName(value).normalize('NFKD').replace(/\p{M}/gu, '')
 		.replace(/[ÆæŒœØøÐðÞþŁłĐđßı‘’–—]/g, character => replacements[character] || character)
 		.replace(/#\s*(?=\d)/g, 'No ')
+		.replace(/(\d)\s*:\s*(\d)/g, '$1 to $2')
 		.replace(/(?:\b[A-Za-z]\.){2,}$/, initialism => initialism.replace(/\./g, ''));
 	if (Array.from(name).some(character => character.charCodeAt(0) > 126)) {
 		throw new Error('Use a name that can be written with plain Latin characters for the filename.');
@@ -124,7 +127,7 @@ export function fileName(value: string): string {
 
 /** A file or folder name that is valid on every platform and can't alter wiki-link syntax. */
 function safeSegment(name: string): string {
-	if (name.includes('#') || name.startsWith('.') || name.endsWith('.')) {
+	if (/[#:]/.test(name) || name.startsWith('.') || name.endsWith('.')) {
 		throw new Error('Enter a name without slashes, colons, brackets, or other special characters.');
 	}
 	if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)) {

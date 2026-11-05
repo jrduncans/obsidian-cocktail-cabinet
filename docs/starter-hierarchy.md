@@ -61,7 +61,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Creole Bitters | Bitters | — |
 | Demerara 151 Rum | Rum | Spirit |
 | Demerara Rum | Rum | Spirit |
-| Demerara Syrup (2 to 1) | Sugar Syrup | Syrup |
+| Demerara Syrup (2:1) | Sugar Syrup | Syrup |
 | Dry Sparkling Wine | Sparkling Wine | Wine |
 | Dry Vermouth | Vermouth | Fortified Wine |
 | Dry White Wine | Still Wine | Wine |
@@ -120,8 +120,8 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Reposado Tequila | Agave Spirit | Spirit |
 | Rye Whiskey | Whiskey | Spirit |
 | Salt | — | — |
-| Simple Syrup (1 to 1) | Sugar Syrup | Syrup |
-| Simple Syrup (2 to 1) | Sugar Syrup | Syrup |
+| Simple Syrup (1:1) | Sugar Syrup | Syrup |
+| Simple Syrup (2:1) | Sugar Syrup | Syrup |
 | Single Malt Scotch | Whiskey | Spirit |
 | Soda Water | Carbonated Mixer | — |
 | Specialty Bitters | Bitters | — |

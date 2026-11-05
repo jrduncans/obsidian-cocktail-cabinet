@@ -167,7 +167,7 @@ void test('homemade syrup bottles become House other stock with mL remaining', (
 	assert.equal(syrup.metadata[PROP.form], 'Homemade syrup');
 	assert.equal(syrup.metadata[PROP.stockTracking], 'volume');
 	assert.equal(syrup.metadata[PROP.remaining], 600);
-	assert.deepEqual(syrup.metadata[PROP.provides], ['[[Rehearsal/Types/Simple Syrup (1 to 1)|Simple Syrup (1 to 1)]]']);
+	assert.deepEqual(syrup.metadata[PROP.provides], ['[[Rehearsal/Types/Simple Syrup (1 to 1)|Simple Syrup (1:1)]]']);
 	assert.ok((syrup.metadata.aliases as string[]).includes('Simple Syrup, 1 to 1'));
 	for (const key of [PROP.type, PROP.open, PROP.unopened, 'Volume', 'Type']) assert.ok(!(key in syrup.metadata), key);
 	assert.ok(readDocument(plan.files.get('Rehearsal/Recipes/Example.md')!).body.includes('[[Rehearsal/Ingredients/House Simple Syrup (1 to 1)|Simple Syrup, 1 to 1]]'));
@@ -196,8 +196,8 @@ void test('meaning-changing links use recipe overrides only in Ingredients and k
 	config.types.set('Apple Brandy', { name: 'Apple Brandy', family: 'Apple Brandy Family' });
 	config.types.set('Falernum', { name: 'Falernum Syrup', family: 'Flavored Syrup' });
 	config.types.set('Falernum Liqueur', { name: 'Falernum', family: 'Herbal & Spice Liqueur' });
-	config.types.set('Simple Syrup', { name: 'Simple Syrup (1 to 1)', family: 'Sugar Syrup' });
-	config.links.push({ recipe: 'Synthetic rich recipe', target: 'Simple Syrup', destination: { kind: 'type', name: 'Simple Syrup (2 to 1)' } });
+	config.types.set('Simple Syrup', { name: 'Simple Syrup (1:1)', family: 'Sugar Syrup' });
+	config.links.push({ recipe: 'Synthetic rich recipe', target: 'Simple Syrup', destination: { kind: 'type', name: 'Simple Syrup (2:1)' } });
 	const source = new Map([
 		['Cocktails/Types/Apple Brandy.md', doc({})], ['Cocktails/Types/Falernum.md', doc({})],
 		['Cocktails/Types/Falernum Liqueur.md', doc({})], ['Cocktails/Types/Simple Syrup.md', doc({})],

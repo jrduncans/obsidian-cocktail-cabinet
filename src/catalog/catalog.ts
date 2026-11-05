@@ -170,9 +170,9 @@ family('Other Fruit Juice', 'Juice', 'Other fruit juices; track purchased juice 
 ]);
 family('Vegetable Juice', 'Juice', 'Vegetable juices.', [['Tomato Juice', 'Juice from tomatoes used in savory cocktails; seasoned mixes should be distinguished when needed.']]);
 family('Sugar Syrup', 'Syrup', 'Syrups made from sugar, honey, or agave without added flavorings. Record dilution and concentration on the ingredient page; flavor from the sweetener itself does not make a syrup flavored.', [
-	['Simple Syrup (1 to 1)', 'White sugar and water at 1:1 by weight. Nominal Brix: 50.'],
-	['Simple Syrup (2 to 1)', 'White sugar and water at 2:1 by weight. Nominal Brix: approximately 66.7.'],
-	['Demerara Syrup (2 to 1)', 'Demerara sugar and water at 2:1 by weight. Nominal sugar concentration: approximately 66.7 percent; actual Brix can vary.'],
+	['Simple Syrup (1:1)', 'White sugar and water at 1:1 by weight. Nominal Brix: 50.'],
+	['Simple Syrup (2:1)', 'White sugar and water at 2:1 by weight. Nominal Brix: approximately 66.7.'],
+	['Demerara Syrup (2:1)', 'Demerara sugar and water at 2:1 by weight. Nominal sugar concentration: approximately 66.7 percent; actual Brix can vary.'],
 	['Honey Syrup', 'Honey diluted with water. Specify the ratio for your recipes.'],
 	['Agave Syrup', 'Agave-based sweetener. Document whether it is diluted.'],
 ]);
@@ -198,15 +198,16 @@ ingredientTypes(undefined, [
 	['Cocktail Cherry', 'A prepared cherry used as a cocktail garnish.'], ['Salt', 'Salt; keep a saline solution separate when a recipe specifies one.'],
 ]);
 
+// Ratio names are unambiguous; the everyday names are aliases so pickers find them too.
 const sugar = [
-	['Simple Syrup (1 to 1)', '1:1', 'white sugar'],
-	['Simple Syrup (2 to 1)', '2:1', 'white sugar'],
-	['Demerara Syrup (2 to 1)', '2:1', 'demerara sugar'],
+	['Simple Syrup (1:1)', '1:1', 'white sugar', ['Simple Syrup']],
+	['Simple Syrup (2:1)', '2:1', 'white sugar', ['Rich Simple Syrup']],
+	['Demerara Syrup (2:1)', '2:1', 'demerara sugar', ['Demerara Syrup', 'Rich Demerara Syrup']],
 ] as const;
-for (const [name, ratio, ingredient] of sugar) {
+for (const [name, ratio, ingredient, aliases] of sugar) {
 	const entry = entries.find(item => item.name === name);
 	if (!entry) throw new Error(`Missing starter syrup: ${name}`);
-	entry.properties = { [PROP.sugarWaterRatio]: `${ratio} by weight` };
+	entry.properties = { [PROP.sugarWaterRatio]: `${ratio} by weight`, aliases: [...aliases] };
 	entry.method = `Combine ${ratio === '1:1' ? 'equal weights of' : 'two parts by weight of'} ${ingredient} and ${ratio === '1:1' ? '' : 'one part by weight of '}water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).`;
 }
 
