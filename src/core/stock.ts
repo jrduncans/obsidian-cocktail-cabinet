@@ -20,6 +20,22 @@ export const STOCK_FORMS = {
 	Other: 'Other',
 } as const;
 
+/** Forms whose sources are made at home and would otherwise be named after their type. */
+const HOUSE_FORMS: readonly string[] = ['Homemade syrup', 'Prepared juice'];
+
+/** The suggested name for other stock: "House <type>" for homemade forms, otherwise none. */
+export function houseName(form: string, typeName: string | undefined): string {
+	return typeName && HOUSE_FORMS.includes(form) ? `House ${typeName}` : '';
+}
+
+/**
+ * The name field after the suggestion changes: follow the suggestion while the field is
+ * blank or still shows the previous one, and keep anything the user typed.
+ */
+export function suggestedName(current: string, previous: string, next: string): string {
+	return !current.trim() || current === previous ? next : current;
+}
+
 export interface StockInput {
 	kind: 'bottle' | 'ingredient';
 	tracking: string;

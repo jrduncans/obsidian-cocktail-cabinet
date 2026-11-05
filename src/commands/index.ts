@@ -73,6 +73,21 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		name: 'Add other stock',
 		callback: () => handle(() => ready(() => new StockModal(plugin, false).open())),
 	});
+	// On a type note, open a stock form with the type already filled in.
+	const forType = (id: string, name: string, bottle: boolean) => plugin.addCommand({
+		id,
+		name,
+		checkCallback: checking => {
+			const file = plugin.app.workspace.getActiveFile();
+			if (!file?.path.startsWith(`${plugin.store.root}/`)) return false;
+			const type = plugin.store.notes().find(note => note.path === file.path && note.kind === 'type');
+			if (!type) return false;
+			if (!checking) void handle(() => ready(() => new StockModal(plugin, bottle, { types: [type] }).open()));
+			return true;
+		},
+	});
+	forType('add-bottle-of-type', 'Add a bottle of this type', true);
+	forType('add-other-stock-for-type', 'Add other stock for this type', false);
 	plugin.addCommand({
 		id: 'create-recipe',
 		name: 'Create a cocktail recipe',

@@ -96,7 +96,7 @@ export class RecipeIngredients {
 			for (const kind of ['type', 'bottle', 'ingredient', 'family', 'category'] as const) {
 				const title = { type: 'Ingredient type', bottle: 'Bottle', ingredient: 'Other stock', family: 'Ingredient family', category: 'Ingredient category' }[kind];
 				menu.addItem(item => item.setTitle(title).onClick(() => {
-					if (kind === 'bottle' || kind === 'ingredient') new StockModal(this.plugin, kind === 'bottle', choose, plainIngredient(data.text)).open();
+					if (kind === 'bottle' || kind === 'ingredient') new StockModal(this.plugin, kind === 'bottle', { created: choose, name: plainIngredient(data.text) }).open();
 					else new IngredientModal(this.plugin, kind, choose, plainIngredient(data.text)).open();
 				}));
 			}

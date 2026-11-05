@@ -41,9 +41,10 @@ export abstract class CabinetForm extends Modal {
 			.addToggle(toggle => toggle.setValue(value).onChange(change));
 	}
 
-	protected choose(label: string, notes: () => CabinetNote[], change: (notes: CabinetNote[]) => void, multiple = false) {
-		const selected: CabinetNote[] = [];
-		const row = new Setting(this.contentEl).setName(label).setDesc('None selected');
+	protected choose(label: string, notes: () => CabinetNote[], change: (notes: CabinetNote[]) => void, multiple = false, initial: readonly CabinetNote[] = []) {
+		const selected: CabinetNote[] = multiple ? [...initial] : initial.slice(0, 1);
+		const row = new Setting(this.contentEl).setName(label)
+			.setDesc(selected.length ? selected.map(item => item.name).join(', ') : 'None selected');
 		row.addButton(button => button.setButtonText('Select').onClick(() => {
 			new NotePicker(this.app, notes(), note => {
 				if (!multiple) selected.length = 0;

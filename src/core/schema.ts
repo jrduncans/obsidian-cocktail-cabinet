@@ -57,6 +57,8 @@ export interface PlannedFile {
 	content: string;
 	kind: NoteKind | 'cabinet' | 'shopping' | 'base';
 	catalogId?: string;
+	/** Starter example: created only with a new cabinet home, never restored once deleted. */
+	example?: boolean;
 	/**
 	 * Plugin-managed file: fingerprints of earlier generated versions (see `managedFingerprint`).
 	 * Setup replaces a file that still matches one; any other content is the user's and is kept.

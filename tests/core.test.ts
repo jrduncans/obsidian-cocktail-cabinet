@@ -6,6 +6,9 @@ import type { CabinetNote } from '../src/core/schema';
 import { ingredientSection, localDate, renderNote } from '../src/core/notes';
 import { isWithin, relatedTargets } from '../src/core/relationships';
 import { starterPlan } from '../src/core/setup';
+import { STARTER_EXAMPLES, examplePlan } from '../src/catalog/examples';
+import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
+import { ingredientSection } from '../src/core/notes';
 import { basePath, RESOURCE_BASES } from '../src/core/bases';
 import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } from '../src/core/navigation';
 import { SHOPPING_BASE, SHOPPING_VIEWS, shoppingBase, shoppingNote, shoppingNotePath } from '../src/core/shopping';
@@ -416,4 +419,35 @@ void test('starter syrups use ratio names, keep their filenames and IDs, and ali
 	assert.ok(rich.content.includes('"Rich Simple Syrup"') && rich.content.includes('"Simple Syrup (2:1)"'));
 	assert.ok(files.find(file => file.catalogId === 'type/Simple Syrup (1 to 1)')!.content.includes('"Simple Syrup"'));
 	assert.ok(files.find(file => file.catalogId === 'type/Demerara Syrup (2 to 1)')!.content.includes('"Rich Demerara Syrup"'));
+});
+
+void test('the worked example links starter types, measures every pour, and starts with unknown stock', () => {
+	assert.ok(!starterPlan('Cocktails').some(file => file.example), 'examples only when asked for');
+	const files = examplePlan('Cocktails', '2026-11-04');
+	const paths = new Set(starterPlan('Cocktails').map(file => file.path));
+	const ids = new Set(STARTER_CATALOG.map(entry => entry.id));
+	for (const example of STARTER_EXAMPLES) assert.ok(!ids.has(example.id), example.id);
+	assert.equal(new Set(STARTER_EXAMPLES.map(example => example.id)).size, STARTER_EXAMPLES.length);
+	for (const file of files) {
+		assert.ok(file.example && file.catalogId && file.content.includes(`cc-catalog-id: "${file.catalogId}"`), file.path);
+		for (const [, target] of file.content.matchAll(/\[\[([^|\]]+)\|/g)) assert.ok(paths.has(`${target}.md`), `${file.path} → ${target}`);
+	}
+	const syrup = files.find(file => file.path === 'Cocktails/Ingredients/House Simple Syrup (1 to 1).md')!;
+	assert.ok(syrup.content.includes('cc-name: "House Simple Syrup (1:1)"'));
+	assert.ok(syrup.content.includes('cc-stock-tracking: "volume"') && syrup.content.includes('cc-remaining-ml: null'));
+	const limes = files.find(file => file.path === 'Cocktails/Ingredients/Limes.md')!;
+	assert.ok(limes.content.includes('cc-availability: "Unknown"'));
+	for (const recipe of files.filter(file => file.kind === 'recipe')) {
+		const lines = ingredientSection(recipe.content).split('\n').filter(line => line.startsWith('- '));
+		assert.equal(lines.length, 3, recipe.path);
+		for (const line of lines) assert.ok(recipeVolumeMl(splitIngredient(line.slice(2)).amount) !== null, line);
+		assert.ok(recipe.content.includes('[[Cocktails/Types/Simple Syrup (1 to 1)|Simple Syrup]]'));
+	}
+});
+
+void test('the home note introduces the example only in a new cabinet', () => {
+	const home = (examples: boolean) => starterPlan('Cocktails', new Map(), examples).find(file => file.kind === 'cabinet')!.content;
+	assert.ok(!home(false).includes('Try an example'));
+	assert.ok(home(true).includes('[[Cocktails/Ingredients/Limes|Limes]], [[Cocktails/Ingredients/Lemons|Lemons]], and [[Cocktails/Ingredients/House Simple Syrup (1 to 1)|House Simple Syrup (1:1)]]'));
+	assert.ok(home(true).includes('[[Cocktails/Recipes/Daiquiri|Daiquiri]] and [[Cocktails/Recipes/Whiskey Sour|Whiskey Sour]]'));
 });

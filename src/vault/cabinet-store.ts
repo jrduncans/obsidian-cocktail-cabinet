@@ -3,7 +3,7 @@ import { cabinetFolder, KINDS, managedFingerprint, PROP, wikiLink } from '../cor
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { ingredientSection, localDate, renderNote } from '../core/notes';
 import { relatedTargets } from '../core/relationships';
-import { starterPlan } from '../core/setup';
+import { cabinetHomePath, starterPlan } from '../core/setup';
 import type { SetupPreview } from '../core/setup';
 import { enhancedRecipeContent } from './recipe-document';
 
@@ -83,7 +83,7 @@ export class CabinetStore {
 	}
 
 	async isSetUp(): Promise<boolean> {
-		const home = this.app.vault.getAbstractFileByPath(`${this.root}/Cocktail Cabinet.md`);
+		const home = this.app.vault.getAbstractFileByPath(cabinetHomePath(this.root));
 		return home instanceof TFile && (await this.frontmatter(home))[PROP.kind] === 'cabinet';
 	}
 
@@ -104,7 +104,10 @@ export class CabinetStore {
 			if (catalogPaths.has(id)) result.conflicts.push(file.path);
 			else catalogPaths.set(id, file.path);
 		}
-		for (const planned of starterPlan(root, catalogPaths)) {
+		// The worked example comes with a new cabinet only, so a deleted example stays deleted.
+		const home = cabinetHomePath(root);
+		const newCabinet = !this.app.vault.getAbstractFileByPath(home) && !byLowerPath.has(home.toLowerCase());
+		for (const planned of starterPlan(root, catalogPaths, newCabinet)) {
 			const parts = planned.path.split('/');
 			for (let depth = 1; depth < parts.length; depth++) {
 				const parent = parts.slice(0, depth).join('/');
@@ -126,6 +129,11 @@ export class CabinetStore {
 					else if (planned.managed.includes(managedFingerprint(current, root))) result.update.push(planned);
 					else { result.keep.push(existing.path); result.customized.push(existing.path); }
 				} else result.keep.push(existing.path);
+				continue;
+			}
+			// An example never blocks setup: whatever already has its path is the user's.
+			if (planned.example) {
+				result.keep.push(existing.path);
 				continue;
 			}
 			if (existing instanceof TFile && existing.extension === 'md' && existing.path === planned.path) {

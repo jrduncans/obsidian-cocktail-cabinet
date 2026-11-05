@@ -122,6 +122,36 @@ void test('setup updates the managed navigation Base only while it matches an ea
 	} finally { previous.pop(); }
 });
 
+void test('a new cabinet gets the worked example; reruns never restore a deleted example', async () => {
+	const { contents, store } = fixture();
+	contents.delete('Cocktails/Cocktail Cabinet.md');
+	const fresh = await store.previewSetup('Cocktails');
+	assert.deepEqual(fresh.conflicts, []);
+	assert.deepEqual(fresh.create.filter(file => file.example).map(file => file.path).sort(), [
+		'Cocktails/Ingredients/House Simple Syrup (1 to 1).md',
+		'Cocktails/Ingredients/Lemons.md',
+		'Cocktails/Ingredients/Limes.md',
+		'Cocktails/Recipes/Daiquiri.md',
+		'Cocktails/Recipes/Whiskey Sour.md',
+	]);
+	await store.setup('Cocktails');
+	assert.ok(contents.get('Cocktails/Cocktail Cabinet.md')?.includes('[[Cocktails/Recipes/Daiquiri|Daiquiri]]'));
+	contents.delete('Cocktails/Recipes/Daiquiri.md');
+	assert.equal((await store.setup('Cocktails')).created, 0);
+	assert.ok(!contents.has('Cocktails/Recipes/Daiquiri.md'));
+});
+
+void test('an existing note at an example path is kept rather than blocking a new cabinet', async () => {
+	const { contents, store } = fixture();
+	contents.delete('Cocktails/Cocktail Cabinet.md');
+	contents.set('Cocktails/Recipes/Daiquiri.md', '---\ncc-kind: recipe\n---\nMy own Daiquiri.\n');
+	const preview = await store.previewSetup('Cocktails');
+	assert.deepEqual(preview.conflicts, []);
+	assert.ok(preview.keep.includes('Cocktails/Recipes/Daiquiri.md'));
+	await store.setup('Cocktails');
+	assert.equal(contents.get('Cocktails/Recipes/Daiquiri.md'), '---\ncc-kind: recipe\n---\nMy own Daiquiri.\n');
+});
+
 void test('managed fingerprints ignore the cabinet folder and line endings', () => {
 	assert.equal(managedFingerprint('a "Cocktails" b\n', 'Cocktails'), managedFingerprint('a "Drinks/Bar" b\r\n', 'Drinks/Bar'));
 	assert.notEqual(managedFingerprint('a', 'Cocktails'), managedFingerprint('b', 'Cocktails'));

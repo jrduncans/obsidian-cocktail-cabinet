@@ -1,4 +1,5 @@
 import { STARTER_CATALOG, catalogDraft } from '../catalog/catalog';
+import { STARTER_EXAMPLES, examplePlan } from '../catalog/examples';
 import { localDate, markdown, renderNote } from './notes';
 import { cabinetFolder, notePath, PROP, wikiLink } from './schema';
 import { basePath, resourceBases } from './bases';
@@ -6,17 +7,37 @@ import { NAVIGATION_BASE, navigationBase } from './navigation';
 import { SHOPPING_NOTE, shoppingBase, shoppingNote, shoppingNotePath } from './shopping';
 import type { PlannedFile } from './schema';
 
-export function starterPlan(folder: string, paths: ReadonlyMap<string, string> = new Map()): PlannedFile[] {
+/** Every file setup writes. `examples` adds the worked example, for a cabinet without a home yet. */
+export function starterPlan(folder: string, paths: ReadonlyMap<string, string> = new Map(), examples = false): PlannedFile[] {
 	const root = cabinetFolder(folder);
 	const files = STARTER_CATALOG.map(entry => ({
 		...renderNote(root, catalogDraft(root, entry, paths), localDate()),
 		path: paths.get(entry.id) || notePath(root, entry.kind, entry.name),
 		catalogId: entry.id,
 	}));
-	return [...files, ...resourceBases(root), navigationBase(root), shoppingBase(root), shoppingNote(root), cabinetHome(root)];
+	const example = examples ? examplePlan(root, localDate(), paths) : [];
+	return [...files, ...example, ...resourceBases(root), navigationBase(root), shoppingBase(root), shoppingNote(root), cabinetHome(root, example)];
 }
 
-function cabinetHome(root: string): PlannedFile {
+export function cabinetHomePath(root: string): string {
+	return `${root}/Cocktail Cabinet.md`;
+}
+
+function exampleSection(example: readonly PlannedFile[]): string {
+	if (!example.length) return '';
+	const links = (kind: string) => {
+		const items = STARTER_EXAMPLES.filter(item => item.kind === kind).flatMap(item => {
+			const file = example.find(file => file.catalogId === item.id);
+			return file ? [wikiLink(file.path, item.name)] : [];
+		});
+		return items.length < 3 ? items.join(' and ') : `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
+	};
+	return `\n\n## Try an example
+
+Setup added example stock, ${links('ingredient')}, and two recipes it completes: ${links('recipe')}. Their stock starts unknown. Set the syrup’s amount, then open a recipe and run **Cocktail Cabinet: Log this cocktail**. Change or delete the examples as you like; setup won’t add them back.`;
+}
+
+function cabinetHome(root: string, example: readonly PlannedFile[] = []): PlannedFile {
 	const viewLink = (name: string) => wikiLink(basePath(root, name), name);
 	const properties = {
 		[PROP.kind]: 'cabinet',
@@ -24,13 +45,13 @@ function cabinetHome(root: string): PlannedFile {
 		[PROP.schemaVersion]: 1,
 	};
 	return {
-		path: `${root}/Cocktail Cabinet.md`,
+		path: cabinetHomePath(root),
 		kind: 'cabinet',
 		content: markdown(properties, `# Cocktail Cabinet
 
 Your bottles, ingredients, and cocktail recipes in one place. Start with one bottle or a favorite recipe and build your cabinet gradually.
 
-Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below.
+Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below.${exampleSection(example)}
 
 ## Your collection
 

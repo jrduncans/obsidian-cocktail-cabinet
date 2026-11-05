@@ -4,11 +4,19 @@ import type CocktailCabinetPlugin from '../main';
 import { BottleAmount, OPEN_AMOUNT_UNITS } from '../core/bottle-amount';
 import { PROP, noteName } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
-import { AVAILABILITY, STOCK_FORMS, STOCK_TRACKING, stockProperties } from '../core/stock';
+import { AVAILABILITY, STOCK_FORMS, STOCK_TRACKING, houseName, stockProperties, suggestedName } from '../core/stock';
 import { CabinetForm } from './form';
 
+export interface StockModalOptions {
+	/** Called with the new note instead of opening it. */
+	created?: (note: CabinetNote) => void;
+	name?: string;
+	/** The bottle's type, or the types other stock provides. */
+	types?: readonly CabinetNote[];
+}
+
 export class StockModal extends CabinetForm {
-	constructor(private plugin: CocktailCabinetPlugin, private bottle: boolean, private created?: (note: CabinetNote) => void, private initialName = '') {
+	constructor(private plugin: CocktailCabinetPlugin, private bottle: boolean, private options: StockModalOptions = {}) {
 		super(plugin.app);
 	}
 
@@ -17,20 +25,35 @@ export class StockModal extends CabinetForm {
 			this.bottle ? 'Add a bottle' : 'Add other stock',
 			'Record how much you have, or mark it as Have, Low, or Out. Leave measured amounts blank if you haven’t checked them.',
 		);
-		let name = this.initialName, description = '', volume = '', abv = '';
+		let name = this.options.name ?? '', description = '', volume = '', abv = '';
 		let unopened = '', remaining = '', lastPurchasePrice = '';
 		const open = new BottleAmount();
 		let refreshOpen: (() => void) | undefined;
 		let form = 'Fresh ingredient', availability = 'Unknown';
 		let tracking = this.bottle ? 'volume' : 'status';
 		let shoppingList = false;
-		let types: CabinetNote[] = [];
-		this.text('Name', name, value => { name = value; }).setClass('cocktail-cabinet-name');
+		let types: CabinetNote[] = this.bottle ? (this.options.types ?? []).slice(0, 1) : [...this.options.types ?? []];
+		let nameInput: TextComponent | undefined;
+		let suggestion = '';
+		// Homemade sources default to "House <type>" so they don't share their type's name.
+		const suggest = () => {
+			if (this.bottle) return;
+			const next = houseName(form, types[0]?.name);
+			const value = suggestedName(name, suggestion, next);
+			suggestion = next;
+			if (value !== name) {
+				name = value;
+				nameInput?.setValue(value);
+			}
+		};
+		new Setting(this.contentEl).setName('Name').setClass('cocktail-cabinet-name')
+			.addText(text => { nameInput = text.setValue(name).onChange(value => { name = value; }); });
 		this.choose(
 			this.bottle ? 'Ingredient type (optional)' : 'Provides ingredients',
 			() => this.plugin.store.notes().filter(note => note.kind === 'type'),
-			notes => { types = notes; },
+			notes => { types = notes; suggest(); },
 			!this.bottle,
+			types,
 		);
 		if (this.bottle) {
 			this.text('Bottle volume (mL)', volume, value => {
@@ -40,7 +63,7 @@ export class StockModal extends CabinetForm {
 			});
 			this.text('Alcohol by volume (%)', abv, value => { abv = value; });
 		} else {
-			this.select('Form', STOCK_FORMS, form, value => { form = value; });
+			this.select('Form', STOCK_FORMS, form, value => { form = value; suggest(); });
 		}
 		this.select('Track stock by', STOCK_TRACKING, tracking, value => {
 			tracking = value;
@@ -123,7 +146,7 @@ export class StockModal extends CabinetForm {
 			}
 			const file = await this.plugin.store.create({ kind, name, description, properties });
 			this.close();
-			if (this.created) this.created({ path: file.path, name: noteName(name).normalize('NFC'), kind, parents: types.map(note => note.path) });
+			if (this.options.created) this.options.created({ path: file.path, name: noteName(name).normalize('NFC'), kind, parents: types.map(note => note.path) });
 			else await this.plugin.store.open(file.path);
 		});
 	}

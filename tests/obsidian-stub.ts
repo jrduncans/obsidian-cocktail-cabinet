@@ -17,6 +17,16 @@ export function moment(value?: string, _format?: string) {
 export function normalizePath(path: string): string { return path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\//, '').replace(/\/$/, ''); }
 
 // Fixtures use JSON frontmatter, which is valid YAML supported by Obsidian.
-export function parseYaml(source: string): unknown { return JSON.parse(source); }
+/** JSON, or the `key: <JSON value>` lines the plugin writes (bare words read as strings). */
+export function parseYaml(source: string): unknown {
+	if (source.trim().startsWith('{')) return JSON.parse(source);
+	return Object.fromEntries(source.split('\n').filter(line => line.includes(':')).map(line => {
+		const colon = line.indexOf(':');
+		const value = line.slice(colon + 1).trim();
+		let parsed: unknown;
+		try { parsed = value ? JSON.parse(value) : null; } catch { parsed = value; }
+		return [line.slice(0, colon).trim(), parsed];
+	}));
+}
 export function stringifyYaml(value: unknown): string { return JSON.stringify(value); }
 export function parseFrontMatterAliases(): string[] { return []; }

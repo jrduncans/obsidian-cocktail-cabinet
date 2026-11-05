@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PROP } from '../src/core/schema';
 import { renderNote } from '../src/core/notes';
-import { stockProperties } from '../src/core/stock';
+import { houseName, stockProperties, suggestedName } from '../src/core/stock';
 import { BottleAmount } from '../src/core/bottle-amount';
 import type { StockInput } from '../src/core/stock';
 
@@ -200,4 +200,16 @@ void test('stock mode resets preserve unknown instead of restoring a full bottle
 	const properties = stockProperties(input({ tracking: 'status', open: 'invalid', openUnit: 'percent' }));
 	assert.ok(!(PROP.open in properties));
 	assert.equal(properties[PROP.availability], 'Unknown');
+});
+
+void test('homemade other stock suggests a House name without overwriting typed names', () => {
+	assert.equal(houseName('Homemade syrup', 'Simple Syrup (1:1)'), 'House Simple Syrup (1:1)');
+	assert.equal(houseName('Prepared juice', 'Lime Juice'), 'House Lime Juice');
+	assert.equal(houseName('Fresh ingredient', 'Lime Juice'), '');
+	assert.equal(houseName('Homemade syrup', undefined), '');
+	assert.equal(suggestedName('', '', 'House Orgeat'), 'House Orgeat');
+	assert.equal(suggestedName('House Orgeat', 'House Orgeat', 'House Grenadine'), 'House Grenadine');
+	assert.equal(suggestedName('House Orgeat', 'House Orgeat', ''), '');
+	assert.equal(suggestedName('Small Hand Orgeat', 'House Orgeat', 'House Grenadine'), 'Small Hand Orgeat');
+	assert.equal(suggestedName('Limes', '', 'House Lime Juice'), 'Limes');
 });
