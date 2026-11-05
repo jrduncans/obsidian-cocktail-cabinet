@@ -9,6 +9,8 @@ export class BottleAmount {
 	value = '';
 	private volume = '';
 	private defaultFull = true;
+	/** The saved amount, kept exact until the user changes the entry. */
+	private loaded: number | null | undefined;
 
 	private get fullVolume(): number | null {
 		const volume = Number(this.volume);
@@ -26,11 +28,36 @@ export class BottleAmount {
 	setValue(value: string): void {
 		this.value = value;
 		this.defaultFull = false;
+		this.loaded = undefined;
+	}
+
+	/** Start from saved stock: percent when the bottle size is known, otherwise mL. */
+	load(ml: number | null, volume: number | null): void {
+		this.volume = volume === null ? '' : String(volume);
+		this.defaultFull = false;
+		this.unit = volume !== null && volume > 0 ? 'percent' : 'ml';
+		this.loaded = ml;
+		this.value = this.display(ml);
+	}
+
+	private display(ml: number | null): string {
+		if (ml === null) return '';
+		const volume = this.fullVolume;
+		if (this.unit === 'ml') return String(Number(ml.toFixed(3)));
+		return volume === null ? '' : String(Number((ml / volume * 100).toFixed(1)));
 	}
 
 	setUnit(unit: string): void {
 		if (unit !== 'percent' && unit !== 'ml') throw new Error('Select percent full or mL.');
 		if (unit === this.unit) return;
+		if (this.loaded !== undefined) {
+			if (unit === 'percent' && this.loaded !== null && this.loaded > 0 && this.fullVolume === null) {
+				throw new Error('Enter the bottle volume to use a percentage estimate.');
+			}
+			this.unit = unit;
+			this.value = this.display(this.loaded);
+			return;
+		}
 		let value = '';
 		if (this.defaultFull) {
 			if (this.fullVolume !== null) value = unit === 'percent' ? '100' : String(this.fullVolume);
@@ -49,6 +76,7 @@ export class BottleAmount {
 	}
 
 	toMl(): number | null {
+		if (this.loaded !== undefined) return this.loaded;
 		return openBottleMl(this.value, this.unit, this.fullVolume);
 	}
 
@@ -56,5 +84,6 @@ export class BottleAmount {
 	reset(): void {
 		this.value = '';
 		this.defaultFull = false;
+		this.loaded = undefined;
 	}
 }

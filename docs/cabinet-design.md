@@ -135,7 +135,7 @@ Agreed on 2026-11-03 while scoping [roadmap](roadmap.md) Phase 1.
   - A final **Other bottle…** option searches every bottle in the cabinet for exceptional substitutions.
   - A line with one candidate, or naming a specific owned bottle, is pre-selected. A line with several candidates starts unselected, and apply is disabled until each such line is chosen.
   - The preview and shortfall check follow the current selections; apply writes exactly what is shown. Recording substitutions is out of scope for now.
-- **Stock editing deferred.** Bottle creation plus hand edits of stock fields are enough to start real use.
+- **Stock editing deferred.** Bottle creation plus hand edits of stock fields are enough to start real use. Superseded by [editing stock](#editing-stock).
 
 ### Desktop logging implementation
 
@@ -157,6 +157,18 @@ Agreed on 2026-11-04, after managing syrups in the dev vault meant an other-stoc
 - **Add stock from the type note.** Two commands on a type note, **Add a bottle of this type** and **Add other stock for this type**, open the matching form with the type or Provides filled in, so the separate source note rarely needs opening; the type's Stock section already shows it. Two commands rather than a guess, since most types can be either (decided 2026-11-04).
 - **The suggestion yields to typing.** The House name follows the form and first provided type while the name is blank or still the suggestion; anything typed is kept.
 - **Worked example.** Decided 2026-11-04. A new cabinet gets Limes and Lemons (availability, providing the juice and peel types), House Simple Syrup (1:1) (mL), and a Daiquiri and Whiskey Sour, so a drink can be logged on day one. Stock starts Unknown rather than with sample amounts: the first log asks for the syrup amount or **Don't subtract**, and the home note says to set it. Examples are the user's notes, so setup adds them only when it creates the cabinet home and never restores a deleted one; a file already at an example path is kept rather than blocking setup. Each has a catalog ID (`ingredient/Limes`, `recipe/Daiquiri`) listed in `STARTER_EXAMPLES`, for the migration to recognize.
+
+## Editing stock
+
+Agreed on 2026-11-04 as the first Phase 2 item, replacing hand edits of `cc-open-ml`, `cc-unopened`, `cc-remaining-ml`, and `cc-availability`.
+
+- **One form with shortcuts.** **Edit stock** is a command on bottle and other-stock notes, desktop and mobile. It opens a form filled from the note's current stock (read from the file, not the metadata cache), shows Now and After, and saves only what changed.
+- **Bought more** adds one sealed bottle per press (volume-tracked bottles) or sets Have (availability), and switches the shopping-list flag off; the price field is right there to update. For other stock tracked in mL it only clears the flag, and the new amount is typed. Automatic flag clearing applies only to this explicit purchase action, not to stock changes in general.
+- **Finished** empties the open bottle (0 mL open; sealed bottles stay), sets other stock to 0 mL, or sets Out.
+- **No Open next bottle.** Considered and dropped: logging already opens a sealed bottle when the open one runs out, so 0 mL open with a sealed spare behaves the same, and opening early raised an unclear question about the leftover.
+- **Levels.** The open bottle starts in percent full when the bottle size is known, else mL. An untouched value keeps the exact saved mL, so opening and saving never rounds stock.
+- **Mode switches.** A new mode starts unknown (Unknown availability, blank amounts) and is never converted from the old one; switching back to the saved mode restores its values. Saving a switch removes the old mode's stock fields.
+- **Stale protection.** Save re-reads the note inside `processFrontMatter` and refuses, changing nothing, if stock, price, or flag changed since the form opened. Bottle size and ABV stay in Properties.
 
 ## Navigation in notes
 

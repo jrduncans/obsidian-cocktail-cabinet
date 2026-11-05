@@ -8,6 +8,8 @@ import { SetupModal } from '../ui/setup-modal';
 import { NotePicker } from '../ui/picker';
 import { LoggingModal } from '../ui/logging-modal';
 import { LoggingStore } from '../vault/logging-store';
+import { StockStore } from '../vault/stock-store';
+import { EditStockModal } from '../ui/edit-stock-modal';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(plugin.app, plugin.store);
@@ -24,6 +26,23 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 				const recipe = plugin.store.notes().find(note => note.path === file.path && note.kind === 'recipe');
 				if (recipe) new LoggingModal(plugin, logger, recipe).open();
 			}
+			return true;
+		},
+	});
+	const stocks = new StockStore(plugin.app);
+	plugin.addCommand({
+		id: 'edit-stock',
+		name: 'Edit stock',
+		checkCallback: checking => {
+			const file = plugin.app.workspace.getActiveFile();
+			if (!file || file.extension !== 'md' || !file.path.startsWith(`${plugin.store.root}/`)) return false;
+			const kind: unknown = plugin.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind];
+			if (kind !== 'bottle' && kind !== 'ingredient') return false;
+			if (!checking) void handle(async () => {
+				const note = plugin.store.notes().find(note => note.path === file.path && note.kind === kind);
+				if (!note) throw new Error('This note isn’t a cabinet bottle or other stock.');
+				new EditStockModal(plugin.app, stocks, note, await stocks.read(note)).open();
+			});
 			return true;
 		},
 	});
