@@ -14,7 +14,12 @@ export const NAVIGATION_BASE = 'Related';
  * Fingerprints of every earlier released version of the navigation Base. When the generated
  * content changes, add the previous version's `managedFingerprint` here so setup updates it.
  */
-export const PREVIOUS_NAVIGATION_VERSIONS: readonly string[] = [];
+export const PREVIOUS_NAVIGATION_VERSIONS: readonly string[] = [
+	// 0.1.0: bottle stock as "? mL open, 0 unopened".
+	'5357-fc366e60',
+	// Development only: "660 mL open", "None".
+	'5493-e44f3a35',
+];
 
 export const NAVIGATION_VIEWS = {
 	families: 'Families',

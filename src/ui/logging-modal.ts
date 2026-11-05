@@ -3,7 +3,7 @@ import type { ButtonComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
 import { SKIP_LINE } from '../core/logging-lines';
 import { planLogging } from '../core/logging-plan';
-import { formatMl } from '../core/logging-stock';
+import { bottleStockText, formatMl } from '../core/logging-stock';
 import { PROP } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
 import { LoggingStore, LoggingWriteError } from '../vault/logging-store';
@@ -141,8 +141,9 @@ export class LoggingModal extends Modal {
 				row.createEl('td', { text: change.source.note.name });
 				row.createEl('td', { text: `${formatMl(change.consumedMl)} mL` });
 				const unopened = change.updates[PROP.unopened] ?? change.source.fields[PROP.unopened];
+				const volume = change.source.fields[PROP.volume];
 				const after = change.source.note.kind === 'bottle'
-					? `${formatMl(change.updates[PROP.open]!)} mL open, ${typeof unopened === 'number' ? unopened : 0} unopened${change.opened ? ` · opens ${change.opened}` : ''}`
+					? `${bottleStockText(change.updates[PROP.open]!, typeof unopened === 'number' ? unopened : 0, typeof volume === 'number' ? volume : null)}${change.opened ? ` · opens ${change.opened}` : ''}`
 					: `${formatMl(change.updates[PROP.remaining]!)} mL`;
 				row.createEl('td', { text: after });
 			}

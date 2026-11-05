@@ -56,6 +56,20 @@ function quantity(fields: Record<string, unknown>, key: string, integer = false)
 
 export function formatMl(value: number): string { return String(Number(value.toFixed(3))); }
 
+/**
+ * A bottle's stock in words: "88% (660 mL), 2 unopened". Percent of the bottle size when known,
+ * otherwise mL alone. A missing open amount reads as none open; zero parts are left out.
+ */
+export function bottleStockText(open: number | null, unopened: number | null, volume: number | null): string {
+	const parts: string[] = [];
+	if (open !== null && open > 0) {
+		const percent = volume !== null && volume > 0 ? open / volume * 100 : null;
+		parts.push(percent === null ? `${formatMl(open)} mL` : `${percent < 1 ? '<1' : Math.round(percent)}% (${formatMl(open)} mL)`);
+	}
+	if (unopened !== null && unopened > 0) parts.push(`${unopened} unopened`);
+	return parts.join(', ') || 'None';
+}
+
 function drawdown(source: StockSource, consumedMl: number): StockChange {
 	const fields = source.fields;
 	if (fields[PROP.kind] !== source.note.kind) throw new Error('No longer a bottle or other stock.');

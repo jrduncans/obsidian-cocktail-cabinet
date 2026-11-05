@@ -1,4 +1,4 @@
-import { formatMl } from './logging-stock';
+import { bottleStockText, formatMl } from './logging-stock';
 import { optionalNumber, PROP } from './schema';
 import type { Properties } from './schema';
 import { AVAILABILITY } from './stock';
@@ -86,7 +86,7 @@ export function editFromState(state: StockState): StockEdit {
 export function describeStock(state: StockState): string {
 	if (state.tracking === 'status') return state.availability;
 	if (state.tracking !== 'volume') return 'Tracking not set';
-	if (state.kind === 'bottle') return `${state.open === null ? '?' : formatMl(state.open)} mL open, ${state.unopened} unopened`;
+	if (state.kind === 'bottle') return bottleStockText(state.open, state.unopened, state.volume);
 	return state.remaining === null ? 'Amount unknown' : `${formatMl(state.remaining)} mL`;
 }
 

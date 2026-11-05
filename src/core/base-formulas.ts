@@ -29,13 +29,23 @@ export const kindIs = (...kinds: NoteKind[]) => kinds.map(kind => `note[${q(PROP
 /** A link showing the proper name (`cc-name`) of the file in `value`. */
 export const linkWithName = `value.asLink(if(value.properties[${q(PROP.name)}], value.properties[${q(PROP.name)}], value.name))`;
 
+/** Mirrors `bottleStockText`: "88% (660 mL), 2 unopened", mL alone without a bottle size, or "None". */
+function bottleStock(open: string, unopened: string, volume: string): string {
+	const ml = `${open}.round() + " mL"`;
+	const percent = `if(${open} / ${volume} < 0.01, "<1", (${open} / ${volume} * 100).round())`;
+	const openText = `if(${volume} > 0, ${percent} + "% (" + ${ml} + ")", ${ml})`;
+	const unopenedText = `${unopened} + " unopened"`;
+	return `if(${open} > 0 && ${unopened} > 0, ${openText} + ", " + ${unopenedText}, `
+		+ `if(${open} > 0, ${openText}, if(${unopened} > 0, ${unopenedText}, "None")))`;
+}
+
 export const COMMON_FORMULAS = {
 	name: `file.asLink(if(note[${q(PROP.name)}], note[${q(PROP.name)}], file.name))`,
 	parents: parentsOf(),
 	parentLinks: `formula.parents.map(${linkWithName})`,
 	stock: `if(note[${q(PROP.stockTracking)}] == "status", if(note[${q(PROP.availability)}], note[${q(PROP.availability)}], "Unknown"), `
 		+ `if(note[${q(PROP.stockTracking)}] != "volume", "", if(note[${q(PROP.kind)}] == "bottle", `
-		+ `if(note[${q(PROP.open)}] == null, "?", note[${q(PROP.open)}].round()) + " mL open, " + if(note[${q(PROP.unopened)}], note[${q(PROP.unopened)}], 0) + " unopened", `
+		+ bottleStock(`note[${q(PROP.open)}]`, `note[${q(PROP.unopened)}]`, `note[${q(PROP.volume)}]`) + ', '
 		+ `if(note[${q(PROP.remaining)}] == null, "?", note[${q(PROP.remaining)}].round()) + " mL")))`,
 	// Ratings are numbers 1–5; anything else is shown as written.
 	rating: 'if(note.rating.isType("number"), "⭐️".repeat(note.rating.round()), note.rating)',

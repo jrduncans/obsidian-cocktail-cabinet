@@ -5,6 +5,9 @@ import { BottleAmount } from '../src/core/bottle-amount';
 import { boughtMore, describeStock, editFromState, finished, planStockEdit, readStockState, sameStockState } from '../src/core/stock-edit';
 import type { StockEdit } from '../src/core/stock-edit';
 import { StockStore } from '../src/vault/stock-store';
+import { bottleStockText } from '../src/core/logging-stock';
+import { COMMON_FORMULAS } from '../src/core/base-formulas';
+import { PREVIOUS_NAVIGATION_VERSIONS } from '../src/core/navigation';
 import { TFile } from './obsidian-stub';
 import type { App } from 'obsidian';
 
@@ -34,12 +37,34 @@ void test('current stock is read per mode, with unknown amounts distinct from ze
 });
 
 void test('summaries match the Stock sections', () => {
-	assert.equal(describeStock(readStockState('bottle', bottle)), '300 mL open, 1 unopened');
-	assert.equal(describeStock(readStockState('bottle', { ...bottle, [PROP.open]: null })), '? mL open, 1 unopened');
+	assert.equal(describeStock(readStockState('bottle', bottle)), '40% (300 mL), 1 unopened');
+	assert.equal(describeStock(readStockState('bottle', { ...bottle, [PROP.open]: null })), '1 unopened');
+	assert.equal(describeStock(readStockState('bottle', { ...bottle, [PROP.unopened]: 0 })), '40% (300 mL)');
+	assert.equal(describeStock(readStockState('bottle', { ...bottle, [PROP.volume]: null, [PROP.unopened]: 0 })), '300 mL');
+	assert.equal(describeStock(readStockState('bottle', { ...bottle, [PROP.open]: null, [PROP.unopened]: null })), 'None');
+	assert.equal(describeStock(readStockState('bottle', { ...bottle, [PROP.open]: 0, [PROP.unopened]: 0 })), 'None');
 	assert.equal(describeStock(readStockState('ingredient', syrup)), '250 mL');
 	assert.equal(describeStock(readStockState('ingredient', { ...syrup, [PROP.remaining]: null })), 'Amount unknown');
 	assert.equal(describeStock(readStockState('ingredient', limes)), 'Low');
 	assert.equal(describeStock(readStockState('ingredient', {})), 'Tracking not set');
+});
+
+void test('bottle stock text drops zero parts and says None when there is nothing', () => {
+	assert.equal(bottleStockText(660, 0, 750), '88% (660 mL)');
+	assert.equal(bottleStockText(660.4, 2, 750), '88% (660.4 mL), 2 unopened');
+	assert.equal(bottleStockText(660, 0, null), '660 mL');
+	assert.equal(bottleStockText(5, 0, 750), '<1% (5 mL)');
+	assert.equal(bottleStockText(7.5, 0, 750), '1% (7.5 mL)');
+	assert.equal(bottleStockText(null, 1, 750), '1 unopened');
+	assert.equal(bottleStockText(0, null, 750), 'None');
+	assert.equal(bottleStockText(null, null, null), 'None');
+});
+
+void test('the Stock formula follows the same wording, and setup replaces the previous Related view', () => {
+	const stock = COMMON_FORMULAS.stock;
+	assert.ok(stock.includes('"None"'));
+	assert.ok(stock.includes('" unopened"') && stock.includes('"<1"') && !stock.includes('mL open'));
+	assert.ok(PREVIOUS_NAVIGATION_VERSIONS.includes('5357-fc366e60'));
 });
 
 void test('an unchanged form writes nothing', () => {
@@ -59,7 +84,7 @@ void test('bought more adds a sealed bottle, clears the shopping flag, and keeps
 	assert.equal(boughtMore(bought, 'bottle').unopened, '3');
 	const plan = planStockEdit(before, { ...bought, price: '31.5' });
 	assert.deepEqual(plan.updates, { [PROP.unopened]: 2, [PROP.lastPurchasePrice]: 31.5, [PROP.shoppingList]: false });
-	assert.equal(describeStock(plan.after), '300 mL open, 2 unopened');
+	assert.equal(describeStock(plan.after), '40% (300 mL), 2 unopened');
 });
 
 void test('bought more marks status stock as Have', () => {
