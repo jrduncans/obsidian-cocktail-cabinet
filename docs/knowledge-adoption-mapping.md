@@ -51,6 +51,9 @@ Renamed types are rewritten automatically (see the types table). These depend on
 - **Substitutes For** is dropped. Every declared pair now shares a type, so the logging picker lists them first.
 - **Bottle stock:** `Volume` "750 mL" → `cc-volume-ml` 750; `Remaining in Open Bottle` × volume → `cc-open-ml`; `Unopened Bottles` → `cc-unopened`; `ABV`, `Last Purchase Price`, and `Shopping List` carry over; all bottles use volume tracking. An empty open amount stays unknown rather than zero.
 - **Recipe ratings:** ⭐️ strings → `rating` 1–5 by star count; blank stays blank.
+- **Homemade syrups** kept as bottle notes become other stock, per [homemade stock](cabinet-design.md#homemade-stock): Simple Syrup, 1 to 1 → **House Simple Syrup (1 to 1)** and Demerara Syrup, 2 to 1 → **House Demerara Syrup (2 to 1)**, form Homemade syrup, tracked in mL (open + unopened × volume), old names kept as aliases. Bought syrups stay bottles.
+- **Filenames** follow the plugin's naming rules, so Tuxedo #2, Biloxi Deluxe #2, Maison Rouge Cognac V.S., and Last Wørd get `No 2`, `VS`, and `Woerd` filenames while keeping their names.
+- **Types with no prose of their own** take the starter description.
 - **Fresh Lemons, Limes, and Oranges** become other-stock sources providing their juices, with status tracking and availability carried over.
 - **DataviewJS related-recipe blocks** on bottle, type, and subcategory notes are replaced with the plugin's navigation embeds for the note's kind (see [navigation in notes](cabinet-design.md#navigation-in-notes)), and `Related.base` is added to Views.
 - **Other old-schema views and notes** (the `.base` files, `Shopping.md`, templates) are handled at cutover, not here. `Shopping.md` is replaced by the plugin's **Shopping list** note.

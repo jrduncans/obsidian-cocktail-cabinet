@@ -8,10 +8,9 @@ import type { Document } from './document';
 import { destinationPath, familyName } from './mapping';
 import type { AdoptionMapping, Destination } from './mapping';
 import { rewriteBody, rewriteLinks } from './links';
-import type { MigrationDecisions } from './decisions';
 
 export interface Change { category: string; action: 'create' | 'rewrite' | 'rename' | 'retire'; path: string; from?: string; }
-export interface Issue { category: 'Unmapped notes' | 'Unmapped links' | 'Unmapped properties' | 'Conversion errors' | 'Confirmation' | 'Deferred cutover' | 'Approved overrides'; path: string; detail: string; }
+export interface Issue { category: 'Unmapped notes' | 'Unmapped links' | 'Unmapped properties' | 'Conversion errors' | 'Confirmation' | 'Deferred cutover'; path: string; detail: string; }
 export interface MigrationPlan {
 	root: string;
 	files: Map<string, string>;
@@ -27,10 +26,18 @@ const LEGACY_KEYS: Record<NoteKind, string[]> = {
 	ingredient: ['base', 'Provides', 'Form', 'Availability', 'Shopping List'], recipe: [],
 };
 const RETAINED_KEYS = ['aliases', 'created', 'source', 'rating'];
+/** The description in a generated note body, without its heading or navigation embeds. */
+function starterDescription(body: string): string {
+	return body.replace(/^# [^\n]*(?:\n|$)/, '').replace(/^!\[\[[^\]]*\.base#[^\]]*\]\][^\S\n]*$/gm, '').trim();
+}
+
+/** Homemade syrups kept as bottle notes become House other stock (see the mapping's mechanical changes). */
+const HOUSE: Record<string, string> = { 'Simple Syrup, 1 to 1': 'Simple Syrup (1 to 1)', 'Demerara Syrup, 2 to 1': 'Demerara Syrup (2 to 1)' };
+
 const FRUIT: Record<string, string> = { 'Fresh Lemons': 'Lemon Juice', 'Fresh Limes': 'Lime Juice', 'Fresh Oranges': 'Orange Juice' };
 
 /** Pure plan: no filesystem access, dates, or personal source content embedded in code. */
-export function migrationPlan(source: ReadonlyMap<string, string>, folder: string, mapping: AdoptionMapping, decisions: MigrationDecisions = { filenames: {}, volumes: {} }): MigrationPlan {
+export function migrationPlan(source: ReadonlyMap<string, string>, folder: string, mapping: AdoptionMapping): MigrationPlan {
 	const root = cabinetFolder(folder);
 	const plan: MigrationPlan = { root, files: new Map(), remove: [], changes: [], issues: [], counts: { create: 0, rewrite: 0, rename: 0, retire: 0, 'Conversion errors': 0 } };
 	const count = (key: string) => { plan.counts[key] = (plan.counts[key] ?? 0) + 1; };
@@ -38,9 +45,6 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 	const documents = new Map<string, Document>();
 	const destinations = new Map<string, Destination | null>();
 	const definitions = starterPlan(root);
-	for (const path of [...Object.keys(decisions.filenames), ...Object.keys(decisions.volumes)]) {
-		if (!source.has(path)) issue('Conversion errors', path, 'Approved override does not match a source file.');
-	}
 	for (const rule of [...mapping.types.values(), ...mapping.additionalTypes]) {
 		if (!rule || definitions.some(file => file.path === notePath(root, 'type', rule.name))) continue;
 		definitions.push(renderNote(root, { kind: 'type', name: rule.name, description: '', properties: rule.family ? { [PROP.family]: wikiLink(notePath(root, 'family', rule.family), rule.family) } : {} }, ''));
@@ -76,6 +80,8 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 			} else if (parts.length === 3 && parts[1] === 'Types') {
 				const type = mapping.types.get(name);
 				destination = type === null ? null : type ? { kind: 'type', name: type.name } : undefined;
+			} else if (parts.length === 3 && parts[1] === 'Bottles' && HOUSE[name]) {
+				destination = { kind: 'ingredient', name: `House ${HOUSE[name]}` };
 			} else if (parts.length === 3 && parts[1] === 'Bottles') {
 				const previous = singleLegacyLink(document.metadata.Type);
 				const rule = mapping.bottles.get(name);
@@ -91,17 +97,13 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 			}
 			if (destination === undefined) issue('Unmapped notes', path, 'No migration rule; preserved.');
 			else {
-				if (destination && decisions.filenames[path]) {
-					destination.filename = decisions.filenames[path];
-					issue('Approved overrides', path, `Filename: ${destination.filename}; original display name retained.`);
-				}
 				if (destination) destinationPath(root, destination);
 				destinations.set(path, destination);
 			}
 		} catch (error) { issue('Conversion errors', path, String(error)); }
 	}
 	const available = new Set([...definitions.map(file => file.path), ...[...destinations.values()].filter((value): value is Destination => !!value).map(value => destinationPath(root, value))]);
-	const merged = new Map<string, { document: Document; kind: NoteKind; bodies: string[] }>();
+	const merged = new Map<string, { document: Document; kind: NoteKind; bodies: string[]; starter: string }>();
 	for (const [path, destination] of destinations) {
 		const document = documents.get(path)!;
 		const from = `${root}/${path.slice('Cocktails/'.length)}`;
@@ -114,8 +116,11 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 			continue;
 		}
 		const { kind, name } = destination;
+		const sourceName = path.split('/').at(-1)!.replace(/\.md$/, '');
+		const house = kind === 'ingredient' ? HOUSE[sourceName] : undefined;
+		const legacy = house ? LEGACY_KEYS.bottle : LEGACY_KEYS[kind];
 		const to = destinationPath(root, destination);
-		const seed = definitions.find(file => file.path === to) ?? renderNote(root, { kind, name: destination.filename ?? name, description: '' }, '');
+		const seed = definitions.find(file => file.path === to) ?? renderNote(root, { kind, name, description: '' }, '');
 		const generated = readDocument(seed.content);
 		const metadata = { ...document.metadata };
 		const context = { root, mapping, sources: destinations, available,
@@ -124,17 +129,27 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 			const authoredAliases = metadata.aliases;
 			if (authoredAliases != null && typeof authoredAliases !== 'string' && (!Array.isArray(authoredAliases) || (authoredAliases as unknown[]).some(value => typeof value !== 'string'))) throw new Error('Aliases must be text or a list of text.');
 			for (const key of Object.keys(metadata)) {
-				if (!LEGACY_KEYS[kind].includes(key) && !RETAINED_KEYS.includes(key) && !key.startsWith('cc-')) issue('Unmapped properties', path, `${key}: preserved without conversion.`);
+				if (!legacy.includes(key) && !RETAINED_KEYS.includes(key) && !key.startsWith('cc-')) issue('Unmapped properties', path, `${key}: preserved without conversion.`);
 			}
 			if (kind === 'bottle') {
 				const type = mapping.bottles.get(name)?.type ?? mapping.types.get(singleLegacyLink(metadata.Type)!)!.name;
-				const volume = decisions.volumes[path];
-				if (volume !== undefined) issue('Approved overrides', path, `Bottle volume: ${volume} mL (source value ${JSON.stringify(metadata.Volume)}).`);
-				Object.assign(generated.metadata, bottleStock(volume === undefined ? metadata : { ...metadata, Volume: `${volume} mL` }), { [PROP.type]: wikiLink(notePath(root, 'type', type), type) });
+				Object.assign(generated.metadata, bottleStock(metadata), { [PROP.type]: wikiLink(notePath(root, 'type', type), type) });
 				delete generated.metadata[PROP.availability];
 				count('Bottle stock converted');
 			}
-			if (kind === 'ingredient') {
+			if (house) {
+				const stock = bottleStock(metadata);
+				const volume = stock[PROP.volume] as number | null, open = stock[PROP.open] as number | null;
+				const unopened = (stock[PROP.unopened] as number | null) ?? 0;
+				if (unopened > 0 && volume === null) throw new Error('Unopened homemade syrup needs a known volume.');
+				const remaining = open === null && unopened === 0 ? null : (open ?? 0) + unopened * (volume ?? 0);
+				Object.assign(generated.metadata, {
+					[PROP.provides]: [wikiLink(notePath(root, 'type', house), house)], [PROP.form]: 'Homemade syrup',
+					[PROP.stockTracking]: 'volume', [PROP.remaining]: remaining, [PROP.lastPurchasePrice]: stock[PROP.lastPurchasePrice],
+				});
+				delete generated.metadata[PROP.availability];
+				count('Homemade syrups converted');
+			} else if (kind === 'ingredient') {
 				const juice = FRUIT[name]!;
 				if (metadata.Form !== 'Whole fruit' || JSON.stringify(metadata.Provides) !== JSON.stringify([`[[${juice}]]`])) throw new Error('Fresh fruit form or provided juice differs from mapping.');
 				if (metadata.Availability != null && (typeof metadata.Availability !== 'string' || !['Unknown', 'Have', 'Low', 'Out'].includes(metadata.Availability))) throw new Error('Invalid availability.');
@@ -151,7 +166,7 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 				if (rating !== metadata.rating) count('Ratings converted');
 				metadata.rating = rating;
 			}
-			for (const key of LEGACY_KEYS[kind]) delete metadata[key];
+			for (const key of legacy) delete metadata[key];
 			// Recursively rewrite links in retained custom metadata without losing nested values.
 			const rewriteValue = (value: unknown): unknown => typeof value === 'string' ? rewriteLinks(value, path, false, context)
 				: Array.isArray(value) ? value.map(rewriteValue)
@@ -159,7 +174,7 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 			for (const key of Object.keys(metadata)) metadata[key] = rewriteValue(metadata[key]);
 			const properties: Record<string, unknown> = { ...generated.metadata, ...metadata, [PROP.kind]: kind, [PROP.name]: name };
 			// Renderer's automatic aliases are combined with authored aliases.
-			const aliasValues: unknown[] = [generated.metadata.aliases, metadata.aliases, destination.filename ? name : undefined];
+			const aliasValues: unknown[] = [generated.metadata.aliases, metadata.aliases, house ? sourceName : undefined];
 			const aliases = aliasValues.flatMap((value): string[] => Array.isArray(value) ? (value as unknown[]).filter((item): item is string => typeof item === 'string') : typeof value === 'string' ? [value] : []);
 			if (aliases.length) properties.aliases = [...new Set(aliases)];
 			// renderNote's creation-only recipe defaults must not invent historical metadata.
@@ -180,14 +195,16 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 				if (aliases.length) existing.document.metadata.aliases = [...new Set([...(Array.isArray(priorAliases) ? (priorAliases as unknown[]).filter((value): value is string => typeof value === 'string') : []), ...aliases])];
 				if (body && !existing.bodies.includes(body)) existing.bodies.push(body);
 				count('Notes merged');
-			} else merged.set(to, { document: { metadata: properties, body: '' }, kind, bodies: body ? [body] : [] });
+			} else merged.set(to, { document: { metadata: properties, body: '' }, kind, bodies: body ? [body] : [], starter: starterDescription(generated.body) });
 			plan.changes.push({ category: `${kind} notes`, action: from === to ? 'rewrite' : 'rename', path: to, from });
 			count(`${kind} notes converted`);
 			if (kind !== 'recipe') count('Navigation installed');
 		} catch (error) { issue('Conversion errors', path, `${String(error)}; values: ${JSON.stringify(document.metadata)}`); }
 	}
 	for (const [path, entry] of merged) {
-		entry.document.body = withNavigation(`# ${String(entry.document.metadata[PROP.name])}\n\n${entry.bodies.join('\n\n')}`, root, entry.kind);
+		// Authored prose wins; a note with none keeps the starter's description.
+		const bodies = entry.bodies.length ? entry.bodies : [entry.starter].filter(Boolean);
+		entry.document.body = withNavigation(`# ${String(entry.document.metadata[PROP.name])}\n\n${bodies.join('\n\n')}`, root, entry.kind);
 		plan.files.set(path, writeDocument(entry.document));
 	}
 	for (const path of documents.keys()) if (!destinations.has(path)) {

@@ -27,22 +27,13 @@ The destination must be absent or an exact, unchanged copy of the source `Cockta
 
 The report lists every create, rewrite, rename, and retirement. Renames may also change content. Multiple old classifications can merge into one target; their authored bodies, aliases, and shopping flags are retained. Conflicting metadata and authored content on a retired note require review. Generated Views and Shopping list are added; old views and unmapped resources remain for the later cutover. `Shopping.md` is replaced in the rehearsal.
 
-## Explicit decisions
+## Source fixes, not overrides
 
-Some source notes may need decisions the mapping does not cover, such as a positive remaining fraction without bottle volume, an unsupported filename, or a collision after folding accents. The script reports these and does not infer a solution. Provide approved decisions in a private JSON file with `--decisions '/private/path/decisions.json'`:
+Anything the mapping and naming rules can't convert is a conversion error that blocks apply. Fix it in the source vault (for example, a missing bottle volume) or add a rule to the mapping and script; there is no per-note override file.
 
-```json
-{
-  "filenames": {
-    "Cocktails/Recipes/Example #2.md": "Example No 2"
-  },
-  "volumes": {
-    "Cocktails/Bottles/Example bottle.md": 500
-  }
-}
-```
+## Before cutover
 
-Keys are exact source-vault-relative paths. Filename values are plain Latin names without the `.md` extension. They change the filename, retaining the original name in `cc-name`, the heading, and aliases. Volumes are positive mL values used only for the converted copy. Each override is listed in the report; stale paths and unknown decision keys are errors. Keep private decisions outside the repository and use the same file for dry run and apply.
+The migration renames or retires about 90 notes, mostly where accents fold into plain filenames (Vieux Carré → `Vieux Carre.md`). As of 2026-11-04, 15 links outside `Cocktails/` point at them: 14 in daily notes and 1 in a template. Aliases don't make Obsidian resolve those links, so cutover must update them, either by renaming through Obsidian (which rewrites links) or by a link-only rewrite of those lines with the user's explicit approval, since daily notes are personal journal content.
 
 ## Live verification
 

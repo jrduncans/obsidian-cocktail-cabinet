@@ -11,7 +11,7 @@ import { migrationPlan } from '../scripts/knowledge/plan';
 import { migrationReport } from '../scripts/knowledge/report';
 import { navigationEmbeds } from '../src/core/navigation';
 import { PROP } from '../src/core/schema';
-import { readDecisions } from '../scripts/knowledge/decisions';
+import { STARTER_CATALOG } from '../src/catalog/catalog';
 
 const doc = (metadata: Record<string, unknown>, body = '') => writeDocument({ metadata, body });
 const mapping = (): AdoptionMapping => ({
@@ -138,27 +138,48 @@ void test('Latin filename collisions are reported rather than losing a recipe', 
 	assert.ok(plan.issues.some(issue => issue.detail.includes('collision')));
 });
 
-void test('explicit private overrides repair volumes and filenames without changing display names', () => {
+void test('filenames come from rules, keeping the proper name, and links follow them', () => {
 	const config = mapping();
-	config.bottles.set('Example VS.', { previous: 'Old type', type: 'Bourbon' });
+	config.bottles.set('Example V.S.', { previous: 'Old type', type: 'Bourbon' });
 	const source = new Map([
-		['Cocktails/Bottles/Example VS..md', doc({ Type: ['[[Old type]]'], Volume: '', 'Remaining in Open Bottle': 0.1 })],
-		['Cocktails/Recipes/Example #2.md', doc({}, '### Ingredients\n- 1 oz [[Example VS.]]')],
+		['Cocktails/Bottles/Example V.S..md', doc({ Type: ['[[Old type]]'], Volume: '500 mL', 'Remaining in Open Bottle': 0.1 })],
+		['Cocktails/Recipes/Example #2.md', doc({}, '### Ingredients\n- 1 oz [[Example V.S.]]')],
 	]);
-	const decisions = readDecisions({ filenames: { 'Cocktails/Bottles/Example VS..md': 'Example VS', 'Cocktails/Recipes/Example #2.md': 'Example No 2' }, volumes: { 'Cocktails/Bottles/Example VS..md': 500 } });
-	const plan = migrationPlan(source, 'Rehearsal', config, decisions);
+	const plan = migrationPlan(source, 'Rehearsal', config);
 	const bottle = readDocument(plan.files.get('Rehearsal/Bottles/Example VS.md')!);
 	assert.equal(bottle.metadata[PROP.open], 50);
-	assert.equal(bottle.metadata[PROP.name], 'Example VS.');
-	assert.deepEqual(bottle.metadata.aliases, ['Example VS.']);
+	assert.equal(bottle.metadata[PROP.name], 'Example V.S.');
+	assert.deepEqual(bottle.metadata.aliases, ['Example V.S.']);
 	const recipe = readDocument(plan.files.get('Rehearsal/Recipes/Example No 2.md')!);
 	assert.equal(recipe.metadata[PROP.name], 'Example #2');
-	assert.ok(recipe.body.includes('[[Rehearsal/Bottles/Example VS|Example VS.]]'));
+	assert.ok(recipe.body.includes('[[Rehearsal/Bottles/Example VS|Example V.S.]]'));
 	assert.ok(!plan.issues.some(issue => issue.category === 'Conversion errors'));
-	assert.equal(plan.issues.filter(issue => issue.category === 'Approved overrides').length, 3);
-	assert.throws(() => readDecisions({ volumes: { 'Cocktails/Bottles/Example.md': -1 } }));
-	assert.throws(() => readDecisions({ filenames: { '../escape.md': 'Escape' } }));
-	assert.throws(() => readDecisions({ extra: true }));
+});
+
+void test('homemade syrup bottles become House other stock with mL remaining', () => {
+	const source = new Map([
+		['Cocktails/Bottles/Simple Syrup, 1 to 1.md', doc({ Type: ['[[Simple Syrup]]'], Volume: '400 mL', 'Remaining in Open Bottle': 0.5, 'Unopened Bottles': 1, 'Shopping List': false })],
+		['Cocktails/Recipes/Example.md', doc({}, '### Ingredients\n- 1 oz [[Simple Syrup, 1 to 1]]')],
+	]);
+	const plan = migrationPlan(source, 'Rehearsal', mapping());
+	const syrup = readDocument(plan.files.get('Rehearsal/Ingredients/House Simple Syrup (1 to 1).md')!);
+	assert.equal(syrup.metadata[PROP.kind], 'ingredient');
+	assert.equal(syrup.metadata[PROP.form], 'Homemade syrup');
+	assert.equal(syrup.metadata[PROP.stockTracking], 'volume');
+	assert.equal(syrup.metadata[PROP.remaining], 600);
+	assert.deepEqual(syrup.metadata[PROP.provides], ['[[Rehearsal/Types/Simple Syrup (1 to 1)|Simple Syrup (1 to 1)]]']);
+	assert.ok((syrup.metadata.aliases as string[]).includes('Simple Syrup, 1 to 1'));
+	for (const key of [PROP.type, PROP.open, PROP.unopened, 'Volume', 'Type']) assert.ok(!(key in syrup.metadata), key);
+	assert.ok(readDocument(plan.files.get('Rehearsal/Recipes/Example.md')!).body.includes('[[Rehearsal/Ingredients/House Simple Syrup (1 to 1)|Simple Syrup, 1 to 1]]'));
+});
+
+void test('a migrated type with no prose of its own keeps the starter description', () => {
+	const config = mapping();
+	config.types.set('Amaro', { name: 'Amaro', family: 'Amaro Family' });
+	const plan = migrationPlan(new Map([['Cocktails/Types/Amaro.md', doc({ Subcategory: ['[[Amaro]]'] }, '```dataviewjs\nawait dv.view("Cocktails/Views/RelatedRecipes", { page: dv.current().file.path });\n```\n')]]), 'Rehearsal', config);
+	const body = readDocument(plan.files.get('Rehearsal/Types/Amaro.md')!).body;
+	const starter = STARTER_CATALOG.find(entry => entry.kind === 'type' && entry.name === 'Amaro')!.description;
+	assert.ok(body.includes(starter), body);
 });
 
 void test('ambiguous bare links and unknown bottle classifications are reported without selecting a target', () => {

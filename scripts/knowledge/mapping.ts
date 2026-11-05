@@ -4,9 +4,9 @@ import type { NoteKind } from '../../src/core/schema';
 
 export interface TypeRule { name: string; family?: string; }
 export interface BottleRule { previous: string; type: string; }
-export interface Destination { kind: NoteKind; name: string; filename?: string; }
+export interface Destination { kind: NoteKind; name: string; }
 export function destinationPath(root: string, destination: Destination): string {
-	return notePath(root, destination.kind, destination.filename ?? destination.name);
+	return notePath(root, destination.kind, destination.name);
 }
 export interface LinkRule { recipe: string; target: string; destination: Destination; }
 export interface AdoptionMapping {

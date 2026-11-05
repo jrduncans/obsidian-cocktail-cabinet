@@ -182,7 +182,7 @@ void test('a family without a category still finds its types and their bottles',
 });
 
 void test('Latin diacritics and ligatures produce plain filenames with predictable collisions', () => {
-	for (const [name, expected] of [['Cachaça', 'Cachaca'], ['Añejo Tequila', 'Anejo Tequila'], ['Bénédictine', 'Benedictine'], ['Crème de Cacao', 'Creme de Cacao'], ['Ærø', 'AEro']]) {
+	for (const [name, expected] of [['Cachaça', 'Cachaca'], ['Añejo Tequila', 'Anejo Tequila'], ['Bénédictine', 'Benedictine'], ['Crème de Cacao', 'Creme de Cacao'], ['Ærø', 'AEroe'], ['Last Wørd', 'Last Woerd']]) {
 		assert.equal(fileName(name!), expected);
 	}
 	assert.equal(notePath('Cocktails', 'type', 'Cachaça'), notePath('Cocktails', 'type', 'Cachaca'));
@@ -190,6 +190,20 @@ void test('Latin diacritics and ligatures produce plain filenames with predictab
 	assert.equal(fileName('Ti’ Punch'), "Ti' Punch");
 	assert.throws(() => fileName('東京'));
 	assert.throws(() => fileName('NúL'));
+});
+
+void test('filenames are derived by rule from names with numbers and initialisms', () => {
+	assert.equal(fileName('Tuxedo #2'), 'Tuxedo No 2');
+	assert.equal(fileName('Biloxi Deluxe #2'), 'Biloxi Deluxe No 2');
+	assert.equal(fileName('Maison Rouge Cognac V.S.'), 'Maison Rouge Cognac VS');
+	assert.equal(fileName('Mr. Bali Hai Tribute'), 'Mr. Bali Hai Tribute');
+	assert.equal(fileName('F.B.I. Sour'), 'F.B.I. Sour');
+	for (const name of ['A#Heading', 'Done.']) assert.throws(() => fileName(name), name);
+	const note = renderNote('Cocktails', { kind: 'recipe', name: 'Tuxedo #2', description: '' }, '2026-11-04');
+	assert.equal(note.path, 'Cocktails/Recipes/Tuxedo No 2.md');
+	assert.ok(note.content.includes('cc-name: "Tuxedo #2"'));
+	assert.ok(note.content.includes('aliases: ["Tuxedo #2"]'));
+	assert.ok(note.content.includes('# Tuxedo #2\n'));
 });
 
 void test('proper names survive in properties, page headings, aliases, and link display text', () => {
