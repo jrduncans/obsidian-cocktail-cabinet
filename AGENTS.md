@@ -28,6 +28,7 @@ This project spans three workspace folders:
 - The dev vault's `.obsidian/plugins/cocktail-cabinet` is a symlink to this repository. Builds in the repository therefore supply the plugin files directly to that vault; a separate copy step is unnecessary for this setup.
 - Plugin settings written to `data.json` also land in the repository through that symlink. Keep that local state ignored by Git.
 - The Hot Reload community plugin is installed in `Cocktail Cabinet Dev` to support development reloads.
+- Real vaults, including `knowledge`, get a copy, not a symlink, so it syncs to mobile and only merged work reaches them: `npm run install:vault -- --vault PATH` from a clean `main`. Run it only when the user asks to install or update.
 
 
 ## Development conventions

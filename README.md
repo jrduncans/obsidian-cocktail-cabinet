@@ -95,6 +95,12 @@ After changing starter ingredients, run `npm run catalog:docs` to regenerate the
 
 The dev vault's plugin directory is a symlink to this repository. Builds supply `main.js` directly; Hot Reload is installed in that vault. Generated bundles and local `data.json` settings are ignored by Git.
 
-For another test vault, copy `main.js`, `manifest.json`, and `styles.css` to `<vault>/.obsidian/plugins/cocktail-cabinet/` and enable the plugin. Release assets belong at that same plugin root; do not commit generated bundles.
+To install in a real vault, or update it, run from a clean `main`:
+
+```sh
+npm run install:vault -- --vault '/path/to/vault'
+```
+
+It builds, copies `main.js`, `manifest.json`, and `styles.css` to `<vault>/.obsidian/plugins/cocktail-cabinet/`, keeps the vault's `data.json` settings, and asks Obsidian to reload the plugin. The first time, enable **Cocktail Cabinet** in **Settings → Community plugins** and check its cabinet folder. It refuses a branch other than `main`, uncommitted changes, and a symlinked plugin folder (a development vault). The copied files sync to other devices with the vault. Bump the version with `npm version patch` before an install you want to tell apart. Do not commit generated bundles to this repository.
 
 The development override pins Obsidian's transitive Moment dependency to `2.31.0`. The plugin bundle keeps `obsidian` external and uses its bundled `moment` export for Daily notes; it does not bundle a separate Moment library.
