@@ -23,11 +23,23 @@ npm run migrate:knowledge -- \
   --apply
 ```
 
-The destination must be absent or an exact, unchanged copy of the source `Cocktails/` folder. Apply creates a complete staged copy before replacing the destination, rechecks source and target snapshots, and restores the original copy if installation fails. Existing edited rehearsals are refused; choose a new folder. Apply to the `knowledge` vault is always forbidden, including aliases resolved through symlinks. Source and target vaults must be separate. Symlinks inside the source cabinet and destination cabinet path are refused. Daily notes and templates are outside the migration.
+The destination must be absent or an exact, unchanged copy of the source `Cocktails/` folder. Apply creates a complete staged copy before replacing the destination, rechecks source and target snapshots, and restores the original copy if installation fails. Existing edited rehearsals are refused; choose a new folder. Rehearsal apply to the `knowledge` vault is always forbidden, including aliases resolved through symlinks; cutover uses [in-place mode](#cutover-in-place). Source and target vaults must be separate. Symlinks inside the source cabinet and destination cabinet path are refused. Daily notes and templates are outside the migration.
 
 The starter's worked example is added only where the vault has no equivalent: a recipe of the same name, or other stock providing the same type. Skipped examples are listed in the report.
 
 The report lists every create, rewrite, rename, and retirement. Renames may also change content. Multiple old classifications can merge into one target; their authored bodies, aliases, and shopping flags are retained. Conflicting metadata and authored content on a retired note require review. Generated Views and Shopping list are added; old views and unmapped resources remain for the later cutover. `Shopping.md` is replaced in the rehearsal.
+
+## Cutover in place
+
+For cutover, `--in-place` converts the source vault's own `Cocktails/` folder:
+
+```sh
+npm run migrate:knowledge -- \
+  --source-vault '/path/to/knowledge' \
+  --in-place --report '/private/path/cutover-report.md'
+```
+
+Review the dry-run report, then add `--apply`. In-place apply requires the vault to be a git repository with nothing uncommitted or untracked under `Cocktails/`, so it can be undone with `git checkout -- Cocktails && git clean -fd Cocktails`. It uses the same staged copy, rechecks, and swap as a rehearsal, writes nothing outside `Cocktails/`, and stops on conversion errors. Rehearsals into the `knowledge` vault remain forbidden; in place is the only way to write there.
 
 ## Source fixes, not overrides
 

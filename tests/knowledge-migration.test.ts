@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { bottleStock, bottleVolume, cleanNavigation, readDocument, writeDocument } from '../scripts/knowledge/document';
 import { applyPlan, safeDestination, sameSnapshot, snapshot, textSource, writeReport } from '../scripts/knowledge/io';
@@ -323,4 +324,35 @@ void test('the rename pre-pass leaves the migration plan unchanged', () => {
 	assert.deepEqual(sorted(after.issues), sorted(before.issues));
 	for (const path of after.remove) assert.ok(renamed.has(`Cocktails/${path.slice('Rehearsal/'.length)}`), path);
 	assert.deepEqual(restorePrepass(source, config).source, source, 'a vault without the pre-pass is unchanged');
+});
+
+void test('in-place apply converts a committed Cocktails folder that git can restore', async () => {
+	const directory = await mkdtemp(join(tmpdir(), 'migration-in-place-'));
+	try {
+		const vault = join(directory, 'vault');
+		const git = (...args: string[]) => execFileSync('git', ['-C', vault, ...args], { encoding: 'utf8' });
+		await mkdir(join(vault, 'Cocktails', 'Recipes'), { recursive: true });
+		await writeFile(join(vault, 'Cocktails', 'Recipes', 'Synthetic.md'), doc({ rating: '⭐️⭐️' }, '### Ingredients\n- water'));
+		await writeFile(join(vault, 'Daily.md'), 'Untouched daily note.');
+		const plan = () => migrationPlan(textSource(before), 'Cocktails', mapping());
+		const before = await snapshot(join(vault, 'Cocktails'));
+		await assert.rejects(applyPlan(vault, vault, plan(), before, true), /git repository/);
+		git('init', '-q');
+		git('add', '-A');
+		git('-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '-qm', 'Synthetic vault');
+		await writeFile(join(vault, 'Cocktails', 'Draft.md'), 'Uncommitted.');
+		await assert.rejects(applyPlan(vault, vault, plan(), before, true), /Commit or discard/);
+		await rm(join(vault, 'Cocktails', 'Draft.md'));
+		await writeFile(join(vault, 'Daily.md'), 'Edited outside Cocktails.');
+		await assert.rejects(safeDestination(vault, vault, 'Rehearsal', true), /Cocktails folder/);
+		await assert.rejects(safeDestination(vault, directory, 'Cocktails', true), /omit a separate target/);
+		await applyPlan(vault, vault, plan(), before, true);
+		assert.equal(readDocument(await readFile(join(vault, 'Cocktails', 'Recipes', 'Synthetic.md'), 'utf8')).metadata.rating, 2);
+		assert.ok((await readFile(join(vault, 'Cocktails', 'Views', 'Related.base'), 'utf8')).length > 0);
+		assert.equal(await readFile(join(vault, 'Daily.md'), 'utf8'), 'Edited outside Cocktails.');
+		assert.ok(!(await readdir(vault)).some(name => name.startsWith('.cocktail-migration-')), 'staging is removed');
+		git('checkout', '-q', '--', 'Cocktails');
+		git('clean', '-qfd', 'Cocktails');
+		assert.ok(sameSnapshot(before, await snapshot(join(vault, 'Cocktails'))), 'git restores the original');
+	} finally { await rm(directory, { recursive: true, force: true }); }
 });

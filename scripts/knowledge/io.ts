@@ -1,5 +1,7 @@
 import { cp, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { promisify } from 'node:util';
 import { cabinetFolder } from '../../src/core/schema';
 import type { MigrationPlan } from './plan';
 
@@ -16,10 +18,28 @@ async function canonical(path: string): Promise<string> {
 	}
 }
 
+/**
+ * In-place cutover converts the vault's own `Cocktails/` folder. It needs git with nothing
+ * uncommitted there, so one `git checkout` or `git reset --hard` undoes it completely.
+ */
+async function inPlaceDestination(source: string, target: string, root: string): Promise<string> {
+	if (target !== source) throw new Error('In-place migration writes to the source vault; omit a separate target.');
+	if (root !== 'Cocktails') throw new Error('In-place migration converts the Cocktails folder; use --root Cocktails.');
+	const destination = join(source, 'Cocktails');
+	if (await canonical(destination) !== destination) throw new Error('Destination must stay inside the vault without symlinks.');
+	const git = (...args: string[]) => promisify(execFile)('git', ['-C', source, ...args]);
+	try { await git('rev-parse', '--is-inside-work-tree'); }
+	catch { throw new Error('In-place migration needs the vault in a git repository, so it can be undone.'); }
+	const { stdout } = await git('status', '--porcelain', '--untracked-files=all', '--', 'Cocktails');
+	if (stdout.trim()) throw new Error('Commit or discard the changes in Cocktails first, so the migration can be undone with git.');
+	return destination;
+}
+
 /** Resolve aliases and every existing ancestor before permitting any destination writes. */
-export async function safeDestination(sourceVault: string, targetVault: string, root: string): Promise<string> {
+export async function safeDestination(sourceVault: string, targetVault: string, root: string, inPlace = false): Promise<string> {
 	const source = await realpath(sourceVault);
 	const target = await realpath(targetVault);
+	if (inPlace) return inPlaceDestination(source, target, root);
 	const forbidden = await canonical(KNOWLEDGE_VAULT);
 	const destination = resolve(target, cabinetFolder(root));
 	const physical = await canonical(destination);
@@ -54,10 +74,13 @@ export function textSource(files: ReadonlyMap<string, Buffer>): Map<string, stri
 		.map(([path, content]) => [`Cocktails/${path}`, /\.(?:md|base|js)$/.test(path) ? content.toString('utf8') : '']));
 }
 
-/** No overwrite of an edited rehearsal. Stage a complete copy, then swap with rollback. */
-export async function applyPlan(sourceVault: string, targetVault: string, plan: MigrationPlan, expected: ReadonlyMap<string, Buffer>): Promise<void> {
+/**
+ * No overwrite of an edited rehearsal. Stage a complete copy, then swap with rollback.
+ * In place, the target is the source's own Cocktails folder, an unchanged copy by definition.
+ */
+export async function applyPlan(sourceVault: string, targetVault: string, plan: MigrationPlan, expected: ReadonlyMap<string, Buffer>, inPlace = false): Promise<void> {
 	if (plan.issues.some(issue => issue.category === 'Conversion errors')) throw new Error('Conversion errors block apply; review the report.');
-	const destination = await safeDestination(sourceVault, targetVault, plan.root);
+	const destination = await safeDestination(sourceVault, targetVault, plan.root, inPlace);
 	const source = join(await realpath(sourceVault), 'Cocktails');
 	if (!sameSnapshot(expected, await snapshot(source))) throw new Error('Source changed since planning. Run a fresh dry run.');
 	let exists = false;
@@ -89,7 +112,7 @@ export async function applyPlan(sourceVault: string, targetVault: string, plan: 
 			await mkdir(dirname(file), { recursive: true });
 			await writeFile(file, content, { flag: 'wx' });
 		}
-		await safeDestination(sourceVault, targetVault, plan.root);
+		await safeDestination(sourceVault, targetVault, plan.root, inPlace);
 		if (!sameSnapshot(expected, await snapshot(source))) throw new Error('Source changed before apply.');
 		if (exists) {
 			if (!sameSnapshot(expected, await snapshot(destination))) throw new Error('Target changed before apply.');
