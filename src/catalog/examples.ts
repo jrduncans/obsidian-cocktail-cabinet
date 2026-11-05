@@ -12,6 +12,8 @@ export interface StarterExample {
 	id: string;
 	kind: Extract<NoteKind, 'ingredient' | 'recipe'>;
 	name: string;
+	/** For stock: the type it exists to supply; other stock providing it is an equivalent. */
+	provides?: string;
 }
 
 interface ExampleDefinition extends StarterExample {
@@ -22,7 +24,7 @@ const id = (kind: StarterExample['kind'], name: string) => `${kind}/${fileName(n
 
 function fruit(name: string, juice: string, peel: string): ExampleDefinition {
 	return {
-		id: id('ingredient', name), kind: 'ingredient', name,
+		id: id('ingredient', name), kind: 'ingredient', name, provides: juice,
 		render: (root, link) => renderNote(root, {
 			kind: 'ingredient', name,
 			description: `Fresh ${name.toLowerCase()} for juice and peel. Set availability when you buy them.`,
@@ -56,7 +58,7 @@ const EXAMPLES: readonly ExampleDefinition[] = [
 	fruit('Limes', 'Lime Juice', 'Lime Peel'),
 	fruit('Lemons', 'Lemon Juice', 'Lemon Peel'),
 	{
-		id: id('ingredient', HOUSE_SYRUP), kind: 'ingredient', name: HOUSE_SYRUP,
+		id: id('ingredient', HOUSE_SYRUP), kind: 'ingredient', name: HOUSE_SYRUP, provides: 'Simple Syrup (1:1)',
 		render: (root, link) => renderNote(root, {
 			kind: 'ingredient', name: HOUSE_SYRUP,
 			description: `Made at home; see ${link('Simple Syrup (1:1)')} for the ratio. Set the amount when you make a batch, and logging subtracts each pour.`,
@@ -83,7 +85,7 @@ const EXAMPLES: readonly ExampleDefinition[] = [
 	], 'Shake with ice and strain into a rocks glass over fresh ice.', 'Bourbon, lemon, and sugar.'),
 ];
 
-export const STARTER_EXAMPLES: readonly StarterExample[] = EXAMPLES.map(({ id, kind, name }) => ({ id, kind, name }));
+export const STARTER_EXAMPLES: readonly StarterExample[] = EXAMPLES.map(({ id, kind, name, provides }) => ({ id, kind, name, ...provides ? { provides } : {} }));
 
 /** Example notes for a new cabinet, linked to catalog types at their current paths. */
 export function examplePlan(root: string, date: string, paths: ReadonlyMap<string, string> = new Map()): PlannedFile[] {

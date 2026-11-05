@@ -8,7 +8,6 @@ import { isWithin, relatedTargets } from '../src/core/relationships';
 import { starterPlan } from '../src/core/setup';
 import { STARTER_EXAMPLES, examplePlan } from '../src/catalog/examples';
 import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
-import { ingredientSection } from '../src/core/notes';
 import { basePath, RESOURCE_BASES } from '../src/core/bases';
 import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } from '../src/core/navigation';
 import { SHOPPING_BASE, SHOPPING_VIEWS, shoppingBase, shoppingNote, shoppingNotePath } from '../src/core/shopping';

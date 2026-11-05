@@ -13,7 +13,7 @@ export function migrationReport(plan: MigrationPlan): string {
 		}
 		lines.push('');
 	}
-	for (const category of ['Confirmation', 'Conversion errors', 'Unmapped notes', 'Unmapped links', 'Unmapped properties', 'Deferred cutover'] as const) {
+	for (const category of ['Confirmation', 'Conversion errors', 'Unmapped notes', 'Unmapped links', 'Unmapped properties', 'Deferred cutover', 'Skipped starter examples'] as const) {
 		lines.push(`## ${category}`, '');
 		const issues = plan.issues.filter(issue => issue.category === category);
 		lines.push(...(issues.length ? issues.map(issue => `- ${JSON.stringify(issue.path)}: ${JSON.stringify(issue.detail)}`) : ['None.']), '');

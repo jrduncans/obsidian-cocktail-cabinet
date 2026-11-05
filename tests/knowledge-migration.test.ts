@@ -247,3 +247,26 @@ void test('rehearsal apply preserves unknown files, refuses edits, and never wri
 		await assert.rejects(applyPlan(source, target, { ...plan, root: 'Fresh' }, before), /Source changed/);
 	} finally { await rm(directory, { recursive: true, force: true }); }
 });
+
+void test('starter examples are added unless the vault has its own equivalent', () => {
+	const source = new Map([
+		['Cocktails/Ingredients/Fresh Limes.md', doc({ Provides: ['[[Lime Juice]]'], Form: 'Whole fruit' })],
+		['Cocktails/Bottles/Simple Syrup, 1 to 1.md', doc({ Type: ['[[Simple Syrup]]'], Volume: '400 mL' })],
+		['Cocktails/Recipes/daiquiri.md', doc({}, '### Ingredients\n\n- 2 oz rum')],
+	]);
+	const plan = migrationPlan(source, 'Rehearsal', mapping());
+	const skipped = plan.issues.filter(issue => issue.category === 'Skipped starter examples');
+	assert.deepEqual(skipped.map(issue => [issue.path, issue.detail]), [
+		['Rehearsal/Ingredients/Limes.md', 'The vault has Rehearsal/Ingredients/Fresh Limes.md.'],
+		['Rehearsal/Ingredients/House Simple Syrup (1 to 1).md', 'The vault has Rehearsal/Ingredients/House Simple Syrup (1 to 1).md.'],
+		['Rehearsal/Recipes/Daiquiri.md', 'The vault has Rehearsal/Recipes/daiquiri.md.'],
+	]);
+	assert.ok(!plan.files.has('Rehearsal/Ingredients/Limes.md') && !plan.files.has('Rehearsal/Recipes/Daiquiri.md'));
+	const added = plan.changes.filter(change => change.category === 'Starter examples').map(change => change.path);
+	assert.deepEqual(added, ['Rehearsal/Ingredients/Lemons.md', 'Rehearsal/Recipes/Whiskey Sour.md']);
+	const sour = readDocument(plan.files.get('Rehearsal/Recipes/Whiskey Sour.md')!);
+	assert.equal(sour.metadata[PROP.catalogId], 'recipe/Whiskey Sour');
+	assert.ok(!('created' in sour.metadata));
+	assert.ok(migrationReport(plan).includes('## Skipped starter examples'));
+	assert.equal(plan.issues.filter(issue => issue.category === 'Conversion errors').length, 0);
+});

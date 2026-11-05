@@ -1,4 +1,5 @@
 import { STARTER_CATALOG } from '../../src/catalog/catalog';
+import { STARTER_EXAMPLES, examplePlan } from '../../src/catalog/examples';
 import { renderNote } from '../../src/core/notes';
 import { starterPlan } from '../../src/core/setup';
 import { cabinetFolder, notePath, parseRating, PROP, wikiLink } from '../../src/core/schema';
@@ -10,7 +11,7 @@ import type { AdoptionMapping, Destination } from './mapping';
 import { rewriteBody, rewriteLinks } from './links';
 
 export interface Change { category: string; action: 'create' | 'rewrite' | 'rename' | 'retire'; path: string; from?: string; }
-export interface Issue { category: 'Unmapped notes' | 'Unmapped links' | 'Unmapped properties' | 'Conversion errors' | 'Confirmation' | 'Deferred cutover'; path: string; detail: string; }
+export interface Issue { category: 'Unmapped notes' | 'Unmapped links' | 'Unmapped properties' | 'Conversion errors' | 'Confirmation' | 'Deferred cutover' | 'Skipped starter examples'; path: string; detail: string; }
 export interface MigrationPlan {
 	root: string;
 	files: Map<string, string>;
@@ -210,6 +211,7 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 	for (const path of documents.keys()) if (!destinations.has(path)) {
 		for (const link of source.get(path)!.matchAll(/\[\[([^\]\n]+)\]\]/g)) issue('Unmapped links', path, `Preserved in unmapped note: ${link[1]}`);
 	}
+	addExamples(plan, root, merged, issue);
 	for (const file of definitions) if (!plan.files.has(file.path)) {
 		plan.files.set(file.path, file.content);
 		plan.changes.push({ category: file.kind === 'base' ? 'Generated Bases' : 'New cabinet notes', action: 'create', path: file.path });
@@ -226,4 +228,36 @@ export function migrationPlan(source: ReadonlyMap<string, string>, folder: strin
 	for (const change of plan.changes) count(change.action);
 	for (const entry of plan.issues) count(entry.category);
 	return plan;
+}
+
+/**
+ * Adds the starter's worked example, except where the vault already has its own equivalent:
+ * a recipe of the same name, or other stock providing the same type (Fresh Limes for Limes).
+ */
+function addExamples(plan: MigrationPlan, root: string, merged: ReadonlyMap<string, { document: Document; kind: NoteKind }>, issue: (category: Issue['category'], path: string, detail: string) => void) {
+	const target = (link: unknown) => typeof link === 'string' ? link.match(/^\[\[([^|\]]+)/)?.[1] : undefined;
+	const recipes = new Map<string, string>(), providers = new Map<string, string>();
+	for (const [path, { document, kind }] of merged) {
+		if (kind === 'recipe') recipes.set(String(document.metadata[PROP.name]).toLocaleLowerCase('en'), path);
+		const provides: unknown = document.metadata[PROP.provides];
+		if (kind === 'ingredient' && Array.isArray(provides)) for (const link of provides) {
+			const type = target(link);
+			if (type && !providers.has(type)) providers.set(type, path);
+		}
+	}
+	const files = examplePlan(root, '');
+	for (const example of STARTER_EXAMPLES) {
+		const file = files.find(file => file.catalogId === example.id)!;
+		const equivalent = example.kind === 'recipe' ? recipes.get(example.name.toLocaleLowerCase('en'))
+			: example.provides ? providers.get(notePath(root, 'type', example.provides).replace(/\.md$/, '')) : undefined;
+		if (equivalent || plan.files.has(file.path)) {
+			issue('Skipped starter examples', file.path, `The vault has ${equivalent ?? file.path}.`);
+			continue;
+		}
+		const document = readDocument(file.content);
+		// No invented history: the migration doesn't date the example it adds.
+		delete document.metadata.created;
+		plan.files.set(file.path, writeDocument(document));
+		plan.changes.push({ category: 'Starter examples', action: 'create', path: file.path });
+	}
 }

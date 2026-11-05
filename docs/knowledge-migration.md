@@ -25,6 +25,8 @@ npm run migrate:knowledge -- \
 
 The destination must be absent or an exact, unchanged copy of the source `Cocktails/` folder. Apply creates a complete staged copy before replacing the destination, rechecks source and target snapshots, and restores the original copy if installation fails. Existing edited rehearsals are refused; choose a new folder. Apply to the `knowledge` vault is always forbidden, including aliases resolved through symlinks. Source and target vaults must be separate. Symlinks inside the source cabinet and destination cabinet path are refused. Daily notes and templates are outside the migration.
 
+The starter's worked example is added only where the vault has no equivalent: a recipe of the same name, or other stock providing the same type. Skipped examples are listed in the report.
+
 The report lists every create, rewrite, rename, and retirement. Renames may also change content. Multiple old classifications can merge into one target; their authored bodies, aliases, and shopping flags are retained. Conflicting metadata and authored content on a retired note require review. Generated Views and Shopping list are added; old views and unmapped resources remain for the later cutover. `Shopping.md` is replaced in the rehearsal.
 
 ## Source fixes, not overrides
