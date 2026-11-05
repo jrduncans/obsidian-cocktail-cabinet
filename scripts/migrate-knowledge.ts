@@ -5,6 +5,7 @@ import { applyPlan, safeDestination, snapshot, textSource, writeReport } from '.
 import { readMapping } from './knowledge/mapping';
 import { migrationPlan } from './knowledge/plan';
 import { migrationReport } from './knowledge/report';
+import { actualRemovals, restorePrepass } from './knowledge/renames';
 
 const { values } = parseArgs({ options: {
 	'source-vault': { type: 'string' }, 'target-vault': { type: 'string' }, root: { type: 'string' },
@@ -18,7 +19,10 @@ if (values.help) {
 	if (values.apply) await safeDestination(values['source-vault'], values['target-vault']!, values.root);
 	const source = await snapshot(join(values['source-vault'], 'Cocktails'));
 	const mapping = readMapping(await readFile('docs/knowledge-adoption-mapping.md', 'utf8'));
-	const plan = migrationPlan(textSource(source), values.root, mapping);
+	// Notes the rename pre-pass already renamed are read under their old names.
+	const restored = restorePrepass(textSource(source), mapping);
+	const plan = migrationPlan(restored.source, values.root, mapping);
+	actualRemovals(plan, restored.actual);
 	const report = migrationReport(plan);
 	if (values.report) await writeReport(values.report, report, values['source-vault']);
 	else process.stdout.write(report);

@@ -9,6 +9,7 @@ import { readMapping } from '../scripts/knowledge/mapping';
 import type { AdoptionMapping } from '../scripts/knowledge/mapping';
 import { migrationPlan } from '../scripts/knowledge/plan';
 import { migrationReport } from '../scripts/knowledge/report';
+import { actualRemovals, prepassRenames, restorePrepass, withDisplayText } from '../scripts/knowledge/renames';
 import { navigationEmbeds } from '../src/core/navigation';
 import { PROP } from '../src/core/schema';
 import { STARTER_CATALOG } from '../src/catalog/catalog';
@@ -269,4 +270,57 @@ void test('starter examples are added unless the vault has its own equivalent', 
 	assert.ok(!('created' in sour.metadata));
 	assert.ok(migrationReport(plan).includes('## Skipped starter examples'));
 	assert.equal(plan.issues.filter(issue => issue.category === 'Conversion errors').length, 0);
+});
+
+/** The pre-pass as Obsidian would do it: aliases, display text, then renames that rewrite links. */
+function runPrepass(source: Map<string, string>, config: AdoptionMapping): Map<string, string> {
+	const renames = prepassRenames(source.keys(), config);
+	const names = new Set(renames.map(rename => rename.path.split('/').at(-1)!.replace(/\.md$/, '')));
+	const vault = new Map([...source].map(([path, content]) => [path, withDisplayText(content, names)]));
+	for (const { path, alias } of renames) if (alias) {
+		const document = readDocument(vault.get(path)!);
+		vault.set(path, writeDocument({ metadata: { ...document.metadata, aliases: [alias] }, body: document.body }));
+	}
+	for (const { path, name } of renames) {
+		const old = path.split('/').at(-1)!.replace(/\.md$/, ''), to = path.replace(/[^/]+\.md$/, `${name}.md`);
+		vault.set(to, vault.get(path)!);
+		vault.delete(path);
+		const target = [...vault.keys()].filter(key => key.endsWith(`/${name}.md`)).length > 1 ? to.replace(/\.md$/, '') : name;
+		for (const [key, content] of vault) vault.set(key, content.replace(/\[\[([^\]|#\n]+)([^\]\n]*)\]\]/g, (link: string, linked: string, rest: string) => linked === old ? `[[${target}${rest}]]` : link));
+	}
+	return vault;
+}
+
+void test('the rename pre-pass leaves the migration plan unchanged', () => {
+	const config = mapping();
+	config.types.set('Simple Syrup', { name: 'Simple Syrup (1:1)', family: 'Sugar Syrup' });
+	config.types.set('Classic Aromatic Bitters', { name: 'Aromatic Bitters', family: 'Bitters' });
+	config.types.set('Crème de Menthe', { name: 'Crème de Menthe', family: 'Herbal & Spice Liqueur' });
+	const source = new Map([
+		['Cocktails/Types/Simple Syrup.md', doc({ Subcategory: ['[[Sugar Syrup]]'] })],
+		['Cocktails/Types/Classic Aromatic Bitters.md', doc({ Subcategory: ['[[Aromatic Bitters]]'] })],
+		['Cocktails/Types/Crème de Menthe.md', doc({})],
+		['Cocktails/Subcategories/Aromatic Bitters.md', doc({ Category: ['[[Bitters]]'] })],
+		['Cocktails/Subcategories/Sugar Syrup.md', doc({})],
+		['Cocktails/Categories/Fruit Juice.md', doc({})],
+		['Cocktails/Bottles/Simple Syrup, 1 to 1.md', doc({ Type: ['[[Simple Syrup]]'], Volume: '400 mL', 'Remaining in Open Bottle': 0.5 })],
+		['Cocktails/Bottles/Bénédictine.md', doc({ Type: ['[[Old type]]'], Volume: '750 mL' })],
+		['Cocktails/Recipes/Vieux Carré.md', doc({ rating: '⭐️⭐️⭐️⭐️' }, '### Ingredients\n\n- ¼ oz [[Bénédictine]]\n- 1 dash [[Classic Aromatic Bitters]]\n- [[Crème de Menthe]] rinse')],
+		['Cocktails/Recipes/Old Fashioned.md', doc({}, '### Ingredients\n\n- ¼ oz [[Simple Syrup]]\n- [[Aromatic Bitters]]\n\nSee [[Vieux Carré#Method]] and [[Simple Syrup, 1 to 1]].')],
+	]);
+	config.bottles.set('Bénédictine', { previous: 'Old type', type: 'Bourbon' });
+	const before = migrationPlan(source, 'Rehearsal', config);
+	assert.equal(before.issues.filter(issue => issue.category === 'Conversion errors').length, 0, JSON.stringify(before.issues));
+	const renamed = runPrepass(source, config);
+	assert.ok(renamed.has('Cocktails/Recipes/Vieux Carre.md') && renamed.has('Cocktails/Bottles/House Simple Syrup (1 to 1).md') && renamed.has('Cocktails/Categories/Juice.md'));
+	assert.ok(renamed.get('Cocktails/Recipes/Old Fashioned.md')!.includes('[[Simple Syrup (1 to 1)|Simple Syrup]]'));
+	assert.ok(renamed.get('Cocktails/Recipes/Vieux Carre.md')!.includes('[[Cocktails/Types/Aromatic Bitters|Classic Aromatic Bitters]]'));
+	const restored = restorePrepass(renamed, config);
+	const after = migrationPlan(restored.source, 'Rehearsal', config);
+	actualRemovals(after, restored.actual);
+	const sorted = <T>(items: T[]) => items.map(item => JSON.stringify(item)).sort();
+	assert.deepEqual(sorted([...after.files]), sorted([...before.files]));
+	assert.deepEqual(sorted(after.issues), sorted(before.issues));
+	for (const path of after.remove) assert.ok(renamed.has(`Cocktails/${path.slice('Rehearsal/'.length)}`), path);
+	assert.deepEqual(restorePrepass(source, config).source, source, 'a vault without the pre-pass is unchanged');
 });

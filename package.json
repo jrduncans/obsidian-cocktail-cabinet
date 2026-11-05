@@ -11,7 +11,8 @@
 		"lint": "eslint .",
 		"test": "node scripts/test.mjs && node scripts/catalog-docs.mjs --check",
 		"catalog:docs": "node scripts/catalog-docs.mjs",
-		"migrate:knowledge": "node scripts/migrate-knowledge.mjs"
+		"migrate:knowledge": "node scripts/run-ts.mjs scripts/migrate-knowledge.ts",
+		"prepass:knowledge": "node scripts/run-ts.mjs scripts/prepass-knowledge.ts"
 	},
 	"keywords": [],
 	"license": "0-BSD",

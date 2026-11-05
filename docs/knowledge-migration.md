@@ -37,6 +37,17 @@ Anything the mapping and naming rules can't convert is a conversion error that b
 
 The migration renames or retires about 90 notes, mostly where accents fold into plain filenames (Vieux Carré → `Vieux Carre.md`). As of 2026-11-04, 15 links outside `Cocktails/` point at them: 14 in daily notes and 1 in a template. Aliases don't make Obsidian resolve those links, so cutover must update them, either by renaming through Obsidian (which rewrites links) or by a link-only rewrite of those lines with the user's explicit approval, since daily notes are personal journal content.
 
+## Rename pre-pass
+
+Run on `knowledge` on 2026-11-04 with `npm run prepass:knowledge -- --vault PATH --step text|renames`:
+
+1. `--step text --apply` gives bare links to the notes being renamed their current wording as display text, and adds the current name as an alias to notes whose filename folds or that get a House name.
+2. `--step renames` lists `path<TAB>new name`; each is renamed with `obsidian vault=knowledge rename path=… name=…` so Obsidian rewrites links everywhere. Pass the CLI `< /dev/null` in a loop, or it consumes the list.
+
+Only filename-only renames, the one-to-one type renames in `PREPASS_TYPES`, Fruit Juice → Juice, and the two House syrup bottles (still in `Bottles/`) are in the pre-pass. Reclassifications into catch-alls, the Falernum swap, merges, Subcategories → Families, and retirements stay in the migration. Until cutover, the six "rich" recipes point at Simple Syrup (1 to 1); the migration moves them to 2:1.
+
+The migration reverses the pre-pass before planning (`restorePrepass`): filename-only renames from the alias, the rest from fixed tables. Bare links are reversed only when the name is unique, since Obsidian writes a path otherwise (Aromatic Bitters). Removals are pointed at the files' actual paths. A test checks that the plan is identical with and without the pre-pass.
+
 ## Live verification
 
 Select the rehearsal cabinet in Cocktail Cabinet settings. Open its resource Bases, a category/family/type/bottle note, and Shopping list to check rendered results. Run **Log this cocktail** on several migrated recipes, review stock choices and mL deductions, and clear the daily-note toggle for rehearsal logging. Any inventory changes must stay inside the rehearsal folder. Verify the source vault remains unchanged before committing the implementation. Rehearsal does not authorize cutover.

@@ -9,7 +9,7 @@ export default defineConfig(
 		'esbuild.config.mjs',
 		'scripts/test.mjs',
 		'scripts/catalog-docs.mjs',
-		'scripts/migrate-knowledge.mjs',
+		'scripts/run-ts.mjs',
 		'tests/tsconfig.json',
 		'version-bump.mjs',
 		'versions.json',
