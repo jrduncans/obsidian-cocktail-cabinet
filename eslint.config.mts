@@ -9,6 +9,7 @@ export default defineConfig(
 		'esbuild.config.mjs',
 		'scripts/test.mjs',
 		'scripts/catalog-docs.mjs',
+		'scripts/migrate-knowledge.mjs',
 		'tests/tsconfig.json',
 		'version-bump.mjs',
 		'versions.json',
@@ -33,7 +34,8 @@ export default defineConfig(
 	},
 	...obsidianmd.configs.recommended,
 	{
-		files: ['tests/**/*.ts'],
+		files: ['tests/**/*.ts', 'scripts/**/*.ts'],
+		languageOptions: { globals: globals.node },
 		rules: {
 			'obsidianmd/no-nodejs-modules': 'off',
 			'obsidianmd/hardcoded-config-path': 'off',

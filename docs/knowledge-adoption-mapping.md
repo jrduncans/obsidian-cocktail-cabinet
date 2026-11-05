@@ -1,6 +1,6 @@
 # Knowledge adoption mapping
 
-Agreed on 2026-11-03 with the user, question by question, from the `knowledge` vault and the starter catalog at `c261d8d`. This is step 1 of [roadmap](roadmap.md) Phase 1 and the input to the one-off migration script. Nothing has been written to either vault, and the starter catalog changes below are not implemented yet.
+Agreed on 2026-11-03 with the user, question by question, from the `knowledge` vault and the starter catalog at `c261d8d`. This is step 1 of [roadmap](roadmap.md) Phase 1 and the input to the [one-off migration script](knowledge-migration.md). The starter catalog changes below are implemented. Migration has been rehearsed in a separate dev-vault folder; the personal vault remains unchanged.
 
 Policy, from [adoption decisions](cabinet-design.md#adoption-and-logging-decisions): match the starter wherever the two overlap, with local types for the rest. Scope: 7 categories, 26 subcategories, 107 types, 165 bottles, 3 ingredient sources, and 502 recipes.
 

@@ -6,11 +6,12 @@ import { spawnSync } from 'node:child_process';
 
 const directory = await mkdtemp(join(tmpdir(), 'cocktail-cabinet-tests-'));
 try {
-	const suites = ['core.test', 'cabinet-store.test', 'stock.test', 'recipe-import.test', 'logging.test', 'logging-store.test'];
+	const suites = ['core.test', 'cabinet-store.test', 'stock.test', 'recipe-import.test', 'logging.test', 'logging-store.test', 'knowledge-migration.test'];
 	await build({
 		entryPoints: suites.map(suite => `tests/${suite}.ts`), outdir: directory, outExtension: { '.js': '.mjs' },
 		bundle: true, platform: 'node', format: 'esm', target: 'node20',
 		alias: { obsidian: resolve('tests/obsidian-stub.ts') },
+		banner: { js: 'import { createRequire } from "node:module"; const require = createRequire(import.meta.url);' },
 	});
 	const result = spawnSync(process.execPath, ['--test', ...suites.map(suite => join(directory, `${suite}.mjs`))], { stdio: 'inherit' });
 	process.exitCode = result.status ?? 1;
