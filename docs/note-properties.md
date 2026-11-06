@@ -2,7 +2,7 @@
 
 Schemas for Cocktail Cabinet resources. The `cc-` prefix means Cocktail Cabinet; it namespaces properties without implying that every resource is a cocktail recipe. Obsidian's standard `aliases` property and the existing recipe properties `created`, `source`, and `rating` keep their unprefixed names.
 
-Creation forms implement per-record volume or status tracking, mL remaining, last purchase price, and shopping-list flags. Desktop consumption is available through **Log this cocktail**; flagged resources appear in the **Shopping list** note. The plugin validates creation inputs and selected stock during logging, not every manually edited property; existing notes are preserved rather than automatically migrated.
+Creation forms implement per-record volume or status tracking, mL remaining, last purchase price, and shopping-list flags. Consumption is available through **Log this cocktail**; flagged resources appear in the **Shopping list** note. The plugin validates creation inputs and selected stock during logging, not every manually edited property; existing notes are preserved rather than automatically migrated.
 
 ## Reading the schemas
 

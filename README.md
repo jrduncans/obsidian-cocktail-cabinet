@@ -29,7 +29,7 @@ For a cabinet created before Bases support, rerun **Set up cabinet** to add miss
 - **Rename cabinet note**: from any cabinet note, give it a new proper name. The filename, heading, `cc-name`, and aliases follow, and links from other notes keep working; link text that showed the old name shows the new one, while other wording, such as a recipe's "lemon juice", stays.
 - **Edit cabinet note**: from a recipe, bottle, other-stock, type, or family note, change what its creation form set, apart from the name and stock. Recipes: source, rating, ingredients and their links, method, description, and tasting notes; other text in the note stays as it is. Bottles: type, size, and ABV. Other stock: the types it provides and its form. Types: family and shopping list. Families: category. Changes made to the note after the form opens stop the save.
 - **Edit stock**: from a bottle or other-stock note, update what you have. **Bought more** adds a sealed bottle (or marks it Have) and takes it off the shopping list; **Finished** empties the open bottle (or marks it Out). You can also set the level as percent full or mL, the price, or switch between mL and availability tracking. Changes made to the note after the form opens stop the save.
-- **Log this cocktail** (desktop): from a cabinet recipe, review servings, what you used, how much will be left, and the proposed daily entry, then select **Log**. See the logging details below.
+- **Log this cocktail**: from a cabinet recipe, review servings, what you used, how much will be left, and the proposed daily entry, then select **Log**. See the logging details below.
 - **Navigation in each note**: category, family, type, bottle, and other-stock notes embed sections from the shared `Views/Related.base`: a category's families; a family's types; the bottles and other stock under a family or type, with their stock; other stock of the same type on a bottle; and related recipes on all of them. Recipes count every link in the recipe note, followed up the hierarchy, so a family lists recipes that call for any of its types or bottles. Recipes show their rating as stars, highest first. These are core Bases, so they render with Cocktail Cabinet disabled. `Related.base` is managed by the plugin: rerunning setup updates it unless you've changed it. Sort or column changes made in an embed apply to every note.
 - **Browse related recipes**: from an ingredient or bottle note, find recipe ingredient references beneath that classification, broadly specified recipes it can fulfill, and same-type bottle alternatives. References elsewhere in a recipe, such as tasting notes, do not count.
 
@@ -49,7 +49,7 @@ Types, bottles, and other stock can be marked **Add to shopping list** independe
 
 ## Log a cocktail
 
-On desktop, open a cabinet recipe and run **Cocktail Cabinet: Log this cocktail**.
+Open a cabinet recipe and run **Cocktail Cabinet: Log this cocktail**.
 
 - **Used:** each measured, linked ingredient gets a picker listing matching bottles and other stock you track in mL. A single match, or a named bottle you have, is selected for you; otherwise select one. **Other bottle…** searches the whole cabinet. **Don’t subtract** skips the line; it is the default when nothing in your cabinet stocks that ingredient, such as fresh juice.
 - **Stock:** what each bottle loses and has left. The open bottle is used first, then unopened bottles. A shortfall or unknown amount blocks logging.
@@ -63,7 +63,7 @@ If your stock or the recipe changed since the preview, nothing is saved and the 
 - Recipe ratings are whole numbers from 1 to 5 in the `rating` property.
 - Setup adds `Related.base` to an existing cabinet but does not edit existing notes. Add the embeds by hand, for example `![[Cocktails/Views/Related.base#Recipes]]`.
 - Existing personal collections using the old `Subcategory`, `Type`, and `base` conventions need a future adoption/migration flow. Setup does not convert them. Choose a fresh cabinet folder to experiment.
-- Desktop drink logging and stock editing are available; mobile logging, web/CSV imports, and agent integration are future work. Recipe review does not fetch URLs or extract recipes from web pages.
+- Drink logging and stock editing are available on desktop and mobile; logging is untested on a phone. Web/CSV imports and agent integration are future work. Recipe review does not fetch URLs or extract recipes from web pages.
 - Preparation batches and measured juice yields are not modeled.
 - Earlier plugin notes using `cc-open-fraction` need [manual conversion](docs/note-properties.md#upgrading-early-stock-notes); setup preserves them and their existing home note and Bases. New notes use the mL schema.
 - Syrup filenames spell ratios as “1 to 1” and “2 to 1” for cross-platform filenames; their descriptions and ratio property use 1:1 and 2:1 by weight.

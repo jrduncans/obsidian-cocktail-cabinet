@@ -1,6 +1,6 @@
 import type CocktailCabinetPlugin from '../main';
 import { PROP } from '../core/schema';
-import { MarkdownView, Notice, Platform } from 'obsidian';
+import { MarkdownView, Notice } from 'obsidian';
 import { IngredientModal } from '../ui/ingredient-modal';
 import { StockModal } from '../ui/stock-modal';
 import { RecipeModal } from '../ui/recipe-modal';
@@ -22,7 +22,6 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		id: 'log-this-cocktail',
 		name: 'Log this cocktail',
 		checkCallback: checking => {
-			if (Platform.isMobile) return false;
 			const file = plugin.app.workspace.getActiveFile();
 			if (!file || file.extension !== 'md' || !file.path.startsWith(`${plugin.store.root}/`)) return false;
 			const kind: unknown = plugin.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind];

@@ -56,7 +56,7 @@ The plugin should help users keep their cocktail system clean, clear, and workin
 
 ## Approved stock and purchasing design
 
-The [resource schemas](note-properties.md) specify the fields and constraints. Creation forms and resource Bases implement mode-based mL stock, purchasing fields, and shopping flags. Desktop consumption is implemented by **Log this cocktail**, and flagged resources appear in the **Shopping list** note, with a section per kind (decided 2026-11-04, matching the `knowledge` vault's three-table Shopping note). Existing early notes need the documented manual conversion; setup preserves their contents.
+The [resource schemas](note-properties.md) specify the fields and constraints. Creation forms and resource Bases implement mode-based mL stock, purchasing fields, and shopping flags. Consumption is implemented by **Log this cocktail**, and flagged resources appear in the **Shopping list** note, with a section per kind (decided 2026-11-04, matching the `knowledge` vault's three-table Shopping note). Existing early notes need the documented manual conversion; setup preserves their contents.
 
 - Each bottle or other-stock source explicitly selects `cc-stock-tracking: volume` or `status`. The source's form does not determine its mode; homemade syrup, fresh or purchased juice, and bottles can use either. Creation defaults are volume for bottles and status for other stock.
 - Volume tracking stores mL remaining. Bottles use `cc-open-ml` for the open bottle and retain full bottle volume and unopened count; other stock uses `cc-remaining-ml`. Bottle fractions are replaced in new notes. ABV continues to be stored as a fraction. Unknown measured amounts remain distinct from known zero. An empty unopened-bottle count means zero, in both forms and logging.
@@ -129,7 +129,7 @@ Agreed on 2026-11-03 while scoping [roadmap](roadmap.md) Phase 1.
 - **Match the starter.** The `knowledge` vault adopts the starter classification wherever the two overlap, rather than preserving its own types locally. Bottle-level decisions and meaning-changing recipe links are settled before migration. Types the starter does not cover become local types in the plugin schema, under an existing starter family where one fits.
 - **One-off migration.** The `knowledge` vault is migrated by a one-off script with a dry-run report, rehearsed on a copy first. A general in-plugin adoption flow is not planned; reusable building blocks may be offered later.
 - **Plugin link style.** Migration rewrites every ingredient link to the generated style (vault-relative path with display text), replacing the vault's bare-link convention.
-- **Logging entry point.** **Log this cocktail** is an Obsidian command on the recipe note. Desktop is sufficient at first; mobile follows.
+- **Logging entry point.** **Log this cocktail** is an Obsidian command on the recipe note. It runs on desktop and mobile (mobile enabled 2026-11-05, before a mobile layout pass).
 - **No hard-coded substitution rules.** The vault skill's always-ask-for-Green-Chartreuse rule is not built in. Instead, every counted ingredient line in the review can be changed before apply:
   - The picker first lists owned bottles that fit the line in the hierarchy: a type's bottles; any bottle of a type in a referenced family; or a referenced bottle plus the other bottles of its type.
   - A final **Other bottle…** option searches every bottle in the cabinet for exceptional substitutions.
@@ -137,11 +137,11 @@ Agreed on 2026-11-03 while scoping [roadmap](roadmap.md) Phase 1.
   - The preview and shortfall check follow the current selections; apply writes exactly what is shown. Recording substitutions is out of scope for now.
 - **Stock editing deferred.** Bottle creation plus hand edits of stock fields are enough to start real use. Superseded by [editing stock](#editing-stock).
 
-### Desktop logging implementation
+### Logging implementation
 
 Logging is used several times a week, so its text is terse: the title is “Log <recipe>”, sections are Used, Stock, Not subtracted, and the daily-note toggle, empty sections are hidden, and the save action is **Log**. Errors name the bottle and the problem in a few words (“Campari: 15 mL short.”) rather than exposing property keys. Every picker also offers **Don’t subtract**, the default for a line nothing in the cabinet stocks (fresh juice, for example), so untracked ingredients never block logging.
 
-**Log this cocktail** is available only on active cabinet recipe notes on desktop. The review starts at one serving with a numeric control. Parenthetical volume equivalents such as `2 oz (60 ml)` and `¼ oz (7.5 ml)` use the stated mL for the pour, including rounded conversions; ranges and qualified quantities remain unmeasured. The initial picker includes matching measured other-stock sources through `cc-provides`, alongside bottles. Every link on one ingredient line is a possible alternative for that single pour, including parenthetical links. Status-only requirements are listed as not drawn down; selecting a status-tracked bottle through the exception picker also leaves it unchanged.
+**Log this cocktail** is available on active cabinet recipe notes, desktop and mobile. The review starts at one serving with a numeric control. Parenthetical volume equivalents such as `2 oz (60 ml)` and `¼ oz (7.5 ml)` use the stated mL for the pour, including rounded conversions; ranges and qualified quantities remain unmeasured. The initial picker includes matching measured other-stock sources through `cc-provides`, alongside bottles. Every link on one ingredient line is a possible alternative for that single pour, including parenthetical links. Status-only requirements are listed as not drawn down; selecting a status-tracked bottle through the exception picker also leaves it unchanged.
 
 Daily notes uses the core plugin’s configured folder, format, and native template-based creation. One serving writes `Made a/an [[path|Recipe]].`; other positive serving counts write `Made 2 servings of [[path|Recipe]].` Existing Made entries turn the daily-entry control off by default, with an explicit option for another round. Disabled Daily notes or unusable configuration blocks daily-entry apply; clearing the control permits inventory-only changes.
 
