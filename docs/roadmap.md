@@ -54,6 +54,13 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 ### 4. Everyday polish: less command-hunting
 
 - Finish: recipe review adds tags and rating, and warns about duplicates. Relinking and rating existing recipes are covered by **Edit cabinet note**.
+- Built 2026-11-06: a header button for each note's main action (**Log this cocktail** on recipes, **Edit stock** on bottles and other stock), every note command in the file menu and the note's More options menu, so mobile doesn't need the command palette, and a **Latest** view in `Recipes.base`. **Browse related recipes** was removed; the in-note Recipes sections replace it.
+- New, from a 2026-11-06 UX review (not yet designed in detail):
+  - Last used: logging writes the date to each bottle and other stock it subtracts from, and possibly `cc-last-made` on the recipe (backfillable from daily notes). Enables recently made, neglected bottles, and stale-stock prompts.
+  - Recipe sections in notes split into recipes that name the note (including, on a type, its bottles) above recipes it can fill through a broader type or family. Existing notes need the new embed added.
+  - Catch-all types (Amaro, Flavored Rum, Specialty Bitters, …) flagged so their bottles don't count as interchangeable: no Same type section, no family-level recipe matches, no automatic logging candidates.
+  - Fix stock as you go: set an unknown or short level inside the logging modal instead of only blocking; Edit stock records when stock was last checked, feeding a "Stock to check" view. Bulk cleanup works through that view rather than a separate command.
+  - Unlinked measured ingredient lines (about a fifth in `knowledge`, often spirits) are silently not subtracted; offer linking from the logging modal and a view of recipes with unlinked lines.
 
 ### 5. Reach: retire the remaining skills
 

@@ -362,6 +362,14 @@ void test('resource Bases expose mL stock, tracking choices, and independent pur
 	}
 });
 
+void test('the Recipes Base adds a Latest view, newest first', () => {
+	const recipes = starterPlan('Cocktails').find(file => file.path.endsWith('/Recipes.base'))!.content;
+	const [, byName, latest] = recipes.split('  - type: table\n');
+	assert.match(byName!, /name: "Recipes"[\s\S]*property: file\.name\n {8}direction: ASC/);
+	assert.match(latest!, /name: "Latest"[\s\S]*property: note\.created\n {8}direction: DESC/);
+	assert.ok(latest!.includes('      - note.created'), 'Latest shows the Created column');
+});
+
 void test('the navigation Base is scoped to the root and serves every embedded view', () => {
 	const root = "My cabinet's/Drinks";
 	const base = navigationBase(root);

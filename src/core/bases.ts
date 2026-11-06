@@ -7,6 +7,8 @@ interface ResourceBase {
 	kind: NoteKind;
 	name: string;
 	columns: Column[];
+	/** More table views after the default one, which sorts by file name. */
+	views?: { name: string; sort: [property: string, direction: 'ASC' | 'DESC'] }[];
 }
 
 const purchasingColumns: Column[] = [
@@ -60,6 +62,7 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 		kind: 'recipe',
 		name: 'Recipes',
 		columns: [['source', 'Source'], ['rating', 'Rating'], ['created', 'Created']],
+		views: [{ name: 'Latest', sort: ['note.created', 'DESC'] }],
 	},
 ];
 
@@ -81,6 +84,7 @@ function renderBase(root: string, resource: ResourceBase): string {
 	const properties = columns.map(([property, label]) =>
 		`  ${property}:\n    displayName: ${JSON.stringify(label)}`,
 	);
+	const views = [{ name: resource.name, sort: ['file.name', 'ASC'] }, ...resource.views ?? []];
 	return [
 		'filters:',
 		'  and:',
@@ -88,13 +92,15 @@ function renderBase(root: string, resource: ResourceBase): string {
 		'properties:',
 		...properties,
 		'views:',
-		'  - type: table',
-		`    name: ${JSON.stringify(resource.name)}`,
-		'    order:',
-		...columns.map(([property]) => `      - ${property}`),
-		'    sort:',
-		'      - property: file.name',
-		'        direction: ASC',
+		...views.flatMap(view => [
+			'  - type: table',
+			`    name: ${JSON.stringify(view.name)}`,
+			'    order:',
+			...columns.map(([property]) => `      - ${property}`),
+			'    sort:',
+			`      - property: ${view.sort[0]}`,
+			`        direction: ${view.sort[1]}`,
+		]),
 		'',
 	].join('\n');
 }

@@ -1,8 +1,7 @@
 import { App, TFile, TFolder, parseFrontMatterAliases, parseYaml } from 'obsidian';
 import { cabinetFolder, KINDS, managedFingerprint, PROP, wikiLink } from '../core/schema';
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
-import { ingredientSection, localDate, renderNote } from '../core/notes';
-import { relatedTargets } from '../core/relationships';
+import { localDate, renderNote } from '../core/notes';
 import { cabinetHomePath, starterPlan } from '../core/setup';
 import type { SetupPreview } from '../core/setup';
 import { enhancedRecipeContent } from './recipe-document';
@@ -190,23 +189,6 @@ export class CabinetStore {
 			await this.ensureFolder(file.path.slice(0, file.path.lastIndexOf('/')));
 			return this.app.vault.create(file.path, file.content);
 		});
-	}
-
-	async relatedRecipes(target: CabinetNote): Promise<CabinetNote[]> {
-		const notes = this.notes();
-		const targets = relatedTargets(notes, target);
-		const recipes = notes.filter(note => note.kind === 'recipe');
-		const found = await Promise.all(recipes.map(async recipe => {
-			const file = this.app.vault.getAbstractFileByPath(recipe.path);
-			if (!(file instanceof TFile)) return null;
-			const ingredients = ingredientSection(await this.app.vault.cachedRead(file));
-			const links = [...ingredients.matchAll(/\[\[([^\]]+)\]\]/g)];
-			return links.some(match => {
-				const linked = this.resolve(match[1] || '', file.path);
-				return linked && targets.has(linked.path);
-			}) ? recipe : null;
-		}));
-		return found.filter((note): note is CabinetNote => note !== null);
 	}
 
 	recipeDestination(path: string): string {

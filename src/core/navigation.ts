@@ -6,7 +6,7 @@ import type { NoteKind, PlannedFile } from './schema';
 
 /**
  * One shared core Base, embedded in each resource note through `this`, so navigation
- * renders without the plugin. Its recipe rule mirrors `relatedTargets`.
+ * renders without the plugin. Its recipe rule mirrors `relatedTargets`, kept for the planned availability resolver.
  */
 export const NAVIGATION_BASE = 'Related';
 

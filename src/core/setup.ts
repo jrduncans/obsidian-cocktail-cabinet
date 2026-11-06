@@ -71,9 +71,9 @@ ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} lists every bottle, ingredien
 
 ### Recipes
 
-${viewLink('Recipes')} holds the cocktails you want to keep. Use **Cocktail Cabinet: Create a cocktail recipe** to save amounts and a method. Ingredients can name a type, a broader family such as rum, or a specific bottle.
+${viewLink('Recipes')} holds the cocktails you want to keep; its **Latest** view lists the newest first. Use **Cocktail Cabinet: Create a cocktail recipe** to save amounts and a method. Ingredients can name a type, a broader family such as rum, or a specific bottle.
 
-To find recipes related to an ingredient or bottle, open that note and run **Cocktail Cabinet: Browse related recipes**.
+Each ingredient and bottle note lists the recipes that use it. On a recipe, the glass button in the note's header logs the cocktail; on a bottle or other stock, the gauge button edits its stock. Other actions for a note are in its **More options** menu.
 
 ## Ingredient catalog
 

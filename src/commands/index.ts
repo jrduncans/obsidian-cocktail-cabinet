@@ -1,11 +1,10 @@
 import type CocktailCabinetPlugin from '../main';
-import { PROP } from '../core/schema';
 import { MarkdownView, Notice } from 'obsidian';
+import type { TFile } from 'obsidian';
 import { IngredientModal } from '../ui/ingredient-modal';
 import { StockModal } from '../ui/stock-modal';
 import { RecipeModal } from '../ui/recipe-modal';
 import { SetupModal } from '../ui/setup-modal';
-import { NotePicker } from '../ui/picker';
 import { LoggingModal } from '../ui/logging-modal';
 import { LoggingStore } from '../vault/logging-store';
 import { StockStore } from '../vault/stock-store';
@@ -15,67 +14,13 @@ import { RenameModal } from '../ui/rename-modal';
 import { EditStore } from '../vault/edit-store';
 import { EditNoteModal } from '../ui/edit-note-modal';
 import { isEditable } from '../core/note-edit';
+import { registerNoteActions } from './note-actions';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(plugin.app, plugin.store);
-	plugin.addCommand({
-		id: 'log-this-cocktail',
-		name: 'Log this cocktail',
-		checkCallback: checking => {
-			const file = plugin.app.workspace.getActiveFile();
-			if (!file || file.extension !== 'md' || !file.path.startsWith(`${plugin.store.root}/`)) return false;
-			const kind: unknown = plugin.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind];
-			if (kind !== 'recipe') return false;
-			if (!checking) {
-				const recipe = plugin.store.notes().find(note => note.path === file.path && note.kind === 'recipe');
-				if (recipe) new LoggingModal(plugin, logger, recipe).open();
-			}
-			return true;
-		},
-	});
 	const stocks = new StockStore(plugin.app);
-	plugin.addCommand({
-		id: 'edit-stock',
-		name: 'Edit stock',
-		checkCallback: checking => {
-			const file = plugin.app.workspace.getActiveFile();
-			if (!file || file.extension !== 'md' || !file.path.startsWith(`${plugin.store.root}/`)) return false;
-			const kind: unknown = plugin.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind];
-			if (kind !== 'bottle' && kind !== 'ingredient') return false;
-			if (!checking) void handle(async () => {
-				const note = plugin.store.notes().find(note => note.path === file.path && note.kind === kind);
-				if (!note) throw new Error('This note isn’t a cabinet bottle or other stock.');
-				new EditStockModal(plugin.app, stocks, note, await stocks.read(note)).open();
-			});
-			return true;
-		},
-	});
 	const renamer = new RenameStore(plugin.app);
-	plugin.addCommand({
-		id: 'rename-cabinet-note',
-		name: 'Rename cabinet note',
-		checkCallback: checking => {
-			const file = plugin.app.workspace.getActiveFile();
-			if (!file?.path.startsWith(`${plugin.store.root}/`)) return false;
-			const note = plugin.store.notes().find(note => note.path === file.path);
-			if (!note) return false;
-			if (!checking) new RenameModal(plugin.app, renamer, note).open();
-			return true;
-		},
-	});
 	const edits = new EditStore(plugin.app);
-	plugin.addCommand({
-		id: 'edit-cabinet-note',
-		name: 'Edit cabinet note',
-		checkCallback: checking => {
-			const file = plugin.app.workspace.getActiveFile();
-			if (!file?.path.startsWith(`${plugin.store.root}/`)) return false;
-			const note = plugin.store.notes().find(note => note.path === file.path);
-			if (!note || !isEditable(note.kind)) return false;
-			if (!checking) void handle(async () => new EditNoteModal(plugin, edits, note, await edits.read(note)).open());
-			return true;
-		},
-	});
 	const ready = async (action: () => void | Promise<void>) => {
 		if (!await plugin.store.isSetUp()) {
 			new SetupModal(plugin).open();
@@ -83,6 +28,39 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 			await action();
 		}
 	};
+	const noteFor = (file: TFile) => {
+		const note = plugin.store.notes().find(note => note.path === file.path);
+		if (!note) throw new Error('This note isn’t in the cabinet.');
+		return note;
+	};
+	// On a type note, open a stock form with the type already filled in.
+	const forType = (bottle: boolean) => (file: TFile) => void handle(() => ready(() => new StockModal(plugin, bottle, { types: [noteFor(file)] }).open()));
+	registerNoteActions(plugin, [
+		{
+			id: 'log-this-cocktail', name: 'Log this cocktail', icon: 'martini', kinds: ['recipe'], header: true,
+			run: file => void handle(async () => new LoggingModal(plugin, logger, noteFor(file)).open()),
+		},
+		{
+			id: 'edit-stock', name: 'Edit stock', icon: 'gauge', kinds: ['bottle', 'ingredient'], header: true,
+			run: file => void handle(async () => {
+				const note = noteFor(file);
+				new EditStockModal(plugin.app, stocks, note, await stocks.read(note)).open();
+			}),
+		},
+		{
+			id: 'edit-cabinet-note', name: 'Edit cabinet note', icon: 'pencil', kinds: 'any', when: isEditable,
+			run: file => void handle(async () => {
+				const note = noteFor(file);
+				new EditNoteModal(plugin, edits, note, await edits.read(note)).open();
+			}),
+		},
+		{
+			id: 'rename-cabinet-note', name: 'Rename cabinet note', icon: 'text-cursor-input', kinds: 'any',
+			run: file => void handle(async () => new RenameModal(plugin.app, renamer, noteFor(file)).open()),
+		},
+		{ id: 'add-bottle-of-type', name: 'Add a bottle of this type', icon: 'wine', kinds: ['type'], run: forType(true) },
+		{ id: 'add-other-stock-for-type', name: 'Add other stock for this type', icon: 'package-plus', kinds: ['type'], run: forType(false) },
+	]);
 	const open = () => handle(() => ready(() =>
 		plugin.store.open(`${plugin.store.root}/Cocktail Cabinet.md`),
 	));
@@ -122,21 +100,6 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		name: 'Add other stock',
 		callback: () => handle(() => ready(() => new StockModal(plugin, false).open())),
 	});
-	// On a type note, open a stock form with the type already filled in.
-	const forType = (id: string, name: string, bottle: boolean) => plugin.addCommand({
-		id,
-		name,
-		checkCallback: checking => {
-			const file = plugin.app.workspace.getActiveFile();
-			if (!file?.path.startsWith(`${plugin.store.root}/`)) return false;
-			const type = plugin.store.notes().find(note => note.path === file.path && note.kind === 'type');
-			if (!type) return false;
-			if (!checking) void handle(() => ready(() => new StockModal(plugin, bottle, { types: [type] }).open()));
-			return true;
-		},
-	});
-	forType('add-bottle-of-type', 'Add a bottle of this type', true);
-	forType('add-other-stock-for-type', 'Add other stock for this type', false);
 	plugin.addCommand({
 		id: 'create-recipe',
 		name: 'Create a cocktail recipe',
@@ -153,25 +116,6 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 				const content = view?.file === file ? view.editor.getValue() : await plugin.app.vault.read(file);
 				new RecipeModal(plugin, { path: file.path, content }).open();
 			}));
-			return true;
-		},
-	});
-	plugin.addCommand({
-		id: 'browse-related-recipes',
-		name: 'Browse related recipes',
-		checkCallback: checking => {
-			const file = plugin.app.workspace.getActiveFile();
-			if (!file?.path.startsWith(`${plugin.store.root}/`)) return false;
-			const note = plugin.store.notes().find(note => note.path === file.path && note.kind !== 'recipe');
-			if (!note) return false;
-			if (!checking) {
-				void handle(async () => {
-					const recipes = await plugin.store.relatedRecipes(note);
-					new NotePicker(plugin.app, recipes, recipe => {
-						void handle(() => plugin.store.open(recipe.path));
-					}).open();
-				});
-			}
 			return true;
 		},
 	});
