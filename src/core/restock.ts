@@ -46,6 +46,8 @@ const FORMULAS: Record<string, string> = {
 	low,
 	out,
 	unknown,
+	// The shared stock text reads a bottle with no open amount as "None", which looks like empty.
+	unknownStock: `if(${note(PROP.unopened)} > 0, ${note(PROP.unopened)} + " unopened, open amount unknown", "Unknown")`,
 };
 
 const stocked = kindIs('bottle', 'ingredient');
@@ -61,7 +63,7 @@ const VIEWS: readonly FormulaView[] = [
 		columns: [name, type, price, ['file.mtime', 'Last changed'], shopping],
 		sort: [['file.mtime', 'DESC']],
 	},
-	{ name: RESTOCK_VIEWS.unknown, type: 'table', filter: `(${stocked}) && formula.unknown`, columns: [name, type, ['formula.stock', 'Stock'], shopping] },
+	{ name: RESTOCK_VIEWS.unknown, type: 'table', filter: `(${stocked}) && formula.unknown`, columns: [name, type, ['formula.unknownStock', 'Stock'], shopping] },
 ];
 
 export function restockBase(root: string): PlannedFile {

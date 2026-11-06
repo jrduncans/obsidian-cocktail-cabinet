@@ -477,6 +477,7 @@ void test('Restock is a user-owned Base of shopping candidates: running low, out
 	// Out is ordered by last change, so a bottle bought once sinks without being dismissed.
 	assert.match(views[1]!, /formula\.out'\n[\s\S]*property: file\.mtime\n {8}direction: DESC/);
 	assert.match(views[2]!, /formula\.unknown/);
+	assert.ok(views[2]!.includes('      - formula.unknownStock\n'), 'unknown rows never read "None"');
 	// Low: Low status, or the last bottle under the share (or mL without a size); out needs known zeros.
 	for (const part of ['== "Low"', 'note["cc-open-ml"] > 0 && !(note["cc-unopened"] > 0)', '<= formula.lowShare', '<= formula.lowMl', 'note["cc-remaining-ml"] > 0 && note["cc-remaining-ml"] <= formula.lowMl']) assert.ok(content.includes(part), part);
 	for (const part of ['== "Out"', 'note["cc-open-ml"] == 0 && !(note["cc-unopened"] > 0)', 'note["cc-remaining-ml"] == 0']) assert.ok(content.includes(part), part);
