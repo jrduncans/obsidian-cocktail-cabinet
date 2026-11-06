@@ -49,7 +49,7 @@ export function registerNoteActions(plugin: CocktailCabinetPlugin, actions: read
 		if (!(file instanceof TFile)) return;
 		const kind = kindOf(file);
 		for (const action of actions.filter(action => applies(action, kind))) {
-			menu.addItem(item => item.setTitle(action.name).setIcon(action.icon).setSection('action').onClick(() => action.run(file)));
+			menu.addItem(item => item.setTitle(action.name).setIcon(action.icon).setSection('cocktail-cabinet').onClick(() => action.run(file)));
 		}
 	}));
 
