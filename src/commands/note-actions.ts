@@ -45,11 +45,13 @@ export function registerNoteActions(plugin: CocktailCabinetPlugin, actions: read
 		});
 	}
 
+	// The untitled section is the menus' own group just above Delete. Obsidian appends any
+	// section name it doesn't list after everything, below Delete (checked in 1.15).
 	plugin.registerEvent(app.workspace.on('file-menu', (menu, file) => {
 		if (!(file instanceof TFile)) return;
 		const kind = kindOf(file);
 		for (const action of actions.filter(action => applies(action, kind))) {
-			menu.addItem(item => item.setTitle(action.name).setIcon(action.icon).setSection('cocktail-cabinet').onClick(() => action.run(file)));
+			menu.addItem(item => item.setTitle(action.name).setIcon(action.icon).setSection('').onClick(() => action.run(file)));
 		}
 	}));
 
