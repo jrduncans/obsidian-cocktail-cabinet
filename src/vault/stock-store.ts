@@ -29,9 +29,9 @@ export class StockStore {
 		return readStockState(this.kind(note), properties as Record<string, unknown>);
 	}
 
-	/** Write the plan, including a check date with no other change, only if the note still has the stock the form opened with. */
+	/** Write the plan only if the note still has the stock the form opened with. */
 	async save(note: CabinetNote, before: StockState, plan: StockEditPlan): Promise<void> {
-		if (!Object.keys(plan.updates).length && !plan.remove.length) return;
+		if (!plan.changed) return;
 		if (this.writing) throw new Error('Another stock change is still saving.');
 		this.writing = true;
 		try {

@@ -55,11 +55,12 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 
 - Finish: recipe review adds tags and rating, and warns about duplicates. Relinking and rating existing recipes are covered by **Edit cabinet note**.
 - Built 2026-11-06: a header button for each note's main action (**Log this cocktail** on recipes, **Edit stock** on bottles and other stock), every note command in the file menu and the note's More options menu, so mobile doesn't need the command palette, and a **Latest** view in `Recipes.base`. **Browse related recipes** was removed; the in-note Recipes sections replace it.
-- Built 2026-11-06: fix stock as you go. The logging modal opens **Edit stock** for a source that's unknown or short, and from each Stock row; Edit stock records `cc-stock-checked`; the **Stock to check** Base lists unknown stock, then never checked, then oldest check. See [editing stock](cabinet-design.md#editing-stock).
+- Built 2026-11-06: fix stock as you go. The logging modal opens **Edit stock** for a source that's unknown or short, and from each Stock row; the **Restock** Base lists stock running low, out (most recently changed first), and unknown, each with a shopping-list checkbox. A check date was tried and dropped the same day. See [editing stock](cabinet-design.md#editing-stock).
 - New, from a 2026-11-06 UX review (not yet designed in detail):
   - Last used: logging writes the date to each bottle and other stock it subtracts from, and possibly `cc-last-made` on the recipe (backfillable from daily notes). Enables recently made, neglected bottles, and stale-stock prompts.
   - Recipe sections in notes split into recipes that name the note (including, on a type, its bottles) above recipes it can fill through a broader type or family. Existing notes need the new embed added.
   - Catch-all types (Amaro, Flavored Rum, Specialty Bitters, …) flagged so their bottles don't count as interchangeable: no Same type section, no family-level recipe matches, no automatic logging candidates.
+  - After shopping: record a trip in one pass, from Shopping list items and from things bought off-list, including new bottles (through **Add a bottle**). Each purchase may update the price, and the bottle size when it changed (750 to 700 mL); a different size such as 375 mL or 1 L is a separate bottle. Today it's **Bought more** in Edit stock, one note at a time.
   - Unlinked measured ingredient lines (about a fifth in `knowledge`, often spirits) are silently not subtracted; offer linking from the logging modal and a view of recipes with unlinked lines.
 
 ### 5. Reach: retire the remaining skills

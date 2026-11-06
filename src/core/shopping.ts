@@ -2,7 +2,8 @@ import { basePath } from './bases';
 import { COMMON_FORMULAS, kindIs, linkWithName, q, renderFormulaBase } from './base-formulas';
 import type { FormulaView } from './base-formulas';
 import { markdown } from './notes';
-import { cabinetFolder, PROP } from './schema';
+import { RESTOCK_BASE } from './restock';
+import { cabinetFolder, PROP, wikiLink } from './schema';
 import type { PlannedFile } from './schema';
 
 /**
@@ -64,6 +65,6 @@ export function shoppingNote(root: string): PlannedFile {
 	return {
 		path: shoppingNotePath(root),
 		kind: 'shopping',
-		content: markdown({ [PROP.kind]: 'shopping' }, `# ${SHOPPING_NOTE}\n\nTurn on **Add to shopping list** on a bottle, ingredient type, or other stock to list it here. A type means any bottle of that type will do.\n\n${embeds}`),
+		content: markdown({ [PROP.kind]: 'shopping' }, `# ${SHOPPING_NOTE}\n\nTurn on **Add to shopping list** on a bottle, ingredient type, or other stock to list it here. A type means any bottle of that type will do. To find more to add, see ${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)}.\n\n${embeds}`),
 	};
 }

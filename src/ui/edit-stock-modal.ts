@@ -2,7 +2,6 @@ import { Notice, Setting } from 'obsidian';
 import type { App } from 'obsidian';
 import { BottleAmount, OPEN_AMOUNT_UNITS } from '../core/bottle-amount';
 import { formatMl } from '../core/logging-stock';
-import { localDate } from '../core/notes';
 import type { CabinetNote } from '../core/schema';
 import { AVAILABILITY, STOCK_TRACKING } from '../core/stock';
 import { boughtMore, describeStock, editFromState, finished, planStockEdit } from '../core/stock-edit';
@@ -27,8 +26,7 @@ export class EditStockModal extends CabinetForm {
 	private get bottle(): boolean { return this.before.kind === 'bottle'; }
 
 	onOpen() {
-		const checked = this.before.checked ? ` Last checked ${this.before.checked}.` : ' Not checked yet.';
-		this.begin(`Edit stock: ${this.note.name}`, `Now: ${describeStock(this.before)}.${checked} Saving records today as checked.`);
+		this.begin(`Edit stock: ${this.note.name}`, `Now: ${describeStock(this.before)}.`);
 		if (this.before.problems.length) {
 			this.contentEl.createEl('p', { cls: 'cocktail-cabinet-error', text: `${this.before.problems.join(' ')} Shown as unknown; left as is unless you change it.` });
 		}
@@ -46,24 +44,29 @@ export class EditStockModal extends CabinetForm {
 		this.afterEl = this.contentEl.createEl('p');
 		this.render();
 		this.submit('Save', async () => {
-			const plan = this.plan(localDate());
+			const plan = this.plan();
+			if (!plan.changed) {
+				this.close();
+				new Notice('No stock changes to save.');
+				return;
+			}
 			await this.stocks.save(this.note, this.before, plan);
 			this.close();
-			new Notice(plan.changed ? `${this.note.name}: ${describeStock(plan.after)}.` : `${this.note.name}: stock confirmed.`);
+			new Notice(`${this.note.name}: ${describeStock(plan.after)}.`);
 			this.onSaved?.();
 		});
 	}
 
-	private plan(checked?: string) {
+	private plan() {
 		const open = this.bottle && this.edit.tracking === 'volume' ? this.amount.toMl() : this.before.open;
-		return planStockEdit(this.before, { ...this.edit, open }, checked);
+		return planStockEdit(this.before, { ...this.edit, open });
 	}
 
 	private refresh() {
 		this.errorEl.empty();
 		try {
 			const plan = this.plan();
-			this.afterEl.setText(plan.changed ? `After: ${describeStock(plan.after)}.` : 'No changes yet; Save confirms the stock as it is.');
+			this.afterEl.setText(plan.changed ? `After: ${describeStock(plan.after)}.` : 'No changes yet.');
 		} catch (error) {
 			this.afterEl.setText('');
 			this.errorEl.setText(error instanceof Error ? error.message : 'Check the amounts.');

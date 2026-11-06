@@ -25,7 +25,7 @@ function edit(properties: Record<string, unknown>, kind: 'bottle' | 'ingredient'
 void test('current stock is read per mode, with unknown amounts distinct from zero', () => {
 	assert.deepEqual(readStockState('bottle', bottle), {
 		kind: 'bottle', tracking: 'volume', volume: 750, open: 300, unopened: 1, remaining: null,
-		availability: 'Unknown', price: 29.95, shoppingList: true, checked: null, problems: [],
+		availability: 'Unknown', price: 29.95, shoppingList: true, problems: [],
 	});
 	assert.equal(readStockState('bottle', { ...bottle, [PROP.open]: null, [PROP.unopened]: null }).open, null);
 	assert.equal(readStockState('bottle', { ...bottle, [PROP.unopened]: null }).unopened, 0);
@@ -203,31 +203,4 @@ void test('saving refuses stock that changed after the form opened', async () =>
 	saved[PROP.open] = 270;
 	await assert.rejects(store.save(note, before, plan), /changed/);
 	assert.equal(saved[PROP.open], 270);
-});
-
-void test('saving the form records the check date, even with no other change', () => {
-	const before = readStockState('bottle', { ...bottle, [PROP.stockChecked]: '2026-01-02' });
-	assert.equal(before.checked, '2026-01-02');
-	assert.equal(readStockState('bottle', { ...bottle, [PROP.stockChecked]: 'soon' }).checked, null);
-	assert.equal(readStockState('bottle', { ...bottle, [PROP.stockChecked]: new Date('2026-03-04T00:00:00Z') }).checked, '2026-03-04');
-	const unchanged = planStockEdit(before, edit(bottle, 'bottle'), '2026-11-06');
-	assert.equal(unchanged.changed, false);
-	assert.deepEqual(unchanged.updates, { [PROP.stockChecked]: '2026-11-06' });
-	assert.equal(unchanged.after.checked, '2026-11-06');
-	const finishedPlan = planStockEdit(before, finished(edit(bottle, 'bottle'), 'bottle'), '2026-11-06');
-	assert.equal(finishedPlan.changed, true);
-	assert.deepEqual(finishedPlan.updates, { [PROP.open]: 0, [PROP.stockChecked]: '2026-11-06' });
-	assert.ok(sameStockState(before, readStockState('bottle', { ...bottle, [PROP.stockChecked]: '2026-11-06' })), 'a newer check date isn’t a stock change');
-});
-
-void test('a check-only save writes just the date', async () => {
-	const note = { path: 'Cocktails/Bottles/Example.md', name: 'Example', kind: 'bottle' as const, parents: [] };
-	const properties: Record<string, unknown> = { ...bottle };
-	const app = {
-		vault: { getAbstractFileByPath: (path: string) => new TFile(path) },
-		fileManager: { processFrontMatter: async (_file: TFile, update: (value: Record<string, unknown>) => void) => { update(properties); } },
-	} as unknown as App;
-	const before = readStockState('bottle', bottle);
-	await new StockStore(app).save(note, before, planStockEdit(before, edit(bottle, 'bottle'), '2026-11-06'));
-	assert.deepEqual(properties, { ...bottle, [PROP.stockChecked]: '2026-11-06' });
 });
