@@ -2,6 +2,7 @@ import { Notice, Setting } from 'obsidian';
 import type { App } from 'obsidian';
 import { BottleAmount, OPEN_AMOUNT_UNITS } from '../core/bottle-amount';
 import { formatMl } from '../core/logging-stock';
+import { localDate } from '../core/notes';
 import type { CabinetNote } from '../core/schema';
 import { AVAILABILITY, STOCK_TRACKING } from '../core/stock';
 import { boughtMore, describeStock, editFromState, finished, planStockEdit } from '../core/stock-edit';
@@ -16,7 +17,8 @@ export class EditStockModal extends CabinetForm {
 	private afterEl!: HTMLElement;
 	private quick!: Setting;
 
-	constructor(app: App, private stocks: StockStore, private note: CabinetNote, private before: StockState) {
+	/** `onSaved` runs after a successful save, so a form that opened this one can refresh. */
+	constructor(app: App, private stocks: StockStore, private note: CabinetNote, private before: StockState, private onSaved?: () => void) {
 		super(app);
 		this.edit = editFromState(before);
 		this.amount.load(before.open, before.volume);
@@ -25,7 +27,8 @@ export class EditStockModal extends CabinetForm {
 	private get bottle(): boolean { return this.before.kind === 'bottle'; }
 
 	onOpen() {
-		this.begin(`Edit stock: ${this.note.name}`, `Now: ${describeStock(this.before)}.`);
+		const checked = this.before.checked ? ` Last checked ${this.before.checked}.` : ' Not checked yet.';
+		this.begin(`Edit stock: ${this.note.name}`, `Now: ${describeStock(this.before)}.${checked} Saving records today as checked.`);
 		if (this.before.problems.length) {
 			this.contentEl.createEl('p', { cls: 'cocktail-cabinet-error', text: `${this.before.problems.join(' ')} Shown as unknown; left as is unless you change it.` });
 		}
@@ -43,28 +46,24 @@ export class EditStockModal extends CabinetForm {
 		this.afterEl = this.contentEl.createEl('p');
 		this.render();
 		this.submit('Save', async () => {
-			const plan = this.plan();
-			if (!plan.changed) {
-				this.close();
-				new Notice('No stock changes to save.');
-				return;
-			}
+			const plan = this.plan(localDate());
 			await this.stocks.save(this.note, this.before, plan);
 			this.close();
-			new Notice(`${this.note.name}: ${describeStock(plan.after)}.`);
+			new Notice(plan.changed ? `${this.note.name}: ${describeStock(plan.after)}.` : `${this.note.name}: stock confirmed.`);
+			this.onSaved?.();
 		});
 	}
 
-	private plan() {
+	private plan(checked?: string) {
 		const open = this.bottle && this.edit.tracking === 'volume' ? this.amount.toMl() : this.before.open;
-		return planStockEdit(this.before, { ...this.edit, open });
+		return planStockEdit(this.before, { ...this.edit, open }, checked);
 	}
 
 	private refresh() {
 		this.errorEl.empty();
 		try {
 			const plan = this.plan();
-			this.afterEl.setText(plan.changed ? `After: ${describeStock(plan.after)}.` : 'No changes yet.');
+			this.afterEl.setText(plan.changed ? `After: ${describeStock(plan.after)}.` : 'No changes yet; Save confirms the stock as it is.');
 		} catch (error) {
 			this.afterEl.setText('');
 			this.errorEl.setText(error instanceof Error ? error.message : 'Check the amounts.');

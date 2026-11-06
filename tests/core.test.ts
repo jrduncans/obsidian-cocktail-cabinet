@@ -10,6 +10,7 @@ import { STARTER_EXAMPLES, examplePlan } from '../src/catalog/examples';
 import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
 import { basePath, RESOURCE_BASES } from '../src/core/bases';
 import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } from '../src/core/navigation';
+import { STOCK_CHECK_BASE, stockCheckBase } from '../src/core/stock-check';
 import { SHOPPING_BASE, SHOPPING_VIEWS, shoppingBase, shoppingNote, shoppingNotePath } from '../src/core/shopping';
 
 void test('cabinet paths remain inside a visible vault folder', () => {
@@ -144,7 +145,8 @@ void test('home introduces all six resource Bases in context without embeds or s
 	const files = starterPlan('Drinks/Cabinet');
 	const home = files.find(file => file.kind === 'cabinet')!;
 	const bases = files.filter(file => file.kind === 'base');
-	assert.equal(bases.length, 8);
+	assert.equal(bases.length, 9);
+	assert.ok(home.content.includes(wikiLink(basePath('Drinks/Cabinet', STOCK_CHECK_BASE), STOCK_CHECK_BASE)));
 	assert.ok(bases.some(file => file.path === basePath('Drinks/Cabinet', NAVIGATION_BASE)));
 	assert.ok(bases.some(file => file.path === basePath('Drinks/Cabinet', SHOPPING_BASE)));
 	assert.ok(home.content.includes(wikiLink(shoppingNotePath('Drinks/Cabinet'), 'Shopping list')));
@@ -457,4 +459,18 @@ void test('the home note introduces the example only in a new cabinet', () => {
 	assert.ok(!home(false).includes('Try an example'));
 	assert.ok(home(true).includes('[[Cocktails/Ingredients/Limes|Limes]], [[Cocktails/Ingredients/Lemons|Lemons]], and [[Cocktails/Ingredients/House Simple Syrup (1 to 1)|House Simple Syrup (1:1)]]'));
 	assert.ok(home(true).includes('[[Cocktails/Recipes/Daiquiri|Daiquiri]] and [[Cocktails/Recipes/Whiskey Sour|Whiskey Sour]]'));
+});
+
+void test('Stock to check is a user-owned Base: unknown first, then never checked, then oldest check', () => {
+	const base = stockCheckBase('Cocktails');
+	assert.equal(base.path, basePath('Cocktails', STOCK_CHECK_BASE));
+	assert.ok(!base.managed);
+	const { content } = base;
+	assert.ok(content.includes(`note["cc-kind"] == "bottle" || note["cc-kind"] == "ingredient"`));
+	assert.match(content, /priority: 'if\(formula\.unknown, 0, if\(note\["cc-stock-checked"\], 2, 1\)\)'/);
+	assert.match(content, /property: formula\.priority\n {8}direction: ASC\n {6}- property: note\.cc-stock-checked\n {8}direction: ASC/);
+	// Unknown covers every way logging can't draw down: no mode, Unknown, or a missing amount.
+	for (const part of ['!note["cc-availability"]', '== "Unknown"', '!= "volume", true', 'note["cc-open-ml"] == null', 'note["cc-remaining-ml"] == null']) assert.ok(content.includes(part), part);
+	assert.ok(content.includes('shownStock: \'if(formula.unknown, "Unknown", formula.stock)\''));
+	for (const line of content.split('formulas:\n')[1]!.split('properties:')[0]!.trimEnd().split('\n')) assert.match(line, /^ {2}\w+: '.*'$/);
 });

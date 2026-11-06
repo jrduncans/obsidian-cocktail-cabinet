@@ -169,6 +169,8 @@ Agreed on 2026-11-04 as the first Phase 2 item, replacing hand edits of `cc-open
 - **Levels.** The open bottle starts in percent full when the bottle size is known, else mL. An untouched value keeps the exact saved mL, so opening and saving never rounds stock.
 - **Mode switches.** A new mode starts unknown (Unknown availability, blank amounts) and is never converted from the old one; switching back to the saved mode restores its values. Saving a switch removes the old mode's stock fields.
 - **Stale protection.** Save re-reads the note inside `processFrontMatter` and refuses, changing nothing, if stock, price, or flag changed since the form opened. Bottle size and ABV stay in Properties.
+- **Checks.** Added 2026-11-06. Every save writes `cc-stock-checked` (today), even with no other change: the form shows the stock, so saving confirms it. Logging doesn't write it. The check date isn't part of stale protection.
+- **Fix as you go.** Added 2026-11-06. Stock is often out of date because a purchase or an unlogged drink wasn't recorded, so the logging modal opens **Edit stock** in place: a button on each source whose stock is unknown or short, and a gauge button on each Stock row. Saving re-reads the review and keeps selections. Bulk cleanup is the **Stock to check** Base (unknown, then never checked, then oldest check), not a separate command.
 
 ## Renaming
 

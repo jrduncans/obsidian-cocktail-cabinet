@@ -1,4 +1,4 @@
-import { Modal, Notice, Setting } from 'obsidian';
+import { Modal, Notice, Setting, setIcon } from 'obsidian';
 import type { ButtonComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
 import { SKIP_LINE } from '../core/logging-lines';
@@ -10,6 +10,8 @@ import { LoggingStore, LoggingWriteError } from '../vault/logging-store';
 import type { LoggingReview } from '../vault/logging-store';
 import type CocktailCabinetPlugin from '../main';
 import { NotePicker } from './picker';
+import { EditStockModal } from './edit-stock-modal';
+import type { StockStore } from '../vault/stock-store';
 
 function ingredientLabel(text: string): string {
 	return text.replace(/\[\[([^\]]+)\]\]/g, (_link, target: string) => target.includes('|') ? target.split('|').at(-1)! : target.split('/').at(-1)!);
@@ -29,7 +31,33 @@ export class LoggingModal extends Modal {
 	private applyButton!: ButtonComponent;
 	private dailySetting?: Setting;
 
-	constructor(plugin: CocktailCabinetPlugin, private logger: LoggingStore, private recipe: CabinetNote) { super(plugin.app); }
+	constructor(plugin: CocktailCabinetPlugin, private logger: LoggingStore, private stocks: StockStore, private recipe: CabinetNote) { super(plugin.app); }
+
+	/** Fix a bottle's stock without leaving the log, then re-read everything and keep the choices. */
+	private editStock(path: string) {
+		if (this.busy || this.terminal) return;
+		const source = this.review?.sources.find(item => item.note.path === path);
+		if (!source) return;
+		void (async () => {
+			try {
+				new EditStockModal(this.app, this.stocks, source.note, await this.stocks.read(source.note), () => { void this.reload(); }).open();
+			} catch (error) {
+				new Notice(error instanceof Error ? error.message : 'Couldn’t open the stock.');
+			}
+		})();
+	}
+
+	private async reload() {
+		try {
+			const review = await this.logger.review(this.recipe);
+			if (this.closed || this.busy || this.terminal) return;
+			this.acceptReview(review, false);
+			this.notice = '';
+			this.render();
+		} catch (error) {
+			if (!this.closed) this.messageEl.setText(error instanceof Error ? error.message : 'Couldn’t reload the stock.');
+		}
+	}
 
 	onOpen() {
 		this.titleEl.setText('Log this cocktail');
@@ -134,7 +162,7 @@ export class LoggingModal extends Modal {
 			new Setting(this.previewEl).setName('Stock').setHeading();
 			const table = this.previewEl.createEl('table', { cls: 'cocktail-cabinet-log-preview' });
 			const head = table.createEl('thead').createEl('tr');
-			for (const text of ['', 'Used', 'Left']) head.createEl('th', { text });
+			for (const text of ['', 'Used', 'Left', '']) head.createEl('th', { text });
 			const body = table.createEl('tbody');
 			for (const change of plan.changes) {
 				const row = body.createEl('tr');
@@ -146,11 +174,22 @@ export class LoggingModal extends Modal {
 					? `${bottleStockText(change.updates[PROP.open]!, typeof unopened === 'number' ? unopened : 0, typeof volume === 'number' ? volume : null)}${change.opened ? ` · opens ${change.opened}` : ''}`
 					: `${formatMl(change.updates[PROP.remaining]!)} mL`;
 				row.createEl('td', { text: after });
+				this.editButton(row.createEl('td'), change.source.note);
 			}
 		}
-		if (plan.errors.length) {
+		const blocked = new Set(plan.blocked.map(item => item.error));
+		const other = plan.errors.filter(error => !blocked.has(error));
+		if (other.length) {
 			const errors = this.previewEl.createDiv({ cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
-			for (const error of plan.errors) errors.createEl('p', { text: ingredientLabel(error) });
+			for (const error of other) errors.createEl('p', { text: ingredientLabel(error) });
+		}
+		// Stock that can't cover the drink is often just out of date: offer the fix in place.
+		for (const item of plan.blocked) {
+			const source = review.sources.find(candidate => candidate.note.path === item.path)!;
+			const row = new Setting(this.previewEl).setName(source.note.name).setDesc(item.error.slice(source.note.name.length + 2))
+				.addButton(button => button.setButtonText('Edit stock').onClick(() => this.editStock(item.path)));
+			row.descEl.addClass('cocktail-cabinet-error');
+			row.descEl.setAttribute('role', 'alert');
 		}
 		if (plan.skipped.length) {
 			new Setting(this.previewEl).setName('Not subtracted').setHeading();
@@ -194,6 +233,12 @@ export class LoggingModal extends Modal {
 			this.busy = false;
 			if (!this.closed) this.refreshPreview();
 		}
+	}
+
+	private editButton(cell: HTMLElement, note: CabinetNote) {
+		const button = cell.createEl('button', { cls: 'clickable-icon', attr: { 'aria-label': `Edit stock: ${note.name}` } });
+		setIcon(button, 'gauge');
+		button.addEventListener('click', () => this.editStock(note.path));
 	}
 
 	onClose() { this.closed = true; this.contentEl.empty(); }

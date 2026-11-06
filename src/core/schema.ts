@@ -30,6 +30,7 @@ export const PROP = {
 	form: 'cc-form',
 	lastPurchasePrice: 'cc-last-purchase-price',
 	shoppingList: 'cc-shopping-list',
+	stockChecked: 'cc-stock-checked',
 	sugarWaterRatio: 'cc-sugar-water-ratio',
 	schemaVersion: 'cc-schema-version',
 } as const;

@@ -17,6 +17,8 @@ export interface StockState {
 	availability: string;
 	price: number | null;
 	shoppingList: boolean;
+	/** When the stock was last confirmed through Edit stock, as YYYY-MM-DD. */
+	checked: string | null;
 	/** Values that couldn't be read and are shown as unknown. Left as they are unless edited. */
 	problems: string[];
 }
@@ -46,6 +48,12 @@ const MODE_FIELDS: Record<StockKind, Record<StockTracking, string[]>> = {
 	ingredient: { volume: [PROP.remaining], status: [PROP.availability] },
 };
 
+/** A YAML date can arrive as a string or, from some parsers, a Date. */
+function checkedDate(value: unknown): string | null {
+	if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+	return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim()) ? value.trim() : null;
+}
+
 export function readStockState(kind: StockKind, properties: Record<string, unknown>): StockState {
 	const problems: string[] = [];
 	const amount = (key: string, label: string, integer = false): number | null => {
@@ -67,6 +75,7 @@ export function readStockState(kind: StockKind, properties: Record<string, unkno
 		availability: typeof availability === 'string' && availability in AVAILABILITY ? availability : 'Unknown',
 		price: amount(PROP.lastPurchasePrice, 'Last purchase price'),
 		shoppingList: properties[PROP.shoppingList] === true,
+		checked: checkedDate(properties[PROP.stockChecked]),
 		problems,
 	};
 }
@@ -104,7 +113,11 @@ export function finished(edit: StockEdit, kind: StockKind): StockEdit {
 	return kind === 'bottle' ? { ...edit, open: 0 } : { ...edit, remaining: '0' };
 }
 
-export function planStockEdit(before: StockState, edit: StockEdit): StockEditPlan {
+/**
+ * `checked` is today's date: saving the form confirms the stock it shows, so the note records
+ * the check even when nothing else changes. `changed` still reports only stock, price, and flag.
+ */
+export function planStockEdit(before: StockState, edit: StockEdit, checked?: string): StockEditPlan {
 	if (edit.tracking !== 'volume' && edit.tracking !== 'status') throw new Error('Select how to track stock.');
 	const tracking: StockTracking = edit.tracking;
 	const after: StockState = {
@@ -146,7 +159,12 @@ export function planStockEdit(before: StockState, edit: StockEdit): StockEditPla
 	if (!Object.is(after.price, before.price)) updates[PROP.lastPurchasePrice] = after.price;
 	if (after.shoppingList !== before.shoppingList) updates[PROP.shoppingList] = after.shoppingList;
 	const remove = switched && before.tracking ? MODE_FIELDS[before.kind][before.tracking] : [];
-	return { after, updates, remove, changed: Object.keys(updates).length > 0 };
+	const changed = Object.keys(updates).length > 0;
+	if (checked) {
+		updates[PROP.stockChecked] = checked;
+		after.checked = checked;
+	}
+	return { after, updates, remove, changed };
 }
 
 /** Whether a fresh read still matches what the form was opened with. */

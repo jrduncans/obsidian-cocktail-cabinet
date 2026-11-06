@@ -11,7 +11,12 @@ export interface StockChange {
 	updates: Record<string, number>;
 	opened: number;
 }
-export interface DrawdownPlan { changes: StockChange[]; errors: string[]; }
+export interface DrawdownPlan {
+	changes: StockChange[];
+	errors: string[];
+	/** Sources whose stock can't cover their pours or is unknown, with their error; editing their stock may fix it. */
+	blocked: { path: string; error: string }[];
+}
 export interface SelectedPour { path: string; ml: number; }
 const EPSILON = 1e-8;
 
@@ -104,7 +109,7 @@ function drawdown(source: StockSource, consumedMl: number): StockChange {
 
 /** Aggregate each source before arithmetic. Any error invalidates the entire plan. */
 export function planDrawdown(sources: readonly StockSource[], pours: readonly SelectedPour[], servings: number): DrawdownPlan {
-	if (!Number.isFinite(servings) || servings <= 0) return { changes: [], errors: ['Enter more than 0 servings.'] };
+	if (!Number.isFinite(servings) || servings <= 0) return { changes: [], errors: ['Enter more than 0 servings.'], blocked: [] };
 	const totals = new Map<string, number>();
 	const errors: string[] = [];
 	for (const pour of pours) {
@@ -113,13 +118,18 @@ export function planDrawdown(sources: readonly StockSource[], pours: readonly Se
 		totals.set(pour.path, (totals.get(pour.path) ?? 0) + ml);
 	}
 	const changes: StockChange[] = [];
+	const blocked: DrawdownPlan['blocked'] = [];
 	for (const [path, ml] of totals) {
 		const source = sources.find(item => item.note.path === path);
 		try {
 			if (!source) throw new Error('Moved or deleted. Select another.');
 			if (!Number.isFinite(ml)) throw new Error('Too many servings.');
 			changes.push(drawdown(source, ml));
-		} catch (error) { errors.push(`${source?.note.name ?? path}: ${error instanceof Error ? error.message : 'Couldn’t calculate.'}`); }
+		} catch (error) {
+			const message = `${source?.note.name ?? path}: ${error instanceof Error ? error.message : 'Couldn’t calculate.'}`;
+			errors.push(message);
+			if (source) blocked.push({ path, error: message });
+		}
 	}
-	return { changes, errors };
+	return { changes, errors, blocked };
 }

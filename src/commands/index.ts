@@ -38,7 +38,7 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 	registerNoteActions(plugin, [
 		{
 			id: 'log-this-cocktail', name: 'Log this cocktail', icon: 'martini', kinds: ['recipe'], header: true,
-			run: file => void handle(async () => new LoggingModal(plugin, logger, noteFor(file)).open()),
+			run: file => void handle(async () => new LoggingModal(plugin, logger, stocks, noteFor(file)).open()),
 		},
 		{
 			id: 'edit-stock', name: 'Edit stock', icon: 'gauge', kinds: ['bottle', 'ingredient'], header: true,

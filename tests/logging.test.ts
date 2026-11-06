@@ -115,11 +115,14 @@ void test('exact finishing leaves zero open stock without opening an extra bottl
 void test('shortfall invalidates a plan even when another bottle has enough', () => {
 	const plan = planDrawdown([bottle(a, 20), bottle(b, 100)], [{ path: a.path, ml: 30 }, { path: b.path, ml: 30 }], 1);
 	assert.match(plan.errors.join(), /10 mL short/);
+	assert.deepEqual(plan.blocked.map(item => item.path), [a.path], 'only the short bottle is offered for a stock edit');
 });
 void test('unknown open amount can open known unopened stock; unknown stock never invents volume', () => {
 	assert.deepEqual(planDrawdown([bottle(a, null, 2, 100)], [{ path: a.path, ml: 120 }], 1).changes[0]!.updates,
 		{ [PROP.open]: 80, [PROP.unopened]: 0 });
 	assert.match(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /Open amount is unknown/);
+	assert.deepEqual(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 1).blocked.map(item => item.path), [a.path]);
+	assert.deepEqual(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 0).blocked, []);
 	assert.match(planDrawdown([bottle(a, 0, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /1 mL short/);
 });
 void test('missing full bottle volume blocks rollover but is unnecessary for a known sufficient open amount', () => {

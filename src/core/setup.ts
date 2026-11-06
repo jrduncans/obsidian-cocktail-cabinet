@@ -5,6 +5,7 @@ import { cabinetFolder, notePath, PROP, wikiLink } from './schema';
 import { basePath, resourceBases } from './bases';
 import { NAVIGATION_BASE, navigationBase } from './navigation';
 import { SHOPPING_NOTE, shoppingBase, shoppingNote, shoppingNotePath } from './shopping';
+import { STOCK_CHECK_BASE, stockCheckBase } from './stock-check';
 import type { PlannedFile } from './schema';
 
 /** Every file setup writes. `examples` adds the worked example, for a cabinet without a home yet. */
@@ -16,7 +17,7 @@ export function starterPlan(folder: string, paths: ReadonlyMap<string, string> =
 		catalogId: entry.id,
 	}));
 	const example = examples ? examplePlan(root, localDate(), paths) : [];
-	return [...files, ...example, ...resourceBases(root), navigationBase(root), shoppingBase(root), shoppingNote(root), cabinetHome(root, example)];
+	return [...files, ...example, ...resourceBases(root), navigationBase(root), shoppingBase(root), stockCheckBase(root), shoppingNote(root), cabinetHome(root, example)];
 }
 
 export function cabinetHomePath(root: string): string {
@@ -68,6 +69,10 @@ An ingredient type describes what a recipe calls for, such as lime juice. Stock 
 ### Shopping list
 
 ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} lists every bottle, ingredient type, and other stock marked **Add to shopping list**.
+
+### Stock to check
+
+${wikiLink(basePath(root, STOCK_CHECK_BASE), STOCK_CHECK_BASE)} lists bottles and other stock with unknown amounts first, then those you haven't checked in longest. Saving **Edit stock** records the check, even when nothing changed.
 
 ### Recipes
 
