@@ -46,7 +46,7 @@ export const COMMON_FORMULAS = {
 	stock: `if(note[${q(PROP.stockTracking)}] == "status", if(note[${q(PROP.availability)}], note[${q(PROP.availability)}], "Unknown"), `
 		+ `if(note[${q(PROP.stockTracking)}] != "volume", "", if(note[${q(PROP.kind)}] == "bottle", `
 		+ bottleStock(`note[${q(PROP.open)}]`, `note[${q(PROP.unopened)}]`, `note[${q(PROP.volume)}]`) + ', '
-		+ `if(note[${q(PROP.remaining)}] == null, "?", note[${q(PROP.remaining)}].round()) + " mL")))`,
+		+ `if(note[${q(PROP.remaining)}] > 0, note[${q(PROP.remaining)}].round(), 0) + " mL")))`,
 	// Ratings are numbers 1–5; anything else is shown as written.
 	rating: 'if(note.rating.isType("number"), "⭐️".repeat(note.rating.round()), note.rating)',
 };

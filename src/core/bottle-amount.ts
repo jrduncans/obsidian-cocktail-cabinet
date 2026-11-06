@@ -80,7 +80,7 @@ export class BottleAmount {
 		return openBottleMl(this.value, this.unit, this.fullVolume);
 	}
 
-	/** Switching stock tracking modes explicitly starts with unknown stock. */
+	/** Switching stock tracking modes starts with a blank amount, which reads as none. */
 	reset(): void {
 		this.value = '';
 		this.defaultFull = false;

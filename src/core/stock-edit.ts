@@ -48,9 +48,11 @@ const MODE_FIELDS: Record<StockKind, Record<StockTracking, string[]>> = {
 
 export function readStockState(kind: StockKind, properties: Record<string, unknown>): StockState {
 	const problems: string[] = [];
-	const amount = (key: string, label: string, integer = false): number | null => {
+	// `empty` is what a blank value reads as: 0 for stock amounts, unknown (null) for size and price.
+	// A value that isn't a number reads as null, and is left as it is unless edited.
+	const amount = (key: string, label: string, integer = false, empty: number | null = null): number | null => {
 		const value = properties[key];
-		if (value === undefined || value === null || value === '') return null;
+		if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) return empty;
 		if (typeof value === 'number' && Number.isFinite(value) && value >= 0 && (!integer || Number.isInteger(value))) return value;
 		problems.push(`${label} isn’t ${integer ? 'a whole number' : 'a number'}: ${JSON.stringify(value)}.`);
 		return null;
@@ -61,9 +63,9 @@ export function readStockState(kind: StockKind, properties: Record<string, unkno
 		kind,
 		tracking: tracking === 'volume' || tracking === 'status' ? tracking : null,
 		volume: kind === 'bottle' ? amount(PROP.volume, 'Bottle size') : null,
-		open: kind === 'bottle' ? amount(PROP.open, 'Open amount') : null,
-		unopened: kind === 'bottle' ? amount(PROP.unopened, 'Unopened count', true) ?? 0 : 0,
-		remaining: kind === 'ingredient' ? amount(PROP.remaining, 'Amount left') : null,
+		open: kind === 'bottle' ? amount(PROP.open, 'Open amount', false, 0) : null,
+		unopened: kind === 'bottle' ? amount(PROP.unopened, 'Unopened count', true, 0) ?? 0 : 0,
+		remaining: kind === 'ingredient' ? amount(PROP.remaining, 'Amount left', false, 0) : null,
 		availability: typeof availability === 'string' && availability in AVAILABILITY ? availability : 'Unknown',
 		price: amount(PROP.lastPurchasePrice, 'Last purchase price'),
 		shoppingList: properties[PROP.shoppingList] === true,
@@ -123,10 +125,11 @@ export function planStockEdit(before: StockState, edit: StockEdit): StockEditPla
 			if (!Number.isFinite(open) || open < 0) throw new Error('Open amount must be 0 or more.');
 			if (before.volume !== null && open > before.volume) throw new Error(`Open amount can’t be more than the ${formatMl(before.volume)} mL bottle.`);
 		}
-		after.open = open;
+		// A cleared field is 0; an unreadable saved value stays unless a new one is entered.
+		after.open = open ?? (before.open === null ? null : 0);
 		after.unopened = optionalNumber(edit.unopened, 'Unopened bottles', 0, Infinity, true) ?? 0;
 	} else {
-		after.remaining = optionalNumber(edit.remaining, 'Amount left', 0);
+		after.remaining = optionalNumber(edit.remaining, 'Amount left', 0) ?? (before.remaining === null ? null : 0);
 	}
 
 	const switched = tracking !== before.tracking;

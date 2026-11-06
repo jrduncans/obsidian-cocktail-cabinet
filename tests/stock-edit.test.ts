@@ -22,12 +22,15 @@ function edit(properties: Record<string, unknown>, kind: 'bottle' | 'ingredient'
 	return { ...editFromState(readStockState(kind, properties)), ...overrides };
 }
 
-void test('current stock is read per mode, with unknown amounts distinct from zero', () => {
+void test('current stock is read per mode; blank amounts read as 0, unreadable ones as unknown', () => {
 	assert.deepEqual(readStockState('bottle', bottle), {
 		kind: 'bottle', tracking: 'volume', volume: 750, open: 300, unopened: 1, remaining: null,
 		availability: 'Unknown', price: 29.95, shoppingList: true, problems: [],
 	});
-	assert.equal(readStockState('bottle', { ...bottle, [PROP.open]: null, [PROP.unopened]: null }).open, null);
+	assert.equal(readStockState('bottle', { ...bottle, [PROP.open]: null, [PROP.unopened]: null }).open, 0);
+	assert.equal(readStockState('bottle', { ...bottle, [PROP.open]: ' ' }).open, 0);
+	assert.equal(readStockState('ingredient', { ...syrup, [PROP.remaining]: null }).remaining, 0);
+	assert.equal(readStockState('bottle', { ...bottle, [PROP.volume]: null }).volume, null, 'bottle size stays unknown');
 	assert.equal(readStockState('bottle', { ...bottle, [PROP.unopened]: null }).unopened, 0);
 	assert.equal(readStockState('ingredient', limes).availability, 'Low');
 	assert.equal(readStockState('ingredient', { [PROP.kind]: 'ingredient' }).tracking, null);
@@ -44,7 +47,7 @@ void test('summaries match the Stock sections', () => {
 	assert.equal(describeStock(readStockState('bottle', { ...bottle, [PROP.open]: null, [PROP.unopened]: null })), 'None');
 	assert.equal(describeStock(readStockState('bottle', { ...bottle, [PROP.open]: 0, [PROP.unopened]: 0 })), 'None');
 	assert.equal(describeStock(readStockState('ingredient', syrup)), '250 mL');
-	assert.equal(describeStock(readStockState('ingredient', { ...syrup, [PROP.remaining]: null })), 'Amount unknown');
+	assert.equal(describeStock(readStockState('ingredient', { ...syrup, [PROP.remaining]: null })), '0 mL');
 	assert.equal(describeStock(readStockState('ingredient', limes)), 'Low');
 	assert.equal(describeStock(readStockState('ingredient', {})), 'Tracking not set');
 });
@@ -104,7 +107,12 @@ void test('levels are validated: open within bottle size, whole sealed counts, n
 	const before = readStockState('bottle', bottle);
 	assert.deepEqual(planStockEdit(before, edit(bottle, 'bottle', { open: 750 })).updates, { [PROP.open]: 750 });
 	assert.deepEqual(planStockEdit(before, edit(bottle, 'bottle', { unopened: '' })).updates, { [PROP.unopened]: 0 });
-	assert.deepEqual(planStockEdit(before, edit(bottle, 'bottle', { open: null })).updates, { [PROP.open]: null });
+	assert.deepEqual(planStockEdit(before, edit(bottle, 'bottle', { open: null })).updates, { [PROP.open]: 0 }, 'a cleared amount is none');
+	assert.deepEqual(planStockEdit(readStockState('ingredient', syrup), edit(syrup, 'ingredient', { remaining: '' })).updates, { [PROP.remaining]: 0 });
+	const blank = { ...bottle, [PROP.open]: null };
+	assert.deepEqual(planStockEdit(readStockState('bottle', blank), edit(blank, 'bottle')).updates, {}, 'a blank amount is kept, not rewritten as 0');
+	const broken = { ...bottle, [PROP.open]: 'half' };
+	assert.deepEqual(planStockEdit(readStockState('bottle', broken), edit(broken, 'bottle', { open: null })).updates, {}, 'an unreadable amount is kept unless replaced');
 	for (const overrides of [{ open: 751 }, { open: -1 }, { unopened: '1.5' }, { unopened: '-1' }, { price: '-2' }, { price: 'cheap' }]) {
 		assert.throws(() => planStockEdit(before, edit(bottle, 'bottle', overrides)), JSON.stringify(overrides));
 	}
@@ -121,9 +129,9 @@ void test('switching to availability keeps nothing numeric and removes mL fields
 	assert.equal(source.updates[PROP.availability], 'Unknown');
 });
 
-void test('switching to mL takes the amounts entered, unknown when blank, and removes availability', () => {
+void test('switching to mL takes the amounts entered, 0 when blank, and removes availability', () => {
 	const plan = planStockEdit(readStockState('ingredient', limes), edit(limes, 'ingredient', { tracking: 'volume', remaining: '' }));
-	assert.deepEqual(plan.updates, { [PROP.stockTracking]: 'volume', [PROP.remaining]: null });
+	assert.deepEqual(plan.updates, { [PROP.stockTracking]: 'volume', [PROP.remaining]: 0 });
 	assert.deepEqual(plan.remove, [PROP.availability]);
 	const status = { ...bottle, [PROP.stockTracking]: 'status', [PROP.availability]: 'Have' };
 	const toVolume = planStockEdit(readStockState('bottle', status), edit(status, 'bottle', { tracking: 'volume', open: 500, unopened: '' }));

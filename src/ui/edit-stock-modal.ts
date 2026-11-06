@@ -89,7 +89,7 @@ export class EditStockModal extends CabinetForm {
 			this.openRow(el);
 			this.number(el, 'Unopened bottles', this.edit.unopened, value => { this.edit.unopened = value; }, 'Sealed bottles. Leave blank if none.');
 		} else {
-			this.number(el, 'Amount left (mL)', this.edit.remaining, value => { this.edit.remaining = value; }, 'Clear if unknown; 0 means empty.');
+			this.number(el, 'Amount left (mL)', this.edit.remaining, value => { this.edit.remaining = value; }, 'Blank means empty.');
 		}
 		this.number(el, 'Last purchase price', this.edit.price, value => { this.edit.price = value; }, 'Optional, without a currency symbol.');
 		new Setting(el).setName('Add to shopping list').addToggle(toggle => toggle
@@ -106,7 +106,7 @@ export class EditStockModal extends CabinetForm {
 
 	private openRow(el: HTMLElement) {
 		const size = this.before.volume === null ? 'Bottle size unknown, so enter mL.' : `${formatMl(this.before.volume)} mL bottle.`;
-		const row = new Setting(el).setName('Open bottle').setDesc(`${size} Clear if unknown.`);
+		const row = new Setting(el).setName('Open bottle').setDesc(`${size} Blank means none open.`);
 		row.addDropdown(dropdown => dropdown.addOptions(OPEN_AMOUNT_UNITS).setValue(this.amount.unit).onChange(value => {
 			try {
 				this.amount.setUnit(value);
@@ -122,7 +122,7 @@ export class EditStockModal extends CabinetForm {
 		});
 	}
 
-	/** Back to the saved mode restores its values; a new mode starts unknown, never converted. */
+	/** Back to the saved mode restores its values; a new mode starts empty (Unknown availability), never converted. */
 	private switchTracking(tracking: string) {
 		const saved = editFromState(this.before);
 		this.edit.tracking = tracking;

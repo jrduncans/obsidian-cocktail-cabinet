@@ -7,8 +7,9 @@ import type { PlannedFile } from './schema';
 /**
  * Candidates for the shopping list: stock running low, stock that's out (most recently
  * changed first, so a bottle bought once sinks without anyone dismissing it), and stock
- * never filled in. Each view has the shopping-list checkbox to pick from. A user-owned
- * Base: setup creates it when missing and never replaces it.
+ * whose availability or tracking mode was never set. A blank amount is none, not unknown.
+ * Each view has the shopping-list checkbox to pick from. A user-owned Base: setup creates
+ * it when missing and never replaces it.
  */
 export const RESTOCK_BASE = 'Restock';
 export const RESTOCK_VIEWS = { low: 'Running low', out: 'Out', unknown: 'Unknown' } as const;
@@ -18,14 +19,12 @@ const tracking = note(PROP.stockTracking);
 const isBottle = `${note(PROP.kind)} == "bottle"`;
 const noUnopened = `!(${note(PROP.unopened)} > 0)`;
 
-/** Mirrors what logging can't draw down from: no mode, Unknown availability, or a missing amount. */
-const unknown = `if(${tracking} == "status", !${note(PROP.availability)} || ${note(PROP.availability)} == "Unknown", `
-	+ `if(${tracking} != "volume", true, `
-	+ `if(${isBottle}, ${note(PROP.open)} == null, ${note(PROP.remaining)} == null)))`;
+/** Unknown or missing availability, or no tracking mode. */
+const unknown = `if(${tracking} == "status", !${note(PROP.availability)} || ${note(PROP.availability)} == "Unknown", ${tracking} != "volume")`;
 
-/** Amounts are known and zero; an unknown amount is never out. */
+/** Out, or nothing left: blank amounts count as 0. */
 const out = `if(${tracking} == "status", ${note(PROP.availability)} == "Out", `
-	+ `${tracking} == "volume" && if(${isBottle}, ${note(PROP.open)} == 0 && ${noUnopened}, ${note(PROP.remaining)} == 0))`;
+	+ `${tracking} == "volume" && if(${isBottle}, !(${note(PROP.open)} > 0) && ${noUnopened}, !(${note(PROP.remaining)} > 0)))`;
 
 /**
  * Low, or the last bottle under `lowShare` full; without a bottle size, and for other
@@ -46,8 +45,7 @@ const FORMULAS: Record<string, string> = {
 	low,
 	out,
 	unknown,
-	// The shared stock text reads a bottle with no open amount as "None", which looks like empty.
-	unknownStock: `if(${note(PROP.unopened)} > 0, ${note(PROP.unopened)} + " unopened, open amount unknown", "Unknown")`,
+	unknownStock: `if(${tracking} == "status", "Unknown", "Tracking not set")`,
 };
 
 const stocked = kindIs('bottle', 'ingredient');

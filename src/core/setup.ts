@@ -35,7 +35,7 @@ function exampleSection(example: readonly PlannedFile[]): string {
 	};
 	return `\n\n## Try an example
 
-Setup added example stock, ${links('ingredient')}, and two recipes it completes: ${links('recipe')}. Their stock starts unknown. Set the syrup’s amount, then open a recipe and run **Cocktail Cabinet: Log this cocktail**. Change or delete the examples as you like; setup won’t add them back.`;
+Setup added example stock, ${links('ingredient')}, and two recipes it completes: ${links('recipe')}. The fruit starts as Unknown and the syrup as empty. Set the syrup’s amount, then open a recipe and run **Cocktail Cabinet: Log this cocktail**. Change or delete the examples as you like; setup won’t add them back.`;
 }
 
 function cabinetHome(root: string, example: readonly PlannedFile[] = []): PlannedFile {

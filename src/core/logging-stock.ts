@@ -14,7 +14,7 @@ export interface StockChange {
 export interface DrawdownPlan {
 	changes: StockChange[];
 	errors: string[];
-	/** Sources whose stock can't cover their pours or is unknown, with their error; editing their stock may fix it. */
+	/** Sources whose stock can't cover their pours, with their error; editing their stock may fix it. */
 	blocked: { path: string; error: string }[];
 }
 export interface SelectedPour { path: string; ml: number; }
@@ -49,9 +49,10 @@ export function isStocked(source: StockSource): boolean {
 		: positive(fields[PROP.remaining]);
 }
 
+/** An empty amount is null; callers read an empty open, unopened, or remaining amount as 0. */
 function quantity(fields: Record<string, unknown>, key: string, integer = false): number | null {
 	const value = fields[key];
-	if (value === undefined || value === null) return null;
+	if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) return null;
 	if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || (integer && !Number.isInteger(value))) {
 		const labels: Record<string, string> = { [PROP.open]: 'Open amount', [PROP.unopened]: 'Unopened count', [PROP.volume]: 'Bottle size', [PROP.remaining]: 'Amount left' };
 		throw new Error(`${labels[key] ?? 'Amount'} must be ${integer ? 'a whole number' : 'a number'}, 0 or more.`);
@@ -80,27 +81,23 @@ function drawdown(source: StockSource, consumedMl: number): StockChange {
 	if (fields[PROP.kind] !== source.note.kind) throw new Error('No longer a bottle or other stock.');
 	if (fields[PROP.stockTracking] !== 'volume') throw new Error('Not tracked in mL.');
 	if (source.note.kind === 'ingredient') {
-		const remaining = quantity(fields, PROP.remaining);
-		if (remaining === null) throw new Error('Amount left is unknown.');
+		const remaining = quantity(fields, PROP.remaining) ?? 0;
 		if (consumedMl > remaining + EPSILON) throw new Error(`${formatMl(consumedMl - remaining)} mL short.`);
 		return { source, consumedMl, updates: { [PROP.remaining]: Math.max(0, remaining - consumedMl) }, opened: 0 };
 	}
 	if (source.note.kind !== 'bottle') throw new Error('Select a bottle or other stock.');
-	const open = quantity(fields, PROP.open);
+	const open = quantity(fields, PROP.open) ?? 0;
 	const unopened = quantity(fields, PROP.unopened, true) ?? 0;
 	const volume = quantity(fields, PROP.volume);
 	if (volume === 0) throw new Error('Bottle size is 0 mL.');
-	if (open !== null && volume !== null && open > volume + EPSILON) throw new Error('Open amount is more than the bottle size.');
-	if (open !== null && consumedMl <= open + EPSILON) {
+	if (volume !== null && open > volume + EPSILON) throw new Error('Open amount is more than the bottle size.');
+	if (consumedMl <= open + EPSILON) {
 		return { source, consumedMl, updates: { [PROP.open]: Math.max(0, open - consumedMl) }, opened: 0 };
 	}
-	if (unopened === 0) {
-		if (open === null) throw new Error('Open amount is unknown and none are unopened.');
-		throw new Error(`${formatMl(consumedMl - open)} mL short.`);
-	}
+	if (unopened === 0) throw new Error(`${formatMl(consumedMl - open)} mL short.`);
 	if (volume === null) throw new Error('Bottle size is unknown, so another can’t be opened.');
-	const needed = consumedMl - (open ?? 0);
-	if (needed > unopened * volume + EPSILON) throw new Error(`${formatMl(needed - unopened * volume)} mL short${open === null ? ' (open amount unknown)' : ''}.`);
+	const needed = consumedMl - open;
+	if (needed > unopened * volume + EPSILON) throw new Error(`${formatMl(needed - unopened * volume)} mL short.`);
 	const opened = Math.max(1, Math.ceil((needed - EPSILON) / volume));
 	return { source, consumedMl, opened, updates: {
 		[PROP.open]: Math.max(0, opened * volume - needed), [PROP.unopened]: unopened - opened,

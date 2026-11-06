@@ -117,10 +117,10 @@ void test('shortfall invalidates a plan even when another bottle has enough', ()
 	assert.match(plan.errors.join(), /10 mL short/);
 	assert.deepEqual(plan.blocked.map(item => item.path), [a.path], 'only the short bottle is offered for a stock edit');
 });
-void test('unknown open amount can open known unopened stock; unknown stock never invents volume', () => {
+void test('a blank open amount is none open: it opens a sealed bottle, or is short', () => {
 	assert.deepEqual(planDrawdown([bottle(a, null, 2, 100)], [{ path: a.path, ml: 120 }], 1).changes[0]!.updates,
 		{ [PROP.open]: 80, [PROP.unopened]: 0 });
-	assert.match(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /Open amount is unknown/);
+	assert.match(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /1 mL short/);
 	assert.deepEqual(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 1).blocked.map(item => item.path), [a.path]);
 	assert.deepEqual(planDrawdown([bottle(a, null, 0)], [{ path: a.path, ml: 1 }], 0).blocked, []);
 	assert.match(planDrawdown([bottle(a, 0, 0)], [{ path: a.path, ml: 1 }], 1).errors.join(), /1 mL short/);
@@ -133,9 +133,9 @@ void test('empty unopened count means zero and cannot cover a pour beyond the op
 	assert.deepEqual(planDrawdown([bottle(a, 20, null)], [{ path: a.path, ml: 10 }], 1).changes[0]!.updates, { [PROP.open]: 10 });
 	assert.match(planDrawdown([bottle(a, 20, null)], [{ path: a.path, ml: 30 }], 1).errors.join(), /10 mL short/);
 });
-void test('volume other stock decrements remaining with no rollover and keeps unknown separate from zero', () => {
+void test('volume other stock decrements remaining with no rollover; a blank amount is empty', () => {
 	assert.deepEqual(planDrawdown([ingredient()], [{ path: prepared.path, ml: 25 }], 2).changes[0]!.updates, { [PROP.remaining]: 150 });
-	assert.match(planDrawdown([ingredient(prepared, null)], [{ path: prepared.path, ml: 1 }], 1).errors.join(), /Amount left is unknown/);
+	assert.match(planDrawdown([ingredient(prepared, null)], [{ path: prepared.path, ml: 1 }], 1).errors.join(), /1 mL short/);
 	assert.match(planDrawdown([ingredient(prepared, 0)], [{ path: prepared.path, ml: 1 }], 1).errors.join(), /short/);
 });
 void test('an explicitly selected status-tracked bottle stays unchanged and appears as not drawn down', () => {
@@ -206,7 +206,7 @@ void test('rounded ounce/mL recipe amounts produce counted lines, pickers, and m
 });
 
 
-void test('missing, null, and empty unopened counts behave like zero without changing unknown open amounts', () => {
+void test('missing, null, and empty unopened counts and open amounts behave like zero', () => {
 	for (const unopened of [undefined, null, '', '  ', 0]) {
 		const source = stockSnapshot(a, { ...bottle(a, 20).fields, [PROP.unopened]: unopened });
 		assert.equal(source.fields[PROP.unopened], 0);
@@ -216,7 +216,8 @@ void test('missing, null, and empty unopened counts behave like zero without cha
 		assert.match(planDrawdown([source], [{ path: a.path, ml: 30 }], 1).errors.join(), /10 mL short/);
 		const unmeasured = stockSnapshot(a, { ...source.fields, [PROP.open]: null });
 		assert.equal(isStocked(unmeasured), false);
-		assert.match(planDrawdown([unmeasured], [{ path: a.path, ml: 1 }], 1).errors.join(), /Open amount is unknown/);
+		assert.match(planDrawdown([unmeasured], [{ path: a.path, ml: 1 }], 1).errors.join(), /1 mL short/);
+		// Stale protection still compares what the file holds: blank and 0 are different text.
 		assert.equal(sameStock(unmeasured, bottle(a, 0)), false);
 	}
 });

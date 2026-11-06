@@ -477,11 +477,13 @@ void test('Restock is a user-owned Base of shopping candidates: running low, out
 	// Out is ordered by last change, so a bottle bought once sinks without being dismissed.
 	assert.match(views[1]!, /formula\.out'\n[\s\S]*property: file\.mtime\n {8}direction: DESC/);
 	assert.match(views[2]!, /formula\.unknown/);
-	assert.ok(views[2]!.includes('      - formula.unknownStock\n'), 'unknown rows never read "None"');
+	assert.ok(views[2]!.includes('      - formula.unknownStock\n'));
 	// Low: Low status, or the last bottle under the share (or mL without a size); out needs known zeros.
 	for (const part of ['== "Low"', 'note["cc-open-ml"] > 0 && !(note["cc-unopened"] > 0)', '<= formula.lowShare', '<= formula.lowMl', 'note["cc-remaining-ml"] > 0 && note["cc-remaining-ml"] <= formula.lowMl']) assert.ok(content.includes(part), part);
-	for (const part of ['== "Out"', 'note["cc-open-ml"] == 0 && !(note["cc-unopened"] > 0)', 'note["cc-remaining-ml"] == 0']) assert.ok(content.includes(part), part);
-	for (const part of ['!note["cc-availability"]', '== "Unknown"', '!= "volume", true', 'note["cc-open-ml"] == null', 'note["cc-remaining-ml"] == null']) assert.ok(content.includes(part), part);
+	// Blank amounts are none: out is nothing above 0, and unknown is only availability or a missing mode.
+	for (const part of ['== "Out"', '!(note["cc-open-ml"] > 0) && !(note["cc-unopened"] > 0)', '!(note["cc-remaining-ml"] > 0)']) assert.ok(content.includes(part), part);
+	assert.ok(content.includes(`unknown: 'if(note["cc-stock-tracking"] == "status", !note["cc-availability"] || note["cc-availability"] == "Unknown", note["cc-stock-tracking"] != "volume")'`));
+	assert.ok(!/cc-(open|remaining)-ml"\] == null/.test(content));
 	assert.ok(content.includes("lowShare: '0.25'") && content.includes("lowMl: '100'"));
 	for (const line of content.split('formulas:\n')[1]!.split('properties:')[0]!.trimEnd().split('\n')) assert.match(line, /^ {2}\w+: '.*'$/);
 });

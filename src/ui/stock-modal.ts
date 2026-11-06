@@ -23,7 +23,7 @@ export class StockModal extends CabinetForm {
 	onOpen() {
 		this.begin(
 			this.bottle ? 'Add a bottle' : 'Add other stock',
-			'Record how much you have, or mark it as Have, Low, or Out. Leave measured amounts blank if you haven’t checked them.',
+			'Record how much you have, or mark it as Have, Low, or Out. A blank amount means none.',
 		);
 		let name = this.options.name ?? '', description = '', volume = '', abv = '';
 		let unopened = '', remaining = '', lastPurchasePrice = '';
@@ -90,11 +90,11 @@ export class StockModal extends CabinetForm {
 					let summary: string;
 					try {
 						const ml = open.toMl();
-						summary = ml === null ? 'Amount unknown.' : `${open.unit === 'percent' ? 'About ' : ''}${Number(ml.toFixed(2))} mL remaining.`;
+						summary = ml === null ? 'None open.' : `${open.unit === 'percent' ? 'About ' : ''}${Number(ml.toFixed(2))} mL remaining.`;
 					} catch (error) {
 						summary = error instanceof Error ? error.message : 'Enter a valid amount.';
 					}
-					row.setDesc(`${summary} Excludes unopened bottles. Clear if unknown; enter 0 for no open stock.`);
+					row.setDesc(`${summary} Excludes unopened bottles. Blank means none open.`);
 				};
 				row.addDropdown(dropdown => {
 					unitInput = dropdown.addOptions(OPEN_AMOUNT_UNITS).setValue(open.unit).onChange(value => {
@@ -124,7 +124,7 @@ export class StockModal extends CabinetForm {
 			} else {
 				this.text('Remaining volume (mL)', remaining, value => {
 					remaining = value;
-				}, 'Enter 0 for empty stock.', stockEl);
+				}, 'Blank means empty.', stockEl);
 			}
 		};
 		renderStock();

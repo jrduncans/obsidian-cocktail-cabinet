@@ -19,6 +19,8 @@ export const PREVIOUS_NAVIGATION_VERSIONS: readonly string[] = [
 	'5357-fc366e60',
 	// Development only: "660 mL open", "None".
 	'5493-e44f3a35',
+	// Before 2026-11-06: other stock with a blank amount as "? mL".
+	'5883-0e6d892d',
 ];
 
 export const NAVIGATION_VIEWS = {
