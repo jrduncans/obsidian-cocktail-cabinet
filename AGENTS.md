@@ -37,6 +37,7 @@ This project spans three workspace folders:
 - Before finishing code changes, run `npm test`, `npm run build`, and `npm run lint`. After changing the starter catalog, run `npm run catalog:docs`; tests check the generated hierarchy for drift.
 - Keep `src/main.ts` focused on plugin lifecycle and registration. Put feature logic in focused modules; consider splitting files beyond 200–300 lines. Keep pure cocktail logic separate from Obsidian I/O.
 - Use browser-compatible APIs and small dependencies. The plugin supports mobile; keep `minAppVersion` accurate for APIs in use.
+- Don't hide or disable features by platform. "Desktop first" in the docs sets testing and layout priority; it doesn't mean gating with `Platform.isMobile`. A rough mobile layout is acceptable, because the feature has to appear on mobile for its issues to be found.
 - Register commands with stable IDs. Persist settings with `loadData()` / `saveData()` and keep collection data in vault notes and core Bases.
 - Setup creates missing files and preserves existing notes and customized Bases. Keep unknown quantities distinct from zero and validate creation inputs.
 - Keep startup light, defer vault scans until needed, and use `register*` helpers for listeners and intervals.
