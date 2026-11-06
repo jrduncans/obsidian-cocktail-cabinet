@@ -17,14 +17,19 @@ export const RESTOCK_VIEWS = { low: 'Running low', out: 'Out', unknown: 'Unknown
 const note = (key: string) => `note[${q(key)}]`;
 const tracking = note(PROP.stockTracking);
 const isBottle = `${note(PROP.kind)} == "bottle"`;
-const noUnopened = `!(${note(PROP.unopened)} > 0)`;
+/**
+ * Blank or at most 0. In Bases a comparison on a blank number fails the whole expression,
+ * even beside `||`, so blank is tested first and the comparison runs only in `if`'s other branch.
+ */
+const none = (key: string) => `if(${note(key)} == null, true, ${note(key)} <= 0)`;
+const noUnopened = none(PROP.unopened);
 
 /** Unknown or missing availability, or no tracking mode. */
 const unknown = `if(${tracking} == "status", !${note(PROP.availability)} || ${note(PROP.availability)} == "Unknown", ${tracking} != "volume")`;
 
 /** Out, or nothing left: blank amounts count as 0. */
 const out = `if(${tracking} == "status", ${note(PROP.availability)} == "Out", `
-	+ `${tracking} == "volume" && if(${isBottle}, !(${note(PROP.open)} > 0) && ${noUnopened}, !(${note(PROP.remaining)} > 0)))`;
+	+ `${tracking} == "volume" && if(${isBottle}, ${none(PROP.open)} && ${noUnopened}, ${none(PROP.remaining)}))`;
 
 /**
  * Low, or the last bottle under `lowShare` full; without a bottle size, and for other

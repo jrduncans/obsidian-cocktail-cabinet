@@ -479,11 +479,12 @@ void test('Restock is a user-owned Base of shopping candidates: running low, out
 	assert.match(views[2]!, /formula\.unknown/);
 	assert.ok(views[2]!.includes('      - formula.unknownStock\n'));
 	// Low: Low status, or the last bottle under the share (or mL without a size); out needs known zeros.
-	for (const part of ['== "Low"', 'note["cc-open-ml"] > 0 && !(note["cc-unopened"] > 0)', '<= formula.lowShare', '<= formula.lowMl', 'note["cc-remaining-ml"] > 0 && note["cc-remaining-ml"] <= formula.lowMl']) assert.ok(content.includes(part), part);
+	for (const part of ['== "Low"', 'note["cc-open-ml"] > 0 && if(note["cc-unopened"] == null, true, note["cc-unopened"] <= 0)', '<= formula.lowShare', '<= formula.lowMl', 'note["cc-remaining-ml"] > 0 && note["cc-remaining-ml"] <= formula.lowMl']) assert.ok(content.includes(part), part);
 	// Blank amounts are none: out is nothing above 0, and unknown is only availability or a missing mode.
-	for (const part of ['== "Out"', '!(note["cc-open-ml"] > 0) && !(note["cc-unopened"] > 0)', '!(note["cc-remaining-ml"] > 0)']) assert.ok(content.includes(part), part);
+	for (const part of ['== "Out"', 'if(note["cc-open-ml"] == null, true, note["cc-open-ml"] <= 0) && if(note["cc-unopened"] == null, true, note["cc-unopened"] <= 0)', 'if(note["cc-remaining-ml"] == null, true, note["cc-remaining-ml"] <= 0)']) assert.ok(content.includes(part), part);
+	// Bases doesn't treat `!(blank > 0)` or `!blank` as true for numbers.
+	assert.ok(!content.includes('!(note[') && !content.includes('!note["cc-unopened"]'));
 	assert.ok(content.includes(`unknown: 'if(note["cc-stock-tracking"] == "status", !note["cc-availability"] || note["cc-availability"] == "Unknown", note["cc-stock-tracking"] != "volume")'`));
-	assert.ok(!/cc-(open|remaining)-ml"\] == null/.test(content));
-	assert.ok(content.includes("lowShare: '0.25'") && content.includes("lowMl: '100'"));
+		assert.ok(content.includes("lowShare: '0.25'") && content.includes("lowMl: '100'"));
 	for (const line of content.split('formulas:\n')[1]!.split('properties:')[0]!.trimEnd().split('\n')) assert.match(line, /^ {2}\w+: '.*'$/);
 });
