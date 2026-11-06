@@ -10,8 +10,8 @@ Frequency is taken from the `knowledge` vault. In 2026 the daily notes have abou
 | --- | --- | --- | --- |
 | Log a drink | Several times a week | Built and tested on desktop; retry recovery deferred | Pick recipe and servings, review and adjust bottle choices, preview the mL drawn down, write the daily-note line, and be safe to retry. See [the workflow assessment](workflow-assessment.md#logging-needs-operation-level-retry-protection). |
 | Update stock | Weekly | Built; tested on desktop and mobile (2026-11-05) | **Edit stock** on a bottle or other-stock note: Bought more, Finished, set the level, price, shopping flag, and an explicit switch between mL and availability tracking. See [editing stock](cabinet-design.md#editing-stock). |
-| Edit or rename a note | Whenever something is wrong | Rename built and tested on desktop (2026-11-05); editing not started | Rename a recipe, bottle, or ingredient once and have the file name, H1, `cc-name`, aliases, and incoming links follow; today a recipe rename takes three hand edits. Edit an existing note's fields with the same form that created it. |
-| Add a recipe | Weekly | Core works | Prep tags (`#shaken`, `#stirred`, …) and rating during review, a duplicate-recipe check, and the sources actually used: Bevnap CSV and web pages. Relink plain-text ingredients once a matching note exists (for example, the dev vault's Black Manhattan still has plain-text Angostura Bitters). |
+| Edit or rename a note | Whenever something is wrong | Rename and **Edit cabinet note** built and tested on desktop (2026-11-05); mobile not yet checked | Rename a recipe, bottle, or ingredient once and have the file name, H1, `cc-name`, aliases, and incoming links follow; today a recipe rename takes three hand edits. Edit an existing note's fields with the same form that created it. |
+| Add a recipe | Weekly | Core works | Prep tags (`#shaken`, `#stirred`, …) and rating during review, a duplicate-recipe check, and the sources actually used: Bevnap CSV and web pages. Relinking plain-text ingredients once a matching note exists is done through **Edit cabinet note**. |
 | Browse the hierarchy | While browsing | Built for new notes (embedded Bases); the migration script adds it to adopted notes | Each category, family, type, and bottle note shows, in the note itself, its parent, its children (families, types, or bottles), and the recipes that use it, as the vault's DataviewJS blocks do today. Those blocks read the old properties, so they stop working at cutover (about 300 notes). |
 | Set up cabinet | Once | Built; no worked example | Done for a new cabinet, but nothing shows how the pieces fit. The starter should include a small working example: limes and lemons as availability-tracked other stock providing Lime Juice and Lemon Juice, House Simple Syrup (1 to 1) tracked in mL, and one or two recipes they complete. Still needs a check on real iOS and Android devices. |
 | Adopt the `knowledge` vault | Once; blocks real use | Done: cutover applied 2026-11-04 | The [approved mapping](knowledge-adoption-mapping.md) and [one-off migration script](knowledge-migration.md) cover classification, stock, recipe links, ratings, and navigation. Private dry-run reports list remaining unmapped content and the provisional bitters classification. Breakage found afterward is fixed as it is hit. |
@@ -43,6 +43,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 - Built: **Rename cabinet note**, keeping file name, H1, `cc-name`, aliases, and links in step; see [renaming](cabinet-design.md#renaming). Tested on desktop in the dev vault; mobile not yet checked.
 - Built: **Edit stock** on a bottle or other stock: Bought more, Finished, set the level, price and shopping flag, and switch tracking mode with an explicit conversion (mL to availability keeps nothing numeric; availability to mL asks for the amounts). No Open next bottle action: logging opens a sealed bottle when needed. See [editing stock](cabinet-design.md#editing-stock). On mobile it works, but the keyboard covers much of the form and Save is below the fold; a shared mobile pass on the cabinet forms belongs with the logging mobile pass in Phase 3.
 - Built: the **Shopping list** note, with sections for flagged bottles, types, and other stock; see [purchasing and the shopping list](note-properties.md#purchasing-and-the-shopping-list).
+- Built: **Edit cabinet note**, the creation form's fields for an existing note apart from name and stock, rewriting only the recipe sections that changed; see [editing notes](cabinet-design.md#editing-notes). Tested on desktop in the dev vault; mobile not yet checked. It also covers relinking plain-text recipe ingredients and adds a rating input, both earlier listed under Phase 4.
 - Built in Phase 1, step 4: **Add stock for this type**, the "House <type>" default name, and the starter's worked example.
 
 ### 3. Harden logging
@@ -52,7 +53,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 
 ### 4. Everyday polish: less command-hunting
 
-- Finish: recipe review adds tags and rating, warns about duplicates, and supports relinking later.
+- Finish: recipe review adds tags and rating, and warns about duplicates. Relinking and rating existing recipes are covered by **Edit cabinet note**.
 
 ### 5. Reach: retire the remaining skills
 

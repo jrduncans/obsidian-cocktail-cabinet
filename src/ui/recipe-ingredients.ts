@@ -9,11 +9,19 @@ import { IngredientModal } from './ingredient-modal';
 import { NotePicker } from './picker';
 import { StockModal } from './stock-modal';
 
-interface IngredientRow { amount: string; text: string; note?: CabinetNote; }
+export interface IngredientRow {
+	amount: string;
+	text: string;
+	note?: CabinetNote;
+	/** The line as saved, written back unchanged unless the row is edited. */
+	original?: string;
+}
 
 /** Shared review controls for pasted and manually entered ingredients. */
 export class RecipeIngredients {
 	private rows: IngredientRow[] = [];
+	/** Each saved row's values when the form opened. */
+	private loaded = new Map<IngredientRow, { amount: string; text: string; note?: string }>();
 	private rowsEl: HTMLElement;
 	private notes: CabinetNote[];
 
@@ -28,15 +36,18 @@ export class RecipeIngredients {
 
 	lines(): string[] {
 		if (this.rows.some(row => row.amount.trim() && !row.text.trim())) throw new Error('Enter an ingredient for each amount.');
-		const lines = this.rows.filter(row => row.text.trim()).map(row => [row.amount.trim(),
-			row.note ? wikiLink(row.note.path, row.text.trim()) : row.text.trim(),
-		].filter(Boolean).join(' '));
-		if (!lines.length) throw new Error('Add at least one ingredient before creating the recipe.');
+		const lines = this.rows.filter(row => row.text.trim()).map(row => {
+			const loaded = this.loaded.get(row);
+			if (row.original !== undefined && loaded && loaded.amount === row.amount && loaded.text === row.text && loaded.note === row.note?.path) return row.original;
+			return [row.amount.trim(), row.note ? wikiLink(row.note.path, row.text.trim()) : row.text.trim()].filter(Boolean).join(' ');
+		});
+		if (!lines.length) throw new Error('Add at least one ingredient.');
 		return lines;
 	}
 
 	private add(data: IngredientRow) {
 		this.rows.push(data);
+		if (data.original !== undefined) this.loaded.set(data, { amount: data.amount, text: data.text, note: data.note?.path });
 		const wrapper = this.rowsEl.createDiv({ cls: 'cocktail-cabinet-ingredient' });
 		const fields = new Setting(wrapper).setName('Ingredient');
 		const status = wrapper.createEl('p', { cls: 'cocktail-cabinet-ingredient-status', attr: { 'aria-live': 'polite' } });

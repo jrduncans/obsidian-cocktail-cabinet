@@ -12,6 +12,9 @@ import { StockStore } from '../vault/stock-store';
 import { EditStockModal } from '../ui/edit-stock-modal';
 import { RenameStore } from '../vault/rename-store';
 import { RenameModal } from '../ui/rename-modal';
+import { EditStore } from '../vault/edit-store';
+import { EditNoteModal } from '../ui/edit-note-modal';
+import { isEditable } from '../core/note-edit';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(plugin.app, plugin.store);
@@ -58,6 +61,19 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 			const note = plugin.store.notes().find(note => note.path === file.path);
 			if (!note) return false;
 			if (!checking) new RenameModal(plugin.app, renamer, note).open();
+			return true;
+		},
+	});
+	const edits = new EditStore(plugin.app);
+	plugin.addCommand({
+		id: 'edit-cabinet-note',
+		name: 'Edit cabinet note',
+		checkCallback: checking => {
+			const file = plugin.app.workspace.getActiveFile();
+			if (!file?.path.startsWith(`${plugin.store.root}/`)) return false;
+			const note = plugin.store.notes().find(note => note.path === file.path);
+			if (!note || !isEditable(note.kind)) return false;
+			if (!checking) void handle(async () => new EditNoteModal(plugin, edits, note, await edits.read(note)).open());
 			return true;
 		},
 	});

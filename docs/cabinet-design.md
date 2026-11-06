@@ -180,6 +180,18 @@ Built on 2026-11-05 as the Phase 2 rename, replacing the three hand edits a reci
 - **Stale protection.** Save refuses, changing nothing, if `cc-name` changed after the form opened. Link failures after the move are listed in the notice rather than undoing the rename.
 - **Not covered.** Renaming through Obsidian's own **Rename file** leaves `cc-name` and the heading alone. Markdown-style `[text](path.md)` links get only Obsidian's path update.
 
+## Editing notes
+
+Built on 2026-11-05 as the last Phase 2 item, replacing hand edits of the fields the creation forms set.
+
+- **One command, the creation fields.** **Edit cabinet note** works on recipes, bottles, other stock, types, and families, desktop and mobile; categories have nothing to edit, so it doesn't appear there. It opens a form filled from the file, not the metadata cache, and saves only what changed. The name stays with **Rename cabinet note**, and stock, price, and a stock note's shopping flag with **Edit stock**.
+- **Fields by kind.** Recipe: source, rating, ingredients with link review, method, description, tasting notes. Bottle: type, size, ABV (typed as percent, stored as a fraction). Other stock: provides, form. Type: family, shopping list. Family: category. Bottle size and ABV moved here from Properties because the form converts percent and refuses a size smaller than the open amount.
+- **Body text stays in the editor, except on recipes.** A bottle's, stock's, or hierarchy note's description and preparation are ordinary Markdown, so the form offers only fields that need a picker or validation.
+- **Recipe sections in place.** Only the four sections are rewritten, each only when changed; other headings, embeds, and extra sections stay where they are. A missing section with text is added after the one that precedes it, at the same heading level. This differs from **Enhance as cocktail recipe**, which re-parses the whole page and moves unrecognized text into Description; Enhance stays for turning a page into a recipe.
+- **Ingredients.** A line that is one link to a cabinet note opens as a linked row; other lines keep their text and get link suggestions, which covers relinking once a matching note exists. An untouched row is written back exactly as saved. An Ingredients section with nested lists or other text is left alone, and the form says so.
+- **Ratings.** A dropdown from Unrated to five stars. A saved value that can't be read stays unless another is chosen.
+- **Stale protection.** When recipe sections change, the save refuses, changing nothing, if the note changed at all since the form opened; property changes are checked against the edited fields through `processFrontMatter`.
+
 ## Navigation in notes
 
 Agreed on 2026-11-04, after testing logging in the dev vault showed that moving around the hierarchy was missing.

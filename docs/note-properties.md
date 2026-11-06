@@ -178,7 +178,7 @@ A cocktail's requirements, method, description, and tasting notes. New notes are
 | `aliases` | `string[]` | `false` | Alternate names included in cabinet picker search and available to Obsidian links. |
 | `created` | `date` | `false` | Resolved to the local calendar date during creation; enhancement retains an existing creation date. For example, `2026-10-30`. Recorded metadata; no current date-based behavior reads it. Generated recipes always include it. |
 | `source` | `string \| null` | `false` | Provenance such as a URL, book, or attribution. The form trims text and stores `null` when blank. Recorded only; no fetching or interpretation. |
-| `rating` | `integer \| null` | `false` | Whole number from 1 to 5; null or missing means unrated. Shown as stars and sorted highest first in each note's Recipes section, unrated last. Copied-text creation and enhancement convert a numeric string or a run of ⭐️ (the older convention) to the number; enhancement keeps any other existing value as written. No rating form input yet. |
+| `rating` | `integer \| null` | `false` | Whole number from 1 to 5; null or missing means unrated. Shown as stars and sorted highest first in each note's Recipes section, unrated last. Copied-text creation and enhancement convert a numeric string or a run of ⭐️ (the older convention) to the number; enhancement keeps any other existing value as written. **Edit cabinet note** sets it; an unreadable saved value is kept unless another rating is chosen. |
 
 Recipe requirements are Markdown body content rather than frontmatter properties:
 
