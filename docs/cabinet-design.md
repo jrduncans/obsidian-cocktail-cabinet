@@ -170,6 +170,16 @@ Agreed on 2026-11-04 as the first Phase 2 item, replacing hand edits of `cc-open
 - **Mode switches.** A new mode starts unknown (Unknown availability, blank amounts) and is never converted from the old one; switching back to the saved mode restores its values. Saving a switch removes the old mode's stock fields.
 - **Stale protection.** Save re-reads the note inside `processFrontMatter` and refuses, changing nothing, if stock, price, or flag changed since the form opened. Bottle size and ABV stay in Properties.
 
+## Renaming
+
+Built on 2026-11-05 as the Phase 2 rename, replacing the three hand edits a recipe rename took.
+
+- **One command for every cabinet note.** **Rename cabinet note** works on recipes, bottles, other stock, and every hierarchy level, desktop and mobile. The form takes the new proper name and shows the resulting filename; the note stays in its folder. A filename already taken, ignoring case, stops it before anything is written.
+- **What follows.** `cc-name` takes the new name. The first `# ` heading follows if it showed the old name or filename; any other heading is left and the notice says so. The old name leaves `aliases` unless **Keep the old name as an alias** is on; the new name is added when it differs from its filename, as at creation. `cc-catalog-id` is unchanged, so setup still recognizes a renamed starter note.
+- **Links.** The file moves through Obsidian, which updates links according to the vault's settings. Then every note that linked to it, daily notes included, is checked: display text showing the old name, old filename, or the new filename (which Obsidian's own updating writes over old-filename text) becomes the new proper name. Other display text is recipe wording and stays. Links that no longer resolve, because automatic link updating is off, are pointed at the new path. A note whose links all used full paths keeps full paths, even when Obsidian's link format would shorten them. Property links (`cc-type`, `cc-provides`, and the rest) are updated through the frontmatter API.
+- **Stale protection.** Save refuses, changing nothing, if `cc-name` changed after the form opened. Link failures after the move are listed in the notice rather than undoing the rename.
+- **Not covered.** Renaming through Obsidian's own **Rename file** leaves `cc-name` and the heading alone. Markdown-style `[text](path.md)` links get only Obsidian's path update.
+
 ## Navigation in notes
 
 Agreed on 2026-11-04, after testing logging in the dev vault showed that moving around the hierarchy was missing.

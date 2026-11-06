@@ -217,7 +217,7 @@ Table columns show note links, proper names, and the resource's current creation
 
 The display name, filename, catalog ID, and page heading have separate roles. Creation writes the name property and heading, generates a plain Latin filename, and supplies proper-name display text for new links. The reader uses a nonblank name suitable for link display; otherwise it falls back to the filename.
 
-There is no ongoing synchronization between these representations. Editing `cc-name` affects subsequent plugin displays and newly generated links; it does not rename the file, rewrite the heading, or update existing links' display text.
+There is no ongoing synchronization between these representations. Editing `cc-name` by hand affects subsequent plugin displays and newly generated links; it does not rename the file, rewrite the heading, or update existing links' display text. **Rename cabinet note** keeps them in step; see [renaming](cabinet-design.md#renaming).
 
 `cc-catalog-id` is optional for custom resources but must be retained on starter categories, families, types, and bottle references for setup to preserve their catalog identity across renames. IDs use a slash between the level and identity, such as `family/Aquavit`, to avoid URL-scheme rendering. Catalog identity is independent of the display name and path. Browsing and recipe discovery do not use it.
 

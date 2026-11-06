@@ -10,6 +10,8 @@ import { LoggingModal } from '../ui/logging-modal';
 import { LoggingStore } from '../vault/logging-store';
 import { StockStore } from '../vault/stock-store';
 import { EditStockModal } from '../ui/edit-stock-modal';
+import { RenameStore } from '../vault/rename-store';
+import { RenameModal } from '../ui/rename-modal';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(plugin.app, plugin.store);
@@ -43,6 +45,19 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 				if (!note) throw new Error('This note isn’t a cabinet bottle or other stock.');
 				new EditStockModal(plugin.app, stocks, note, await stocks.read(note)).open();
 			});
+			return true;
+		},
+	});
+	const renamer = new RenameStore(plugin.app);
+	plugin.addCommand({
+		id: 'rename-cabinet-note',
+		name: 'Rename cabinet note',
+		checkCallback: checking => {
+			const file = plugin.app.workspace.getActiveFile();
+			if (!file?.path.startsWith(`${plugin.store.root}/`)) return false;
+			const note = plugin.store.notes().find(note => note.path === file.path);
+			if (!note) return false;
+			if (!checking) new RenameModal(plugin.app, renamer, note).open();
 			return true;
 		},
 	});
