@@ -5,9 +5,7 @@ import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
 import { recipeVolumeMl } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
-import { IngredientModal } from './ingredient-modal';
-import { NotePicker } from './picker';
-import { StockModal } from './stock-modal';
+import { addCreateItems, pickIngredient } from './link-choice';
 
 export interface IngredientRow {
 	amount: string;
@@ -99,18 +97,10 @@ export class RecipeIngredients {
 			text.inputEl.setAttribute('aria-label', 'Ingredient name');
 			text.inputEl.addClass('cocktail-cabinet-ingredient-input');
 		});
-		actions.addButton(button => button.setButtonText('Select link').onClick(() => {
-			new NotePicker(this.plugin.app, recipeIngredientNotes(this.plugin.store.notes()), choose).open();
-		}));
+		actions.addButton(button => button.setButtonText('Select link').onClick(() => pickIngredient(this.plugin, choose)));
 		actions.addButton(button => button.setButtonText('Create ingredient').onClick(event => {
 			const menu = new Menu();
-			for (const kind of ['type', 'bottle', 'ingredient', 'family', 'category'] as const) {
-				const title = { type: 'Ingredient type', bottle: 'Bottle', ingredient: 'Other stock', family: 'Ingredient family', category: 'Ingredient category' }[kind];
-				menu.addItem(item => item.setTitle(title).onClick(() => {
-					if (kind === 'bottle' || kind === 'ingredient') new StockModal(this.plugin, kind === 'bottle', { created: choose, name: plainIngredient(data.text) }).open();
-					else new IngredientModal(this.plugin, kind, choose, plainIngredient(data.text)).open();
-				}));
-			}
+			addCreateItems(menu, this.plugin, plainIngredient(data.text), choose);
 			menu.showAtMouseEvent(event);
 		}));
 		actions.addButton(button => button.setButtonText('Unlink').onClick(() => {

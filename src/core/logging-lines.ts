@@ -1,10 +1,10 @@
-import { ingredientSection } from './notes';
 import { recipeVolumeMl, splitIngredient } from './recipe-amount';
 import { isWithin } from './relationships';
 import { PROP } from './schema';
 import type { CabinetNote } from './schema';
 import { isStocked } from './logging-stock';
 import type { StockSource } from './logging-stock';
+import { ingredientKey, ingredientLines, ingredientParts } from './unlinked-lines';
 
 export interface CountedLine {
 	id: number;
@@ -23,6 +23,8 @@ export interface SkippedLine {
 	reason: string;
 	/** The one source the line clearly uses though nothing is subtracted (status-tracked, or no mL amount), for last used. */
 	used?: string;
+	/** An unlinked measured line or a broken link, which logging offers to link: its line in the note, as written. */
+	link?: { line: number; raw: string; key: string };
 }
 /** Selection value for a line the user chose not to subtract. */
 export const SKIP_LINE = '__skip__';
@@ -52,9 +54,7 @@ export function classifyLoggingLines(
 	resolve: (link: string) => string | null,
 ): LoggingLines {
 	const counted: CountedLine[] = [], skipped: SkippedLine[] = [];
-	for (const [id, raw] of ingredientSection(content).split(/\r?\n/).entries()) {
-		const text = raw.replace(/^\s*(?:[-*+]|\d+[.)])\s+/, '').trim();
-		if (!text) continue;
+	for (const { line: id, raw, text } of ingredientLines(content)) {
 		const links = [...text.matchAll(/\[\[([^\]]+)\]\]/g)];
 		const targets = [...new Set(links.flatMap(match => {
 			const path = resolve(match[1]!);
@@ -62,8 +62,9 @@ export function classifyLoggingLines(
 			return note ? [note.path] : [];
 		}))];
 		const ml = recipeVolumeMl(splitIngredient(text).amount);
-		if (!links.length) { skipped.push({ text, reason: 'Not linked' }); continue; }
-		if (!targets.length) { skipped.push({ text, reason: 'Link not found' }); continue; }
+		const link = { line: id, raw, key: ingredientKey(ingredientParts(text).wording) };
+		if (!links.length) { skipped.push({ text, reason: 'Not linked', ...(ml === null ? {} : { link }) }); continue; }
+		if (!targets.length) { skipped.push({ text, reason: 'Link not found', link }); continue; }
 		const linked = targets.map(path => notes.find(note => note.path === path)!);
 		const matching = sources.filter(source => linked.some(target => fitsLine(notes, source.note, target)));
 		const lesser = sources.filter(source => !matching.includes(source)).flatMap(source => {

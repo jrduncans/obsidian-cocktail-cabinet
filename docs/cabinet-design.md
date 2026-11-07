@@ -231,6 +231,16 @@ Decided 2026-11-06. Some types group products without close substitutes: Amaro, 
 - **Navigation.** A bottle's Recipes leave out recipes naming another bottle of a catch-all type; recipes calling for the type itself, or anything broader, stay under Can fill. Same type stays: it's where to look for a substitute. The type's own Stock and Recipes are unchanged.
 - **Not affected.** Shopping list and Record purchases type rows, and Stock sections.
 
+## Unlinked lines
+
+Decided 2026-11-06. About a fifth of the measured lines in `knowledge` had no link, so logging silently skipped them. Linking fixes the recipe, not just one log, so it writes to the recipe straight away.
+
+- **What counts.** Measured lines (an mL or oz amount) without a link. Unmeasured lines, such as garnishes, don't affect stock; link them through Enhance as cocktail recipe. A link to a missing note is offered for relinking in logging.
+- **The written link.** The amount, any echoed volume ("/ 45 ml."), and the list marker stay as written; the wording becomes the display text of a path link: `1½ oz [[Cocktails/Types/Gin|gin]]`. Each line is checked against what was reviewed before writing, and a recipe that changed is left alone and reported.
+- **Logging.** **Link…** on the line in Not subtracted. After linking, the review reloads; choices on other lines carry over while their text is unchanged.
+- **Review unlinked ingredients.** A command, not a Base: Bases can't read a note's body lines. Lines are grouped by wording, compared without case or accents, with the groups used by the most recipes first. One choice links a whole group, with each recipe ticked so a different meaning can be left out. Suggestions match names and aliases only, as in recipe review.
+- **Kept as text.** Wordings set aside in the plugin's settings (`keptAsText`), not in the notes; logging labels those lines "Kept as text" and still offers **Link…**.
+
 ## Classification principles
 
 Agreed on 2026-11-03 while building the [knowledge adoption mapping](knowledge-adoption-mapping.md), which applies them.

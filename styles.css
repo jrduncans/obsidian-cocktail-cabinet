@@ -263,3 +263,25 @@
 	align-items: center;
 	gap: var(--size-4-1);
 }
+.cocktail-cabinet-log-link {
+	margin-inline-start: var(--size-4-2);
+	padding: 0 var(--size-4-2);
+	height: auto;
+	font-size: var(--font-ui-smaller);
+}
+.cocktail-cabinet-unlinked-group {
+	border-bottom: var(--border-width) solid var(--background-modifier-border);
+	padding-bottom: var(--size-4-2);
+}
+.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-unlinked-group > .setting-item {
+	border: 0;
+}
+.cocktail-cabinet-unlinked-uses {
+	list-style: none;
+	padding-inline-start: 0;
+	margin: 0 0 var(--size-4-2);
+	font-size: var(--font-ui-small);
+}
+.cocktail-cabinet-unlinked-uses li {
+	padding: var(--size-4-1) 0;
+}

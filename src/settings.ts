@@ -3,6 +3,7 @@ import type CocktailCabinetPlugin from './main';
 import { DEFAULT_RESTOCK } from './core/restock';
 import { cabinetFolder } from './core/schema';
 import { CUSTOM_VIEWS_FOLDER } from './core/setup';
+import { ingredientKey } from './core/unlinked-lines';
 import { SetupModal } from './ui/setup-modal';
 
 export interface CocktailCabinetSettings {
@@ -13,6 +14,8 @@ export interface CocktailCabinetSettings {
 	lowStockMl: number;
 	/** Fingerprint of the version of each plugin view last written, by path (see `CabinetStore.syncViews`). */
 	viewVersions: Record<string, string>;
+	/** Ingredient wordings (`ingredientKey`) left as plain text on purpose, such as water: Review unlinked ingredients skips them. */
+	keptAsText: string[];
 }
 
 export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
@@ -20,13 +23,14 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	lowStockPercent: DEFAULT_RESTOCK.percent,
 	lowStockMl: DEFAULT_RESTOCK.ml,
 	viewVersions: {},
+	keptAsText: [],
 };
 
 const positive = (value: unknown, max = Infinity): value is number =>
 	typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= max;
 
 export function loadSettings(data: unknown): CocktailCabinetSettings {
-	const settings: CocktailCabinetSettings = { ...DEFAULT_SETTINGS, viewVersions: {} };
+	const settings: CocktailCabinetSettings = { ...DEFAULT_SETTINGS, viewVersions: {}, keptAsText: [] };
 	if (!data || typeof data !== 'object') return settings;
 	const saved = data as Record<string, unknown>;
 	if (typeof saved.cabinetFolder === 'string') {
@@ -38,6 +42,9 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	const versions = saved.viewVersions;
 	if (versions && typeof versions === 'object' && !Array.isArray(versions)) {
 		settings.viewVersions = Object.fromEntries(Object.entries(versions).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+	}
+	if (Array.isArray(saved.keptAsText)) {
+		settings.keptAsText = [...new Set(saved.keptAsText.filter((key): key is string => typeof key === 'string').map(ingredientKey).filter(Boolean))].sort();
 	}
 	return settings;
 }
@@ -59,6 +66,8 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 			definition.render?.(setting);
 		}
 	}
+
+	private saveKept = debounce(() => this.plugin.saveSettings(), 800, true);
 
 	/** A number setting that saves valid input and rewrites Restock; other input is ignored until fixed. */
 	private threshold(setting: Setting, key: 'lowStockPercent' | 'lowStockMl', max: number) {
@@ -93,6 +102,18 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 			desc: `The Bases in the cabinet's Views folder belong to the plugin, which updates them in new releases. To change one, copy it into ${CUSTOM_VIEWS_FOLDER} and edit the copy. Refresh restores the originals.`,
 			render: (setting: Setting) => {
 				setting.addButton(button => button.setButtonText('Refresh views').onClick(() => void this.plugin.syncViews(true)));
+			},
+		}, {
+			name: 'Kept as text',
+			desc: 'Ingredient wordings that Review unlinked ingredients leaves out, one per line, such as water or egg white. Logging still lists them as not subtracted.',
+			render: (setting: Setting) => {
+				setting.addTextArea(text => {
+					text.inputEl.rows = 6;
+					text.setPlaceholder('One wording per line').setValue(this.plugin.settings.keptAsText.join('\n')).onChange(value => {
+						this.plugin.settings.keptAsText = [...new Set(value.split('\n').map(ingredientKey).filter(Boolean))];
+						this.saveKept();
+					});
+				});
 			},
 		}, {
 			name: 'Local notes',

@@ -21,6 +21,12 @@ A specific kind of ingredient, such as rye whiskey, lime juice, or 2:1 demerara 
 **Catch-all type**:
 An ingredient type grouping products without close substitutes, such as Amaro or Specialty Bitters. Its bottles are likely substitutes for each other, offered but not assumed.
 
+**Unlinked line**:
+A measured recipe ingredient line without a cabinet link, so logging can't subtract it. Linking keeps the recipe's wording as the link's display text.
+
+**Kept as text**:
+An ingredient wording deliberately left unlinked, such as water, which the unlinked review leaves out.
+
 **Recipe ingredient**:
 An ingredient requirement in a cocktail recipe, which may name a bottle, an ingredient type, or a broader classification such as rum.
 

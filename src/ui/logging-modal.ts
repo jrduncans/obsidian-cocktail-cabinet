@@ -2,6 +2,8 @@ import { Modal, Notice, Setting, setIcon } from 'obsidian';
 import type { ButtonComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
 import { SKIP_LINE } from '../core/logging-lines';
+import type { SkippedLine } from '../core/logging-lines';
+import { ingredientParts } from '../core/unlinked-lines';
 import { planLogging } from '../core/logging-plan';
 import { bottleStockText, formatMl } from '../core/logging-stock';
 import { PROP } from '../core/schema';
@@ -12,6 +14,8 @@ import type CocktailCabinetPlugin from '../main';
 import { NotePicker } from './picker';
 import { EditStockModal } from './edit-stock-modal';
 import type { StockStore } from '../vault/stock-store';
+import type { RecipeLinkStore } from '../vault/recipe-links';
+import { showLinkMenu } from './link-choice';
 
 function ingredientLabel(text: string): string {
 	return text.replace(/\[\[([^\]]+)\]\]/g, (_link, target: string) => target.includes('|') ? target.split('|').at(-1)! : target.split('/').at(-1)!);
@@ -31,7 +35,26 @@ export class LoggingModal extends Modal {
 	private applyButton!: ButtonComponent;
 	private dailySetting?: Setting;
 
-	constructor(plugin: CocktailCabinetPlugin, private logger: LoggingStore, private stocks: StockStore, private recipe: CabinetNote) { super(plugin.app); }
+	constructor(private plugin: CocktailCabinetPlugin, private logger: LoggingStore, private stocks: StockStore,
+		private links: RecipeLinkStore, private recipe: CabinetNote) { super(plugin.app); }
+
+	/** Link an ingredient line in the recipe, then re-read it so the line can be subtracted, keeping the other choices. */
+	private linkLine(line: SkippedLine, event: MouseEvent) {
+		const link = line.link;
+		if (!link || this.busy || this.terminal) return;
+		const wording = ingredientParts(line.text).wording;
+		showLinkMenu(this.plugin, event, wording, note => {
+			if (this.closed || this.busy || this.terminal) return;
+			void (async () => {
+				try {
+					await this.links.linkLine({ path: this.recipe.path, line: link.line, raw: link.raw }, note.path);
+					await this.reload(`Linked ${wording} to ${note.name} in the recipe.`);
+				} catch (error) {
+					await this.reload(error instanceof Error ? error.message : 'Couldn’t link the line.');
+				}
+			})();
+		});
+	}
 
 	/** Fix a bottle's stock without leaving the log, then re-read everything and keep the choices. */
 	private editStock(path: string) {
@@ -47,12 +70,12 @@ export class LoggingModal extends Modal {
 		})();
 	}
 
-	private async reload() {
+	private async reload(notice = '') {
 		try {
 			const review = await this.logger.review(this.recipe);
 			if (this.closed || this.busy || this.terminal) return;
 			this.acceptReview(review, false);
-			this.notice = '';
+			this.notice = notice;
 			this.render();
 		} catch (error) {
 			if (!this.closed) this.messageEl.setText(error instanceof Error ? error.message : 'Couldn’t reload the stock.');
@@ -81,9 +104,10 @@ export class LoggingModal extends Modal {
 	private acceptReview(review: LoggingReview, initial: boolean) {
 		const old = this.review;
 		this.review = review;
-		const keepSelections = !initial && old?.content === review.content;
+		// A choice carries over while its line reads the same, so linking another line keeps it.
+		const oldText = new Map(initial ? [] : old?.lines.counted.map(line => [line.id, line.text] as const) ?? []);
 		this.selections = new Map(review.lines.counted.flatMap(line => {
-			const previous = keepSelections ? this.selections.get(line.id) : undefined;
+			const previous = oldText.get(line.id) === line.text ? this.selections.get(line.id) : undefined;
 			const path = previous && (previous === SKIP_LINE || review.sources.some(source => source.note.path === previous)) ? previous : line.initialSelection;
 			return path ? [[line.id, path] as const] : [];
 		}));
@@ -197,7 +221,14 @@ export class LoggingModal extends Modal {
 		if (plan.skipped.length) {
 			new Setting(this.previewEl).setName('Not subtracted').setHeading();
 			const list = this.previewEl.createEl('ul', { cls: 'cocktail-cabinet-log-skipped' });
-			for (const line of plan.skipped) list.createEl('li', { text: `${ingredientLabel(line.text)}: ${line.reason}` });
+			const kept = new Set(this.plugin.settings.keptAsText);
+			for (const line of plan.skipped) {
+				const reason = line.link && line.reason === 'Not linked' && kept.has(line.link.key) ? 'Kept as text' : line.reason;
+				const item = list.createEl('li', { text: `${ingredientLabel(line.text)}: ${reason}` });
+				if (!line.link) continue;
+				const button = item.createEl('button', { cls: 'cocktail-cabinet-log-link', text: 'Link…', attr: { 'aria-label': `Link ${ingredientLabel(line.text)}` } });
+				button.addEventListener('click', event => this.linkLine(line, event));
+			}
 		}
 		if (this.dailySetting) {
 			const valid = Number.isFinite(this.servings) && this.servings > 0;

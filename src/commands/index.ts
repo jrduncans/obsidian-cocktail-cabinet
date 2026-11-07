@@ -16,12 +16,15 @@ import { EditStore } from '../vault/edit-store';
 import { EditNoteModal } from '../ui/edit-note-modal';
 import { isEditable } from '../core/note-edit';
 import { registerNoteActions } from './note-actions';
+import { RecipeLinkStore } from '../vault/recipe-links';
+import { UnlinkedModal } from '../ui/unlinked-modal';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(plugin.app, plugin.store);
 	const stocks = new StockStore(plugin.app);
 	const renamer = new RenameStore(plugin.app);
 	const edits = new EditStore(plugin.app);
+	const links = new RecipeLinkStore(plugin.app, plugin.store);
 	const ready = async (action: () => void | Promise<void>) => {
 		if (!await plugin.store.isSetUp()) {
 			new SetupModal(plugin).open();
@@ -42,7 +45,7 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		{ id: 'record-purchases-here', name: 'Record purchases', icon: 'shopping-cart', kinds: ['shopping'], header: true, command: false, run: () => void recordPurchases() },
 		{
 			id: 'log-this-cocktail', name: 'Log this cocktail', icon: 'martini', kinds: ['recipe'], header: true,
-			run: file => void handle(async () => new LoggingModal(plugin, logger, stocks, noteFor(file)).open()),
+			run: file => void handle(async () => new LoggingModal(plugin, logger, stocks, links, noteFor(file)).open()),
 		},
 		{
 			id: 'edit-stock', name: 'Edit stock', icon: 'gauge', kinds: ['bottle', 'ingredient'], header: true,
@@ -84,6 +87,12 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		name: 'Refresh cabinet views',
 		icon: 'refresh-cw',
 		callback: () => handle(() => ready(() => plugin.syncViews(true))),
+	});
+	plugin.addCommand({
+		id: 'review-unlinked-ingredients',
+		name: 'Review unlinked ingredients',
+		icon: 'unlink',
+		callback: () => handle(() => ready(() => new UnlinkedModal(plugin, links).open())),
 	});
 	plugin.addCommand({
 		id: 'create-ingredient-type',
