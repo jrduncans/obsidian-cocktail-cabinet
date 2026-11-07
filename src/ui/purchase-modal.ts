@@ -53,14 +53,14 @@ export class PurchaseModal extends CabinetForm {
 		const flagged = this.plugin.store.notes().filter(note =>
 			(note.kind === 'bottle' || note.kind === 'ingredient' || note.kind === 'type')
 			&& this.app.metadataCache.getCache(note.path)?.frontmatter?.[PROP.shoppingList] === true);
-		// Specific bottles and other stock first, then types (any bottle will do), each by name, so the
-		// row style changes once rather than back and forth.
-		flagged.sort((left, right) => Number(left.kind === 'type') - Number(right.kind === 'type') || left.name.localeCompare(right.name));
-		this.rows = await Promise.all(flagged.map(async note => {
+		const rows = await Promise.all(flagged.map(async note => {
 			const row: Row = { item: note, onList: true, bought: false };
 			if (note.kind !== 'type') await this.useSource(row, note);
 			return row;
 		}));
+		// Rows with the same controls stay together, each group by name, so the controls don't
+		// change back and forth down the list (most noticeable on a phone).
+		this.rows = rows.sort((left, right) => shapeRank(left) - shapeRank(right) || left.item.name.localeCompare(right.item.name));
 		this.render();
 	}
 
@@ -227,6 +227,14 @@ export class PurchaseModal extends CabinetForm {
 		const done = saved.length ? `Recorded ${saved.length === 1 ? saved[0] : `${saved.length} purchases`}.` : '';
 		new Notice([done, failed.length ? `Not saved: ${failed.join(', ')}. Check them and record again.` : ''].filter(Boolean).join(' '));
 	}
+}
+
+/** Bottles in mL (Qty, Price, Size), other stock in mL (mL, Price), availability (Have, Price), unreadable, then types (a picker). */
+function shapeRank(row: Row): number {
+	if (row.item.kind === 'type') return 4;
+	if (!row.before) return 3;
+	try { return { bottle: 0, amount: 1, status: 2 }[purchaseFields(row.before)]; }
+	catch { return 3; }
 }
 
 type AddChoice = CabinetNote | 'bottle' | 'ingredient';
