@@ -7,7 +7,8 @@ import {
 	ingredientLines, ingredientParts, linkAt, linkedLine, linkedLinePreview, linkSpans, plainIngredient, replacedPreview, replaceLink,
 } from '../core/unlinked-lines';
 import type { LinkPreview } from '../core/unlinked-lines';
-import { LinkPicker, LinkTextModal } from '../ui/link-text';
+import { LinkTextModal } from '../ui/link-text';
+import { pickIngredient } from '../ui/link-choice';
 
 type Context = MarkdownView | MarkdownFileInfo;
 
@@ -21,7 +22,7 @@ function chooseAndLink(plugin: CocktailCabinetPlugin, ctx: Context, editor: Edit
 }) {
 	const path = ctx.file?.path;
 	const before = editor.getRange(options.from, options.to);
-	new LinkPicker(plugin, options.wording, note => {
+	pickIngredient(plugin, note => {
 		new LinkTextModal(plugin, {
 			note, original: options.wording, originalLabel: options.originalLabel, preview: options.preview,
 			submit: text => {
@@ -29,17 +30,18 @@ function chooseAndLink(plugin: CocktailCabinetPlugin, ctx: Context, editor: Edit
 				editor.replaceRange(options.replacement(note, text), options.from, options.to);
 			},
 		}).open();
-	}).open();
+	}, options.wording);
 }
 
 function insertLink(plugin: CocktailCabinetPlugin, editor: Editor, ctx: Context) {
 	const selection = editor.getSelection();
 	if (!selection) {
 		const cursor = editor.getCursor();
-		new LinkPicker(plugin, '', note => {
-			editor.replaceRange(wikiLink(note.path, note.name), cursor);
-			editor.setCursor({ line: cursor.line, ch: cursor.ch + wikiLink(note.path, note.name).length });
-		}).open();
+		pickIngredient(plugin, note => {
+			const link = wikiLink(note.path, note.name);
+			editor.replaceRange(link, cursor);
+			editor.setCursor({ line: cursor.line, ch: cursor.ch + link.length });
+		});
 		return;
 	}
 	if (selection.includes('\n')) { new Notice('Select text on one line to link it.'); return; }
@@ -61,49 +63,66 @@ function ingredientLineAt(plugin: CocktailCabinetPlugin, editor: Editor, ctx: Co
 	return ingredientLines(editor.getValue()).find(line => line.line === cursor.line);
 }
 
-function linkThisLine(plugin: CocktailCabinetPlugin, editor: Editor, ctx: Context) {
+/** What the cursor is on in a recipe's Ingredients: a link to edit, or an unlinked line to link. */
+function ingredientTarget(plugin: CocktailCabinetPlugin, editor: Editor, ctx: Context) {
 	const line = ingredientLineAt(plugin, editor, ctx);
-	if (!line) return;
+	if (!line) return undefined;
 	const raw = editor.getLine(line.line);
-	const lineRange = { from: { line: line.line, ch: 0 }, to: { line: line.line, ch: raw.length } };
 	const span = linkAt(raw, editor.getCursor().ch);
-	if (span) {
+	if (span) return { kind: 'link' as const, line, raw, span };
+	if (!linkSpans(raw).length && ingredientParts(line.text).wording) return { kind: 'line' as const, line, raw };
+	return undefined;
+}
+
+function linkTarget(plugin: CocktailCabinetPlugin, editor: Editor, ctx: Context, target: NonNullable<ReturnType<typeof ingredientTarget>>) {
+	const { line, raw } = target;
+	const range = { from: { line: line.line, ch: 0 }, to: { line: line.line, ch: raw.length } };
+	if (target.kind === 'link') {
+		const { span } = target;
 		chooseAndLink(plugin, ctx, editor, {
 			wording: span.text, originalLabel: 'Current text',
 			preview: text => replacedPreview(raw, span.start, span.end, text),
-			...lineRange, replacement: (note, text) => replaceLink(raw, span, note.path, text),
+			...range, replacement: (note, text) => replaceLink(raw, span, note.path, text),
 		});
-	} else if (linkSpans(raw).length) {
-		new Notice('Click inside the link you want to change, then try again.');
 	} else {
 		const wording = ingredientParts(line.text).wording;
-		if (!wording) { new Notice('This line has no ingredient to link.'); return; }
 		chooseAndLink(plugin, ctx, editor, {
 			wording, originalLabel: 'Recipe wording',
 			preview: text => linkedLinePreview(line.text, text),
-			...lineRange, replacement: (note, text) => linkedLine(raw, note.path, text),
+			...range, replacement: (note, text) => linkedLine(raw, note.path, text),
 		});
 	}
 }
+
+const TARGET_COMMANDS = [
+	{ kind: 'line', id: 'link-ingredient-line', name: 'Link this ingredient line', icon: 'link-2' },
+	{ kind: 'link', id: 'edit-ingredient-link', name: 'Edit this ingredient link', icon: 'pencil-line' },
+] as const;
 
 export function registerEditorLinks(plugin: CocktailCabinetPlugin) {
 	plugin.addCommand({
 		id: 'insert-ingredient-link', name: 'Insert ingredient link', icon: 'link',
 		editorCallback: (editor, ctx) => insertLink(plugin, editor, ctx),
 	});
-	plugin.addCommand({
-		id: 'link-this-line', name: 'Link this line', icon: 'link-2',
-		editorCheckCallback: (checking, editor, ctx) => {
-			if (!ingredientLineAt(plugin, editor, ctx)) return false;
-			if (!checking) linkThisLine(plugin, editor, ctx);
-			return true;
-		},
-	});
-	// In cabinet notes, also offer both from the editor's context menu (right-click, or long-press on mobile).
+	// Each appears only where it applies: on an unlinked Ingredients line, or with the cursor in an Ingredients link.
+	for (const command of TARGET_COMMANDS) {
+		plugin.addCommand({
+			id: command.id, name: command.name, icon: command.icon,
+			editorCheckCallback: (checking, editor, ctx) => {
+				const target = ingredientTarget(plugin, editor, ctx);
+				if (target?.kind !== command.kind) return false;
+				if (!checking) linkTarget(plugin, editor, ctx, target);
+				return true;
+			},
+		});
+	}
+	// In cabinet notes, also offer them from the editor's context menu (right-click, or long-press on mobile).
 	plugin.registerEvent(plugin.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, ctx: Context) => {
 		if (!ctx.file?.path.startsWith(`${plugin.store.root}/`)) return;
-		if (ingredientLineAt(plugin, editor, ctx)) {
-			menu.addItem(item => item.setSection('cocktail-cabinet').setTitle('Link this line').setIcon('link-2').onClick(() => linkThisLine(plugin, editor, ctx)));
+		const target = ingredientTarget(plugin, editor, ctx);
+		const command = TARGET_COMMANDS.find(item => item.kind === target?.kind);
+		if (target && command) {
+			menu.addItem(item => item.setSection('cocktail-cabinet').setTitle(command.name).setIcon(command.icon).onClick(() => linkTarget(plugin, editor, ctx, target)));
 		}
 		menu.addItem(item => item.setSection('cocktail-cabinet').setTitle('Insert ingredient link').setIcon('link').onClick(() => insertLink(plugin, editor, ctx)));
 	}));

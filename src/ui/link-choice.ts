@@ -1,9 +1,9 @@
-import { Menu } from 'obsidian';
+import { Menu, SuggestModal, prepareFuzzySearch } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
 import { IngredientModal } from './ingredient-modal';
-import { NotePicker } from './picker';
+import { pickerText } from './picker';
 import { StockModal } from './stock-modal';
 
 export const CREATE = [
@@ -22,18 +22,65 @@ export function addCreateItems(menu: Menu, plugin: CocktailCabinetPlugin, name: 
 	for (const [kind, title] of CREATE) menu.addItem(item => item.setTitle(prefix ? `${prefix}${title.toLowerCase()}` : title).onClick(() => createIngredient(plugin, kind, name, choose)));
 }
 
-export function pickIngredient(plugin: CocktailCabinetPlugin, choose: (note: CabinetNote) => void) {
-	new NotePicker(plugin.app, recipeIngredientNotes(plugin.store.notes()), choose).open();
+/** Search ingredient notes (anything a recipe can link to), with suggestions for `wording` first. */
+export function pickIngredient(plugin: CocktailCabinetPlugin, choose: (note: CabinetNote) => void, wording = '') {
+	new LinkPicker(plugin, wording, choose).open();
 }
 
-/** Choose what an ingredient's wording links to: name suggestions, any cabinet note, or a new one. */
+/** Choose what an ingredient's wording links to: name suggestions, any ingredient note, or a new one. */
 export function showLinkMenu(plugin: CocktailCabinetPlugin, event: MouseEvent, wording: string, choose: (note: CabinetNote) => void) {
 	const menu = new Menu();
 	for (const note of suggestIngredient(wording, plugin.store.notes())) {
 		menu.addItem(item => item.setTitle(`${note.name} · ${note.kind}`).setIcon('link').onClick(() => choose(note)));
 	}
-	menu.addItem(item => item.setTitle('Find a cabinet note…').setIcon('search').onClick(() => pickIngredient(plugin, choose)));
+	menu.addItem(item => item.setTitle('Find an ingredient note…').setIcon('search').onClick(() => pickIngredient(plugin, choose)));
 	menu.addSeparator();
 	addCreateItems(menu, plugin, wording, choose, 'New ');
 	menu.showAtMouseEvent(event);
+}
+
+type Choice = { note: CabinetNote; suggested: boolean } | { create: typeof CREATE[number]; name: string };
+
+/** Pick what to link to: suggestions for the wording first, any ingredient note by search, or a new one. */
+class LinkPicker extends SuggestModal<Choice> {
+	constructor(private plugin: CocktailCabinetPlugin, private wording: string, private choose: (note: CabinetNote) => void) {
+		super(plugin.app);
+		this.setPlaceholder(wording ? `Link “${wording}” to…` : 'Find an ingredient note');
+		this.emptyStateText = 'No matching ingredient notes.';
+		this.setInstructions([{ command: '↑↓', purpose: 'to navigate' }, { command: '↵', purpose: 'to choose' }, { command: 'esc', purpose: 'to dismiss' }]);
+	}
+
+	getSuggestions(query: string): Choice[] {
+		const q = query.trim();
+		const all = this.plugin.store.notes();
+		const notes = recipeIngredientNotes(all);
+		const create = (name: string): Choice[] => name ? CREATE.map(create => ({ create, name })) : [];
+		if (!q) {
+			// Suggestions, then creating a note named from the wording, then every note to browse.
+			const suggested = this.wording ? suggestIngredient(this.wording, all) : [];
+			const rest = notes.filter(note => !suggested.includes(note)).sort((a, b) => a.name.localeCompare(b.name));
+			return [...suggested.map(note => ({ note, suggested: true })), ...create(this.wording), ...rest.map(note => ({ note, suggested: false }))];
+		}
+		const search = prepareFuzzySearch(q);
+		const found = notes.map(note => ({ note, match: search(pickerText(note)) }))
+			.filter(item => item.match).sort((a, b) => b.match!.score - a.match!.score).slice(0, 50);
+		return [...found.map(item => ({ note: item.note, suggested: false })), ...create(q)];
+	}
+
+	renderSuggestion(choice: Choice, el: HTMLElement) {
+		if ('note' in choice) {
+			const detail = pickerText(choice.note).slice(choice.note.name.length).replace(/^\s*·\s*/, '').trim();
+			el.addClass('mod-complex');
+			const content = el.createDiv({ cls: 'suggestion-content' });
+			content.createDiv({ cls: 'suggestion-title', text: choice.note.name });
+			content.createDiv({ cls: 'suggestion-note', text: `${choice.suggested ? 'Suggested · ' : ''}${detail}` });
+		} else {
+			el.createDiv({ cls: 'suggestion-title', text: `New ${choice.create[1].toLowerCase()}: ${choice.name}` });
+		}
+	}
+
+	onChooseSuggestion(choice: Choice) {
+		if ('note' in choice) this.choose(choice.note);
+		else createIngredient(this.plugin, choice.create[0], choice.name, this.choose);
+	}
 }

@@ -62,7 +62,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 - New, from a 2026-11-06 UX review (not yet designed in detail):
   - Built 2026-11-06: Recipes sections grouped into recipes that call for the note above recipes it can fill through something broader, and [catch-all types](cabinet-design.md#catch-all-types) (`cc-catch-all`), whose bottles are offered as likely substitutes but never assumed.
   - Built 2026-11-06: [unlinked measured lines](cabinet-design.md#unlinked-lines) get **Link…** in the logging modal, and **Review unlinked ingredients** links a wording across recipes or keeps it as text.
-  - Built 2026-11-07: a [link text](cabinet-design.md#unlinked-lines) choice wherever a line is linked, and the editor commands **Insert ingredient link** and **Link this line**. Next: the review as a side pane that opens each recipe beside it; tidying short links like `[[Gin]]`; friendlier create and enhance recipe forms.
+  - Built 2026-11-07: a [link text](cabinet-design.md#unlinked-lines) choice wherever a line is linked, and the editor commands **Insert ingredient link**, **Link this ingredient line**, and **Edit this ingredient link**. Next: the review as a side pane that opens each recipe beside it; tidying short links like `[[Gin]]`; friendlier create and enhance recipe forms.
 
 ### 5. Reach: retire the remaining skills
 

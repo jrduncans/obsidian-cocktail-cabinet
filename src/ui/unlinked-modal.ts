@@ -110,6 +110,7 @@ export class UnlinkedModal extends Modal {
 		renderLinkText(el, {
 			name: pending.note.name, original: group.wording, originalLabel: 'Recipe wording',
 			text: pending.text ?? group.wording,
+			source: pending.text === null ? 'original' : pending.text === pending.note.name ? 'name' : 'typed',
 			desc: source => source === 'original' ? 'Each recipe keeps its own wording.' : 'Every ticked line shows this text.',
 			onChange: (text, source) => {
 				pending.text = source === 'original' ? null : text;
