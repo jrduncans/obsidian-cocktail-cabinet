@@ -285,3 +285,26 @@
 .cocktail-cabinet-unlinked-uses li {
 	padding: var(--size-4-1) 0;
 }
+.cocktail-cabinet-link-text .setting-item-control {
+	flex-wrap: wrap;
+}
+.cocktail-cabinet-link-text button.is-active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+.cocktail-cabinet-link-reads {
+	padding: var(--size-4-2) 0;
+}
+.cocktail-cabinet-link-preview {
+	padding: var(--size-4-2) var(--size-4-3);
+	border-radius: var(--radius-s);
+	background-color: var(--background-secondary);
+	overflow-wrap: anywhere;
+}
+.cocktail-cabinet-link-shown {
+	color: var(--link-color);
+	text-decoration: underline;
+}
+.cocktail-cabinet-unlinked-recipe {
+	color: var(--text-muted);
+}

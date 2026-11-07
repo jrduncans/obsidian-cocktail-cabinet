@@ -2,9 +2,11 @@ import { ButtonComponent, Menu, Modal, Notice, Setting } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { suggestIngredient } from '../core/recipe-import';
+import { ingredientParts, linkedLinePreview, linkTextError } from '../core/unlinked-lines';
 import type { UnlinkedGroup } from '../core/unlinked-lines';
 import type { RecipeLinkStore } from '../vault/recipe-links';
 import { addCreateItems, pickIngredient } from './link-choice';
+import { renderLinkText, renderPreview } from './link-text';
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 const recipeCount = (group: UnlinkedGroup) => new Set(group.uses.map(use => use.recipe.path)).size;
@@ -17,8 +19,8 @@ export class UnlinkedModal extends Modal {
 	private closed = false;
 	private summaryEl!: HTMLElement;
 	private listEl!: HTMLElement;
-	/** The note chosen for a wording and the lines (by index into its uses) still ticked, before writing. */
-	private pending = new Map<string, { note: CabinetNote; ticked: Set<number> }>();
+	/** The note chosen for a wording, the lines (by index into its uses) still ticked, and the link text (null: each line's own wording). */
+	private pending = new Map<string, { note: CabinetNote; ticked: Set<number>; text: string | null }>();
 
 	constructor(private plugin: CocktailCabinetPlugin, private links: RecipeLinkStore) { super(plugin.app); }
 
@@ -80,7 +82,7 @@ export class UnlinkedModal extends Modal {
 		const row = new Setting(el).setName(group.wording).setDesc(desc);
 		const pending = this.pending.get(group.key);
 		const choose = (note: CabinetNote) => {
-			this.pending.set(group.key, { note, ticked: new Set(group.uses.map((_use, index) => index)) });
+			this.pending.set(group.key, { note, ticked: new Set(group.uses.map((_use, index) => index)), text: null });
 			this.renderGroup(el, group);
 		};
 		if (!pending) {
@@ -97,23 +99,41 @@ export class UnlinkedModal extends Modal {
 			row.addButton(button => button.setButtonText('Keep as text').onClick(() => void this.keep(group)));
 			return;
 		}
-		row.setDesc(`Link to ${pending.note.name} (${pending.note.kind}) in:`);
-		const list = el.createEl('ul', { cls: 'cocktail-cabinet-unlinked-uses' });
-		group.uses.forEach((use, index) => {
-			const label = list.createEl('li').createEl('label');
-			const box = label.createEl('input', { type: 'checkbox' });
-			box.checked = pending.ticked.has(index);
-			box.addEventListener('change', () => {
-				if (box.checked) pending.ticked.add(index); else pending.ticked.delete(index);
-				update();
-			});
-			label.appendText(` ${use.recipe.name}: ${use.text}`);
-		});
+		row.setDesc(`Link to ${pending.note.name} (${pending.note.kind}) in the ticked recipes.`);
 		let linkButton!: ButtonComponent;
+		const textError = () => pending.text === null ? '' : linkTextError(pending.text);
 		const update = () => {
 			const count = new Set([...pending.ticked].map(index => group.uses[index]!.recipe.path)).size;
-			linkButton.setButtonText(`Link in ${plural(count, 'recipe')}`).setDisabled(this.busy || !count);
+			linkButton.setButtonText(`Link in ${plural(count, 'recipe')}`).setDisabled(this.busy || !count || !!textError());
+			errorEl.setText(textError());
 		};
+		renderLinkText(el, {
+			name: pending.note.name, original: group.wording, originalLabel: 'Recipe wording',
+			text: pending.text ?? group.wording,
+			desc: source => source === 'original' ? 'Each recipe keeps its own wording.' : 'Every ticked line shows this text.',
+			onChange: (text, source) => {
+				pending.text = source === 'original' ? null : text;
+				renderUses();
+				update();
+			},
+		});
+		const errorEl = el.createEl('p', { cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
+		const list = el.createEl('ul', { cls: 'cocktail-cabinet-unlinked-uses' });
+		const renderUses = () => {
+			list.empty();
+			group.uses.forEach((use, index) => {
+				const label = list.createEl('li').createEl('label');
+				const box = label.createEl('input', { type: 'checkbox' });
+				box.checked = pending.ticked.has(index);
+				box.addEventListener('change', () => {
+					if (box.checked) pending.ticked.add(index); else pending.ticked.delete(index);
+					update();
+				});
+				label.createSpan({ cls: 'cocktail-cabinet-unlinked-recipe', text: ` ${use.recipe.name}: ` });
+				renderPreview(label.createSpan(), linkedLinePreview(use.text, pending.text ?? ingredientParts(use.text).wording));
+			});
+		};
+		renderUses();
 		new Setting(el)
 			.addButton(button => button.setButtonText('Cancel').onClick(() => { this.pending.delete(group.key); this.renderGroup(el, group); }))
 			.addButton(button => { linkButton = button.setCta().onClick(() => void this.link(el, group)); });
@@ -126,11 +146,12 @@ export class UnlinkedModal extends Modal {
 		this.busy = true;
 		const chosen = group.uses.filter((_use, index) => pending.ticked.has(index));
 		try {
-			const result = await this.links.linkMany(chosen.map(use => ({ path: use.recipe.path, line: use.line, raw: use.raw })), pending.note.path);
+			const text = pending.text ?? undefined;
+			const result = await this.links.linkMany(chosen.map(use => ({ path: use.recipe.path, line: use.line, raw: use.raw, text })), pending.note.path);
 			const failed = new Set(result.failed.map(item => item.path));
 			const linked = chosen.filter(use => !failed.has(use.recipe.path));
 			group.uses = group.uses.filter(use => !linked.includes(use));
-			new Notice(`Linked ${group.wording} to ${pending.note.name} in ${plural(result.linked, 'recipe')}.`
+			new Notice(`Linked ${group.wording} to ${pending.note.name}${text === undefined || text === group.wording ? '' : `, shown as ${text},`} in ${plural(result.linked, 'recipe')}.`
 				+ (result.failed.length ? ` Not linked: ${result.failed.map(item => item.changed ? `${item.name} (changed since this list was read)` : item.name).join(', ')}.` : ''), result.failed.length ? 0 : undefined);
 		} catch (error) {
 			new Notice(error instanceof Error ? error.message : 'Couldn’t link the recipes.');

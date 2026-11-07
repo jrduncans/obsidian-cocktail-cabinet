@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { classifyLoggingLines } from '../src/core/logging-lines';
-import { groupUnlinked, ingredientKey, ingredientLines, ingredientParts, linkedLine, linkLines, StaleLineError, unlinkedLines } from '../src/core/unlinked-lines';
+import { groupUnlinked, ingredientKey, ingredientLines, ingredientParts, linkAt, linkedLine, linkedLinePreview, linkLines, linkSpans, linkTextError, replacedPreview, replaceLink, StaleLineError, unlinkedLines } from '../src/core/unlinked-lines';
 import type { CabinetNote } from '../src/core/schema';
 
 const GIN = 'Cocktails/Types/Gin.md';
@@ -88,4 +88,36 @@ void test('linking many writes each recipe once and reports recipes that changed
 	assert.equal(writes, 1);
 	assert.equal(contents.get('Cocktails/Recipes/A.md'), '### Ingredients\n- 2 oz [[Cocktails/Types/Gin|gin]]\n- 1 oz [[Cocktails/Types/Gin|gin]]');
 	assert.equal(contents.get('Cocktails/Recipes/B.md'), '### Ingredients\n- 2 oz vodka');
+});
+
+void test('a line can be linked with the cabinet name or other text instead of its wording', () => {
+	const COCONUT = 'Cocktails/Types/Cream of Coconut.md';
+	assert.equal(linkedLine('- ¾ oz Coconut Cream', COCONUT, 'Cream of Coconut'), '- ¾ oz [[Cocktails/Types/Cream of Coconut|Cream of Coconut]]');
+	assert.throws(() => linkedLine('- ¾ oz Coconut Cream', COCONUT, 'a | b'), /vertical bar/);
+	assert.throws(() => linkedLine('- ¾ oz Coconut Cream', COCONUT, ' '), /Enter the link text/);
+	// Wording with a bar can still be linked once other text is chosen.
+	assert.equal(linkedLine('- 1 oz gin | vodka', GIN, 'Gin'), '- 1 oz [[Cocktails/Types/Gin|Gin]]');
+	const content = '### Ingredients\n- 2 oz gin\n- 1 oz Gin';
+	assert.equal(linkLines(content, [{ line: 1, raw: '- 2 oz gin', text: 'Gin' }, { line: 2, raw: '- 1 oz Gin' }], GIN),
+		'### Ingredients\n- 2 oz [[Cocktails/Types/Gin|Gin]]\n- 1 oz [[Cocktails/Types/Gin|Gin]]');
+	assert.equal(linkTextError('Gin'), '');
+});
+
+void test('previews show the line as a reader will see it', () => {
+	assert.deepEqual(linkedLinePreview('1½ oz / 45 ml. coconut cream', 'Cream of Coconut'), { before: '1½ oz / 45 ml.', link: 'Cream of Coconut', after: '' });
+	const line = '- 1 oz [[Cocktails/Types/Sweet Vermouth|Sweet Vermouth]] ([[Cocktails/Bottles/Cocchi Storico|Cocchi Storico]])';
+	const [type, bottle] = linkSpans(line);
+	assert.deepEqual(replacedPreview(line, bottle!.start, bottle!.end, 'Storico'), { before: '1 oz Sweet Vermouth (', link: 'Storico', after: ')' });
+	assert.equal(type!.text, 'Sweet Vermouth');
+});
+
+void test('the link under the cursor is found and replaced, leaving the rest of the line', () => {
+	const line = '- 6 dashes [[Orange Bitters]], preferably [[Cocktails/Bottles/Regans|Regans]] ![[image.png]]';
+	assert.deepEqual(linkSpans(line).map(span => span.text), ['Orange Bitters', 'Regans']);
+	assert.equal(linkAt(line, 5), undefined);
+	const span = linkAt(line, line.indexOf('Orange'))!;
+	assert.deepEqual(linkAt(line, span.end), span);
+	assert.equal(replaceLink(line, span, 'Cocktails/Types/Orange Bitters.md', 'Orange Bitters'),
+		'- 6 dashes [[Cocktails/Types/Orange Bitters|Orange Bitters]], preferably [[Cocktails/Bottles/Regans|Regans]] ![[image.png]]');
+	assert.throws(() => replaceLink(line, span, GIN, '[x]'), /brackets/);
 });

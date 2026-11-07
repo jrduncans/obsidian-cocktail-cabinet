@@ -3,7 +3,7 @@ import type { ButtonComponent, ToggleComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
 import { SKIP_LINE } from '../core/logging-lines';
 import type { SkippedLine } from '../core/logging-lines';
-import { ingredientParts } from '../core/unlinked-lines';
+import { ingredientParts, linkedLinePreview } from '../core/unlinked-lines';
 import { localDate } from '../core/notes';
 import { planLogging } from '../core/logging-plan';
 import { bottleStockText, formatMl } from '../core/logging-stock';
@@ -17,6 +17,7 @@ import { EditStockModal } from './edit-stock-modal';
 import type { StockStore } from '../vault/stock-store';
 import type { RecipeLinkStore } from '../vault/recipe-links';
 import { showLinkMenu } from './link-choice';
+import { LinkTextModal } from './link-text';
 
 function ingredientLabel(text: string): string {
 	return text.replace(/\[\[([^\]]+)\]\]/g, (_link, target: string) => target.includes('|') ? target.split('|').at(-1)! : target.split('/').at(-1)!);
@@ -49,14 +50,19 @@ export class LoggingModal extends Modal {
 		const wording = ingredientParts(line.text).wording;
 		showLinkMenu(this.plugin, event, wording, note => {
 			if (this.closed || this.busy || this.terminal) return;
-			void (async () => {
-				try {
-					await this.links.linkLine({ path: this.recipe.path, line: link.line, raw: link.raw }, note.path);
-					await this.reload(`Linked ${wording} to ${note.name} in the recipe.`);
-				} catch (error) {
-					await this.reload(error instanceof Error ? error.message : 'Couldn’t link the line.');
-				}
-			})();
+			new LinkTextModal(this.plugin, {
+				note, original: wording, originalLabel: 'Recipe wording',
+				preview: text => linkedLinePreview(line.text, text),
+				submit: async text => {
+					if (this.closed || this.busy || this.terminal) return;
+					try {
+						await this.links.linkLine({ path: this.recipe.path, line: link.line, raw: link.raw, text }, note.path);
+						await this.reload(`Linked ${wording} to ${note.name} in the recipe${text === wording ? '' : `, shown as ${text}`}.`);
+					} catch (error) {
+						await this.reload(error instanceof Error ? error.message : 'Couldn’t link the line.');
+					}
+				},
+			}).open();
 		});
 	}
 

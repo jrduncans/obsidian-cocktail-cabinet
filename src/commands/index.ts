@@ -18,6 +18,7 @@ import { isEditable } from '../core/note-edit';
 import { registerNoteActions } from './note-actions';
 import { RecipeLinkStore } from '../vault/recipe-links';
 import { UnlinkedModal } from '../ui/unlinked-modal';
+import { registerEditorLinks } from './editor-links';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(plugin.app, plugin.store);
@@ -94,6 +95,7 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		icon: 'unlink',
 		callback: () => handle(() => ready(() => new UnlinkedModal(plugin, links).open())),
 	});
+	registerEditorLinks(plugin);
 	plugin.addCommand({
 		id: 'create-ingredient-type',
 		name: 'Add ingredient type',

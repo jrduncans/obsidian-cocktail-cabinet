@@ -6,7 +6,7 @@ import { IngredientModal } from './ingredient-modal';
 import { NotePicker } from './picker';
 import { StockModal } from './stock-modal';
 
-const CREATE = [
+export const CREATE = [
 	['type', 'Ingredient type'], ['bottle', 'Bottle'], ['ingredient', 'Other stock'],
 	['family', 'Ingredient family'], ['category', 'Ingredient category'],
 ] as const;
