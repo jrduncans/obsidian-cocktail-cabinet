@@ -121,3 +121,145 @@
 	padding: var(--size-4-2);
 	border: 1px solid var(--background-modifier-border);
 }
+
+/* Record purchases: anchored near the top so it doesn't re-center as content changes; only the list scrolls. */
+.modal-container:has(.cocktail-cabinet-purchases) {
+	align-items: flex-start;
+}
+.modal.cocktail-cabinet-purchases {
+	margin-top: 6vh;
+	max-height: 86vh;
+	width: min(52rem, 94vw);
+}
+.cocktail-cabinet-purchases .modal-content {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+.cocktail-cabinet-purchase-list {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-x: hidden;
+	overflow-y: auto;
+	border-top: var(--border-width) solid var(--background-modifier-border);
+	border-bottom: var(--border-width) solid var(--background-modifier-border);
+}
+.cocktail-cabinet-purchase-heading {
+	padding: var(--size-4-3) 0 var(--size-4-1);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.cocktail-cabinet-purchase-empty {
+	padding: var(--size-4-2) 0;
+	color: var(--text-faint);
+	font-size: var(--font-ui-small);
+}
+/* Checkbox, name, fields; one line per item, whether or not it's checked. */
+.cocktail-cabinet-purchase-row {
+	display: grid;
+	grid-template-columns: auto minmax(8rem, 1fr) auto;
+	column-gap: var(--size-4-3);
+	align-items: center;
+	padding: var(--size-4-2) 0;
+	border-bottom: var(--border-width) solid var(--background-modifier-border-hover);
+}
+.cocktail-cabinet-purchase-row:last-of-type {
+	border-bottom: 0;
+}
+.cocktail-cabinet-purchase-check {
+	margin: 0;
+}
+.cocktail-cabinet-purchase-label {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	cursor: pointer;
+}
+.cocktail-cabinet-purchase-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.cocktail-cabinet-purchase-meta {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+.cocktail-cabinet-purchase-fields {
+	display: grid;
+	grid-template-columns: 6rem 8rem 9.5rem;
+	align-items: center;
+	justify-items: end;
+	column-gap: var(--size-4-3);
+	transition: opacity 120ms ease;
+}
+.cocktail-cabinet-purchase-fields > .is-amount { grid-column: 1; }
+.cocktail-cabinet-purchase-fields > .is-price { grid-column: 2; }
+.cocktail-cabinet-purchase-fields > .is-size { grid-column: 3; }
+.cocktail-cabinet-purchase-fields > .cocktail-cabinet-error,
+.cocktail-cabinet-purchase-fields > .cocktail-cabinet-purchase-note:not(.is-amount) {
+	grid-column: 1 / -1;
+}
+.cocktail-cabinet-purchase-which {
+	align-self: flex-start;
+	margin-top: var(--size-4-1);
+	max-width: 100%;
+}
+.cocktail-cabinet-purchase-row:not(.is-bought) .cocktail-cabinet-purchase-fields {
+	opacity: 0.45;
+}
+.cocktail-cabinet-purchase-field {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+.cocktail-cabinet-purchase-field input.is-narrow {
+	width: 3.5em;
+}
+.cocktail-cabinet-purchase-field input.is-medium {
+	width: 5em;
+}
+.cocktail-cabinet-purchase-note {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+.cocktail-cabinet-purchase-help {
+	grid-column: 2 / -1;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+.cocktail-cabinet-purchase-help:empty {
+	display: none;
+}
+.cocktail-cabinet-purchase-add {
+	margin: var(--size-4-3) 0;
+}
+/* Narrow screens: fields go under the name, the same on every row. */
+@media (max-width: 40rem) {
+	.cocktail-cabinet-purchase-row {
+		grid-template-columns: auto 1fr;
+		row-gap: var(--size-4-1);
+	}
+	.cocktail-cabinet-purchase-fields {
+		grid-column: 2 / -1;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+		gap: var(--size-4-1) var(--size-4-3);
+	}
+	.cocktail-cabinet-purchase-field input.is-narrow {
+		width: 3em;
+	}
+	.cocktail-cabinet-purchase-field input.is-medium {
+		width: 4.5em;
+	}
+}
+.cocktail-cabinet-purchase-add {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-4-1);
+}
