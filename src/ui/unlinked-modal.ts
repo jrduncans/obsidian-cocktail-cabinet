@@ -36,7 +36,7 @@ export class UnlinkedModal extends Modal {
 
 	private async load() {
 		try {
-			this.groups = await this.links.unlinked(new Set(this.plugin.settings.keptAsText));
+			this.groups = await this.links.unlinked();
 			if (this.closed) return;
 			this.render();
 		} catch (error) {
@@ -63,7 +63,7 @@ export class UnlinkedModal extends Modal {
 		const recipes = new Set(this.groups.flatMap(group => group.uses.map(use => use.recipe.path))).size;
 		this.summaryEl.setText(lines
 			? `${plural(lines, 'measured line')} in ${plural(recipes, 'recipe')} have no link, so logging can’t subtract them. Linking a wording links it in every recipe listed; untick any that mean something else.`
-			: 'Every measured ingredient line is linked or kept as text.');
+			: 'Every measured ingredient line is linked.');
 	}
 
 	private renderList() {
@@ -97,7 +97,6 @@ export class UnlinkedModal extends Modal {
 				addCreateItems(menu, this.plugin, group.wording, choose);
 				menu.showAtMouseEvent(event);
 			}));
-			row.addButton(button => button.setButtonText('Keep as text').onClick(() => void this.keep(group)));
 			return;
 		}
 		row.setDesc(`Link to ${pending.note.name} (${pending.note.kind}) in the ticked recipes.`);
@@ -170,14 +169,5 @@ export class UnlinkedModal extends Modal {
 			this.renderSummary();
 			this.renderGroup(el, group);
 		}
-	}
-
-	private async keep(group: UnlinkedGroup) {
-		const settings = this.plugin.settings;
-		if (!settings.keptAsText.includes(group.key)) settings.keptAsText = [...settings.keptAsText, group.key].sort();
-		await this.plugin.saveSettings();
-		new Notice(`Kept “${group.wording}” as text. Change this in Cocktail Cabinet’s settings.`);
-		this.groups = this.groups.filter(item => item !== group);
-		this.renderList();
 	}
 }

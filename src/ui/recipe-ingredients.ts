@@ -77,7 +77,7 @@ export class RecipeIngredients {
 				new ButtonComponent(suggestions).setButtonText(`${note.name} · ${note.kind}`)
 					.setTooltip(`Link to ${note.path}`).onClick(() => choose(note));
 			}
-			new ButtonComponent(suggestions).setButtonText('Keep as text').onClick(() => {
+			new ButtonComponent(suggestions).setButtonText('Leave unlinked').onClick(() => {
 				keepText = true;
 				refresh();
 			});

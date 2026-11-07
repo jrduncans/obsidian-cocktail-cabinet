@@ -42,12 +42,12 @@ void test('lines are linked only while they still read as reviewed', () => {
 	assert.throws(() => linkLines(content, [{ line: 1, raw: '- 2 oz vodka' }], GIN), StaleLineError);
 });
 
-void test('unlinked wordings group across recipes, most recipes first, leaving out kept text', () => {
+void test('unlinked wordings group across recipes, most recipes first, ', () => {
 	const groups = groupUnlinked([
 		{ note: recipe('B'), content: '### Ingredients\n- 2 oz Gin\n- 1 oz water\n- ½ oz Gin' },
 		{ note: recipe('A'), content: '### Ingredients\n- 1 oz gin\n- ½ oz lemon' },
-	], new Set(['water']));
-	assert.deepEqual(groups.map(group => [group.key, group.uses.map(use => use.recipe.name)]), [['gin', ['A', 'B', 'B']], ['lemon', ['A']]]);
+	]);
+	assert.deepEqual(groups.map(group => [group.key, group.uses.map(use => use.recipe.name)]), [['gin', ['A', 'B', 'B']], ['lemon', ['A']], ['water', ['B']]]);
 	assert.equal(groups[0]!.wording, 'Gin');
 });
 
@@ -55,9 +55,9 @@ void test('logging offers to link unlinked measured lines and broken links', () 
 	const content = '### Ingredients\n- 2 oz gin\n- Mint sprig\n- 1 oz [[Missing]]';
 	const { skipped } = classifyLoggingLines(content, [], [], () => null);
 	assert.deepEqual(skipped.map(line => [line.reason, line.link]), [
-		['Not linked', { line: 1, raw: '- 2 oz gin', key: 'gin' }],
+		['Not linked', { line: 1, raw: '- 2 oz gin' }],
 		['Not linked', undefined],
-		['Link not found', { line: 3, raw: '- 1 oz [[Missing]]', key: 'missing' }],
+		['Link not found', { line: 3, raw: '- 1 oz [[Missing]]' }],
 	]);
 });
 

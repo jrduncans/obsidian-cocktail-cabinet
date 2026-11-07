@@ -256,10 +256,8 @@ export class LoggingModal extends Modal {
 		if (plan.skipped.length) {
 			new Setting(this.previewEl).setName('Not subtracted').setHeading();
 			const list = this.previewEl.createEl('ul', { cls: 'cocktail-cabinet-log-skipped' });
-			const kept = new Set(this.plugin.settings.keptAsText);
 			for (const line of plan.skipped) {
-				const reason = line.link && line.reason === 'Not linked' && kept.has(line.link.key) ? 'Kept as text' : line.reason;
-				const item = list.createEl('li', { text: `${ingredientLabel(line.text)}: ${reason}` });
+				const item = list.createEl('li', { text: `${ingredientLabel(line.text)}: ${line.reason}` });
 				if (!line.link) continue;
 				const button = item.createEl('button', { cls: 'cocktail-cabinet-log-link', text: 'Link…', attr: { 'aria-label': `Link ${ingredientLabel(line.text)}` } });
 				button.addEventListener('click', event => this.linkLine(line, event));

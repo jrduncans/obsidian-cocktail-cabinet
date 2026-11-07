@@ -22,10 +22,10 @@ export class RecipeLinkStore {
 	}
 
 	/** Every recipe's unlinked measured lines, grouped by wording. */
-	async unlinked(kept: ReadonlySet<string>): Promise<UnlinkedGroup[]> {
+	async unlinked(): Promise<UnlinkedGroup[]> {
 		const recipes = this.cabinet.notes().filter(note => note.kind === 'recipe');
 		const contents = await Promise.all(recipes.map(note => this.app.vault.cachedRead(this.file(note.path))));
-		return groupUnlinked(recipes.map((note, index) => ({ note, content: contents[index]! })), kept);
+		return groupUnlinked(recipes.map((note, index) => ({ note, content: contents[index]! })));
 	}
 
 	/** Link one line; throws `StaleLineError` when the recipe changed since it was read. */

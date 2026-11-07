@@ -125,13 +125,13 @@ export interface UnlinkedGroup {
 	uses: UnlinkedUse[];
 }
 
-/** Unlinked measured lines grouped by wording, most used first; `kept` wordings are left out. */
-export function groupUnlinked(recipes: readonly { note: CabinetNote; content: string }[], kept: ReadonlySet<string>): UnlinkedGroup[] {
+/** Unlinked measured lines grouped by wording, most used first. */
+export function groupUnlinked(recipes: readonly { note: CabinetNote; content: string }[]): UnlinkedGroup[] {
 	const groups = new Map<string, UnlinkedUse[]>();
 	for (const { note, content } of recipes) {
 		for (const line of unlinkedLines(content)) {
 			const key = ingredientKey(ingredientParts(line.text).wording);
-			if (!key || kept.has(key)) continue;
+			if (!key) continue;
 			groups.set(key, [...groups.get(key) ?? [], { recipe: note, ...line }]);
 		}
 	}
