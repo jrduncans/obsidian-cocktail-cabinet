@@ -2,6 +2,8 @@ import { Notice, Setting } from 'obsidian';
 import type { App } from 'obsidian';
 import { BottleAmount, OPEN_AMOUNT_UNITS } from '../core/bottle-amount';
 import { formatMl } from '../core/logging-stock';
+import { localDate } from '../core/notes';
+import { PROP } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
 import { AVAILABILITY, STOCK_TRACKING } from '../core/stock';
 import { boughtMore, describeStock, editFromState, finished, planStockEdit } from '../core/stock-edit';
@@ -15,6 +17,8 @@ export class EditStockModal extends CabinetForm {
 	private fieldsEl!: HTMLElement;
 	private afterEl!: HTMLElement;
 	private quick!: Setting;
+	/** Bought more was pressed: saving records today as the purchase date. */
+	private purchased = false;
 
 	/** `onSaved` runs after a successful save, so a form that opened this one can refresh. */
 	constructor(app: App, private stocks: StockStore, private note: CabinetNote, private before: StockState, private onSaved?: () => void) {
@@ -33,6 +37,7 @@ export class EditStockModal extends CabinetForm {
 		this.quick = new Setting(this.contentEl).setName('Quick changes')
 			.addButton(button => button.setButtonText('Bought more').onClick(() => {
 				this.edit = boughtMore(this.edit, this.before.kind);
+				this.purchased = true;
 				this.render();
 			}))
 			.addButton(button => button.setButtonText('Finished').onClick(() => {
@@ -50,6 +55,7 @@ export class EditStockModal extends CabinetForm {
 				new Notice('No stock changes to save.');
 				return;
 			}
+			if (this.purchased) plan.updates[PROP.lastPurchased] = localDate();
 			await this.stocks.save(this.note, this.before, plan);
 			this.close();
 			new Notice(`${this.note.name}: ${describeStock(plan.after)}.`);

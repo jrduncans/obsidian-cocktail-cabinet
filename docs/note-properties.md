@@ -80,6 +80,7 @@ A named bottle, together with its recorded stock. One note tracks the open amoun
 | `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative numeric amount last paid for one bottle, with zero valid and missing or null meaning unknown. Purchasing metadata, independent of stock mode. No price history, currency conversion, or cost calculations are defined. |
 | `cc-shopping-list` | `boolean` | `false` | Explicitly marks this bottle for purchase when `true`. Missing means `false`. Independent of current stock level and of any flag on its ingredient type; listed in the shopping list's Bottles section. |
 | `cc-last-used` | `date \| null` | `false` | Date (`YYYY-MM-DD`) this was last used in a logged cocktail: selected for a line, or the one source a line clearly uses without subtracting (status-tracked, or no mL amount, such as dashes). Written by **Log this cocktail**, never moved backward; Edit stock doesn't set it. Missing means not used since tracking began. Orders Restock's Running low and Out, most recently used first. |
+| `cc-last-purchased` | `date \| null` | `false` | Date (`YYYY-MM-DD`) this was last recorded as bought, by **Record purchases** or **Bought more**; never moved backward. Only the last purchase is kept, with `cc-last-purchase-price`. |
 
 Earlier development notes that store `cc-family` or `cc-category` as a list need the same conversion to one quoted link string; a list is ignored, leaving the note without a parent.
 
@@ -108,6 +109,7 @@ A source that supplies ingredient types, such as fresh fruit, prepared juice, or
 | `cc-last-purchase-price` | `number \| null` | `false` | Nonnegative amount paid for the most recent purchase of this source, using the user's consistent currency convention. Zero is valid; missing or null means unknown. The purchased quantity is not modeled, so this field does not imply a per-mL price. Optional for homemade or otherwise unpurchased sources. |
 | `cc-shopping-list` | `boolean` | `false` | Marks this source for purchase or replenishment when `true`. Missing means `false`. Listed in the shopping list's Other stock section, independently of stock mode, status, and flags on the provided types. |
 | `cc-last-used` | `date \| null` | `false` | Date (`YYYY-MM-DD`) this was last used in a logged cocktail: selected for a line, or the one source a line clearly uses without subtracting (status-tracked, or no mL amount, such as dashes). Written by **Log this cocktail**, never moved backward; Edit stock doesn't set it. Missing means not used since tracking began. Orders Restock's Running low and Out, most recently used first. |
+| `cc-last-purchased` | `date \| null` | `false` | Date (`YYYY-MM-DD`) this was last recorded as bought, by **Record purchases** or **Bought more**; never moved backward. Only the last purchase is kept, with `cc-last-purchase-price`. |
 
 `StockForm` is one of `Fresh ingredient`, `Prepared juice`, `Bottled juice`, `Homemade syrup`, `Purchased syrup`, or `Other`. The source description lives in the body. Measured juice yields, individual preparation batches, and multiple container sizes are not defined by this schema.
 

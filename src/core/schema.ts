@@ -30,6 +30,8 @@ export const PROP = {
 	form: 'cc-form',
 	lastPurchasePrice: 'cc-last-purchase-price',
 	shoppingList: 'cc-shopping-list',
+	/** Bottles and other stock: date last recorded as bought (Record purchases, Bought more). */
+	lastPurchased: 'cc-last-purchased',
 	/** Bottles and other stock: date last selected when logging a cocktail. */
 	lastUsed: 'cc-last-used',
 	/** Recipes: date last logged, and how many times. */

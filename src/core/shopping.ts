@@ -64,6 +64,6 @@ export function shoppingNote(root: string): PlannedFile {
 	return {
 		path: shoppingNotePath(root),
 		kind: 'shopping',
-		content: markdown({ [PROP.kind]: 'shopping' }, `# ${SHOPPING_NOTE}\n\nTurn on **Add to shopping list** on a bottle, ingredient type, or other stock to list it here. A type means any bottle of that type will do. To find more to add, see ${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)}.\n\n${embeds}`),
+		content: markdown({ [PROP.kind]: 'shopping' }, `# ${SHOPPING_NOTE}\n\nTurn on **Add to shopping list** on a bottle, ingredient type, or other stock to list it here. A type means any bottle of that type will do. To find more to add, see ${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)}. After shopping, use the cart button in this note's header (**Record purchases**) to add what you bought to your stock.\n\n${embeds}`),
 	};
 }

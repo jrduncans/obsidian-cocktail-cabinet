@@ -1,6 +1,8 @@
 import { parseYaml, TFile } from 'obsidian';
 import type { App } from 'obsidian';
-import type { CabinetNote } from '../core/schema';
+import { PROP } from '../core/schema';
+import type { CabinetNote, Properties } from '../core/schema';
+import { dateUpdate } from '../core/usage';
 import { readStockState, sameStockState } from '../core/stock-edit';
 import type { StockEditPlan, StockKind, StockState } from '../core/stock-edit';
 
@@ -45,5 +47,21 @@ export class StockStore {
 		} finally {
 			this.writing = false;
 		}
+	}
+
+	/**
+	 * Record a purchase: `updates` from `planPurchase` plus today as `cc-last-purchased`. With
+	 * `before`, refuses (changing nothing) if the stock changed since the form read it. Without,
+	 * only the date and shopping flag are written: a new note, or an ingredient type bought for.
+	 */
+	async recordPurchase(note: CabinetNote, before: StockState | null, updates: Properties, date: string): Promise<void> {
+		const file = this.file(note);
+		await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
+			if (before && !sameStockState(before, readStockState(this.kind(note), properties))) {
+				throw new Error('its stock changed after the form opened');
+			}
+			Object.assign(properties, updates);
+			if (note.kind !== 'type') Object.assign(properties, dateUpdate(properties, PROP.lastPurchased, date));
+		});
 	}
 }

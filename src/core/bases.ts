@@ -24,6 +24,7 @@ interface ResourceBase {
 
 const purchasingColumns: Column[] = [
 	[PROP.lastPurchasePrice, 'Last purchase price'],
+	[PROP.lastPurchased, 'Last purchased'],
 	[PROP.shoppingList, 'Shopping list'],
 ];
 

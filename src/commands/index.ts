@@ -2,6 +2,7 @@ import type CocktailCabinetPlugin from '../main';
 import { MarkdownView, Notice } from 'obsidian';
 import type { TFile } from 'obsidian';
 import { IngredientModal } from '../ui/ingredient-modal';
+import { PurchaseModal } from '../ui/purchase-modal';
 import { StockModal } from '../ui/stock-modal';
 import { RecipeModal } from '../ui/recipe-modal';
 import { SetupModal } from '../ui/setup-modal';
@@ -35,7 +36,10 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 	};
 	// On a type note, open a stock form with the type already filled in.
 	const forType = (bottle: boolean) => (file: TFile) => void handle(() => ready(() => new StockModal(plugin, bottle, { types: [noteFor(file)] }).open()));
+	const recordPurchases = () => handle(() => ready(() => new PurchaseModal(plugin, stocks).open()));
+	plugin.addCommand({ id: 'record-purchases', name: 'Record purchases', icon: 'shopping-cart', callback: recordPurchases });
 	registerNoteActions(plugin, [
+		{ id: 'record-purchases-here', name: 'Record purchases', icon: 'shopping-cart', kinds: ['shopping'], header: true, command: false, run: () => void recordPurchases() },
 		{
 			id: 'log-this-cocktail', name: 'Log this cocktail', icon: 'martini', kinds: ['recipe'], header: true,
 			run: file => void handle(async () => new LoggingModal(plugin, logger, stocks, noteFor(file)).open()),

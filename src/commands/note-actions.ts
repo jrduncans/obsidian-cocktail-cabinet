@@ -3,12 +3,18 @@ import { KINDS, PROP } from '../core/schema';
 import type { NoteKind } from '../core/schema';
 import type CocktailCabinetPlugin from '../main';
 
+/** Cabinet note kinds, plus the Shopping list note. */
+type ActionKind = NoteKind | 'shopping';
+
 /** A command about one cabinet note, also offered in the note's menus. */
 export interface NoteAction {
 	id: string;
 	name: string;
 	icon: string;
-	kinds: readonly NoteKind[] | 'any';
+	/** `any` is every cabinet kind, not the Shopping list. */
+	kinds: readonly ActionKind[] | 'any';
+	/** Register no command of its own: one exists elsewhere that works from any note. */
+	command?: false;
 	/** Also show a button in the note's header, the main action for that kind of note. */
 	header?: boolean;
 	/** Further checks beyond the note's kind, such as Edit cabinet note's editable kinds. */
@@ -23,15 +29,16 @@ export interface NoteAction {
  */
 export function registerNoteActions(plugin: CocktailCabinetPlugin, actions: readonly NoteAction[]) {
 	const { app } = plugin;
-	const kindOf = (file: TFile | null | undefined): NoteKind | undefined => {
+	const kindOf = (file: TFile | null | undefined): ActionKind | undefined => {
 		if (!file || file.extension !== 'md' || !file.path.startsWith(`${plugin.store.root}/`)) return undefined;
 		const kind: unknown = app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind];
+		if (kind === 'shopping') return 'shopping';
 		return KINDS.find(value => value === kind);
 	};
-	const applies = (action: NoteAction, kind: NoteKind | undefined): kind is NoteKind =>
-		!!kind && (action.kinds === 'any' || action.kinds.includes(kind)) && (action.when?.(kind) ?? true);
+	const applies = (action: NoteAction, kind: ActionKind | undefined): kind is ActionKind =>
+		!!kind && (action.kinds === 'any' ? kind !== 'shopping' : action.kinds.includes(kind)) && (kind === 'shopping' || (action.when?.(kind) ?? true));
 
-	for (const action of actions) {
+	for (const action of actions.filter(action => action.command !== false)) {
 		plugin.addCommand({
 			id: action.id,
 			name: action.name,

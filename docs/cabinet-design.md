@@ -175,6 +175,17 @@ Agreed on 2026-11-04 as the first Phase 2 item, replacing hand edits of `cc-open
 - **No check dates.** Tried and dropped 2026-11-06: a `cc-stock-checked` date written on every save, and a list ordered by oldest check. Stock doesn't drift on its own (Out stays Out until a purchase), so re-confirming settled stock was busywork, worst for bottles bought once and not rebought.
 - **Fix as you go.** Added 2026-11-06. Stock is often out of date because a purchase or an unlogged drink wasn't recorded, so the logging modal opens **Edit stock** in place: a button on each source whose stock is short, and a gauge button on each Stock row. Saving re-reads the review and keeps selections. Looking over stock is the **Restock** Base, for the job of choosing what to buy: Running low (Low, or the last bottle at or under the percent-full setting, default 10%, or the mL setting, default 70, without a bottle size and for other stock), Out (Out, or nothing above 0, blank counting as 0; by name, since modified dates are unreliable under sync and Git), and Unknown (Unknown or missing availability, or no tracking mode), each with the shopping-list checkbox. Nothing asks to dismiss an old bottle; nothing marks a bottle as not to be rebought, which would go stale when you change your mind.
 
+## Recording purchases
+
+Agreed on 2026-11-06. Restock helps choose what to buy; missed purchases are the main reason stock is wrong, so recording a trip is one form rather than **Bought more** per note.
+
+- **Where.** **Record purchases**: a header button on the Shopping list note (and its menu), and a command that works from anywhere.
+- **Rows.** Everything on the shopping list, grouped as in the note, read fresh from each note. Marking a row bought shows what it needs: a bottle tracked in mL takes bottles bought (1), bottle size, and price; other stock in mL takes the mL bought (required) and price; availability-tracked stock becomes Have, with price. Price and size start at the saved values; a blank price keeps it. A type row picks one of the bottles or other stock under it, or **New bottle…**.
+- **Off the list.** **Add another…** picks any bottle or other stock; **New bottle…** and **New other stock…** open the creation forms, which record the new note's stock themselves.
+- **Size changes.** A changed size updates `cc-volume-ml` (shrinkflation, 750 to 700 mL); the open bottle's mL stays exact. Refused when the open bottle holds more than the new size, which logging couldn't use. A different bottle (375 mL, 1 L) is a separate note.
+- **Saving.** Every bought row is validated before anything is written. Each note is re-read and skipped, named in the notice, if its stock changed since the form read it. Bought items leave the shopping list (a type too, once a bottle of it is recorded); unmarked rows stay, with no "couldn't find it" state. Each records `cc-last-purchased`, never moved backward; **Bought more** sets it too. Only the last date and price are kept, no history.
+- **Not suggested.** Restock's Running low and Out aren't offered here: choosing what to buy happens there, before the trip, and the list stays short on a phone.
+
 ## Renaming
 
 Built on 2026-11-05 as the Phase 2 rename, replacing the three hand edits a recipe rename took.

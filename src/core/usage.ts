@@ -12,10 +12,15 @@ export function laterDate(saved: unknown, date: string): string {
 	return current && current > date ? current : date;
 }
 
+/** Move the date property `key` up to `date`; empty when it's already there or later. */
+export function dateUpdate(properties: Record<string, unknown>, key: string, date: string): Record<string, string> {
+	const next = laterDate(properties[key], date);
+	return isoDate(properties[key]) === next ? {} : { [key]: next };
+}
+
 /** A bottle or other stock was selected when logging on `date`. */
 export function usedUpdates(properties: Record<string, unknown>, date: string): Record<string, string> {
-	const next = laterDate(properties[PROP.lastUsed], date);
-	return isoDate(properties[PROP.lastUsed]) === next ? {} : { [PROP.lastUsed]: next };
+	return dateUpdate(properties, PROP.lastUsed, date);
 }
 
 /** A recipe was logged on `date`: one more time made, whatever the servings. */
