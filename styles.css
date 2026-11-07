@@ -271,7 +271,7 @@
 }
 .cocktail-cabinet-unlinked-group {
 	border-bottom: var(--border-width) solid var(--background-modifier-border);
-	padding-bottom: var(--size-4-2);
+	padding: var(--size-4-2) 0;
 }
 .cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-unlinked-group > .setting-item {
 	border: 0;

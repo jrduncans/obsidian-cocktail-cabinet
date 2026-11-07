@@ -86,8 +86,9 @@ export class UnlinkedModal extends Modal {
 			this.renderGroup(el, group);
 		};
 		if (!pending) {
-			const suggestions = el.createDiv({ cls: 'cocktail-cabinet-suggestions' });
-			for (const note of suggestIngredient(group.wording, this.plugin.store.notes())) {
+			const suggested = suggestIngredient(group.wording, this.plugin.store.notes());
+			const suggestions = suggested.length ? el.createDiv({ cls: 'cocktail-cabinet-suggestions' }) : el;
+			for (const note of suggested) {
 				new ButtonComponent(suggestions).setButtonText(`${note.name} · ${note.kind}`).setTooltip(`Link to ${note.path}`).onClick(() => choose(note));
 			}
 			row.addButton(button => button.setButtonText('Select link').onClick(() => pickIngredient(this.plugin, choose)));
