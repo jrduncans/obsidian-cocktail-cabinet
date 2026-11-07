@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { App } from 'obsidian';
 import { CabinetStore } from '../src/vault/cabinet-store';
-import { starterPlan } from '../src/core/setup';
+import { cabinetViews, starterPlan } from '../src/core/setup';
 import { relatedTargets } from '../src/core/relationships';
-import { managedFingerprint } from '../src/core/schema';
-import { PREVIOUS_NAVIGATION_VERSIONS } from '../src/core/navigation';
+import { contentFingerprint } from '../src/core/schema';
+import { restockBase } from '../src/core/restock';
+import type { RestockThresholds } from '../src/core/restock';
 import { TFile, TFolder } from './obsidian-stub';
 
 function fixture() {
@@ -47,13 +48,14 @@ function fixture() {
 			},
 		},
 	} as unknown as App;
-	return { app, contents, folders, store: new CabinetStore(app, () => 'Cocktails') };
+	const thresholds: RestockThresholds = { percent: 10, ml: 70 };
+	return { app, contents, folders, thresholds, store: new CabinetStore(app, () => 'Cocktails', () => thresholds) };
 }
 
 void test('setup preserves a complete cabinet', async () => {
 	const { contents, store } = fixture();
 	const before = [...contents];
-	assert.deepEqual(await store.setup('Cocktails'), { created: 0, updated: 0, kept: contents.size, customized: [] });
+	assert.deepEqual(await store.setup('Cocktails'), { created: 0, updated: 0, kept: contents.size });
 	assert.deepEqual([...contents], before);
 });
 
@@ -83,43 +85,62 @@ void test('setup rejects duplicate catalog identities', async () => {
 	assert.deepEqual([...contents], before);
 });
 
-void test('setup adds missing Bases to an older cabinet and preserves the home and customized views', async () => {
-	const { contents, store } = fixture();
-	const customized = 'Cocktails/Views/Bottles.base';
-	contents.set(customized, 'views: []\n# My custom view\n');
+void test('setup adds missing views, replaces changed ones, keeps the home, and creates Custom views', async () => {
+	const { contents, folders, store } = fixture();
+	const edited = 'Cocktails/Views/Bottles.base';
+	const original = contents.get(edited)!;
+	contents.set(edited, 'views: []\n# My change\n');
 	const home = contents.get('Cocktails/Cocktail Cabinet.md');
 	contents.delete('Cocktails/Views/Ingredient types.base');
 	const preview = await store.previewSetup('Cocktails');
-	assert.equal(preview.create.length, 1);
-	assert.equal(preview.create[0]?.kind, 'base');
+	assert.deepEqual(preview.create.map(file => file.path), ['Cocktails/Views/Ingredient types.base']);
+	assert.deepEqual(preview.update.map(file => file.path), [edited]);
 	assert.deepEqual(preview.conflicts, []);
-	assert.equal((await store.setup('Cocktails')).created, 1);
-	assert.equal(contents.get(customized), 'views: []\n# My custom view\n');
+	assert.deepEqual(await store.setup('Cocktails'), { created: 1, updated: 1, kept: contents.size - 2 });
+	assert.equal(contents.get(edited), original);
 	assert.equal(contents.get('Cocktails/Cocktail Cabinet.md'), home);
+	assert.ok(folders.has('Cocktails/Custom views'));
 	assert.equal((await store.setup('Cocktails')).created, 0);
 });
 
-void test('setup updates the managed navigation Base only while it matches an earlier generated version', async () => {
+void test('views are rewritten when the generated version changes, not when Obsidian or the user saves them', async () => {
+	const { contents, store, thresholds } = fixture();
+	const views = cabinetViews('Cocktails', thresholds);
+	// The first sync adopts views that already match and records every view.
+	const first = await store.syncViews({});
+	assert.deepEqual(first.updated, []);
+	assert.deepEqual(Object.keys(first.written).sort(), views.map(view => view.path).sort());
+	// A view saved with column widths, or deleted, stays while the plugin's version is the same.
+	const bottles = 'Cocktails/Views/Bottles.base';
+	contents.set(bottles, `${contents.get(bottles)!}columnSize: {}\n`);
+	contents.delete('Cocktails/Views/Ingredient types.base');
+	assert.deepEqual((await store.syncViews(first.written)).updated, []);
+	assert.match(contents.get(bottles)!, /columnSize/);
+	// A release that changes a view rewrites it, and recreates it if deleted.
+	const stale = { ...first.written, [bottles]: 'older', 'Cocktails/Views/Ingredient types.base': 'older' };
+	assert.deepEqual((await store.syncViews(stale)).updated.sort(), [bottles, 'Cocktails/Views/Ingredient types.base']);
+	assert.ok(!contents.get(bottles)!.includes('columnSize'));
+	// A threshold change rewrites Restock only.
+	thresholds.percent = 15;
+	const restock = await store.syncViews(first.written);
+	assert.deepEqual(restock.updated, ['Cocktails/Views/Restock.base']);
+	assert.equal(contents.get('Cocktails/Views/Restock.base'), restockBase('Cocktails', thresholds).content);
+	assert.equal(restock.written['Cocktails/Views/Restock.base'], contentFingerprint(restockBase('Cocktails', thresholds).content, 'Cocktails'));
+});
+
+void test('Refresh rewrites every changed or missing view, and nothing syncs before setup', async () => {
 	const { contents, store } = fixture();
-	const path = 'Cocktails/Views/Related.base';
-	const current = contents.get(path)!;
-	const earlier = 'filters:\n  and:\n    - \'file.inFolder("Cocktails")\'\n# an earlier generated version\n';
-	const previous = PREVIOUS_NAVIGATION_VERSIONS as string[];
-	previous.push(managedFingerprint(earlier, 'Cocktails'));
-	try {
-		assert.deepEqual((await store.previewSetup('Cocktails')).update, []);
-		contents.set(path, earlier);
-		const preview = await store.previewSetup('Cocktails');
-		assert.deepEqual(preview.update.map(file => file.path), [path]);
-		assert.deepEqual(preview.customized, []);
-		assert.equal((await store.setup('Cocktails')).updated, 1);
-		assert.equal(contents.get(path), current);
-		contents.set(path, `${earlier}# my change\n`);
-		const result = await store.setup('Cocktails');
-		assert.equal(result.updated, 0);
-		assert.deepEqual(result.customized, [path]);
-		assert.equal(contents.get(path), `${earlier}# my change\n`);
-	} finally { previous.pop(); }
+	const { written } = await store.syncViews({});
+	const related = 'Cocktails/Views/Related.base';
+	const original = contents.get(related)!;
+	contents.set(related, '# changed\n');
+	contents.delete('Cocktails/Views/Restock.base');
+	assert.deepEqual((await store.syncViews(written, true)).updated.sort(), ['Cocktails/Views/Related.base', 'Cocktails/Views/Restock.base']);
+	assert.equal(contents.get(related), original);
+	contents.delete('Cocktails/Cocktail Cabinet.md');
+	contents.set(related, '# changed\n');
+	assert.deepEqual((await store.syncViews({}, true)).updated, []);
+	assert.equal(contents.get(related), '# changed\n');
 });
 
 void test('a new cabinet gets the worked example; reruns never restore a deleted example', async () => {
@@ -152,9 +173,9 @@ void test('an existing note at an example path is kept rather than blocking a ne
 	assert.equal(contents.get('Cocktails/Recipes/Daiquiri.md'), '---\ncc-kind: recipe\n---\nMy own Daiquiri.\n');
 });
 
-void test('managed fingerprints ignore the cabinet folder and line endings', () => {
-	assert.equal(managedFingerprint('a "Cocktails" b\n', 'Cocktails'), managedFingerprint('a "Drinks/Bar" b\r\n', 'Drinks/Bar'));
-	assert.notEqual(managedFingerprint('a', 'Cocktails'), managedFingerprint('b', 'Cocktails'));
+void test('view fingerprints ignore the cabinet folder and line endings', () => {
+	assert.equal(contentFingerprint('a "Cocktails" b\n', 'Cocktails'), contentFingerprint('a "Drinks/Bar" b\r\n', 'Drinks/Bar'));
+	assert.notEqual(contentFingerprint('a', 'Cocktails'), contentFingerprint('b', 'Cocktails'));
 });
 
 void test('a file blocking the Views folder stops setup before any files are created', async () => {

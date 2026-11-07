@@ -8,7 +8,6 @@ import type { PlannedFile } from './schema';
 
 /**
  * Everything marked **Add to shopping list**, in one note with a section per kind.
- * An ordinary user-owned Base: setup creates it when missing and never replaces it.
  */
 export const SHOPPING_BASE = 'Shopping list';
 export const SHOPPING_NOTE = 'Shopping list';

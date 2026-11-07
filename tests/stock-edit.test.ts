@@ -7,7 +7,6 @@ import type { StockEdit } from '../src/core/stock-edit';
 import { StockStore } from '../src/vault/stock-store';
 import { bottleStockText } from '../src/core/logging-stock';
 import { COMMON_FORMULAS } from '../src/core/base-formulas';
-import { PREVIOUS_NAVIGATION_VERSIONS } from '../src/core/navigation';
 import { TFile } from './obsidian-stub';
 import type { App } from 'obsidian';
 
@@ -63,11 +62,10 @@ void test('bottle stock text drops zero parts and says None when there is nothin
 	assert.equal(bottleStockText(null, null, null), 'None');
 });
 
-void test('the Stock formula follows the same wording, and setup replaces the previous Related view', () => {
+void test('the Stock formula follows the same wording', () => {
 	const stock = COMMON_FORMULAS.stock;
 	assert.ok(stock.includes('"None"'));
 	assert.ok(stock.includes('" unopened"') && stock.includes('"<1"') && !stock.includes('mL open'));
-	assert.ok(PREVIOUS_NAVIGATION_VERSIONS.includes('5357-fc366e60'));
 });
 
 void test('an unchanged form writes nothing', () => {

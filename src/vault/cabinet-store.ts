@@ -1,8 +1,10 @@
 import { App, TFile, TFolder, parseFrontMatterAliases, parseYaml } from 'obsidian';
-import { cabinetFolder, KINDS, managedFingerprint, PROP, wikiLink } from '../core/schema';
+import { cabinetFolder, contentFingerprint, KINDS, PROP, wikiLink } from '../core/schema';
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { localDate, renderNote } from '../core/notes';
-import { cabinetHomePath, starterPlan } from '../core/setup';
+import { cabinetHomePath, cabinetViews, customViewsPath, starterPlan } from '../core/setup';
+import { DEFAULT_RESTOCK } from '../core/restock';
+import type { RestockThresholds } from '../core/restock';
 import type { SetupPreview } from '../core/setup';
 import { enhancedRecipeContent } from './recipe-document';
 
@@ -18,7 +20,7 @@ const PARENT_PROPERTIES: Partial<Record<NoteKind, string>> = {
 export class CabinetStore {
 	private writing = false;
 
-	constructor(readonly app: App, private folder: () => string) {}
+	constructor(readonly app: App, private folder: () => string, private restock: () => RestockThresholds = () => DEFAULT_RESTOCK) {}
 
 	get root(): string {
 		return cabinetFolder(this.folder());
@@ -88,7 +90,7 @@ export class CabinetStore {
 
 	async previewSetup(folder: string): Promise<SetupPreview> {
 		const root = cabinetFolder(folder);
-		const result: SetupPreview = { root, create: [], update: [], keep: [], customized: [], conflicts: [] };
+		const result: SetupPreview = { root, create: [], update: [], keep: [], conflicts: [] };
 		const allFiles = this.app.vault.getFiles();
 		const byLowerPath = new Map(allFiles.map(file => [file.path.toLowerCase(), file]));
 		const catalogPaths = new Map<string, string>();
@@ -106,7 +108,7 @@ export class CabinetStore {
 		// The worked example comes with a new cabinet only, so a deleted example stays deleted.
 		const home = cabinetHomePath(root);
 		const newCabinet = !this.app.vault.getAbstractFileByPath(home) && !byLowerPath.has(home.toLowerCase());
-		for (const planned of starterPlan(root, catalogPaths, newCabinet)) {
+		for (const planned of starterPlan(root, catalogPaths, newCabinet, this.restock())) {
 			const parts = planned.path.split('/');
 			for (let depth = 1; depth < parts.length; depth++) {
 				const parent = parts.slice(0, depth).join('/');
@@ -122,12 +124,9 @@ export class CabinetStore {
 			}
 			if (existing instanceof TFile && existing.path === planned.path
 				&& planned.kind === 'base' && existing.extension === 'base') {
-				if (planned.managed) {
-					const current = await this.app.vault.read(existing);
-					if (current === planned.content) result.keep.push(existing.path);
-					else if (planned.managed.includes(managedFingerprint(current, root))) result.update.push(planned);
-					else { result.keep.push(existing.path); result.customized.push(existing.path); }
-				} else result.keep.push(existing.path);
+				// Views belong to the plugin: any difference from the current version is replaced.
+				if (await this.app.vault.read(existing) === planned.content) result.keep.push(existing.path);
+				else result.update.push(planned);
 				continue;
 			}
 			// An example never blocks setup: whatever already has its path is the user's.
@@ -149,9 +148,8 @@ export class CabinetStore {
 		return result;
 	}
 
-	async setup(folder: string): Promise<{ created: number; updated: number; kept: number; customized: string[] }> {
+	async setup(folder: string): Promise<{ created: number; updated: number; kept: number }> {
 		return this.write(async () => {
-			// Recheck at apply time; only unchanged plugin-managed files are ever replaced.
 			const preview = await this.previewSetup(folder);
 			if (preview.conflicts.length) {
 				const conflicts = preview.conflicts.slice(0, 3).join(', ');
@@ -166,13 +164,47 @@ export class CabinetStore {
 				const existing = this.app.vault.getAbstractFileByPath(file.path);
 				if (!(existing instanceof TFile)) continue;
 				await this.app.vault.process(existing, current => {
-					// A user edit since the preview wins.
-					if (!file.managed?.includes(managedFingerprint(current, preview.root))) return current;
-					updated++;
+					if (current !== file.content) updated++;
 					return file.content;
 				});
 			}
-			return { created: preview.create.length, updated, kept: preview.keep.length, customized: preview.customized };
+			await this.ensureFolder(customViewsPath(preview.root));
+			return { created: preview.create.length, updated, kept: preview.keep.length };
+		});
+	}
+
+	/**
+	 * Bring the plugin's views up to date. `written` maps each view's path to the fingerprint of the
+	 * version last written. Without `force`, a view is written only when the current version differs
+	 * from that record (a release or a setting changed it), so Obsidian's own saves of column widths
+	 * and sorting, and a deleted view, stay until then. With `force`, every view that differs or is
+	 * missing is written. Returns the updated paths and the new record; nothing happens before setup.
+	 */
+	async syncViews(written: Readonly<Record<string, string>>, force = false): Promise<{ updated: string[]; written: Record<string, string> }> {
+		return this.write(async () => {
+			if (!await this.isSetUp()) return { updated: [], written: { ...written } };
+			const root = this.root;
+			const updated: string[] = [];
+			const next: Record<string, string> = {};
+			for (const view of cabinetViews(root, this.restock())) {
+				const fingerprint = contentFingerprint(view.content, root);
+				next[view.path] = fingerprint;
+				if (!force && written[view.path] === fingerprint) continue;
+				const existing = this.app.vault.getAbstractFileByPath(view.path);
+				if (existing instanceof TFile) {
+					let changed = false;
+					await this.app.vault.process(existing, current => {
+						changed = current !== view.content;
+						return view.content;
+					});
+					if (changed) updated.push(view.path);
+				} else if (!existing) {
+					await this.ensureFolder(view.path.slice(0, view.path.lastIndexOf('/')));
+					await this.app.vault.create(view.path, view.content);
+					updated.push(view.path);
+				}
+			}
+			return { updated, written: next };
 		});
 	}
 

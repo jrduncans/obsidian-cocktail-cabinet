@@ -76,6 +76,12 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		callback: () => new SetupModal(plugin).open(),
 	});
 	plugin.addCommand({
+		id: 'refresh-cabinet-views',
+		name: 'Refresh cabinet views',
+		icon: 'refresh-cw',
+		callback: () => handle(() => ready(() => plugin.syncViews(true))),
+	});
+	plugin.addCommand({
 		id: 'create-ingredient-type',
 		name: 'Add ingredient type',
 		callback: () => handle(() => ready(() => new IngredientModal(plugin).open())),

@@ -59,15 +59,10 @@ export interface PlannedFile {
 	catalogId?: string;
 	/** Starter example: created only with a new cabinet home, never restored once deleted. */
 	example?: boolean;
-	/**
-	 * Plugin-managed file: fingerprints of earlier generated versions (see `managedFingerprint`).
-	 * Setup replaces a file that still matches one; any other content is the user's and is kept.
-	 */
-	managed?: readonly string[];
 }
 
 /** Root-independent FNV-1a fingerprint of generated content, so versions match across cabinet folders. */
-export function managedFingerprint(content: string, root: string): string {
+export function contentFingerprint(content: string, root: string): string {
 	const text = content.replace(/\r\n/g, '\n').split(root).join('{root}');
 	let hash = 0x811c9dc5;
 	for (let index = 0; index < text.length; index++) {

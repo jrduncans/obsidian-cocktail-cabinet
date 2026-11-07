@@ -10,19 +10,6 @@ import type { NoteKind, PlannedFile } from './schema';
  */
 export const NAVIGATION_BASE = 'Related';
 
-/**
- * Fingerprints of every earlier released version of the navigation Base. When the generated
- * content changes, add the previous version's `managedFingerprint` here so setup updates it.
- */
-export const PREVIOUS_NAVIGATION_VERSIONS: readonly string[] = [
-	// 0.1.0: bottle stock as "? mL open, 0 unopened".
-	'5357-fc366e60',
-	// Development only: "660 mL open", "None".
-	'5493-e44f3a35',
-	// Before 2026-11-06: other stock with a blank amount as "? mL".
-	'5883-0e6d892d',
-];
-
 export const NAVIGATION_VIEWS = {
 	families: 'Families',
 	types: 'Types',
@@ -99,7 +86,7 @@ const VIEWS: readonly ViewDefinition[] = [
 
 export function navigationBase(root: string): PlannedFile {
 	root = cabinetFolder(root);
-	return { path: basePath(root, NAVIGATION_BASE), kind: 'base', content: renderFormulaBase(root, FORMULAS, VIEWS), managed: PREVIOUS_NAVIGATION_VERSIONS };
+	return { path: basePath(root, NAVIGATION_BASE), kind: 'base', content: renderFormulaBase(root, FORMULAS, VIEWS) };
 }
 
 /** Embed lines for a resource note; empty for recipes and other kinds. */

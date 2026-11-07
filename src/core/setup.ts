@@ -5,11 +5,28 @@ import { cabinetFolder, notePath, PROP, wikiLink } from './schema';
 import { basePath, resourceBases } from './bases';
 import { NAVIGATION_BASE, navigationBase } from './navigation';
 import { SHOPPING_NOTE, shoppingBase, shoppingNote, shoppingNotePath } from './shopping';
-import { RESTOCK_BASE, restockBase } from './restock';
+import { DEFAULT_RESTOCK, RESTOCK_BASE, restockBase } from './restock';
+import type { RestockThresholds } from './restock';
 import type { PlannedFile } from './schema';
 
+/** Where users keep their own Bases; the plugin never writes there. */
+export const CUSTOM_VIEWS_FOLDER = 'Custom views';
+
+export function customViewsPath(root: string): string {
+	return `${cabinetFolder(root)}/${CUSTOM_VIEWS_FOLDER}`;
+}
+
+/**
+ * The Bases the plugin owns, in `<root>/Views/`. Setup and **Refresh cabinet views** write them,
+ * and the plugin rewrites one when a release or a setting changes it. Copies in Custom views are the user's.
+ */
+export function cabinetViews(folder: string, restock: RestockThresholds = DEFAULT_RESTOCK): PlannedFile[] {
+	const root = cabinetFolder(folder);
+	return [...resourceBases(root), navigationBase(root), shoppingBase(root), restockBase(root, restock)];
+}
+
 /** Every file setup writes. `examples` adds the worked example, for a cabinet without a home yet. */
-export function starterPlan(folder: string, paths: ReadonlyMap<string, string> = new Map(), examples = false): PlannedFile[] {
+export function starterPlan(folder: string, paths: ReadonlyMap<string, string> = new Map(), examples = false, restock: RestockThresholds = DEFAULT_RESTOCK): PlannedFile[] {
 	const root = cabinetFolder(folder);
 	const files = STARTER_CATALOG.map(entry => ({
 		...renderNote(root, catalogDraft(root, entry, paths), localDate()),
@@ -17,7 +34,7 @@ export function starterPlan(folder: string, paths: ReadonlyMap<string, string> =
 		catalogId: entry.id,
 	}));
 	const example = examples ? examplePlan(root, localDate(), paths) : [];
-	return [...files, ...example, ...resourceBases(root), navigationBase(root), shoppingBase(root), restockBase(root), shoppingNote(root), cabinetHome(root, example)];
+	return [...files, ...example, ...cabinetViews(root, restock), shoppingNote(root), cabinetHome(root, example)];
 }
 
 export function cabinetHomePath(root: string): string {
@@ -94,11 +111,9 @@ ${viewLink('Ingredient categories')} groups families into broader classification
 
 ## Make it yours
 
-Open a linked view to browse your current notes, edit properties, or customize filters, sorting, and columns. Enable **Bases** in **Settings → Core plugins** to use these views.
+Open a linked view to browse your current notes and edit properties. Enable **Bases** in **Settings → Core plugins** to use these views.
 
-Edit this page, ingredient notes, and views to suit your cabinet. Setup preserves existing files when you run it again.
-
-${viewLink(NAVIGATION_BASE)} is the exception: it supplies the sections shown in each ingredient and bottle note, and setup keeps it current. Changes to it affect every note, and setup stops updating it once you change it.
+Edit this page and your notes to suit your cabinet; setup keeps existing notes when you run it again. The views in the **Views** folder belong to the plugin, which updates them in new releases; ${viewLink(NAVIGATION_BASE)} supplies the sections shown in each ingredient and bottle note. To change a view, copy it into the **${CUSTOM_VIEWS_FOLDER}** folder and edit the copy; the plugin never touches that folder. **Cocktail Cabinet: Refresh cabinet views** restores the originals.
 
 Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The views need only Obsidian’s core Bases plugin.`),
 	};
@@ -107,10 +122,8 @@ Your notes, links, and properties remain usable with Cocktail Cabinet disabled. 
 export interface SetupPreview {
 	root: string;
 	create: PlannedFile[];
-	/** Plugin-managed files still matching an earlier generated version. */
+	/** Plugin views whose content differs from the current version. */
 	update: PlannedFile[];
 	keep: string[];
-	/** Plugin-managed files the user has changed; kept as they are. */
-	customized: string[];
 	conflicts: string[];
 }

@@ -2,6 +2,7 @@ import { Notice, Setting } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { STARTER_CATALOG } from '../catalog/catalog';
 import { cabinetFolder } from '../core/schema';
+import { CUSTOM_VIEWS_FOLDER } from '../core/setup';
 import type { PlannedFile } from '../core/schema';
 import { CabinetForm } from './form';
 
@@ -17,7 +18,7 @@ export class SetupModal extends CabinetForm {
 			const preview = await this.plugin.store.previewSetup(root);
 			previewEl.setText(preview.conflicts.length
 				? `Conflicts: ${preview.conflicts.slice(0, 5).join(', ')}. Choose another folder; existing files will not be replaced.`
-				: [`${preview.create.length} to create, ${preview.update.length} to update, ${preview.keep.length} to keep.`, exampleText(preview.create), customizedText(preview.customized)].filter(Boolean).join(' '));
+				: [`${preview.create.length} to create, ${preview.update.length} to update, ${preview.keep.length} to keep.`, exampleText(preview.create)].filter(Boolean).join(' '));
 		})));
 		const help = this.contentEl.createEl('p');
 		help.appendText('Enable ');
@@ -26,9 +27,9 @@ export class SetupModal extends CabinetForm {
 		help.createEl('strong', { text: 'Settings' });
 		help.appendText(' → ');
 		help.createEl('strong', { text: 'Core plugins' });
-		help.appendText(' to use the views. Run setup again to add missing notes and views. Existing files are preserved, except the plugin-managed Related view, which is updated unless you’ve changed it. Link or embed new views from the cabinet’s ');
+		help.appendText(' to use the views. Run setup again to add missing notes and views. Existing notes are preserved. The views in the cabinet’s ');
 		help.createEl('strong', { text: 'Views' });
-		help.appendText(' folder in an older home page.');
+		help.appendText(` folder belong to the plugin and are brought up to date; keep your own views in ${CUSTOM_VIEWS_FOLDER}, which setup creates and never changes.`);
 		this.submit('Create cabinet', async () => {
 			const folder = cabinetFolder(root);
 			const result = await this.plugin.store.setup(folder);
@@ -39,7 +40,9 @@ export class SetupModal extends CabinetForm {
 				this.plugin.settings.cabinetFolder = previousFolder;
 				throw error;
 			}
-			new Notice([`Cabinet ready: ${result.created} created, ${result.updated} updated, ${result.kept} kept.`, customizedText(result.customized)].filter(Boolean).join(' '));
+			new Notice(`Cabinet ready: ${result.created} created, ${result.updated} updated, ${result.kept} kept.`);
+			// Record the views just written, so startup doesn't rewrite them.
+			await this.plugin.syncViews();
 			this.close();
 			await this.plugin.store.open(`${folder}/Cocktail Cabinet.md`);
 		});
@@ -49,8 +52,4 @@ export class SetupModal extends CabinetForm {
 function exampleText(create: readonly PlannedFile[]): string {
 	const count = create.filter(file => file.example).length;
 	return count ? `Includes ${count} example ${count === 1 ? 'note' : 'notes'}, with stock unknown.` : 'No stock or recipes are added.';
-}
-
-function customizedText(paths: readonly string[]): string {
-	return paths.length ? `${paths.join(', ')} has your changes, so it wasn’t updated. Delete it and run setup again to get the current version.` : '';
 }

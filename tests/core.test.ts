@@ -377,7 +377,6 @@ void test('the navigation Base is scoped to the root and serves every embedded v
 	const base = navigationBase(root);
 	assert.equal(base.path, basePath(root, NAVIGATION_BASE));
 	assert.ok(base.content.includes(`- 'file.inFolder("My cabinet''s/Drinks")'`));
-	assert.ok(base.managed, 'the navigation Base is plugin-managed');
 	assert.ok(base.content.includes('direction: DESC'), 'recipes sort by rating');
 	for (const view of Object.values(NAVIGATION_VIEWS)) assert.ok(base.content.includes(`name: "${view}"`), view);
 	assert.ok(!base.content.includes(PROP.catalogId));
@@ -407,10 +406,9 @@ void test('ratings read numbers, numeric strings, and star runs from 1 to 5', ()
 	for (const value of [0, 6, 3.5, 'great', '⭐️ good', ['⭐️']]) assert.equal(parseRating(value), undefined);
 });
 
-void test('the shopping list is a user-owned Base with a section per kind, embedded in its own note', () => {
+void test('the shopping list is a Base with a section per kind, embedded in its own note', () => {
 	const base = shoppingBase('Cocktails');
 	assert.equal(base.path, 'Cocktails/Views/Shopping list.base');
-	assert.ok(!base.managed);
 	for (const view of Object.values(SHOPPING_VIEWS)) assert.ok(base.content.includes(`name: "${view}"`), view);
 	assert.equal((base.content.match(/note\["cc-shopping-list"\] == true/g) ?? []).length, 3);
 	for (const label of ['Type', 'Provides', 'Have', 'Not in stock', 'Last price']) assert.ok(base.content.includes(`displayName: "${label}"`), label);
@@ -462,10 +460,9 @@ void test('the home note introduces the example only in a new cabinet', () => {
 	assert.ok(home(true).includes('[[Cocktails/Recipes/Daiquiri|Daiquiri]] and [[Cocktails/Recipes/Whiskey Sour|Whiskey Sour]]'));
 });
 
-void test('Restock is a user-owned Base of shopping candidates: running low, out, unknown', () => {
+void test('Restock is a Base of shopping candidates: running low, out, unknown', () => {
 	const base = restockBase('Cocktails');
 	assert.equal(base.path, basePath('Cocktails', RESTOCK_BASE));
-	assert.ok(!base.managed);
 	const { content } = base;
 	const views = content.split('\n  - type: table\n').slice(1);
 	assert.deepEqual(views.map(view => /name: "(.*)"/.exec(view)![1]), Object.values(RESTOCK_VIEWS));
@@ -485,6 +482,8 @@ void test('Restock is a user-owned Base of shopping candidates: running low, out
 	// Bases doesn't treat `!(blank > 0)` or `!blank` as true for numbers.
 	assert.ok(!content.includes('!(note[') && !content.includes('!note["cc-unopened"]'));
 	assert.ok(content.includes(`unknown: 'if(note["cc-stock-tracking"] == "status", !note["cc-availability"] || note["cc-availability"] == "Unknown", note["cc-stock-tracking"] != "volume")'`));
-		assert.ok(content.includes("lowShare: '0.25'") && content.includes("lowMl: '100'"));
+		assert.ok(content.includes("lowShare: '0.1'") && content.includes("lowMl: '70'"), 'defaults: 10% and 70 mL');
+	const custom = restockBase('Cocktails', { percent: 25, ml: 100 }).content;
+	assert.ok(custom.includes("lowShare: '0.25'") && custom.includes("lowMl: '100'"));
 	for (const line of content.split('formulas:\n')[1]!.split('properties:')[0]!.trimEnd().split('\n')) assert.match(line, /^ {2}\w+: '.*'$/);
 });

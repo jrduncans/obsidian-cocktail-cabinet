@@ -39,7 +39,7 @@ This project spans three workspace folders:
 - Use browser-compatible APIs and small dependencies. The plugin supports mobile; keep `minAppVersion` accurate for APIs in use.
 - Don't hide or disable features by platform. "Desktop first" in the docs sets testing and layout priority; it doesn't mean gating with `Platform.isMobile`. A rough mobile layout is acceptable, because the feature has to appear on mobile for its issues to be found.
 - Register commands with stable IDs. Persist settings with `loadData()` / `saveData()` and keep collection data in vault notes and core Bases.
-- Setup creates missing files and preserves existing notes and customized Bases. Keep unknown quantities distinct from zero and validate creation inputs.
+- Setup creates missing files and preserves existing notes. The Bases in `<root>/Views/` belong to the plugin and are rewritten when their generated content changes; users keep their own in `<root>/Custom views/`. Blank stock amounts mean zero; validate creation inputs.
 - Keep startup light, defer vault scans until needed, and use `register*` helpers for listeners and intervals.
 - Use sentence case and short, action-oriented UI labels. Prefer “select”; use **Settings → Community plugins** notation in instructions.
 
