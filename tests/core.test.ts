@@ -14,6 +14,16 @@ import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } f
 import { RESTOCK_BASE, RESTOCK_VIEWS, restockBase } from '../src/core/restock';
 import { SHOPPING_BASE, SHOPPING_VIEWS, shoppingBase, shoppingNote, shoppingNotePath } from '../src/core/shopping';
 
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+
+interface ParsedBase {
+	filters: { and: string[] };
+	formulas: Record<string, string>;
+	properties: Record<string, { displayName: string }>;
+	views: { name: string; filters?: { and: string[] }; order: string[]; sort: { property: string; direction: string }[] }[];
+}
+const parseBase = (content: string) => parseYaml(content) as ParsedBase;
+
 void test('cabinet paths remain inside a visible vault folder', () => {
 	assert.equal(cabinetFolder(' Drinks/Cabinet/ '), 'Drinks/Cabinet');
 	for (const root of ['', '/', '/tmp/cabinet', '../Cabinet', 'Cocktails/../Other', '.obsidian', 'A//B', 'C:\\Cabinet', 'Cocktails/NUL']) {
@@ -170,19 +180,17 @@ void test('Bases use the selected root and kind without requiring parents or cat
 	const bases = starterPlan(root).filter(file => file.kind === 'base' && RESOURCE_BASES.some(resource => file.path === basePath(root, resource.name)));
 	assert.equal(bases.length, RESOURCE_BASES.length);
 	for (const [index, base] of bases.entries()) {
-		const filters = base.content.split('formulas:')[0]!.split('\n')
-			.filter(line => line.startsWith('    - ')).map(line => JSON.parse(line.slice(6)) as string);
-		assert.deepEqual(filters, [`file.inFolder(${JSON.stringify(root)})`, 'file.ext == "md"', `note["cc-kind"] == "${RESOURCE_BASES[index]!.kind}"`]);
+		const parsed = parseBase(base.content);
+		assert.deepEqual(parsed.filters.and, [`file.inFolder(${JSON.stringify(root)})`, 'file.ext == "md"', `note["cc-kind"] == "${RESOURCE_BASES[index]!.kind}"`]);
 		assert.ok(!base.content.includes(PROP.catalogId));
 		// One linked proper-name column instead of separate file name and cc-name columns.
-		assert.ok(base.content.includes(`  name: 'file.asLink(if(note["cc-name"], note["cc-name"], file.name))'`));
-		assert.ok(base.content.includes('      - formula.name\n') && !base.content.includes('file.name\n    displayName'));
-		assert.ok(!base.content.includes('note.cc-name'));
+		assert.equal(parsed.formulas.name, 'file.asLink(if(note["cc-name"], note["cc-name"], file.name))');
+		assert.equal(parsed.views[0]!.order[0], 'formula.name');
+		assert.ok(!('file.name' in parsed.properties) && !('note.cc-name' in parsed.properties));
 	}
-	const recipes = bases.find(base => base.path.endsWith('/Recipes.base'))!.content;
-	const order = recipes.split('    order:\n')[1]!.split('    sort:')[0]!.trim().split('\n').map(line => line.trim().slice(2));
-	assert.deepEqual(order, ['formula.name', 'formula.rating', 'note.cc-last-made', 'note.cc-times-made', 'note.created', 'note.source'], 'Source last, so it scrolls off first');
-	assert.ok(recipes.includes(`  rating: '${COMMON_FORMULAS.rating}'`), 'ratings as stars');
+	const recipes = parseBase(bases.find(base => base.path.endsWith('/Recipes.base'))!.content);
+	assert.deepEqual(recipes.views[0]!.order, ['formula.name', 'formula.rating', 'cc-last-made', 'cc-times-made', 'created', 'source'], 'Source last, so it scrolls off first');
+	assert.equal(recipes.formulas.rating, COMMON_FORMULAS.rating, 'ratings as stars');
 });
 
 void test('a family without a category still finds its types and their bottles', () => {
@@ -373,27 +381,37 @@ void test('resource Bases expose mL stock, tracking choices, and independent pur
 });
 
 void test('the Recipes Base adds Latest and Recently made views', () => {
-	const recipes = starterPlan('Cocktails').find(file => file.path.endsWith('/Recipes.base'))!.content;
-	const [, byName, latest, made] = recipes.split('  - type: table\n');
-	assert.match(made!, /name: "Recently made"[\s\S]*property: note\.cc-last-made\n {8}direction: DESC/);
-	for (const column of ['note.cc-last-made', 'note.cc-times-made']) assert.ok(made!.includes(`      - ${column}`), column);
-	const bottles = starterPlan('Cocktails').find(file => file.path.endsWith('/Bottles.base'))!.content;
-	assert.ok(bottles.includes('      - note.cc-last-used'), 'Bottles shows Last used');
-	assert.match(byName!, /name: "Recipes"[\s\S]*property: file\.name\n {8}direction: ASC/);
-	assert.match(latest!, /name: "Latest"[\s\S]*property: note\.created\n {8}direction: DESC/);
-	assert.ok(latest!.includes('      - note.created'), 'Latest shows the Created column');
+	const recipes = parseBase(starterPlan('Cocktails').find(file => file.path.endsWith('/Recipes.base'))!.content);
+	const [byName, latest, made] = recipes.views;
+	assert.deepEqual([byName!.name, byName!.sort], ['Recipes', [{ property: 'file.name', direction: 'ASC' }]]);
+	assert.deepEqual([latest!.name, latest!.sort], ['Latest', [{ property: 'created', direction: 'DESC' }]]);
+	assert.deepEqual([made!.name, made!.sort], ['Recently made', [{ property: 'cc-last-made', direction: 'DESC' }]]);
+	for (const column of ['created', 'cc-last-made', 'cc-times-made']) assert.ok(made!.order.includes(column), column);
+	const bottles = parseBase(starterPlan('Cocktails').find(file => file.path.endsWith('/Bottles.base'))!.content);
+	assert.ok(bottles.views[0]!.order.includes('cc-last-used'), 'Bottles shows Last used');
+	assert.ok('note.cc-last-used' in bottles.properties, 'display names keep the note. prefix');
 });
 
 void test('the navigation Base is scoped to the root and serves every embedded view', () => {
 	const root = "My cabinet's/Drinks";
 	const base = navigationBase(root);
 	assert.equal(base.path, basePath(root, NAVIGATION_BASE));
-	assert.ok(base.content.includes(`- 'file.inFolder("My cabinet''s/Drinks")'`));
-	assert.ok(base.content.includes('direction: DESC'), 'recipes sort by rating');
-	for (const view of Object.values(NAVIGATION_VIEWS)) assert.ok(base.content.includes(`name: "${view}"`), view);
+	const parsed = parseBase(base.content);
+	assert.equal(parsed.filters.and[0], 'file.inFolder("My cabinet\'s/Drinks")');
+	assert.ok(parsed.views.some(view => view.sort.some(sort => sort.direction === 'DESC')), 'recipes sort by rating');
+	assert.deepEqual(parsed.views.map(view => view.name), Object.values(NAVIGATION_VIEWS));
 	assert.ok(!base.content.includes(PROP.catalogId));
-	// Every formula line is one YAML single-quoted scalar.
-	for (const line of base.content.split('formulas:\n')[1]!.split('properties:')[0]!.trimEnd().split('\n')) assert.match(line, /^ {2}\w+: '.*'$/);
+});
+
+void test('generated Bases are written as Obsidian saves them, so opening one changes nothing', () => {
+	for (const base of starterPlan("My cabinet's/Drinks").filter(file => file.kind === 'base')) {
+		// Obsidian writes with the yaml library and no line wrapping; a round trip must be a no-op.
+		assert.equal(stringifyYaml(parseYaml(base.content), { lineWidth: 0 }), base.content, base.path);
+		// Views list bare property names; Obsidian rewrites note.x to x there.
+		for (const view of parseBase(base.content).views) {
+			for (const property of [...view.order, ...view.sort.map(sort => sort.property)]) assert.ok(!property.startsWith('note.'), `${base.path}: ${property}`);
+		}
+	}
 });
 
 void test('resource notes embed their navigation sections; recipes do not', () => {
@@ -421,9 +439,11 @@ void test('ratings read numbers, numeric strings, and star runs from 1 to 5', ()
 void test('the shopping list is a Base with a section per kind, embedded in its own note', () => {
 	const base = shoppingBase('Cocktails');
 	assert.equal(base.path, 'Cocktails/Views/Shopping list.base');
-	for (const view of Object.values(SHOPPING_VIEWS)) assert.ok(base.content.includes(`name: "${view}"`), view);
+	const parsed = parseBase(base.content);
+	assert.deepEqual(parsed.views.map(view => view.name), Object.values(SHOPPING_VIEWS));
 	assert.equal((base.content.match(/note\["cc-shopping-list"\] == true/g) ?? []).length, 3);
-	for (const label of ['Type', 'Provides', 'Have', 'Not in stock', 'Last price']) assert.ok(base.content.includes(`displayName: "${label}"`), label);
+	const labels = Object.values(parsed.properties).map(property => property.displayName);
+	for (const label of ['Type', 'Provides', 'Have', 'Not in stock', 'Last price']) assert.ok(labels.includes(label), label);
 	const note = shoppingNote('Cocktails');
 	assert.equal(note.path, 'Cocktails/Shopping list.md');
 	assert.ok(note.content.startsWith('---\ncc-kind: "shopping"\n---\n# Shopping list\n'));
@@ -476,27 +496,26 @@ void test('Restock is a Base of shopping candidates: running low, out, unknown',
 	const base = restockBase('Cocktails');
 	assert.equal(base.path, basePath('Cocktails', RESTOCK_BASE));
 	const { content } = base;
-	const views = content.split('\n  - type: table\n').slice(1);
-	assert.deepEqual(views.map(view => /name: "(.*)"/.exec(view)![1]), Object.values(RESTOCK_VIEWS));
-	for (const view of views) {
-		assert.ok(view.includes('note["cc-kind"] == "bottle" || note["cc-kind"] == "ingredient"'));
-		assert.ok(view.includes('      - note.cc-shopping-list\n'), 'each view can add to the shopping list');
+	const parsed = parseBase(content);
+	assert.deepEqual(parsed.views.map(view => view.name), Object.values(RESTOCK_VIEWS));
+	for (const view of parsed.views) {
+		assert.ok(view.filters!.and[0]!.includes('note["cc-kind"] == "bottle" || note["cc-kind"] == "ingredient"'));
+		assert.ok(view.order.includes('cc-shopping-list'), 'each view can add to the shopping list');
 	}
-	assert.match(views[0]!, /formula\.low/);
+	assert.match(parsed.views[0]!.filters!.and[0]!, /formula\.low/);
 	// Running low and Out: most recently used first, then by name. Modified dates are unreliable under sync and Git.
-	for (const view of views.slice(0, 2)) assert.match(view, /- property: note\.cc-last-used\n {8}direction: DESC\n {6}- property: file\.name\n {8}direction: ASC/);
+	for (const view of parsed.views.slice(0, 2)) assert.deepEqual(view.sort, [{ property: 'cc-last-used', direction: 'DESC' }, { property: 'file.name', direction: 'ASC' }]);
 	assert.ok(!content.includes('file.mtime'));
-	assert.match(views[2]!, /formula\.unknown/);
-	assert.ok(views[2]!.includes('      - formula.unknownStock\n'));
+	assert.match(parsed.views[2]!.filters!.and[0]!, /formula\.unknown/);
+	assert.ok(parsed.views[2]!.order.includes('formula.unknownStock'));
 	// Low: Low status, or the last bottle under the share (or mL without a size); out needs known zeros.
-	for (const part of ['== "Low"', 'note["cc-open-ml"] > 0 && if(note["cc-unopened"] == null, true, note["cc-unopened"] <= 0)', '<= formula.lowShare', '<= formula.lowMl', 'note["cc-remaining-ml"] > 0 && note["cc-remaining-ml"] <= formula.lowMl']) assert.ok(content.includes(part), part);
+	for (const part of ['== "Low"', 'note["cc-open-ml"] > 0 && if(note["cc-unopened"] == null, true, note["cc-unopened"] <= 0)', '<= formula.lowShare', '<= formula.lowMl', 'note["cc-remaining-ml"] > 0 && note["cc-remaining-ml"] <= formula.lowMl']) assert.ok(parsed.formulas.low!.includes(part), part);
 	// Blank amounts are none: out is nothing above 0, and unknown is only availability or a missing mode.
-	for (const part of ['== "Out"', 'if(note["cc-open-ml"] == null, true, note["cc-open-ml"] <= 0) && if(note["cc-unopened"] == null, true, note["cc-unopened"] <= 0)', 'if(note["cc-remaining-ml"] == null, true, note["cc-remaining-ml"] <= 0)']) assert.ok(content.includes(part), part);
+	for (const part of ['== "Out"', 'if(note["cc-open-ml"] == null, true, note["cc-open-ml"] <= 0) && if(note["cc-unopened"] == null, true, note["cc-unopened"] <= 0)', 'if(note["cc-remaining-ml"] == null, true, note["cc-remaining-ml"] <= 0)']) assert.ok(parsed.formulas.out!.includes(part), part);
 	// Bases doesn't treat `!(blank > 0)` or `!blank` as true for numbers.
 	assert.ok(!content.includes('!(note[') && !content.includes('!note["cc-unopened"]'));
-	assert.ok(content.includes(`unknown: 'if(note["cc-stock-tracking"] == "status", !note["cc-availability"] || note["cc-availability"] == "Unknown", note["cc-stock-tracking"] != "volume")'`));
-		assert.ok(content.includes("lowShare: '0.1'") && content.includes("lowMl: '70'"), 'defaults: 10% and 70 mL');
-	const custom = restockBase('Cocktails', { percent: 25, ml: 100 }).content;
-	assert.ok(custom.includes("lowShare: '0.25'") && custom.includes("lowMl: '100'"));
-	for (const line of content.split('formulas:\n')[1]!.split('properties:')[0]!.trimEnd().split('\n')) assert.match(line, /^ {2}\w+: '.*'$/);
+	assert.equal(parsed.formulas.unknown, 'if(note["cc-stock-tracking"] == "status", !note["cc-availability"] || note["cc-availability"] == "Unknown", note["cc-stock-tracking"] != "volume")');
+	assert.deepEqual([parsed.formulas.lowShare, parsed.formulas.lowMl], ['0.1', '70'], 'defaults: 10% and 70 mL');
+	const custom = parseBase(restockBase('Cocktails', { percent: 25, ml: 100 }).content);
+	assert.deepEqual([custom.formulas.lowShare, custom.formulas.lowMl], ['0.25', '100']);
 });

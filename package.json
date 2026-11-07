@@ -32,7 +32,9 @@
 		"jiti": "^2.6.1",
 		"obsidian": "1.12.3",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.59.1",
+		"typescript-eslint": "^8.59.1"
+	},
+	"dependencies": {
 		"yaml": "^2.8.4"
 	}
 }

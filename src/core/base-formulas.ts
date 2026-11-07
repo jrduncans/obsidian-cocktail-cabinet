@@ -1,11 +1,10 @@
+import { stringify } from 'yaml';
 import { cabinetFolder, PROP } from './schema';
 import type { NoteKind } from './schema';
 
 /** Building blocks for generated core Bases that use formulas (navigation, shopping list). */
 
 export const q = (key: string) => JSON.stringify(key);
-/** YAML single-quoted scalar, so formulas stay readable when users edit the Base. */
-export const yaml = (text: string) => `'${text.replace(/'/g, "''")}'`;
 
 const PARENT_KEYS = [PROP.type, PROP.provides, PROP.family, PROP.category];
 
@@ -60,30 +59,33 @@ export interface FormulaView {
 	sort?: Sort[];
 }
 
+/**
+ * A Base as Obsidian itself saves one: written with the `yaml` library, no line wrapping, and
+ * bare property names in view columns and sorts (Obsidian drops `note.` there, keeping it in
+ * `properties`). Opening a generated view then doesn't rewrite the file. Checked in 1.15.
+ */
+export function serializeBase(base: Record<string, unknown>): string {
+	return stringify(base, { lineWidth: 0 });
+}
+
+/** A property as views list it: `note.` dropped, `formula.` and `file.` kept. */
+export const viewProperty = (property: string) => property.replace(/^note\./, '');
+
+export const sortEntries = (sort: readonly Sort[]) => sort.map(([property, direction]) => ({ property: viewProperty(property), direction }));
+
 export function renderFormulaBase(root: string, formulas: Record<string, string>, views: readonly FormulaView[]): string {
 	root = cabinetFolder(root);
 	const labels = new Map(views.flatMap(view => view.columns));
-	return [
-		'filters:',
-		'  and:',
-		`    - ${yaml(`file.inFolder(${q(root)})`)}`,
-		`    - ${yaml('file.ext == "md"')}`,
-		'formulas:',
-		...Object.entries(formulas).map(([name, expression]) => `  ${name}: ${yaml(expression)}`),
-		'properties:',
-		...[...labels].map(([property, label]) => `  ${property}:\n    displayName: ${q(label)}`),
-		'views:',
-		...views.flatMap(view => [
-			`  - type: ${view.type}`,
-			`    name: ${q(view.name)}`,
-			'    filters:',
-			'      and:',
-			`        - ${yaml(view.filter)}`,
-			'    order:',
-			...view.columns.map(([property]) => `      - ${property}`),
-			'    sort:',
-			...(view.sort ?? [['file.name', 'ASC']]).flatMap(([property, direction]) => [`      - property: ${property}`, `        direction: ${direction}`]),
-		]),
-		'',
-	].join('\n');
+	return serializeBase({
+		filters: { and: [`file.inFolder(${q(root)})`, 'file.ext == "md"'] },
+		formulas,
+		properties: Object.fromEntries([...labels].map(([property, label]) => [property, { displayName: label }])),
+		views: views.map(view => ({
+			type: view.type,
+			name: view.name,
+			filters: { and: [view.filter] },
+			order: view.columns.map(([property]) => viewProperty(property)),
+			sort: sortEntries(view.sort ?? [['file.name', 'ASC']]),
+		})),
+	});
 }

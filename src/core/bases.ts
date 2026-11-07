@@ -1,4 +1,5 @@
-import { COMMON_FORMULAS, yaml } from './base-formulas';
+import { COMMON_FORMULAS, serializeBase, sortEntries, viewProperty } from './base-formulas';
+import type { Sort } from './base-formulas';
 import { cabinetFolder, PROP } from './schema';
 import type { NoteKind, PlannedFile } from './schema';
 
@@ -19,7 +20,7 @@ interface ResourceBase {
 	/** After the linked name, in display order: narrow screens scroll the last ones off. */
 	columns: Column[];
 	/** More table views after the default one, which sorts by file name. */
-	views?: { name: string; sort: [property: string, direction: 'ASC' | 'DESC'] }[];
+	views?: { name: string; sort: Sort }[];
 }
 
 const purchasingColumns: Column[] = [
@@ -90,35 +91,18 @@ function renderBase(root: string, resource: ResourceBase): string {
 		...resource.columns.map(([property, label]): Column => [property.startsWith('formula.') ? property : `note.${property}`, label]),
 	];
 	const used = Object.entries(FORMULAS).filter(([name]) => columns.some(([property]) => property === `formula.${name}`));
-	const filters = [
-		`file.inFolder(${JSON.stringify(root)})`,
-		'file.ext == "md"',
-		`note[${JSON.stringify(PROP.kind)}] == ${JSON.stringify(resource.kind)}`,
-	];
-	const properties = columns.map(([property, label]) =>
-		`  ${property}:\n    displayName: ${JSON.stringify(label)}`,
-	);
-	const views = [{ name: resource.name, sort: ['file.name', 'ASC'] }, ...resource.views ?? []];
-	return [
-		'filters:',
-		'  and:',
-		...filters.map(filter => `    - ${JSON.stringify(filter)}`),
-		'formulas:',
-		...used.map(([name, expression]) => `  ${name}: ${yaml(expression)}`),
-		'properties:',
-		...properties,
-		'views:',
-		...views.flatMap(view => [
-			'  - type: table',
-			`    name: ${JSON.stringify(view.name)}`,
-			'    order:',
-			...columns.map(([property]) => `      - ${property}`),
-			'    sort:',
-			`      - property: ${view.sort[0]}`,
-			`        direction: ${view.sort[1]}`,
-		]),
-		'',
-	].join('\n');
+	const views = [{ name: resource.name, sort: ['file.name', 'ASC'] as Sort }, ...resource.views ?? []];
+	return serializeBase({
+		filters: { and: [`file.inFolder(${JSON.stringify(root)})`, 'file.ext == "md"', `note[${JSON.stringify(PROP.kind)}] == ${JSON.stringify(resource.kind)}`] },
+		formulas: Object.fromEntries(used),
+		properties: Object.fromEntries(columns.map(([property, label]) => [property, { displayName: label }])),
+		views: views.map(view => ({
+			type: 'table',
+			name: view.name,
+			order: columns.map(([property]) => viewProperty(property)),
+			sort: sortEntries([view.sort]),
+		})),
+	});
 }
 
 /** Standalone core Bases configuration, with no plugin functions or generated data. */
