@@ -258,3 +258,25 @@ void test('a status-tracked source gets a last-used date though nothing is subtr
 	assert.equal(f.properties.get(f.b.path)![PROP.lastUsed], moment().format('YYYY-MM-DD'));
 	assert.equal(f.properties.get(f.b.path)![PROP.availability], 'Have');
 });
+void test('logging on an earlier day records that day and never moves later dates backward', async () => {
+	const f = fixture();
+	f.properties.get(f.a.path)![PROP.lastUsed] = '2026-11-06';
+	f.recipeProperties[PROP.lastMade] = '2026-11-05';
+	const review = await f.logger.review(f.recipe, '2026-11-01');
+	assert.equal(review.daily.date, '2026-11-01');
+	const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+	assert.equal((await f.logger.apply(review, plan, false)).status, 'applied');
+	assert.equal(f.properties.get(f.a.path)![PROP.lastUsed], '2026-11-06');
+	assert.equal(f.properties.get(f.b.path)![PROP.lastUsed], '2026-11-01');
+	assert.equal(f.recipeProperties[PROP.lastMade], '2026-11-05');
+	assert.equal(f.recipeProperties[PROP.timesMade], 3);
+});
+void test('a future or malformed log date is rejected before any write', async () => {
+	const f = fixture();
+	for (const day of ['2999-01-01', 'yesterday']) {
+		const review = await f.logger.review(f.recipe, day);
+		const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+		await assert.rejects(f.logger.apply(review, plan, false), /today or an earlier date/);
+	}
+	assert.deepEqual(f.events, []);
+});

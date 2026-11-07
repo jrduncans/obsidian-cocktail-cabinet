@@ -33,10 +33,13 @@ export class LoggingDaily {
 
 	private resolve = (link: string, source: string): string | null => this.app.metadataCache.getFirstLinkpathDest(link, source)?.path ?? null;
 
-	async preview(recipe: CabinetNote): Promise<DailyPreview> {
-		const date = moment();
-		const result: DailyPreview = { date: date.format('YYYY-MM-DD'), path: '', configuration: '', duplicate: false };
+	/** The daily note for `day` (`YYYY-MM-DD`, default today); a drink remembered later is logged on the day it was made. */
+	async preview(recipe: CabinetNote, day = moment().format('YYYY-MM-DD')): Promise<DailyPreview> {
+		const date = moment(day, 'YYYY-MM-DD');
+		const result: DailyPreview = { date: day, path: '', configuration: '', duplicate: false };
 		try {
+			if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || Number.isNaN(Date.parse(day))) throw new Error('Enter a valid date.');
+			if (day > moment().format('YYYY-MM-DD')) throw new Error('Pick today or an earlier date.');
 			const instance = this.instance();
 			result.configuration = JSON.stringify(instance.options);
 			const folder = instance.options.folder
@@ -50,7 +53,7 @@ export class LoggingDaily {
 			result.path = normalizePath(`${folder.path}/${name}.md`);
 			// Match native case-insensitive discovery, and retain the actual existing path.
 			const existing = this.app.vault.getAllLoadedFiles().find(file => file.path.toLowerCase() === result.path.toLowerCase());
-			if (existing && !(existing instanceof TFile)) throw new Error('A folder has today’s daily note name.');
+			if (existing && !(existing instanceof TFile)) throw new Error('A folder has that day’s daily note name.');
 			if (existing instanceof TFile) {
 				result.path = existing.path;
 				result.duplicate = hasDailyLog(await this.app.vault.read(existing), recipe, link => this.resolve(link, existing.path));
@@ -74,11 +77,11 @@ export class LoggingDaily {
 
 	async append(preview: DailyPreview, recipe: CabinetNote, line: string): Promise<boolean> {
 		const instance = this.instance();
-		if (preview.configuration !== JSON.stringify(instance.options) || preview.date !== moment().format('YYYY-MM-DD')) {
-			throw new Error('The date or daily note settings changed.');
+		if (preview.configuration !== JSON.stringify(instance.options)) {
+			throw new Error('The daily note settings changed.');
 		}
 		const file = await instance.getDailyNote(moment(preview.date, 'YYYY-MM-DD'));
-		if (!(file instanceof TFile) || file.path !== preview.path) throw new Error('Couldn’t open or create today’s note.');
+		if (!(file instanceof TFile) || file.path !== preview.path) throw new Error('Couldn’t open or create the daily note.');
 		let appended = false;
 		await this.app.vault.process(file, content => {
 			if (!preview.duplicate && hasDailyLog(content, recipe, link => this.resolve(link, file.path))) return content;

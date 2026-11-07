@@ -1,9 +1,10 @@
 import { Modal, Notice, Setting, setIcon } from 'obsidian';
-import type { ButtonComponent } from 'obsidian';
+import type { ButtonComponent, ToggleComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
 import { SKIP_LINE } from '../core/logging-lines';
 import type { SkippedLine } from '../core/logging-lines';
 import { ingredientParts } from '../core/unlinked-lines';
+import { localDate } from '../core/notes';
 import { planLogging } from '../core/logging-plan';
 import { bottleStockText, formatMl } from '../core/logging-stock';
 import { PROP } from '../core/schema';
@@ -26,6 +27,8 @@ export class LoggingModal extends Modal {
 	private servings = 1;
 	private selections = new Map<number, string>();
 	private addDaily = true;
+	private date = localDate();
+	private dateRequest = 0;
 	private busy = false;
 	private terminal = false;
 	private closed = false;
@@ -34,6 +37,7 @@ export class LoggingModal extends Modal {
 	private messageEl!: HTMLElement;
 	private applyButton!: ButtonComponent;
 	private dailySetting?: Setting;
+	private dailyToggle?: ToggleComponent;
 
 	constructor(private plugin: CocktailCabinetPlugin, private logger: LoggingStore, private stocks: StockStore,
 		private links: RecipeLinkStore, private recipe: CabinetNote) { super(plugin.app); }
@@ -72,7 +76,7 @@ export class LoggingModal extends Modal {
 
 	private async reload(notice = '') {
 		try {
-			const review = await this.logger.review(this.recipe);
+			const review = await this.logger.review(this.recipe, this.date);
 			if (this.closed || this.busy || this.terminal) return;
 			this.acceptReview(review, false);
 			this.notice = notice;
@@ -92,7 +96,7 @@ export class LoggingModal extends Modal {
 
 	private async load() {
 		try {
-			const review = await this.logger.review(this.recipe);
+			const review = await this.logger.review(this.recipe, this.date);
 			if (this.closed) return;
 			this.acceptReview(review, true);
 			this.render();
@@ -167,8 +171,17 @@ export class LoggingModal extends Modal {
 			});
 		}
 		this.previewEl = this.contentEl.createDiv();
+		new Setting(this.contentEl).setName('Date').setDesc('Made earlier? Pick the day; last made and last used never move backward.').addText(input => {
+			input.inputEl.type = 'date';
+			input.inputEl.max = localDate();
+			input.inputEl.setAttribute('aria-label', 'Date');
+			input.setValue(this.date).onChange(value => {
+				if (this.busy || this.terminal) { input.setValue(this.date); return; }
+				void this.changeDate(value);
+			});
+		});
 		this.dailySetting = new Setting(this.contentEl).setName('Add to daily note')
-			.addToggle(toggle => toggle.setValue(this.addDaily).onChange(value => {
+			.addToggle(toggle => (this.dailyToggle = toggle).setValue(this.addDaily).onChange(value => {
 				if (this.busy || this.terminal) { toggle.setValue(this.addDaily); return; }
 				this.addDaily = value; this.refreshPreview();
 			}));
@@ -179,6 +192,22 @@ export class LoggingModal extends Modal {
 			});
 		this.refreshPreview();
 	}
+
+	/** Re-read the daily note for another day; an empty or future date is kept as typed and blocks logging. */
+	private async changeDate(value: string) {
+		this.date = value;
+		const request = ++this.dateRequest;
+		const review = this.review;
+		if (!review) return;
+		const daily = await this.logger.daily.preview(review.recipe, value);
+		if (this.closed || this.busy || this.terminal || request !== this.dateRequest || !this.review) return;
+		const duplicateChanged = daily.duplicate !== this.review.daily.duplicate;
+		this.review = { ...this.review, daily };
+		if (duplicateChanged) { this.addDaily = !daily.duplicate; this.dailyToggle?.setValue(this.addDaily); }
+		this.refreshPreview();
+	}
+
+	private dateInvalid(): boolean { return !/^\d{4}-\d{2}-\d{2}$/.test(this.date) || this.date > localDate(); }
 
 	private refreshPreview() {
 		if (!this.previewEl || !this.review) return;
@@ -232,11 +261,11 @@ export class LoggingModal extends Modal {
 		}
 		if (this.dailySetting) {
 			const valid = Number.isFinite(this.servings) && this.servings > 0;
-			const desc = review.daily.error ?? [valid ? dailyLogText(review.recipe, this.servings) : '', review.daily.duplicate ? 'Already in today’s note.' : ''].filter(Boolean).join(' ');
+			const desc = review.daily.error ?? [valid ? dailyLogText(review.recipe, this.servings) : '', review.daily.duplicate ? `Already in the note for ${review.daily.date}.` : ''].filter(Boolean).join(' ');
 			this.dailySetting.setDesc(desc);
 			this.dailySetting.descEl.toggleClass('cocktail-cabinet-error', !!review.daily.error && this.addDaily);
 		}
-		this.applyButton?.setDisabled(this.busy || this.terminal || plan.errors.length > 0 || plan.unselected > 0
+		this.applyButton?.setDisabled(this.busy || this.terminal || this.dateInvalid() || plan.errors.length > 0 || plan.unselected > 0
 			|| (this.addDaily && !!review.daily.error) || (!this.addDaily && !plan.changes.length));
 	}
 
@@ -244,7 +273,7 @@ export class LoggingModal extends Modal {
 		if (this.busy || this.terminal || !this.review) return;
 		const review = this.review;
 		const plan = planLogging(review.lines, review.sources, this.selections, this.servings);
-		if (plan.errors.length || plan.unselected || (this.addDaily && review.daily.error)) return;
+		if (plan.errors.length || plan.unselected || this.dateInvalid() || (this.addDaily && review.daily.error)) return;
 		this.busy = true;
 		this.refreshPreview();
 		try {
