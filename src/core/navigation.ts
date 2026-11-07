@@ -41,6 +41,8 @@ const FORMULAS: Record<string, string> = {
 	thisUp3: thisParentsOf('formula.thisUp2'),
 	thisLineage: '[formula.thisUp1, formula.thisUp2, formula.thisUp3].flat().map(value.path)',
 	thisParents: 'formula.thisUp1.map(value.path)',
+	// A catch-all type groups bottles that aren't assumed to replace each other (Amaro, Specialty Bitters).
+	thisSwapTypes: `formula.thisUp1.filter(value.properties[${q(PROP.catchAll)}] != true).map(value.path)`,
 	// Recipes: every link anywhere in the note, followed up the hierarchy.
 	linked: 'file.links.map(value.asFile()).filter(value)',
 	linkedUp1: parentsOf('formula.linked'),
@@ -52,9 +54,12 @@ const FORMULAS: Record<string, string> = {
 		'formula.uses.contains(this.file.path)',
 		// The recipe calls for something broader than this note.
 		'formula.linked.filter(formula.thisLineage.contains(value.path)).length > 0',
-		// A bottle also serves recipes that name another bottle of its type.
-		`(this.file.properties[${q(PROP.kind)}] == "bottle" && formula.linkedUp1.filter(formula.thisParents.contains(value.path)).length > 0)`,
+		// A bottle also serves recipes that name another bottle of its type, unless the type is a catch-all.
+		`(this.file.properties[${q(PROP.kind)}] == "bottle" && formula.linkedUp1.filter(formula.thisSwapTypes.contains(value.path)).length > 0)`,
 	].join(' || '),
+	// Recipes that call for this note (or, on a type or family, something under it) are grouped above
+	// the ones it can fill through a broader requirement; "Calls…" sorts before "Can…".
+	match: `if(formula.uses.contains(this.file.path), "Calls for " + if(this.file.properties[${q(PROP.name)}], this.file.properties[${q(PROP.name)}], this.file.name), "Can fill")`,
 	stock: COMMON_FORMULAS.stock,
 	rating: COMMON_FORMULAS.rating,
 };
@@ -79,6 +84,8 @@ const VIEWS: readonly ViewDefinition[] = [
 		type: 'table',
 		filter: `(${kindIs('recipe')}) && formula.related`,
 		columns: [['formula.name', 'Name'], ['formula.rating', 'Rating']],
+		// A blank label leaves only the group name in each heading.
+		groupBy: { property: 'formula.match', direction: 'ASC', label: ' ' },
 		// Unrated recipes sort after rated ones.
 		sort: [['note.rating', 'DESC'], ['file.name', 'ASC']],
 	},

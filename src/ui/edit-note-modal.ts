@@ -59,6 +59,7 @@ export class EditNoteModal extends CabinetForm {
 			this.select('Form', { ...(form ? {} : { '': 'Not set' }), ...formOptions(form) }, form, value => { this.edit.form = value; });
 		}
 		if (kind === 'type') {
+			this.toggle('Catch-all type', properties[PROP.catchAll] === true, value => { this.edit.catchAll = value; }, 'Its bottles are likely substitutes, not interchangeable: logging offers them but never picks one for you.');
 			this.toggle('Add to shopping list', properties[PROP.shoppingList] === true, value => { this.edit.shoppingList = value; });
 		}
 		if (kind === 'recipe') this.recipeFields();

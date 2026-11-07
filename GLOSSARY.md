@@ -18,6 +18,9 @@ _Avoid_: Subcategory
 **Ingredient type**:
 A specific kind of ingredient, such as rye whiskey, lime juice, or 2:1 demerara syrup. Differences that would change the cocktail recipe can distinguish ingredient types; differences in how an ingredient is sourced do not inherently do so.
 
+**Catch-all type**:
+An ingredient type grouping products without close substitutes, such as Amaro or Specialty Bitters. Its bottles are likely substitutes for each other, offered but not assumed.
+
 **Recipe ingredient**:
 An ingredient requirement in a cocktail recipe, which may name a bottle, an ingredient type, or a broader classification such as rum.
 

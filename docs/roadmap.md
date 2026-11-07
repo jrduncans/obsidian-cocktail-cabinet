@@ -60,8 +60,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 - Built 2026-11-06: logging records `cc-last-used` on bottles and other stock, and `cc-last-made` and `cc-times-made` on recipes. Restock's Running low and Out sort by last used; `Recipes.base` has a **Recently made** view. File modified dates were tried for Restock's order and dropped: sync and Git make them unreliable. Possible next: a neglected-bottles view (in stock, least recently used).
 - Built 2026-11-06: **Record purchases**, recording a shopping trip from the Shopping list (and anything bought off it, including new bottles), with price, size changes, and `cc-last-purchased`. See [recording purchases](cabinet-design.md#recording-purchases).
 - New, from a 2026-11-06 UX review (not yet designed in detail):
-  - Recipe sections in notes split into recipes that name the note (including, on a type, its bottles) above recipes it can fill through a broader type or family. Existing notes need the new embed added.
-  - Catch-all types (Amaro, Flavored Rum, Specialty Bitters, …) flagged so their bottles don't count as interchangeable: no Same type section, no family-level recipe matches, no automatic logging candidates.
+  - Built 2026-11-06: Recipes sections grouped into recipes that call for the note above recipes it can fill through something broader, and [catch-all types](cabinet-design.md#catch-all-types) (`cc-catch-all`), whose bottles are offered as likely substitutes but never assumed.
   - Unlinked measured ingredient lines (about a fifth in `knowledge`, often spirits) are silently not subtracted; offer linking from the logging modal and a view of recipes with unlinked lines.
 
 ### 5. Reach: retire the remaining skills

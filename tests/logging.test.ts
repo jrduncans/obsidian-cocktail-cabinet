@@ -45,6 +45,22 @@ void test('a bottle link includes its own stock and same-type alternatives and p
 	assert.equal(line.initialSelection, a.path);
 	assert.equal(classify('- 30 ml [[Unclassified]]', [bottle(unclassified)]).counted[0]?.initialSelection, unclassified.path);
 });
+void test('a catch-all type offers its other bottles as alternatives but never selects one', () => {
+	const amaro = { ...note('Amaro', 'type', [family.path]), catchAll: true };
+	const meletti = note('Meletti', 'bottle', [amaro.path]), averna = note('Averna', 'bottle', [amaro.path]);
+	const all = [...notes, amaro, meletti, averna];
+	const run = (text: string, sources: ReturnType<typeof bottle>[]) => classifyLoggingLines(`### Ingredients\n${text}`, all, sources,
+		link => all.find(item => item.name === link.split('|')[0])?.path ?? null).counted[0]!;
+	const stocked = run('- 30 ml [[Meletti]]', [bottle(meletti), bottle(averna)]);
+	assert.deepEqual([stocked.candidates, stocked.alternatives, stocked.alternativesLabel, stocked.initialSelection], [[meletti.path], [averna.path], 'Other Amaro', meletti.path]);
+	const out = run('- 30 ml [[Meletti]]', [bottle(meletti, 0), bottle(averna)]);
+	assert.deepEqual([out.candidates, out.alternatives, out.initialSelection], [[], [averna.path], null]);
+	const untracked = run('- 30 ml [[Meletti]]', [bottle(averna)]);
+	assert.deepEqual([untracked.alternatives, untracked.initialSelection], [[averna.path], null]);
+	// A line asking for the type itself takes any of its bottles, like a family.
+	const generic = run('- 30 ml [[Amaro]]', [bottle(averna)]);
+	assert.deepEqual([generic.candidates, generic.alternatives, generic.initialSelection], [[averna.path], [], averna.path]);
+});
 void test('a sole candidate is preselected; several candidates require an explicit selection', () => {
 	assert.equal(classify('- 30 ml [[London Dry Gin]]', [bottle(a)]).counted[0]?.initialSelection, a.path);
 	const lines = classify('- 30 ml [[London Dry Gin]]');

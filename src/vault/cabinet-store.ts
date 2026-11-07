@@ -67,6 +67,7 @@ export class CabinetStore {
 				kind: kind as NoteKind,
 				parents,
 				aliases: parseFrontMatterAliases(frontmatter) || [],
+				...(kind === 'type' && frontmatter?.[PROP.catchAll] === true ? { catchAll: true } : {}),
 			}];
 		}).sort((left, right) => left.name.localeCompare(right.name));
 		const byPath = new Map(notes.map(note => [note.path, note]));

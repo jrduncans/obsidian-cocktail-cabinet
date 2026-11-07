@@ -28,9 +28,9 @@ export function relatedTargets(notes: readonly CabinetNote[], target: CabinetNot
 		if (hasAncestor(byPath, note.path, target.path) || hasAncestor(byPath, target.path, note.path)) {
 			targets.add(note.path);
 		}
-		// Preserve same-type bottle alternatives without widening to sibling types.
+		// Preserve same-type bottle alternatives without widening to sibling types or within a catch-all type.
 		if (target.kind === 'bottle' && note.kind === 'bottle' &&
-			target.parents.some(parent => note.parents.includes(parent))) {
+			target.parents.some(parent => note.parents.includes(parent) && !byPath.get(parent)?.catchAll)) {
 			targets.add(note.path);
 		}
 	}

@@ -64,6 +64,8 @@ void test('other stock, types, and families edit their own fields', () => {
 	assert.deepEqual(planFieldEdit('ingredient', { [PROP.form]: 'Pickled' }, { form: 'Pickled' }), {});
 	assert.ok('Pickled' in formOptions('Pickled'));
 	assert.deepEqual(planFieldEdit('type', {}, { shoppingList: false }), {});
+	assert.deepEqual(planFieldEdit('type', {}, { catchAll: false }), {});
+	assert.deepEqual(planFieldEdit('type', { [PROP.catchAll]: false }, { catchAll: true }), { [PROP.catchAll]: true });
 	assert.deepEqual(planFieldEdit('type', {}, { shoppingList: true, parents: ['[[F|F]]'] }), { [PROP.shoppingList]: true, [PROP.family]: '[[F|F]]' });
 	assert.deepEqual(planFieldEdit('family', { [PROP.category]: '[[C|C]]' }, { parents: [] }), { [PROP.category]: null });
 	assert.throws(() => planFieldEdit('family', {}, { parents: ['[[C|C]]', '[[D|D]]'] }), /one parent/);

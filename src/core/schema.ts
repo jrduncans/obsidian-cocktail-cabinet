@@ -30,6 +30,8 @@ export const PROP = {
 	form: 'cc-form',
 	lastPurchasePrice: 'cc-last-purchase-price',
 	shoppingList: 'cc-shopping-list',
+	/** Types: a grouping whose bottles aren't assumed to replace each other (Amaro, Specialty Bitters). */
+	catchAll: 'cc-catch-all',
 	/** Bottles and other stock: date last recorded as bought (Record purchases, Bought more). */
 	lastPurchased: 'cc-last-purchased',
 	/** Bottles and other stock: date last selected when logging a cocktail. */
@@ -47,6 +49,8 @@ export interface CabinetNote {
 	kind: NoteKind;
 	parents: string[];
 	aliases?: string[];
+	/** Types only: `cc-catch-all` is true. */
+	catchAll?: boolean;
 }
 
 export interface NoteDraft {

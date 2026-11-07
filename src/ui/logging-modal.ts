@@ -113,10 +113,13 @@ export class LoggingModal extends Modal {
 				dropdown.addOption('', 'Select…');
 				const selected = this.selections.get(line.id);
 				const paths = [...line.candidates];
-				if (selected && selected !== SKIP_LINE && !paths.includes(selected)) paths.push(selected);
-				for (const path of paths) {
-					const source = review.sources.find(source => source.note.path === path)!;
-					dropdown.addOption(path, source.note.name);
+				if (selected && selected !== SKIP_LINE && !paths.includes(selected) && !line.alternatives.includes(selected)) paths.push(selected);
+				const nameOf = (path: string) => review.sources.find(source => source.note.path === path)!.note.name;
+				for (const path of paths) dropdown.addOption(path, nameOf(path));
+				if (line.alternatives.length) {
+					// Likely substitutes from a catch-all type, kept apart from what the recipe calls for.
+					const group = dropdown.selectEl.createEl('optgroup', { attr: { label: line.alternativesLabel ?? 'Other bottles' } });
+					for (const path of line.alternatives) group.createEl('option', { value: path, text: nameOf(path) });
 				}
 				dropdown.addOption('__another__', 'Other bottle…');
 				dropdown.addOption(SKIP_LINE, 'Don’t subtract');

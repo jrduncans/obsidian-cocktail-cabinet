@@ -55,7 +55,7 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 	['Unaged Mexican Rum', 'Unaged Mexican cane-juice rum in the recipe role represented by Paranubes Blanco, with pronounced fermentation and savory character. Choose other bottles for their fit with this profile; recipes may specify a particular bottle or strength.', { aliases: ['Oaxacan Rum'] }],
 	['Black Jamaican Rum', 'Jamaican rum with pronounced caramel influence, distinct from the Aged Jamaican Rum recipe role. Color alone does not determine membership.'],
 	['Pineapple Rum', 'Pineapple-flavored rum, including Stiggins’ Fancy. Other pineapple rums can differ substantially in flavor; recipes often name the intended bottle.'],
-	['Flavored Rum', 'Catch-all for flavored rums without close substitutes, such as coconut rums. Bottles in this type are rarely interchangeable, so recipes usually name the bottle. Pineapple Rum has its own type.'],
+	['Flavored Rum', 'Catch-all for flavored rums without close substitutes, such as coconut rums. Bottles in this type are rarely interchangeable, so recipes usually name the bottle. Pineapple Rum has its own type.', { [PROP.catchAll]: true }],
 ]);
 family('Cachaça', 'Spirit', 'Brazilian sugarcane spirits, kept separate from the Rum family.', [
 	['Unaged Cachaça', 'Unaged Brazilian sugarcane spirit for recipes calling for cachaça.'],
@@ -104,18 +104,18 @@ family('Herbal & Spice Liqueur', 'Liqueur', 'Herbal and spice-led liqueurs, in o
 	['Crème de Menthe', 'Sweet mint liqueur, including clear expressions such as Menthe-Pastille. Kept distinct from the Green Herbal Liqueur recipe role; color alone does not determine membership.'],
 	['Green Herbal Liqueur', 'Green herbal liqueur; link a specific bottle when the recipe names one.'],
 	['Yellow Herbal Liqueur', 'Yellow herbal liqueur; use a specific bottle reference when needed.'],
-	['Herbal Liqueur', 'Catch-all for herbal liqueurs without close substitutes, such as Bénédictine, Becherovka, and Chareau. Bottles in this type are rarely interchangeable, so recipes usually name the bottle.'],
+	['Herbal Liqueur', 'Catch-all for herbal liqueurs without close substitutes, such as Bénédictine, Becherovka, and Chareau. Bottles in this type are rarely interchangeable, so recipes usually name the bottle.', { [PROP.catchAll]: true }],
 	['Allspice Dram', 'Allspice liqueur, also called pimento dram.'],
 	['Falernum', 'Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottle.'],
 	['Vanilla Liqueur', 'Vanilla-forward liqueurs such as Licor 43 and Galliano, often with citrus or other spice notes. Close enough to substitute in many recipes.'],
-	['Spice Liqueur', 'Catch-all for spice-led liqueurs without close substitutes, such as chai spice liqueurs. Bottles in this type are rarely interchangeable, so recipes usually name the bottle.'],
+	['Spice Liqueur', 'Catch-all for spice-led liqueurs without close substitutes, such as chai spice liqueurs. Bottles in this type are rarely interchangeable, so recipes usually name the bottle.', { [PROP.catchAll]: true }],
 ]);
 family('Floral Liqueur', 'Liqueur', 'Flower-flavored liqueurs used as cocktail modifiers.', [
 	['Elderflower Liqueur', 'Sweet floral liqueur flavored with elderflower.'],
 	['Violet Liqueur', 'Sweet violet-flavored floral liqueur, also called creme de violette.'],
 ]);
 family('Amaro Family', 'Liqueur', 'Bitter liqueurs grouped as amaro for cocktail browsing. Includes the Amaro type and specialized styles; choose a type or bottle when the recipe requires one.', [
-	['Amaro', 'A general amaro ingredient type for bottles such as Averna, Montenegro, Meletti, Lucano, and Nonino. Their flavor profiles, sweetness, and strengths differ; use a specific bottle reference when a recipe names one. Use the specialized types for red or orange bitter liqueurs, gentian liqueurs, fernet, and artichoke amaro.'],
+	['Amaro', 'Catch-all for amari without a more specific type, such as Averna, Montenegro, Meletti, Lucano, and Nonino. Their flavor, sweetness, and strength differ, so they are likely substitutes rather than interchangeable: recipes usually name the bottle. Use the specialized types for red or orange bitter liqueurs, gentian liqueurs, fernet, and artichoke amaro.', { [PROP.catchAll]: true }],
 	['Red Bitter Liqueur', 'Campari-style bitter liqueur, distinct from the Aperol-style Orange Bitter Liqueur recipe role. Color alone does not determine membership.'],
 	['Orange Bitter Liqueur', 'Aperol-style bitter liqueur, distinct from the Campari-style Red Bitter Liqueur recipe role and from Orange Liqueur. Color alone does not determine membership.'],
 	['Gentian Liqueur', 'Bitter liqueurs in the gentian recipe role, including Salers, Suze, Avèze, and, in this cabinet, Bitter Bianco. Formulations and strengths vary; select a bottle when needed.'], ['Fernet', 'A strongly bitter herbal liqueur in the fernet style.'],
@@ -152,7 +152,7 @@ family('Bitters', undefined, 'Concentrated bitters used in small cocktail season
 	['Creole Bitters', 'Creole-style aromatic bitters for recipes that specify that profile.'], ['Chocolate Bitters', 'Concentrated chocolate-flavored bitters used as cocktail seasoning.'],
 	['Grapefruit Bitters', 'Concentrated grapefruit-flavored bitters used as cocktail seasoning.'],
 	['Tiki Bitters', 'Spiced bitters in the tiki style, such as Bittermens ‘Elemakule; profiles vary by brand.'],
-	['Specialty Bitters', 'Catch-all for one-of-a-kind bitters without close substitutes. Recipes usually name the bottle; use a flavor type such as Aromatic or Orange Bitters when one fits.'],
+	['Specialty Bitters', 'Catch-all for one-of-a-kind bitters without close substitutes. Recipes usually name the bottle; use a flavor type such as Aromatic or Orange Bitters when one fits.', { [PROP.catchAll]: true }],
 ]);
 entries.push({
 	id: 'bottle/Angostura Bitters', kind: 'bottle', name: 'Angostura Bitters', parent: 'Aromatic Bitters',

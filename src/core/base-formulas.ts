@@ -57,6 +57,8 @@ export interface FormulaView {
 	filter: string;
 	columns: [property: string, label: string][];
 	sort?: Sort[];
+	/** Rows grouped by a property; `label` prefixes each group heading (blank hides it). Groups sort by their value. */
+	groupBy?: { property: string; direction: 'ASC' | 'DESC'; label: string };
 }
 
 /**
@@ -75,7 +77,7 @@ export const sortEntries = (sort: readonly Sort[]) => sort.map(([property, direc
 
 export function renderFormulaBase(root: string, formulas: Record<string, string>, views: readonly FormulaView[]): string {
 	root = cabinetFolder(root);
-	const labels = new Map(views.flatMap(view => view.columns));
+	const labels = new Map(views.flatMap(view => [...view.columns, ...view.groupBy ? [[view.groupBy.property, view.groupBy.label] as const] : []]));
 	return serializeBase({
 		filters: { and: [`file.inFolder(${q(root)})`, 'file.ext == "md"'] },
 		formulas,
@@ -84,6 +86,8 @@ export function renderFormulaBase(root: string, formulas: Record<string, string>
 			type: view.type,
 			name: view.name,
 			filters: { and: [view.filter] },
+			// Obsidian saves groupBy between filters and order.
+			...view.groupBy ? { groupBy: { property: viewProperty(view.groupBy.property), direction: view.groupBy.direction } } : {},
 			order: view.columns.map(([property]) => viewProperty(property)),
 			sort: sortEntries(view.sort ?? [['file.name', 'ASC']]),
 		})),

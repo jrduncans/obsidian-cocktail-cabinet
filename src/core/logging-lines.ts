@@ -12,6 +12,10 @@ export interface CountedLine {
 	ml: number;
 	targets: string[];
 	candidates: string[];
+	/** Stocked bottles sharing a named bottle's catch-all type: offered as likely substitutes, never preselected. */
+	alternatives: string[];
+	/** Heading for `alternatives`, such as "Other Amaro". */
+	alternativesLabel?: string;
 	initialSelection: string | null;
 }
 export interface SkippedLine {
@@ -24,12 +28,23 @@ export interface SkippedLine {
 export const SKIP_LINE = '__skip__';
 export interface LoggingLines { counted: CountedLine[]; skipped: SkippedLine[]; }
 
-/** A named bottle widens only to bottles with its explicitly assigned type. */
+/** The types two bottles share. */
+function sharedTypes(notes: readonly CabinetNote[], source: CabinetNote, target: CabinetNote): CabinetNote[] {
+	if (source.kind !== 'bottle' || target.kind !== 'bottle' || source.path === target.path) return [];
+	return target.parents.filter(path => source.parents.includes(path)).flatMap(path => notes.filter(note => note.path === path));
+}
+
+/** A named bottle widens only to bottles with its explicitly assigned type, unless that type is a catch-all. */
 export function fitsLine(notes: readonly CabinetNote[], source: CabinetNote, target: CabinetNote): boolean {
 	if (source.path === target.path) return true;
-	if (target.kind === 'bottle') return source.kind === 'bottle' && target.parents.some(path => source.parents.includes(path));
+	if (target.kind === 'bottle') return sharedTypes(notes, source, target).some(type => !type.catchAll);
 	if (target.kind === 'ingredient') return false;
 	return isWithin(notes, source.path, target.path);
+}
+
+/** A bottle of a named bottle's catch-all type (Averna for Meletti): a likely substitute, but not assumed to be one. */
+export function catchAllType(notes: readonly CabinetNote[], source: CabinetNote, target: CabinetNote): CabinetNote | undefined {
+	return sharedTypes(notes, source, target).find(type => type.catchAll);
 }
 
 export function classifyLoggingLines(
@@ -51,6 +66,11 @@ export function classifyLoggingLines(
 		if (!targets.length) { skipped.push({ text, reason: 'Link not found' }); continue; }
 		const linked = targets.map(path => notes.find(note => note.path === path)!);
 		const matching = sources.filter(source => linked.some(target => fitsLine(notes, source.note, target)));
+		const lesser = sources.filter(source => !matching.includes(source)).flatMap(source => {
+			const type = linked.map(target => catchAllType(notes, source.note, target)).find(Boolean);
+			return type && isStocked(source) ? [{ path: source.note.path, type }] : [];
+		});
+		const alternatives = lesser.map(item => item.path);
 		// A named bottle or other stock, else the only source that fits.
 		const namedSource = linked.filter(target => target.kind === 'bottle' || target.kind === 'ingredient');
 		const used = namedSource.length === 1 ? namedSource[0]!.path : !namedSource.length && matching.length === 1 ? matching[0]!.note.path : undefined;
@@ -62,9 +82,12 @@ export function classifyLoggingLines(
 		}
 		const candidates = matching.filter(isStocked).map(source => source.note.path);
 		const named = linked.filter(target => (target.kind === 'bottle' || target.kind === 'ingredient') && candidates.includes(target.path));
-		counted.push({ id, text, ml, targets, candidates,
+		counted.push({ id, text, ml, targets, candidates, alternatives,
+			...(lesser.length ? { alternativesLabel: `Other ${lesser[0]!.type.name}` } : {}),
 			// Nothing in the cabinet stocks this (e.g. fresh juice): default to not subtracting, still adjustable.
-			initialSelection: !matching.length ? SKIP_LINE : named.length === 1 ? named[0]!.path : candidates.length === 1 ? candidates[0]! : null,
+			// Catch-all alternatives are never chosen for you, even when the named bottle is out.
+			initialSelection: !matching.length && !alternatives.length ? SKIP_LINE
+				: named.length === 1 ? named[0]!.path : candidates.length === 1 ? candidates[0]! : null,
 		});
 	}
 	return { counted, skipped };

@@ -9,7 +9,7 @@ import { STOCK_FORMS } from './stock';
  */
 export const EDIT_FIELDS = {
 	family: [PROP.category],
-	type: [PROP.family, PROP.shoppingList],
+	type: [PROP.family, PROP.catchAll, PROP.shoppingList],
 	bottle: [PROP.type, PROP.volume, PROP.abv],
 	ingredient: [PROP.provides, PROP.form],
 	recipe: ['source', 'rating'],
@@ -33,6 +33,7 @@ export interface FieldEdit {
 	abv?: string;
 	form?: string;
 	shoppingList?: boolean;
+	catchAll?: boolean;
 	source?: string;
 	/** Empty for unrated, a whole number, or `keep` for an unreadable saved value. */
 	rating?: string;
@@ -108,6 +109,9 @@ export function planFieldEdit(kind: EditableKind, before: Record<string, unknown
 	if (kind === 'ingredient' && edit.form !== undefined && !same(before[PROP.form], edit.form)) {
 		if (!(edit.form in formOptions(before[PROP.form]))) throw new Error('Select an ingredient form.');
 		set(PROP.form, edit.form);
+	}
+	if (kind === 'type' && edit.catchAll !== undefined && edit.catchAll !== (before[PROP.catchAll] === true)) {
+		set(PROP.catchAll, edit.catchAll);
 	}
 	if (kind === 'type' && edit.shoppingList !== undefined && edit.shoppingList !== (before[PROP.shoppingList] === true)) {
 		set(PROP.shoppingList, edit.shoppingList);

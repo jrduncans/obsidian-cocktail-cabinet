@@ -36,9 +36,10 @@ export abstract class CabinetForm extends Modal {
 			.addDropdown(dropdown => dropdown.addOptions(options).setValue(value).onChange(change));
 	}
 
-	protected toggle(label: string, value: boolean, change: (value: boolean) => void) {
-		return new Setting(this.contentEl).setName(label)
-			.addToggle(toggle => toggle.setValue(value).onChange(change));
+	protected toggle(label: string, value: boolean, change: (value: boolean) => void, description?: string) {
+		const row = new Setting(this.contentEl).setName(label);
+		if (description) row.setDesc(description);
+		return row.addToggle(toggle => toggle.setValue(value).onChange(change));
 	}
 
 	protected choose(label: string, notes: () => CabinetNote[], change: (notes: CabinetNote[]) => void, multiple = false, initial: readonly CabinetNote[] = []) {

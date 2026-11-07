@@ -346,6 +346,13 @@ void test('bottle discovery includes generic recipes and same-type bottle recipe
 	assert.deepEqual([...relatedTargets(alternatives, notes[5]!)].sort(), ['Bottle', 'Jamaican', 'Other Bottle', 'Rum', 'Spirit']);
 });
 
+void test('bottles of a catch-all type do not find recipes naming each other', () => {
+	const amaro = { path: 'Amaro', name: 'Amaro', kind: 'type' as const, parents: ['Rum'], catchAll: true };
+	const averna = { path: 'Averna', name: 'Averna', kind: 'bottle' as const, parents: ['Amaro'] };
+	const meletti = { path: 'Meletti', name: 'Meletti', kind: 'bottle' as const, parents: ['Amaro'] };
+	assert.deepEqual([...relatedTargets([...notes, amaro, averna, meletti], averna)].sort(), ['Amaro', 'Averna', 'Rum', 'Spirit']);
+});
+
 void test('cycles and missing parents from manual edits terminate safely', () => {
 	const cyclic = [...notes, { path: 'A', name: 'A', kind: 'family' as const, parents: ['B', 'Missing'] }, { path: 'B', name: 'B', kind: 'family' as const, parents: ['A'] }];
 	assert.equal(isWithin(cyclic, 'A', 'Rum'), false);
@@ -401,6 +408,10 @@ void test('the navigation Base is scoped to the root and serves every embedded v
 	assert.ok(parsed.views.some(view => view.sort.some(sort => sort.direction === 'DESC')), 'recipes sort by rating');
 	assert.deepEqual(parsed.views.map(view => view.name), Object.values(NAVIGATION_VIEWS));
 	assert.ok(!base.content.includes(PROP.catalogId));
+	const recipes = parsed.views.find(view => view.name === NAVIGATION_VIEWS.recipes)!;
+	assert.deepEqual(recipes.groupBy, { property: 'formula.match', direction: 'ASC' }, 'recipes that call for this note come first');
+	assert.ok(['Calls for this', 'Can fill'].sort()[0] === 'Calls for this');
+	assert.match(base.content, /cc-catch-all/, 'a catch-all type does not join its bottles\' recipes');
 });
 
 void test('generated Bases are written as Obsidian saves them, so opening one changes nothing', () => {

@@ -12,7 +12,7 @@ export class IngredientModal extends CabinetForm {
 		this.begin(`Add ingredient ${this.kind}`, this.kind === 'category' ? undefined
 			: `An ingredient ${this.kind === 'type' ? 'family' : 'category'} is optional. Select one when it provides a useful grouping.`);
 		let name = this.initialName, description = '', preparation = '';
-		let shoppingList = false;
+		let shoppingList = false, catchAll = false;
 		let parents: CabinetNote[] = [];
 		this.text('Name', name, value => { name = value; });
 		this.area('Description', description, value => { description = value; });
@@ -22,12 +22,14 @@ export class IngredientModal extends CabinetForm {
 		}
 		if (this.kind === 'type') {
 			this.area('Preparation (optional)', preparation, value => { preparation = value; });
+			this.toggle('Catch-all type', catchAll, value => { catchAll = value; }, 'Its bottles are likely substitutes, not interchangeable: logging offers them but never picks one for you.');
 			this.toggle('Add to shopping list', shoppingList, value => { shoppingList = value; });
 		}
 		this.submit('Create note', async () => {
 			const properties: Properties = {};
 			if (this.kind !== 'category' && parents[0]) properties[this.kind === 'family' ? PROP.category : PROP.family] = this.plugin.store.link(parents[0]);
 			if (this.kind === 'type') {
+				if (catchAll) properties[PROP.catchAll] = true;
 				properties[PROP.shoppingList] = shoppingList;
 			}
 			const file = await this.plugin.store.create({ kind: this.kind, name, description, method: preparation, properties });
