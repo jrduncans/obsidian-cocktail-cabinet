@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { COMMON_FORMULAS } from '../src/core/base-formulas';
 import test from 'node:test';
 import { STARTER_CATALOG } from '../src/catalog/catalog';
 import { cabinetFolder, fileName, noteName, notePath, optionalNumber, parseRating, PROP, wikiLink } from '../src/core/schema';
@@ -169,12 +170,19 @@ void test('Bases use the selected root and kind without requiring parents or cat
 	const bases = starterPlan(root).filter(file => file.kind === 'base' && RESOURCE_BASES.some(resource => file.path === basePath(root, resource.name)));
 	assert.equal(bases.length, RESOURCE_BASES.length);
 	for (const [index, base] of bases.entries()) {
-		const filters = base.content.split('properties:')[0]!.split('\n')
+		const filters = base.content.split('formulas:')[0]!.split('\n')
 			.filter(line => line.startsWith('    - ')).map(line => JSON.parse(line.slice(6)) as string);
 		assert.deepEqual(filters, [`file.inFolder(${JSON.stringify(root)})`, 'file.ext == "md"', `note["cc-kind"] == "${RESOURCE_BASES[index]!.kind}"`]);
 		assert.ok(!base.content.includes(PROP.catalogId));
-		assert.ok(base.content.includes('note.cc-name:'));
+		// One linked proper-name column instead of separate file name and cc-name columns.
+		assert.ok(base.content.includes(`  name: 'file.asLink(if(note["cc-name"], note["cc-name"], file.name))'`));
+		assert.ok(base.content.includes('      - formula.name\n') && !base.content.includes('file.name\n    displayName'));
+		assert.ok(!base.content.includes('note.cc-name'));
 	}
+	const recipes = bases.find(base => base.path.endsWith('/Recipes.base'))!.content;
+	const order = recipes.split('    order:\n')[1]!.split('    sort:')[0]!.trim().split('\n').map(line => line.trim().slice(2));
+	assert.deepEqual(order, ['formula.name', 'formula.rating', 'note.cc-last-made', 'note.cc-times-made', 'note.created', 'note.source'], 'Source last, so it scrolls off first');
+	assert.ok(recipes.includes(`  rating: '${COMMON_FORMULAS.rating}'`), 'ratings as stars');
 });
 
 void test('a family without a category still finds its types and their bottles', () => {
