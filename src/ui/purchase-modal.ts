@@ -53,7 +53,9 @@ export class PurchaseModal extends CabinetForm {
 		const flagged = this.plugin.store.notes().filter(note =>
 			(note.kind === 'bottle' || note.kind === 'ingredient' || note.kind === 'type')
 			&& this.app.metadataCache.getCache(note.path)?.frontmatter?.[PROP.shoppingList] === true);
-		flagged.sort((left, right) => left.name.localeCompare(right.name));
+		// Specific bottles and other stock first, then types (any bottle will do), each by name, so the
+		// row style changes once rather than back and forth.
+		flagged.sort((left, right) => Number(left.kind === 'type') - Number(right.kind === 'type') || left.name.localeCompare(right.name));
 		this.rows = await Promise.all(flagged.map(async note => {
 			const row: Row = { item: note, onList: true, bought: false };
 			if (note.kind !== 'type') await this.useSource(row, note);
