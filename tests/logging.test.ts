@@ -231,3 +231,15 @@ void test('a line nothing in the cabinet stocks defaults to not subtracted, and 
 	assert.deepEqual(plan.changes, []);
 	assert.deepEqual(plan.skipped.map(line => line.reason), ['Not subtracted', 'Not subtracted']);
 });
+
+void test('a skipped line that clearly uses one source names it for last used', () => {
+	// Dashes have no mL: a named bottle is still used.
+	assert.equal(classify('- 2 dashes [[First Gin]]').skipped[0]!.used, a.path);
+	// The only source for a type, tracked by status.
+	assert.equal(classify('- 1 oz [[Lime Juice]]', [status(fruit)]).skipped[0]!.used, fruit.path);
+	// Several sources fit: no guess.
+	assert.equal(classify('- 2 dashes [[London Dry Gin]]').skipped[0]!.used, undefined);
+	assert.equal(classify('- 1 oz [[Lime Juice]]', [status(fruit), status(prepared)]).skipped[0]!.used, undefined);
+	// Unlinked lines use nothing.
+	assert.equal(classify('- 1 oz lime juice').skipped[0]!.used, undefined);
+});

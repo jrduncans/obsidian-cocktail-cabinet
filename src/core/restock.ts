@@ -1,14 +1,16 @@
 import { basePath } from './bases';
 import { COMMON_FORMULAS, kindIs, q, renderFormulaBase } from './base-formulas';
-import type { FormulaView } from './base-formulas';
+import type { FormulaView, Sort } from './base-formulas';
 import { cabinetFolder, PROP } from './schema';
 import type { PlannedFile } from './schema';
 
 /**
  * Candidates for the shopping list: stock running low, stock that's out, and stock whose
  * availability or tracking mode was never set. A blank amount is none, not unknown.
- * Each view has the shopping-list checkbox to pick from. Out is by name: file modified
- * dates are unreliable under sync and Git, so ordering by recent use waits for a last-used date.
+ * Each view has the shopping-list checkbox to pick from. Running low and Out list the most
+ * recently used first (`cc-last-used`, written by logging), so a bottle bought once sinks
+ * without being dismissed; never-used stock follows by name. File modified dates were
+ * tried and dropped: sync and Git make them unreliable.
  */
 export const RESTOCK_BASE = 'Restock';
 
@@ -63,10 +65,12 @@ const name = ['formula.name', 'Name'] as [string, string];
 const type = ['formula.parentLinks', 'Type'] as [string, string];
 const price = [`note.${PROP.lastPurchasePrice}`, 'Last price'] as [string, string];
 const shopping = [`note.${PROP.shoppingList}`, 'Shopping list'] as [string, string];
+const used = [`note.${PROP.lastUsed}`, 'Last used'] as [string, string];
+const byUse: Sort[] = [[`note.${PROP.lastUsed}`, 'DESC'], ['file.name', 'ASC']];
 
 const VIEWS: readonly FormulaView[] = [
-	{ name: RESTOCK_VIEWS.low, type: 'table', filter: `(${stocked}) && formula.low`, columns: [name, type, ['formula.stock', 'Stock'], price, shopping] },
-	{ name: RESTOCK_VIEWS.out, type: 'table', filter: `(${stocked}) && formula.out`, columns: [name, type, price, shopping] },
+	{ name: RESTOCK_VIEWS.low, type: 'table', filter: `(${stocked}) && formula.low`, columns: [name, type, ['formula.stock', 'Stock'], used, price, shopping], sort: byUse },
+	{ name: RESTOCK_VIEWS.out, type: 'table', filter: `(${stocked}) && formula.out`, columns: [name, type, used, price, shopping], sort: byUse },
 	{ name: RESTOCK_VIEWS.unknown, type: 'table', filter: `(${stocked}) && formula.unknown`, columns: [name, type, ['formula.unknownStock', 'Stock'], shopping] },
 ];
 

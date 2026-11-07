@@ -7,6 +7,7 @@ import type { StockEdit } from '../src/core/stock-edit';
 import { StockStore } from '../src/vault/stock-store';
 import { bottleStockText } from '../src/core/logging-stock';
 import { COMMON_FORMULAS } from '../src/core/base-formulas';
+import { laterDate, madeUpdates, usedUpdates } from '../src/core/usage';
 import { TFile } from './obsidian-stub';
 import type { App } from 'obsidian';
 
@@ -209,4 +210,16 @@ void test('saving refuses stock that changed after the form opened', async () =>
 	saved[PROP.open] = 270;
 	await assert.rejects(store.save(note, before, plan), /changed/);
 	assert.equal(saved[PROP.open], 270);
+});
+
+void test('last used and last made never move backward; times made counts logs', () => {
+	assert.equal(laterDate('2026-11-07', '2026-11-06'), '2026-11-07');
+	assert.equal(laterDate('2026-11-05', '2026-11-06'), '2026-11-06');
+	assert.equal(laterDate(new Date('2026-12-01T00:00:00Z'), '2026-11-06'), '2026-12-01');
+	assert.equal(laterDate('soon', '2026-11-06'), '2026-11-06');
+	assert.deepEqual(usedUpdates({}, '2026-11-06'), { [PROP.lastUsed]: '2026-11-06' });
+	assert.deepEqual(usedUpdates({ [PROP.lastUsed]: '2026-11-06' }, '2026-11-06'), {}, 'no write when unchanged');
+	assert.deepEqual(madeUpdates({}, '2026-11-06'), { [PROP.lastMade]: '2026-11-06', [PROP.timesMade]: 1 });
+	assert.deepEqual(madeUpdates({ [PROP.timesMade]: 4, [PROP.lastMade]: '2026-12-01' }, '2026-11-06'), { [PROP.lastMade]: '2026-12-01', [PROP.timesMade]: 5 });
+	assert.equal(madeUpdates({ [PROP.timesMade]: 'lots' }, '2026-11-06')[PROP.timesMade], 1);
 });

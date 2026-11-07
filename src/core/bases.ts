@@ -43,6 +43,7 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 			[PROP.open, 'Open bottle (mL)'],
 			[PROP.unopened, 'Unopened bottles'],
 			[PROP.availability, 'Availability (status mode)'],
+			[PROP.lastUsed, 'Last used'],
 			...purchasingColumns,
 		],
 	},
@@ -55,14 +56,15 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 			[PROP.stockTracking, 'Stock tracking'],
 			[PROP.remaining, 'Remaining volume (mL)'],
 			[PROP.availability, 'Availability (status mode)'],
+			[PROP.lastUsed, 'Last used'],
 			...purchasingColumns,
 		],
 	},
 	{
 		kind: 'recipe',
 		name: 'Recipes',
-		columns: [['source', 'Source'], ['rating', 'Rating'], ['created', 'Created']],
-		views: [{ name: 'Latest', sort: ['note.created', 'DESC'] }],
+		columns: [['source', 'Source'], ['rating', 'Rating'], ['created', 'Created'], [PROP.lastMade, 'Last made'], [PROP.timesMade, 'Times made']],
+		views: [{ name: 'Latest', sort: ['note.created', 'DESC'] }, { name: 'Recently made', sort: [`note.${PROP.lastMade}`, 'DESC'] }],
 	},
 ];
 

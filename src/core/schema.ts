@@ -30,6 +30,11 @@ export const PROP = {
 	form: 'cc-form',
 	lastPurchasePrice: 'cc-last-purchase-price',
 	shoppingList: 'cc-shopping-list',
+	/** Bottles and other stock: date last selected when logging a cocktail. */
+	lastUsed: 'cc-last-used',
+	/** Recipes: date last logged, and how many times. */
+	lastMade: 'cc-last-made',
+	timesMade: 'cc-times-made',
 	sugarWaterRatio: 'cc-sugar-water-ratio',
 	schemaVersion: 'cc-schema-version',
 } as const;

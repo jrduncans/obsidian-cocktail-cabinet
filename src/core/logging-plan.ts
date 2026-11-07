@@ -6,6 +6,8 @@ import type { DrawdownPlan, SelectedPour, StockSource } from './logging-stock';
 
 export interface LoggingPlan extends DrawdownPlan {
 	selected: StockSource[];
+	/** Sources used without subtracting (see `SkippedLine.used`); logging records their last used too. */
+	alsoUsed: string[];
 	skipped: SkippedLine[];
 	servings: number;
 	/** Lines still waiting for a selection. */
@@ -28,5 +30,6 @@ export function planLogging(lines: LoggingLines, sources: readonly StockSource[]
 		} else pours.push({ path: source.note.path, ml: line.ml });
 	}
 	const plan = planDrawdown(sources, pours, servings);
-	return { ...plan, selected: [...selected.values()], skipped, servings, unselected };
+	const alsoUsed = [...new Set(lines.skipped.flatMap(line => line.used && !selected.has(line.used) ? [line.used] : []))];
+	return { ...plan, selected: [...selected.values()], alsoUsed, skipped, servings, unselected };
 }

@@ -364,9 +364,13 @@ void test('resource Bases expose mL stock, tracking choices, and independent pur
 	}
 });
 
-void test('the Recipes Base adds a Latest view, newest first', () => {
+void test('the Recipes Base adds Latest and Recently made views', () => {
 	const recipes = starterPlan('Cocktails').find(file => file.path.endsWith('/Recipes.base'))!.content;
-	const [, byName, latest] = recipes.split('  - type: table\n');
+	const [, byName, latest, made] = recipes.split('  - type: table\n');
+	assert.match(made!, /name: "Recently made"[\s\S]*property: note\.cc-last-made\n {8}direction: DESC/);
+	for (const column of ['note.cc-last-made', 'note.cc-times-made']) assert.ok(made!.includes(`      - ${column}`), column);
+	const bottles = starterPlan('Cocktails').find(file => file.path.endsWith('/Bottles.base'))!.content;
+	assert.ok(bottles.includes('      - note.cc-last-used'), 'Bottles shows Last used');
 	assert.match(byName!, /name: "Recipes"[\s\S]*property: file\.name\n {8}direction: ASC/);
 	assert.match(latest!, /name: "Latest"[\s\S]*property: note\.created\n {8}direction: DESC/);
 	assert.ok(latest!.includes('      - note.created'), 'Latest shows the Created column');
@@ -471,8 +475,8 @@ void test('Restock is a Base of shopping candidates: running low, out, unknown',
 		assert.ok(view.includes('      - note.cc-shopping-list\n'), 'each view can add to the shopping list');
 	}
 	assert.match(views[0]!, /formula\.low/);
-	// Out is by name: modified dates are unreliable under sync and Git.
-	assert.match(views[1]!, /formula\.out'/);
+	// Running low and Out: most recently used first, then by name. Modified dates are unreliable under sync and Git.
+	for (const view of views.slice(0, 2)) assert.match(view, /- property: note\.cc-last-used\n {8}direction: DESC\n {6}- property: file\.name\n {8}direction: ASC/);
 	assert.ok(!content.includes('file.mtime'));
 	assert.match(views[2]!, /formula\.unknown/);
 	assert.ok(views[2]!.includes('      - formula.unknownStock\n'));

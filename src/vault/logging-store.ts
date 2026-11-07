@@ -7,6 +7,7 @@ import type { LoggingPlan } from '../core/logging-plan';
 import { sameStock, stockSnapshot } from '../core/logging-stock';
 import type { StockSource } from '../core/logging-stock';
 import type { CabinetNote } from '../core/schema';
+import { madeUpdates, usedUpdates } from '../core/usage';
 import type { CabinetStore } from './cabinet-store';
 import { LoggingDaily } from './logging-daily';
 import type { DailyPreview } from './logging-daily';
@@ -83,13 +84,14 @@ export class LoggingStore {
 		if (plan.selected.some((source, index) => !sameStock(source, current[index]!))) {
 			return { status: 'stale', review: await this.review(review.recipe), notice: 'Stock changed. Nothing saved; check and log again.' };
 		}
+		const date = review.daily.date;
 		const written: string[] = [];
 		for (const change of plan.changes) {
 			try {
 				await this.app.fileManager.processFrontMatter(this.file(change.source.note.path), (properties: Record<string, unknown>) => {
 					// Protect edits that race the preflight while another bottle is being written.
 					if (!sameStock(change.source, stockSnapshot(change.source.note, properties))) throw new Error('Its stock changed while saving.');
-					Object.assign(properties, change.updates);
+					Object.assign(properties, change.updates, usedUpdates(properties, date));
 				});
 				written.push(change.source.note.name);
 			} catch (error) {
@@ -97,14 +99,38 @@ export class LoggingStore {
 				throw new LoggingWriteError(`Couldn’t save ${change.source.note.name} (${reason}). Already updated: ${written.join(', ') || 'none'}. Daily note unchanged. Check those bottles before logging again, or this drink is subtracted twice.`);
 			}
 		}
+		const missed = await this.recordUse(review.recipe, plan, date);
+		const usage = missed.length ? ` Couldn’t record last used or times made on ${missed.join(', ')}.` : '';
 		if (addDaily) {
 			try {
 				const appended = await this.daily.append(review.daily, review.recipe, dailyLogLine(review.recipe, plan.servings));
-				return { status: 'applied', notice: appended ? 'Cocktail logged.' : 'Stock updated. Already in today’s note.' };
+				return { status: 'applied', notice: (appended ? 'Cocktail logged.' : 'Stock updated. Already in today’s note.') + usage };
 			} catch (error) {
 				throw new LoggingWriteError(`Stock updated, but the daily note wasn’t (${(error instanceof Error ? error.message : 'unknown error').replace(/\.$/, '')}). Add “${dailyLogText(review.recipe, plan.servings)}” yourself; don’t log again, or the stock is subtracted twice.`);
 			}
 		}
-		return { status: 'applied', notice: 'Stock updated.' };
+		return { status: 'applied', notice: 'Stock updated.' + usage };
+	}
+
+	/**
+	 * Last used on sources the stock writes didn't cover (status-tracked, or lines without mL), and the
+	 * recipe's last made and times made. Bookkeeping: a failure is reported, never undoing the log.
+	 */
+	private async recordUse(recipe: CabinetNote, plan: LoggingPlan, date: string): Promise<string[]> {
+		const missed: string[] = [];
+		const changed = new Set(plan.changes.map(change => change.source.note.path));
+		const write = async (note: CabinetNote, updates: (properties: Record<string, unknown>) => Record<string, unknown>) => {
+			try {
+				await this.app.fileManager.processFrontMatter(this.file(note.path), (properties: Record<string, unknown>) => {
+					Object.assign(properties, updates(properties));
+				});
+			} catch { missed.push(note.name); }
+		};
+		const notes = [...plan.selected.map(source => source.note), ...plan.alsoUsed.flatMap(path => this.cabinet.notes().filter(note => note.path === path))];
+		for (const note of notes.filter(note => !changed.has(note.path))) {
+			await write(note, properties => usedUpdates(properties, date));
+		}
+		await write(recipe, properties => madeUpdates(properties, date));
+		return missed;
 	}
 }

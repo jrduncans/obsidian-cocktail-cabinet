@@ -23,6 +23,8 @@ function fixture() {
 	const events: string[] = [];
 	const folders = new Set(['', 'Journal']);
 	let failBottle = '', failDaily = false;
+	// Recipe properties live apart from its body, which `read` returns.
+	const recipeProperties: Record<string, unknown> = { [PROP.timesMade]: 2, [PROP.lastMade]: '2000-01-01' };
 	const dailyInstance = {
 		options: { folder: 'Journal', format: 'YYYY/MM/YYYY-MM-DD', template: 'Templates/Daily' },
 		getFormat: () => dailyInstance.options.format,
@@ -57,7 +59,7 @@ function fixture() {
 			processFrontMatter: (file: TFile, transform: (properties: Record<string, unknown>) => void) => {
 				events.push(file.path);
 				if (file.path === failBottle) return Promise.reject(new Error('Bottle disk failure'));
-				transform(properties.get(file.path)!);
+				transform(properties.get(file.path) ?? recipeProperties);
 				return Promise.resolve();
 			},
 		},
@@ -66,7 +68,7 @@ function fixture() {
 	cabinet.notes = () => notes;
 	cabinet.readNotes = () => Promise.resolve(notes);
 	const logger = new LoggingStore(app as unknown as App, cabinet);
-	return { app, logger, properties, contents, events, dailyPath, recipe, a, b,
+	return { app, logger, properties, recipeProperties, contents, events, dailyPath, recipe, a, b,
 		failBottle: (path: string) => { failBottle = path; }, failDaily: () => { failDaily = true; } };
 }
 async function ready(f: ReturnType<typeof fixture>) {
@@ -82,8 +84,10 @@ void test('apply writes only reviewed stock fields and appends daily text after 
 	const { review, plan } = await ready(f);
 	const before = structuredClone(f.properties.get(f.a.path)!);
 	assert.equal((await f.logger.apply(review, plan, true)).status, 'applied');
-	assert.deepEqual(f.events, [f.a.path, f.b.path, 'daily-create', 'daily-append']);
-	assert.deepEqual(f.properties.get(f.a.path), { ...before, [PROP.open]: 60 });
+	assert.deepEqual(f.events, [f.a.path, f.b.path, f.recipe.path, 'daily-create', 'daily-append']);
+	const today = moment().format('YYYY-MM-DD');
+	assert.deepEqual(f.properties.get(f.a.path), { ...before, [PROP.open]: 60, [PROP.lastUsed]: today });
+	assert.deepEqual(f.recipeProperties, { [PROP.timesMade]: 3, [PROP.lastMade]: today });
 	assert.match(f.contents.get(f.dailyPath)!, /Made a \[\[Cocktails\/Recipes\/Test drink\|Test drink\]\]\./);
 	assert.match(f.contents.get(f.dailyPath)!, /Template content/);
 });
@@ -135,7 +139,7 @@ void test('leaving daily logging off updates stock without creating or changing 
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	await f.logger.apply(review, plan, false);
-	assert.deepEqual(f.events, [f.a.path, f.b.path]);
+	assert.deepEqual(f.events, [f.a.path, f.b.path, f.recipe.path]);
 	assert.equal(f.contents.has(f.dailyPath), false);
 });
 void test('daily note failure reports successful inventory and never repeats it', async () => {
@@ -168,8 +172,19 @@ void test('disabled Daily notes and missing templates block daily logging but al
 		await assert.rejects(f.logger.apply(review, plan, true));
 		assert.deepEqual(f.events, []);
 		await f.logger.apply(review, plan, false);
-		assert.deepEqual(f.events, [f.a.path, f.b.path]);
+		assert.deepEqual(f.events, [f.a.path, f.b.path, f.recipe.path]);
 	}
+});
+void test('recording last made is bookkeeping: a failure is reported without undoing the log', async () => {
+	const f = fixture();
+	const { review, plan } = await ready(f);
+	const original = f.app.fileManager.processFrontMatter;
+	f.app.fileManager.processFrontMatter = (file, transform) => file.path === f.recipe.path ? Promise.reject(new Error('disk')) : original(file, transform);
+	const result = await f.logger.apply(review, plan, true);
+	assert.equal(result.status, 'applied');
+	if (result.status === 'applied') assert.match(result.notice, /Cocktail logged\. Couldn’t record last used or times made on Test drink\./);
+	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
+	assert.match(f.contents.get(f.dailyPath)!, /Made a/);
 });
 void test('a new duplicate racing the inventory writes is not appended again', async () => {
 	const f = fixture();
@@ -230,4 +245,16 @@ void test('changing an empty unopened count to explicit zero does not invalidate
 	f.properties.get(f.a.path)![PROP.unopened] = 0;
 	assert.equal((await f.logger.apply(review, plan, false)).status, 'applied');
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
+});
+void test('a status-tracked source gets a last-used date though nothing is subtracted', async () => {
+	const f = fixture();
+	f.b.parents = []; // On its own, so its line isn't filled from Test A.
+	Object.assign(f.properties.get(f.b.path)!, { [PROP.stockTracking]: 'status', [PROP.availability]: 'Have' });
+	const { review, plan } = await ready(f);
+	assert.deepEqual(plan.changes.map(change => change.source.note.path), [f.a.path]);
+	assert.deepEqual(plan.alsoUsed, [f.b.path]);
+	await f.logger.apply(review, plan, false);
+	assert.deepEqual(f.events, [f.a.path, f.b.path, f.recipe.path]);
+	assert.equal(f.properties.get(f.b.path)![PROP.lastUsed], moment().format('YYYY-MM-DD'));
+	assert.equal(f.properties.get(f.b.path)![PROP.availability], 'Have');
 });

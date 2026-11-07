@@ -14,7 +14,12 @@ export interface CountedLine {
 	candidates: string[];
 	initialSelection: string | null;
 }
-export interface SkippedLine { text: string; reason: string; }
+export interface SkippedLine {
+	text: string;
+	reason: string;
+	/** The one source the line clearly uses though nothing is subtracted (status-tracked, or no mL amount), for last used. */
+	used?: string;
+}
 /** Selection value for a line the user chose not to subtract. */
 export const SKIP_LINE = '__skip__';
 export interface LoggingLines { counted: CountedLine[]; skipped: SkippedLine[]; }
@@ -42,20 +47,22 @@ export function classifyLoggingLines(
 			return note ? [note.path] : [];
 		}))];
 		const ml = recipeVolumeMl(splitIngredient(text).amount);
-		let reason: string | undefined;
-		if (!links.length) reason = 'Not linked';
-		else if (!targets.length) reason = 'Link not found';
-		else if (ml === null) reason = 'No mL or oz amount';
-		if (reason) { skipped.push({ text, reason }); continue; }
+		if (!links.length) { skipped.push({ text, reason: 'Not linked' }); continue; }
+		if (!targets.length) { skipped.push({ text, reason: 'Link not found' }); continue; }
 		const linked = targets.map(path => notes.find(note => note.path === path)!);
 		const matching = sources.filter(source => linked.some(target => fitsLine(notes, source.note, target)));
+		// A named bottle or other stock, else the only source that fits.
+		const namedSource = linked.filter(target => target.kind === 'bottle' || target.kind === 'ingredient');
+		const used = namedSource.length === 1 ? namedSource[0]!.path : !namedSource.length && matching.length === 1 ? matching[0]!.note.path : undefined;
+		const withUse = (line: SkippedLine): SkippedLine => used ? { ...line, used } : line;
+		if (ml === null) { skipped.push(withUse({ text, reason: 'No mL or oz amount' })); continue; }
 		if (matching.length && matching.every(source => source.fields[PROP.stockTracking] === 'status')) {
-			skipped.push({ text, reason: 'Not tracked in mL' });
+			skipped.push(withUse({ text, reason: 'Not tracked in mL' }));
 			continue;
 		}
 		const candidates = matching.filter(isStocked).map(source => source.note.path);
 		const named = linked.filter(target => (target.kind === 'bottle' || target.kind === 'ingredient') && candidates.includes(target.path));
-		counted.push({ id, text, ml: ml!, targets, candidates,
+		counted.push({ id, text, ml, targets, candidates,
 			// Nothing in the cabinet stocks this (e.g. fresh juice): default to not subtracting, still adjustable.
 			initialSelection: !matching.length ? SKIP_LINE : named.length === 1 ? named[0]!.path : candidates.length === 1 ? candidates[0]! : null,
 		});
