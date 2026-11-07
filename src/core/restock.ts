@@ -5,10 +5,10 @@ import { cabinetFolder, PROP } from './schema';
 import type { PlannedFile } from './schema';
 
 /**
- * Candidates for the shopping list: stock running low, stock that's out (most recently
- * changed first, so a bottle bought once sinks without anyone dismissing it), and stock
- * whose availability or tracking mode was never set. A blank amount is none, not unknown.
- * Each view has the shopping-list checkbox to pick from.
+ * Candidates for the shopping list: stock running low, stock that's out, and stock whose
+ * availability or tracking mode was never set. A blank amount is none, not unknown.
+ * Each view has the shopping-list checkbox to pick from. Out is by name: file modified
+ * dates are unreliable under sync and Git, so ordering by recent use waits for a last-used date.
  */
 export const RESTOCK_BASE = 'Restock';
 
@@ -66,11 +66,7 @@ const shopping = [`note.${PROP.shoppingList}`, 'Shopping list'] as [string, stri
 
 const VIEWS: readonly FormulaView[] = [
 	{ name: RESTOCK_VIEWS.low, type: 'table', filter: `(${stocked}) && formula.low`, columns: [name, type, ['formula.stock', 'Stock'], price, shopping] },
-	{
-		name: RESTOCK_VIEWS.out, type: 'table', filter: `(${stocked}) && formula.out`,
-		columns: [name, type, price, ['file.mtime', 'Last changed'], shopping],
-		sort: [['file.mtime', 'DESC']],
-	},
+	{ name: RESTOCK_VIEWS.out, type: 'table', filter: `(${stocked}) && formula.out`, columns: [name, type, price, shopping] },
 	{ name: RESTOCK_VIEWS.unknown, type: 'table', filter: `(${stocked}) && formula.unknown`, columns: [name, type, ['formula.unknownStock', 'Stock'], shopping] },
 ];
 

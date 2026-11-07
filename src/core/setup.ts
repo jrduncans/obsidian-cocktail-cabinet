@@ -87,7 +87,7 @@ An ingredient type describes what a recipe calls for, such as lime juice. Stock 
 
 ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} lists every bottle, ingredient type, and other stock marked **Add to shopping list**.
 
-${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)} suggests what to add: stock running low, stock that's out (most recently changed first), and stock you haven't filled in. Tick **Shopping list** on a row to add it.
+${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)} suggests what to add: stock running low, stock that's out, and stock you haven't filled in. Tick **Shopping list** on a row to add it.
 
 ### Recipes
 

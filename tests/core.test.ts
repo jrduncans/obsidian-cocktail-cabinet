@@ -471,8 +471,9 @@ void test('Restock is a Base of shopping candidates: running low, out, unknown',
 		assert.ok(view.includes('      - note.cc-shopping-list\n'), 'each view can add to the shopping list');
 	}
 	assert.match(views[0]!, /formula\.low/);
-	// Out is ordered by last change, so a bottle bought once sinks without being dismissed.
-	assert.match(views[1]!, /formula\.out'\n[\s\S]*property: file\.mtime\n {8}direction: DESC/);
+	// Out is by name: modified dates are unreliable under sync and Git.
+	assert.match(views[1]!, /formula\.out'/);
+	assert.ok(!content.includes('file.mtime'));
 	assert.match(views[2]!, /formula\.unknown/);
 	assert.ok(views[2]!.includes('      - formula.unknownStock\n'));
 	// Low: Low status, or the last bottle under the share (or mL without a size); out needs known zeros.
