@@ -177,7 +177,7 @@ export class LoggingModal extends Modal {
 			});
 		}
 		this.previewEl = this.contentEl.createDiv();
-		new Setting(this.contentEl).setName('Date').setDesc('Made earlier? Pick the day; last made and last used never move backward.').addText(input => {
+		new Setting(this.contentEl).setName('Date').addText(input => {
 			input.inputEl.type = 'date';
 			input.inputEl.max = localDate();
 			input.inputEl.setAttribute('aria-label', 'Date');
