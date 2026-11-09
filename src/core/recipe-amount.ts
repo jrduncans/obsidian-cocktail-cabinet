@@ -8,7 +8,7 @@ const PREFIX = new RegExp(`^(${NUMBER}(?:\\s*[-–—]\\s*${NUMBER})?\\s*${UNIT}
 
 /** Separate familiar leading amounts without rewriting the source text. */
 export function splitIngredient(line: string): { amount: string; text: string } {
-	const match = line.trim().match(PREFIX);
+	const match = line.trim().match(PREFIX) ?? line.trim().match(/^(pinch of)\s+(.+)$/i);
 	return match ? { amount: match[1]!, text: match[2]! } : { amount: '', text: line.trim() };
 }
 

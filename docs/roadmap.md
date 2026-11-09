@@ -66,10 +66,9 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 - New, designed 2026-11-08: [kitchen staples](cabinet-design.md#kitchen-staples), so everyday ingredients take one note and one step.
   - Built 2026-11-09: **Add kitchen staple**, the `Kitchen staple` form, and hiding Provides for it. A blank Provides checked out in the Bases and the shopping list.
   - Built 2026-11-09: starter staples at Unknown, Saline Solution among them, and an Eggs note providing Whole Egg and Egg White. Soda Water and Cocktail Cherry stay types.
-  - Not built, in suggested order:
-    - Convert Salt, Mint, Heavy Cream, and Milk in `knowledge`, and add its Eggs note, once this release is installed there.
-    - Built 2026-11-09: Views: **Browse** in Ingredient types, **Kitchen staples** in Other stock, a new **In stock** view, staples out of Restock's Unknown tab, and the cabinet home's new section and "start here" order. Verified with desktop dev-vault Bases queries; existing homes need the [documented hand edit](cabinet-design.md#kitchen-staples). Mobile layout not yet checked.
-    - **Review unlinked ingredients** covers unmeasured lines that match an existing note, leaving marked garnishes out by default.
+  - Built 2026-11-09: **Browse** in Ingredient types, **Kitchen staples** in Other stock, a new **In stock** view, staples out of Restock's Unknown tab, and the cabinet home's new section and "start here" order. Verified with desktop dev-vault Bases queries; existing homes need the [documented hand edit](cabinet-design.md#kitchen-staples). Mobile layout not yet checked.
+  - Built 2026-11-09: **Review unlinked ingredients** also covers unmeasured lines matching any ingredient note's name or alias, with marked garnishes hidden by default and a **Show garnishes** toggle. Logging still leaves unmeasured lines unsubtracted.
+  - Not built: Convert Salt, Mint, Heavy Cream, and Milk in `knowledge`, and add its Eggs note, once this release is installed there.
 
 ### 5. Reach: retire the remaining skills
 
