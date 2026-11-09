@@ -63,12 +63,13 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
   - Built 2026-11-06: Recipes sections grouped into recipes that call for the note above recipes it can fill through something broader, and [catch-all types](cabinet-design.md#catch-all-types) (`cc-catch-all`), whose bottles are offered as likely substitutes but never assumed.
   - Built 2026-11-06: [unlinked measured lines](cabinet-design.md#unlinked-lines) get **Link…** in the logging modal, and **Review unlinked ingredients** links a wording across recipes. (Its **Keep as text** was removed 2026-11-07.)
   - Built 2026-11-07: a [link text](cabinet-design.md#unlinked-lines) choice wherever a line is linked, and the editor commands **Insert ingredient link**, **Link this ingredient line**, and **Edit this ingredient link**. Next: the review as a side pane that opens each recipe beside it; tidying short links like `[[Gin]]`; friendlier create and enhance recipe forms.
-- New, designed 2026-11-08 (not built): [kitchen staples](cabinet-design.md#kitchen-staples), so everyday ingredients take one note and one step. Suggested order:
-  - Check that other stock with a blank Provides works through creation, the Bases, the shopping list, and logging.
-  - **Add kitchen staple**, the `Kitchen staple` form, and hiding Provides for it.
-  - Starter staples at Unknown, Saline Solution among them, and an Eggs note providing Whole Egg and Egg White. Settle the final list and convert Salt, Mint, and the other types that become staples, in the starter and in `knowledge`.
-  - Views: **Browse** in Ingredient types, **Kitchen staples** in Other stock, a new **In stock** view, staples out of Restock's Unknown tab, and the cabinet home's new section and "start here" order.
-  - **Review unlinked ingredients** covers unmeasured lines that match an existing note, leaving marked garnishes out by default.
+- New, designed 2026-11-08: [kitchen staples](cabinet-design.md#kitchen-staples), so everyday ingredients take one note and one step.
+  - Built 2026-11-09: **Add kitchen staple**, the `Kitchen staple` form, and hiding Provides for it. A blank Provides checked out in the Bases and the shopping list.
+  - Built 2026-11-09: starter staples at Unknown, Saline Solution among them, and an Eggs note providing Whole Egg and Egg White. Soda Water and Cocktail Cherry stay types.
+  - Not built, in suggested order:
+    - Convert Salt, Mint, Heavy Cream, and Milk in `knowledge`, and add its Eggs note, once this release is installed there.
+    - Views: **Browse** in Ingredient types, **Kitchen staples** in Other stock, a new **In stock** view, staples out of Restock's Unknown tab, and the cabinet home's new section and "start here" order.
+    - **Review unlinked ingredients** covers unmeasured lines that match an existing note, leaving marked garnishes out by default.
 
 ### 5. Reach: retire the remaining skills
 

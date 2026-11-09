@@ -59,6 +59,7 @@ export abstract class CabinetForm extends Modal {
 			row.setDesc('None selected');
 			change([]);
 		}));
+		return row;
 	}
 
 	protected submit(label: string, action: () => Promise<void>) {

@@ -4,7 +4,7 @@ import type CocktailCabinetPlugin from '../main';
 import { BottleAmount, OPEN_AMOUNT_UNITS } from '../core/bottle-amount';
 import { PROP, noteName } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
-import { AVAILABILITY, STOCK_FORMS, STOCK_TRACKING, houseName, stockProperties, suggestedName } from '../core/stock';
+import { AVAILABILITY, KITCHEN_STAPLE_FORM, STOCK_FORMS, STOCK_TRACKING, houseName, stockProperties, suggestedName } from '../core/stock';
 import { CabinetForm } from './form';
 
 export interface StockModalOptions {
@@ -48,7 +48,7 @@ export class StockModal extends CabinetForm {
 		};
 		new Setting(this.contentEl).setName('Name').setClass('cocktail-cabinet-name')
 			.addText(text => { nameInput = text.setValue(name).onChange(value => { name = value; }); });
-		this.choose(
+		const typesRow = this.choose(
 			this.bottle ? 'Ingredient type (optional)' : 'Provides ingredients',
 			() => this.plugin.store.notes().filter(note => note.kind === 'type'),
 			notes => { types = notes; suggest(); },
@@ -63,7 +63,12 @@ export class StockModal extends CabinetForm {
 			});
 			this.text('Alcohol by volume (%)', abv, value => { abv = value; });
 		} else {
-			this.select('Form', STOCK_FORMS, form, value => { form = value; suggest(); });
+			this.select('Form', STOCK_FORMS, form, value => {
+				form = value;
+				// A staple is the ingredient itself. Any selection comes back if the form changes again.
+				typesRow.settingEl.toggle(form !== KITCHEN_STAPLE_FORM);
+				suggest();
+			});
 		}
 		this.select('Track stock by', STOCK_TRACKING, tracking, value => {
 			tracking = value;
@@ -135,18 +140,19 @@ export class StockModal extends CabinetForm {
 		this.area('Description', description, value => { description = value; });
 		this.submit('Create note', async () => {
 			const kind = this.bottle ? 'bottle' : 'ingredient';
+			const staple = !this.bottle && form === KITCHEN_STAPLE_FORM;
 			const properties = stockProperties({
 				kind, tracking, volume, abv, open: open.value, openUnit: open.unit, unopened, remaining,
 				availability, form, lastPurchasePrice, shoppingList,
 			});
 			if (this.bottle) {
 				if (types[0]) properties[PROP.type] = this.plugin.store.link(types[0]);
-			} else {
+			} else if (!staple) {
 				properties[PROP.provides] = types.map(note => this.plugin.store.link(note));
 			}
 			const file = await this.plugin.store.create({ kind, name, description, properties });
 			this.close();
-			if (this.options.created) this.options.created({ path: file.path, name: noteName(name).normalize('NFC'), kind, parents: types.map(note => note.path) });
+			if (this.options.created) this.options.created({ path: file.path, name: noteName(name).normalize('NFC'), kind, parents: staple ? [] : types.map(note => note.path) });
 			else await this.plugin.store.open(file.path);
 		});
 	}

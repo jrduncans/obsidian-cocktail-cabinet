@@ -1,9 +1,12 @@
 import type { NoteDraft, Properties } from '../core/schema';
 import { PROP, fileName, notePath, wikiLink } from '../core/schema';
+import { stapleProperties } from '../core/stock';
 
 export interface CatalogEntry extends NoteDraft {
 	id: string;
 	parent?: string;
+	/** For other stock: the catalog types it supplies. */
+	provides?: readonly string[];
 }
 
 type TypeDefinition = [name: string, description: string, properties?: Properties];
@@ -15,6 +18,14 @@ function category(name: string, description: string) {
 function ingredientTypes(parent: string | undefined, types: TypeDefinition[]) {
 	for (const [name, description, properties] of types) {
 		entries.push({ id: `type/${fileName(name)}`, kind: 'type', name, parent, description, properties });
+	}
+}
+function staples(items: [name: string, description: string, aliases?: string[]][]) {
+	for (const [name, description, aliases] of items) {
+		entries.push({
+			id: `ingredient/${fileName(name)}`, kind: 'ingredient', name, description,
+			properties: { ...stapleProperties('Unknown'), ...aliases ? { aliases } : {} },
+		});
 	}
 }
 function family(name: string, parent: string | undefined, description: string, types: TypeDefinition[]) {
@@ -190,13 +201,29 @@ family('Carbonated Mixer', undefined, 'Carbonated cocktail mixers.', [
 ]);
 ingredientTypes(undefined, [
 	['Cream of Coconut', 'Sweetened coconut cream used for sweetness and texture in cocktails, distinct from unsweetened coconut cream or coconut milk.'],
-	['Heavy Cream', 'High-fat dairy cream for recipes that specify cream.'], ['Milk', 'Dairy milk for recipes calling for milk; use a separate ingredient where a substitution changes the recipe.'], ['Egg White', 'The white of an egg, used for texture and foam in cocktails.'], ['Whole Egg', 'A whole egg, including yolk, for flips and other cocktails that specify it.'],
+	['Egg White', 'The white of an egg, used for texture and foam in cocktails.'], ['Whole Egg', 'A whole egg, including yolk, for flips and other cocktails that specify it.'],
 ]);
 ingredientTypes(undefined, [
-	['Mint', 'Fresh mint leaves or sprigs for flavor and garnish.'], ['Lime Peel', 'Lime peel for garnish or expressed oils.'],
+	['Lime Peel', 'Lime peel for garnish or expressed oils.'],
 	['Lemon Peel', 'Lemon peel for garnish or expressed oils.'], ['Orange Peel', 'Orange peel for garnish or expressed oils.'],
-	['Cocktail Cherry', 'A prepared cherry used as a cocktail garnish.'], ['Salt', 'Salt; keep a saline solution separate when a recipe specifies one.'],
+	['Cocktail Cherry', 'A prepared cherry used as a cocktail garnish.'],
 ]);
+staples([
+	['Salt', 'Salt for rims and seasoning. Saline Solution is its own note.'],
+	['Saline Solution', '20% saline: 20 g salt dissolved in 80 g water. Another strength is its own staple, such as Saline Solution (25%).', ['Saline']],
+	['Mint', 'Fresh mint leaves or sprigs for flavor and garnish.', ['Mint Leaves']],
+	['Water', 'Still water, for recipes that call for it.'],
+	['Heavy Cream', 'High-fat dairy cream for recipes that specify cream.', ['Cream']],
+	['Milk', 'Dairy milk for recipes calling for milk. Add a separate staple where a substitution changes the recipe.'],
+	['Cinnamon Sticks', 'Whole cinnamon sticks for garnish and infusions.', ['Cinnamon Stick']],
+	['Whole Nutmeg', 'Whole nutmeg to grate over a drink.', ['Nutmeg']],
+]);
+// Not a staple: a recipe calls for the egg white or the whole egg, and one carton supplies both.
+entries.push({
+	id: 'ingredient/Eggs', kind: 'ingredient', name: 'Eggs', provides: ['Egg White', 'Whole Egg'],
+	description: 'Eggs for whites and whole-egg drinks. Set availability when you buy them.',
+	properties: { ...stapleProperties('Unknown'), [PROP.form]: 'Fresh ingredient' },
+});
 
 // Ratio names are unambiguous; the everyday names are aliases so pickers find them too.
 const sugar = [
@@ -220,6 +247,9 @@ export function catalogDraft(root: string, entry: CatalogEntry, paths: ReadonlyM
 		const property = kind === 'category' ? PROP.category : kind === 'type' ? PROP.type : PROP.family;
 		const link = wikiLink(paths.get(`${kind}/${fileName(entry.parent)}`) || notePath(root, kind, entry.parent), entry.parent);
 		properties[property] = link;
+	}
+	if (entry.provides) {
+		properties[PROP.provides] = entry.provides.map(name => wikiLink(paths.get(`type/${fileName(name)}`) || notePath(root, 'type', name), name));
 	}
 	return { ...entry, properties };
 }

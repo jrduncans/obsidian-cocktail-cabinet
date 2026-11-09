@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PROP } from '../src/core/schema';
 import { renderNote } from '../src/core/notes';
-import { houseName, stockProperties, suggestedName } from '../src/core/stock';
+import { houseName, KITCHEN_STAPLE_FORM, stapleProperties, stockProperties, suggestedName } from '../src/core/stock';
 import { BottleAmount } from '../src/core/bottle-amount';
 import type { StockInput } from '../src/core/stock';
 
@@ -75,7 +75,7 @@ void test('either stock kind supports every manual status and ignores inactive v
 });
 
 void test('source form is independent of tracking mode and volume mode ignores inactive status', () => {
-	for (const form of ['Fresh ingredient', 'Prepared juice', 'Bottled juice', 'Homemade syrup', 'Purchased syrup', 'Other']) {
+	for (const form of ['Fresh ingredient', 'Prepared juice', 'Bottled juice', 'Homemade syrup', 'Purchased syrup', 'Kitchen staple', 'Other']) {
 		const properties = stockProperties(input({
 			kind: 'ingredient', form, remaining: '500', availability: 'invalid',
 		}));
@@ -212,4 +212,21 @@ void test('homemade other stock suggests a House name without overwriting typed 
 	assert.equal(suggestedName('House Orgeat', 'House Orgeat', ''), '');
 	assert.equal(suggestedName('Small Hand Orgeat', 'House Orgeat', 'House Grenadine'), 'Small Hand Orgeat');
 	assert.equal(suggestedName('Limes', '', 'House Lime Juice'), 'Limes');
+});
+
+void test('a kitchen staple is status-tracked other stock with no Provides', () => {
+	assert.deepEqual(stapleProperties('Have'), {
+		'cc-stock-tracking': 'status',
+		'cc-last-purchase-price': null,
+		'cc-shopping-list': false,
+		'cc-form': KITCHEN_STAPLE_FORM,
+		'cc-availability': 'Have',
+	});
+	assert.throws(() => stapleProperties('Plenty'), /availability/);
+});
+
+void test('the kitchen staple form is accepted when adding other stock', () => {
+	const properties = stockProperties(input({ kind: 'ingredient', tracking: 'status', form: KITCHEN_STAPLE_FORM }));
+	assert.equal(properties[PROP.form], 'Kitchen staple');
+	assert.equal(houseName(KITCHEN_STAPLE_FORM, 'Salt'), '');
 });

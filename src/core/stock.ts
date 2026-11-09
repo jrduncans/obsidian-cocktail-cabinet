@@ -11,12 +11,16 @@ export const AVAILABILITY = {
 	Out: 'Out',
 } as const;
 
+/** Other stock that is its own ingredient: it provides no type, and recipes link it directly. */
+export const KITCHEN_STAPLE_FORM = 'Kitchen staple';
+
 export const STOCK_FORMS = {
 	'Fresh ingredient': 'Fresh ingredient',
 	'Prepared juice': 'Prepared juice',
 	'Bottled juice': 'Bottled juice',
 	'Homemade syrup': 'Homemade syrup',
 	'Purchased syrup': 'Purchased syrup',
+	[KITCHEN_STAPLE_FORM]: KITCHEN_STAPLE_FORM,
 	Other: 'Other',
 } as const;
 
@@ -93,4 +97,12 @@ export function stockProperties(input: StockInput): Properties {
 		properties[PROP.remaining] = optionalNumber(input.remaining, 'Remaining volume', 0);
 	}
 	return properties;
+}
+
+/** A kitchen staple's properties: tracked by availability, with no Provides. */
+export function stapleProperties(availability: string): Properties {
+	return stockProperties({
+		kind: 'ingredient', tracking: 'status', volume: '', abv: '', open: '', unopened: '', remaining: '',
+		availability, form: KITCHEN_STAPLE_FORM, lastPurchasePrice: '', shoppingList: false,
+	});
 }

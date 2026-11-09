@@ -77,7 +77,7 @@ void test('catalog identities use current starter names without URL schemes', ()
 void test('starter catalog supplies definitions without implying owned stock or supplying cocktail recipes', () => {
 	const files = starterPlan('Cocktails');
 	assert.ok(files.filter(file => file.kind === 'type').length >= 90);
-	assert.ok(files.every(file => ['category', 'family', 'type', 'bottle', 'cabinet', 'shopping', 'base'].includes(file.kind)));
+	assert.ok(files.every(file => ['category', 'family', 'type', 'bottle', 'ingredient', 'cabinet', 'shopping', 'base'].includes(file.kind)));
 	assert.ok(files.filter(file => file.kind !== 'base').every(file => !file.content.includes(`${PROP.open}:`) && !file.content.includes(`${PROP.unopened}:`)));
 	const bottles = files.filter(file => file.kind === 'bottle');
 	assert.ok(bottles.length > 0);
@@ -529,4 +529,31 @@ void test('Restock is a Base of shopping candidates: running low, out, unknown',
 	assert.deepEqual([parsed.formulas.lowShare, parsed.formulas.lowMl], ['0.1', '70'], 'defaults: 10% and 70 mL');
 	const custom = parseBase(restockBase('Cocktails', { percent: 25, ml: 100 }).content);
 	assert.deepEqual([custom.formulas.lowShare, custom.formulas.lowMl], ['0.25', '100']);
+});
+
+void test('the starter ships kitchen staples at Unknown, with no Provides, and an Eggs source', () => {
+	const files = starterPlan('Cocktails');
+	const names = ['Salt', 'Saline Solution', 'Mint', 'Water', 'Heavy Cream', 'Milk', 'Cinnamon Sticks', 'Whole Nutmeg'];
+	for (const name of names) {
+		const file = files.find(file => file.catalogId === `ingredient/${name}`);
+		assert.equal(file?.path, `Cocktails/Ingredients/${name}.md`);
+		assert.ok(file.content.includes('cc-form: "Kitchen staple"'), name);
+		assert.ok(file.content.includes('cc-stock-tracking: "status"'), name);
+		assert.ok(file.content.includes('cc-availability: "Unknown"'), name);
+		assert.ok(!file.content.includes(PROP.provides), name);
+		assert.ok(!STARTER_CATALOG.some(entry => entry.kind === 'type' && entry.name === name), name);
+	}
+	assert.ok(files.find(file => file.catalogId === 'ingredient/Saline Solution')?.content.includes('20%'));
+	const eggs = files.find(file => file.catalogId === 'ingredient/Eggs')!;
+	assert.ok(eggs.content.includes('cc-form: "Fresh ingredient"'));
+	assert.ok(eggs.content.includes('"[[Cocktails/Types/Egg White|Egg White]]"'));
+	assert.ok(eggs.content.includes('"[[Cocktails/Types/Whole Egg|Whole Egg]]"'));
+	for (const name of ['Soda Water', 'Cocktail Cherry', 'Egg White', 'Whole Egg']) {
+		assert.ok(STARTER_CATALOG.some(entry => entry.kind === 'type' && entry.name === name), name);
+	}
+});
+
+void test('the Eggs source follows relocated types', () => {
+	const eggs = starterPlan('Cocktails', new Map([['type/Egg White', 'Cocktails/Pantry/Whites.md']])).find(file => file.catalogId === 'ingredient/Eggs')!;
+	assert.ok(eggs.content.includes('"[[Cocktails/Pantry/Whites|Egg White]]"') || eggs.content.includes('"[[Cocktails/Pantry/Whites.md|Egg White]]"'));
 });

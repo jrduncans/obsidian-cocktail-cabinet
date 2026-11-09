@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-134 ingredient types, 26 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+130 ingredient types, 26 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -81,7 +81,6 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Grapefruit Juice | Citrus Juice | Juice |
 | Green Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Grenadine | Flavored Syrup | Syrup |
-| Heavy Cream | — | — |
 | Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Honey Syrup | Sugar Syrup | Syrup |
 | Irish Whiskey | Whiskey | Spirit |
@@ -94,8 +93,6 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Maraschino Liqueur | Fruit Liqueur | Liqueur |
 | Melon Liqueur | Fruit Liqueur | Liqueur |
 | Mezcal | Agave Spirit | Spirit |
-| Milk | — | — |
-| Mint | — | — |
 | Navy Strength Gin | Gin | Spirit |
 | Old Tom Gin | Gin | Spirit |
 | Oloroso Sherry | Sherry | Fortified Wine |
@@ -119,7 +116,6 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Red Wine | Still Wine | Wine |
 | Reposado Tequila | Agave Spirit | Spirit |
 | Rye Whiskey | Whiskey | Spirit |
-| Salt | — | — |
 | Simple Syrup (1:1) | Sugar Syrup | Syrup |
 | Simple Syrup (2:1) | Sugar Syrup | Syrup |
 | Single Malt Scotch | Whiskey | Spirit |
@@ -152,3 +148,19 @@ Named bottles can be linked in recipes without asserting that they are owned. Re
 | Bottle | Ingredient type | Availability |
 | --- | --- | --- |
 | Angostura Bitters | Aromatic Bitters | Unknown |
+
+## Starter other stock
+
+Kitchen staples are the ingredient themselves and provide no type; recipes link them directly. All start at Unknown.
+
+| Name | Form | Provides |
+| --- | --- | --- |
+| Cinnamon Sticks | Kitchen staple | — |
+| Eggs | Fresh ingredient | Egg White, Whole Egg |
+| Heavy Cream | Kitchen staple | — |
+| Milk | Kitchen staple | — |
+| Mint | Kitchen staple | — |
+| Saline Solution | Kitchen staple | — |
+| Salt | Kitchen staple | — |
+| Water | Kitchen staple | — |
+| Whole Nutmeg | Kitchen staple | — |

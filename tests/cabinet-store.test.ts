@@ -74,6 +74,15 @@ void test('setup preserves renamed pages and supplies their paths to missing chi
 	assert.ok(preview.create[0]?.content.includes('cc-catalog-id: "type/Aged Jamaican Rum"'));
 });
 
+void test('setup keeps other stock the user already created at a starter path', async () => {
+	const { contents, store } = fixture();
+	const path = 'Cocktails/Ingredients/Salt.md';
+	contents.set(path, '---\ncc-kind: "ingredient"\ncc-name: "Salt"\n---\n# Salt\n');
+	const preview = await store.previewSetup('Cocktails');
+	assert.deepEqual(preview.conflicts, []);
+	assert.ok(preview.keep.includes(path));
+});
+
 void test('setup rejects duplicate catalog identities', async () => {
 	const { contents, store } = fixture();
 	const original = contents.get('Cocktails/Families/Rum.md')!;

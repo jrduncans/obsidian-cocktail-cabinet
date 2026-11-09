@@ -4,6 +4,7 @@ import type { TFile } from 'obsidian';
 import { IngredientModal } from '../ui/ingredient-modal';
 import { PurchaseModal } from '../ui/purchase-modal';
 import { StockModal } from '../ui/stock-modal';
+import { StapleModal } from '../ui/staple-modal';
 import { RecipeModal } from '../ui/recipe-modal';
 import { SetupModal } from '../ui/setup-modal';
 import { LoggingModal } from '../ui/logging-modal';
@@ -120,6 +121,11 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		id: 'create-ingredient-stock',
 		name: 'Add other stock',
 		callback: () => handle(() => ready(() => new StockModal(plugin, false).open())),
+	});
+	plugin.addCommand({
+		id: 'create-kitchen-staple',
+		name: 'Add kitchen staple',
+		callback: () => handle(() => ready(() => new StapleModal(plugin).open())),
 	});
 	plugin.addCommand({
 		id: 'create-recipe',

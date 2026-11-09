@@ -112,7 +112,7 @@ A source that supplies ingredient types, such as fresh fruit, prepared juice, or
 | `cc-last-used` | `date \| null` | `false` | Date (`YYYY-MM-DD`) this was last used in a logged cocktail: selected for a line, or the one source a line clearly uses without subtracting (status-tracked, or no mL amount, such as dashes). Written by **Log this cocktail**, never moved backward; Edit stock doesn't set it. Missing means not used since tracking began. Orders Restock's Running low and Out, most recently used first. |
 | `cc-last-purchased` | `date \| null` | `false` | Date (`YYYY-MM-DD`) this was last recorded as bought, by **Record purchases** or **Bought more**; never moved backward. Only the last purchase is kept, with `cc-last-purchase-price`. |
 
-`StockForm` is one of `Fresh ingredient`, `Prepared juice`, `Bottled juice`, `Homemade syrup`, `Purchased syrup`, or `Other`. The source description lives in the body. Measured juice yields, individual preparation batches, and multiple container sizes are not defined by this schema.
+`StockForm` is one of `Fresh ingredient`, `Prepared juice`, `Bottled juice`, `Homemade syrup`, `Purchased syrup`, `Kitchen staple`, or `Other`. The source description lives in the body. Measured juice yields, individual preparation batches, and multiple container sizes are not defined by this schema.
 
 ## Stock tracking rules
 

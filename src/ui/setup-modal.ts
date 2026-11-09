@@ -10,7 +10,7 @@ export class SetupModal extends CabinetForm {
 	constructor(private plugin: CocktailCabinetPlugin) { super(plugin.app); }
 
 	onOpen() {
-		this.begin('Set up your cabinet', `Create ${STARTER_CATALOG.filter(entry => entry.kind === 'type').length} ingredient types with descriptions and optional family and category groupings. Include named bottle references with unknown availability and live Bases for browsing and editing your collection, plus the sections shown in each note. A new cabinet also gets a small example: limes, lemons, a house syrup, and two recipes. Record stock for the bottles you own, then add other stock and cocktail recipes.`);
+		this.begin('Set up your cabinet', `Create ${STARTER_CATALOG.filter(entry => entry.kind === 'type').length} ingredient types with descriptions and optional family and category groupings. Include named bottle references and common kitchen staples with unknown availability and live Bases for browsing and editing your collection, plus the sections shown in each note. A new cabinet also gets a small example: limes, lemons, a house syrup, and two recipes. Record stock for the bottles you own, then add other stock and cocktail recipes.`);
 		let root = this.plugin.settings.cabinetFolder;
 		this.text('Cabinet folder', root, value => { root = value; }, 'All new cabinet files go inside this vault folder. Existing files are preserved.');
 		const previewEl = this.contentEl.createEl('p', { attr: { role: 'status' } });

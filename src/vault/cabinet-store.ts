@@ -137,8 +137,9 @@ export class CabinetStore {
 			}
 			if (existing instanceof TFile && existing.extension === 'md' && existing.path === planned.path) {
 				const properties = await this.frontmatter(existing);
+				// Someone may have added their own Salt before the starter offered one; it stays theirs.
 				if (properties[PROP.kind] === planned.kind &&
-					(!planned.catalogId || properties[PROP.catalogId] === planned.catalogId)) {
+					(!planned.catalogId || planned.kind === 'ingredient' || properties[PROP.catalogId] === planned.catalogId)) {
 					result.keep.push(existing.path);
 					continue;
 				}

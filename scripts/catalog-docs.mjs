@@ -13,6 +13,8 @@ try {
 	const families = entries.filter(entry => entry.kind === 'family');
 	const categories = entries.filter(entry => entry.kind === 'category');
 	const bottles = entries.filter(entry => entry.kind === 'bottle').sort((left, right) => left.name.localeCompare(right.name, 'en'));
+	const stock = entries.filter(entry => entry.kind === 'ingredient').sort((left, right) => left.name.localeCompare(right.name, 'en'));
+	const stockRows = stock.map(entry => `| ${entry.name} | ${entry.properties['cc-form']} | ${entry.provides?.join(', ') || '—'} |`);
 	const bottleRows = bottles.map(entry => `| ${entry.name} | ${entry.parent || '—'} | Unknown |`);
 	const rows = types.map(entry => {
 		const family = families.find(family => family.name === entry.parent);
@@ -28,7 +30,11 @@ try {
 		+ (bottles.length ? '\n## Reference bottles\n\n'
 			+ 'Named bottles can be linked in recipes without asserting that they are owned. Record stock on the existing bottle note when needed.\n\n'
 			+ '| Bottle | Ingredient type | Availability |\n| --- | --- | --- |\n'
-			+ bottleRows.join('\n') + '\n' : '');
+			+ bottleRows.join('\n') + '\n' : '')
+		+ (stock.length ? '\n## Starter other stock\n\n'
+			+ 'Kitchen staples are the ingredient themselves and provide no type; recipes link them directly. All start at Unknown.\n\n'
+			+ '| Name | Form | Provides |\n| --- | --- | --- |\n'
+			+ stockRows.join('\n') + '\n' : '');
 	const path = 'docs/starter-hierarchy.md';
 	if (process.argv.includes('--check')) {
 		const existing = await readFile(path, 'utf8');
