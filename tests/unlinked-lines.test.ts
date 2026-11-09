@@ -25,7 +25,6 @@ void test('unmeasured wording excludes leading amounts while linking preserves t
 	for (const [line, amount, wording, linked] of [
 		['2 drops saline', '2 drops', 'saline', '- 2 drops [[Cocktails/Types/Gin|saline]]'],
 		['1 sprig mint', '1 sprig', 'mint', '- 1 sprig [[Cocktails/Types/Gin|mint]]'],
-		['Mint sprig, to garnish', '', 'Mint sprig, to garnish', '- [[Cocktails/Types/Gin|Mint sprig, to garnish]]'],
 		['pinch of salt', 'pinch of', 'salt', '- pinch of [[Cocktails/Types/Gin|salt]]'],
 	] as const) {
 		assert.deepEqual(splitIngredient(line), { amount, text: wording });
@@ -193,4 +192,19 @@ void test('the link under the cursor is found and replaced, leaving the rest of 
 	assert.equal(replaceLink(line, span, 'Cocktails/Types/Orange Bitters.md', 'Orange Bitters'),
 		'- 6 dashes [[Cocktails/Types/Orange Bitters|Orange Bitters]], preferably [[Cocktails/Bottles/Regans|Regans]] ![[image.png]]');
 	assert.throws(() => replaceLink(line, span, GIN, '[x]'), /brackets/);
+});
+
+void test('a trailing garnish marker groups with the ingredient and stays outside the link', () => {
+	assert.deepEqual(ingredientParts('nutmeg to garnish'), { amount: '', lead: '', wording: 'nutmeg', suffix: ' to garnish' });
+	assert.equal(linkedLine('- nutmeg to garnish', GIN), '- [[Cocktails/Types/Gin|nutmeg]] to garnish');
+	assert.equal(linkedLine('- Mint sprig, to garnish', GIN, 'Mint'), '- [[Cocktails/Types/Gin|Mint]], to garnish');
+	assert.deepEqual(linkedLinePreview('nutmeg to garnish', 'Whole Nutmeg'), { before: '', link: 'Whole Nutmeg', after: ' to garnish' });
+	const note = { path: 'Cocktails/Ingredients/Whole Nutmeg.md', name: 'Whole Nutmeg', kind: 'ingredient', parents: [], aliases: ['Nutmeg'] } as const;
+	const recipe = { path: 'Cocktails/Recipes/A.md', name: 'A', kind: 'recipe', parents: [] } as const;
+	const groups = groupUnlinked([{ note: recipe, content: '### Ingredients\n- nutmeg\n- nutmeg to garnish' }], [note], { includeGarnishes: true });
+	assert.deepEqual(groups.map(group => [group.key, group.wording, group.uses.length]), [['nutmeg', 'nutmeg', 2]]);
+});
+
+void test('a measured line keeps its whole wording, even ending in a garnish phrase', () => {
+	assert.equal(ingredientParts('15 ml syrup to garnish').wording, 'syrup to garnish');
 });

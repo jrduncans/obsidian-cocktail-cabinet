@@ -28,15 +28,18 @@ export const plainIngredient = (text: string) =>
 
 /**
  * The parts of an ingredient line: amount ("1½ oz (45 ml)"), an echoed volume some sources add after it
- * ("/ 45 ml."), an optional garnish prefix, and the wording, which becomes a link's display text.
+ * ("/ 45 ml."), an optional garnish prefix, the wording, which becomes a link's display text, and, on an
+ * unmeasured line, a trailing garnish marker that stays outside the link.
  */
-export function ingredientParts(text: string): { amount: string; lead: string; wording: string; prefix?: string } {
+export function ingredientParts(text: string): { amount: string; lead: string; wording: string; prefix?: string; suffix?: string } {
 	const plain = plainIngredient(text).trim();
 	const prefix = plain.match(GARNISH_PREFIX)?.[0];
 	const { amount, text: rest } = splitIngredient(prefix ? plain.slice(prefix.length) : plain);
 	const echoed = amount ? rest.match(/^(\/\s*\d+(?:[.,]\d+)?\s*(?:ml|cl|oz)\.?)\s+(.+)$/i) : null;
 	const parts = echoed ? { amount, lead: echoed[1]!, wording: echoed[2]!.trim() } : { amount, lead: '', wording: rest.trim() };
-	return prefix ? { prefix: prefix.trimEnd(), ...parts } : parts;
+	const suffix = recipeVolumeMl(amount) === null ? parts.wording.match(GARNISH_SUFFIX)?.[0] : undefined;
+	if (suffix) parts.wording = parts.wording.slice(0, -suffix.length).trim();
+	return { ...prefix ? { prefix: prefix.trimEnd() } : {}, ...parts, ...suffix ? { suffix } : {} };
 }
 
 /** Wording compared without case, accents, or spacing differences, so "Gin" and "gin" are one group. */
@@ -62,8 +65,7 @@ export function reviewUnlinkedLines(content: string, notes: readonly CabinetNote
 		if (isMeasured(line.text)) return true;
 		const garnish = GARNISH_PREFIX.test(line.text) || GARNISH_SUFFIX.test(line.text);
 		if (garnish && !options.includeGarnishes) return false;
-		const text = line.text.replace(GARNISH_PREFIX, '').replace(GARNISH_SUFFIX, '');
-		const key = ingredientKey(ingredientParts(text).wording);
+		const key = ingredientKey(ingredientParts(line.text).wording);
 		return !!key && names.has(key);
 	});
 }
@@ -78,13 +80,13 @@ export function linkTextError(text: string): string {
 /** The line with its wording linked to `path`, shown as `text` (the wording by default); the amount and list marker stay as written. */
 export function linkedLine(raw: string, path: string, text?: string): string {
 	const marker = raw.match(MARKER)?.[1] ?? '';
-	const { prefix, amount, lead, wording } = ingredientParts(raw.slice(marker.length).trim());
+	const { prefix, amount, lead, wording, suffix } = ingredientParts(raw.slice(marker.length).trim());
 	if (!wording) throw new Error('This line has no ingredient to link.');
 	const shown = text ?? wording;
 	if (text === undefined && /[|[\]]/.test(wording)) throw new Error(`“${wording}” has brackets or a vertical bar; link it in the recipe instead.`);
 	const error = linkTextError(shown);
 	if (error) throw new Error(error);
-	return marker + [prefix, amount, lead, wikiLink(path, shown)].filter(Boolean).join(' ');
+	return marker + [prefix, amount, lead, wikiLink(path, shown)].filter(Boolean).join(' ') + (suffix ?? '');
 }
 
 /** A line as a reader will see it once linked: the text around the link, and the link's text. */
@@ -92,8 +94,8 @@ export interface LinkPreview { before: string; link: string; after: string; }
 
 /** How an ingredient line (without its marker) reads with its wording linked as `text`. */
 export function linkedLinePreview(text: string, link: string): LinkPreview {
-	const { prefix, amount, lead } = ingredientParts(text);
-	return { before: [prefix, amount, lead].filter(Boolean).join(' '), link: link.trim(), after: '' };
+	const { prefix, amount, lead, suffix } = ingredientParts(text);
+	return { before: [prefix, amount, lead].filter(Boolean).join(' '), link: link.trim(), after: suffix ?? '' };
 }
 
 /** How `line` reads with the characters from `start` to `end` replaced by a link shown as `text`. */
