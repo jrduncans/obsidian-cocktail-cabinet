@@ -2,6 +2,7 @@ import { STARTER_CATALOG, catalogDraft } from '../catalog/catalog';
 import { STARTER_EXAMPLES, examplePlan } from '../catalog/examples';
 import { localDate, markdown, renderNote } from './notes';
 import { cabinetFolder, notePath, PROP, wikiLink } from './schema';
+import { IN_STOCK_BASE, inStockBase } from './in-stock';
 import { basePath, resourceBases } from './bases';
 import { NAVIGATION_BASE, navigationBase } from './navigation';
 import { SHOPPING_NOTE, shoppingBase, shoppingNote, shoppingNotePath } from './shopping';
@@ -22,7 +23,7 @@ export function customViewsPath(root: string): string {
  */
 export function cabinetViews(folder: string, restock: RestockThresholds = DEFAULT_RESTOCK): PlannedFile[] {
 	const root = cabinetFolder(folder);
-	return [...resourceBases(root), navigationBase(root), shoppingBase(root), restockBase(root, restock)];
+	return [...resourceBases(root), navigationBase(root), shoppingBase(root), restockBase(root, restock), inStockBase(root)];
 }
 
 /** Every file setup writes. `examples` adds the worked example, for a cabinet without a home yet. */
@@ -71,11 +72,23 @@ Your bottles, ingredients, and cocktail recipes in one place. Start with one bot
 
 Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below.${exampleSection(example)}
 
+## Start here
+
+1. Open **Other stock → Kitchen staples**, walk through your kitchen, and set availability on the staples you have.
+2. Set the stock on your bottles and other ingredients. **Ingredient types → Browse** shows what you have under each type.
+3. Open a favorite recipe and log a cocktail. Use **In stock** to see everything on hand.
+
 ## Your collection
 
 ### Bottles
 
 ${viewLink('Bottles')} records named bottles and their stock. Starter bottle references have unknown availability; record your stock on the existing note when you have that bottle. Use **Cocktail Cabinet: Add a bottle** when a bottle is missing, enter its name, and select its ingredient type, if known.
+
+${viewLink(IN_STOCK_BASE)} brings bottles and other stock together: Have or Low availability, or a positive amount. Unknown availability and blank amounts do not count as stock.
+
+### Kitchen staples
+
+Open ${wikiLink(basePath(root, 'Other stock') + '#Kitchen staples', 'Kitchen staples')} to mark everyday ingredients such as salt, mint, and saline solution Have, Low, or Out. Each is tracked as itself, with no ingredient type to select. Use **Cocktail Cabinet: Add kitchen staple** for one that is missing.
 
 ### Other stock
 
@@ -99,7 +112,7 @@ Each ingredient and bottle note lists the recipes that use it. On a recipe, the 
 
 ### Types
 
-${viewLink('Ingredient types')} contains ingredient definitions and preparation notes. Every type appears here, including those without a family. Use **Cocktail Cabinet: Add ingredient type** if something you need is missing, or **New type** while creating a recipe.
+${viewLink('Ingredient types')} contains ingredient definitions and preparation notes. The **Browse** tab groups types by category and family, with standalone types and kitchen staples in their own groups; **Have** shows stock on hand. Every type appears in the default tab, including those without a family. Use **Cocktail Cabinet: Add ingredient type** if something you need is missing, or **New type** while creating a recipe.
 
 ### Families
 

@@ -1,3 +1,4 @@
+import { sourceStocked as stocked, typeSources } from './stock-formulas';
 import { basePath } from './bases';
 import { COMMON_FORMULAS, kindIs, linkWithName, q, renderFormulaBase } from './base-formulas';
 import type { FormulaView } from './base-formulas';
@@ -14,12 +15,6 @@ export const SHOPPING_NOTE = 'Shopping list';
 export const SHOPPING_VIEWS = { bottles: 'Bottles', types: 'Types', other: 'Other stock' } as const;
 
 const flagged = `note[${q(PROP.shoppingList)}] == true`;
-const prop = (key: string) => `value.properties[${q(key)}]`;
-
-/** True when the file in `value` has stock on hand; Unknown is not stock. */
-const stocked = `((${prop(PROP.stockTracking)} == "status" && (${prop(PROP.availability)} == "Have" || ${prop(PROP.availability)} == "Low"))`
-	+ ` || (${prop(PROP.stockTracking)} == "volume" && (${prop(PROP.open)} > 0 || ${prop(PROP.unopened)} > 0 || ${prop(PROP.remaining)} > 0)))`;
-
 const FORMULAS: Record<string, string> = {
 	name: COMMON_FORMULAS.name,
 	parents: COMMON_FORMULAS.parents,
@@ -28,8 +23,7 @@ const FORMULAS: Record<string, string> = {
 	provides: COMMON_FORMULAS.parentLinks,
 	stock: COMMON_FORMULAS.stock,
 	// For a type: the bottles and other stock classified under it, via backlinks.
-	sources: `file.backlinks.map(value.asFile()).filter(value).filter((${prop(PROP.kind)} == "bottle" || ${prop(PROP.kind)} == "ingredient")`
-		+ ` && [list(${prop(PROP.type)}), list(${prop(PROP.provides)})].flat().filter(value).map(link(value).asFile()).filter(value).map(value.path).contains(file.path))`,
+	sources: typeSources,
 	have: `formula.sources.filter(${stocked}).map(${linkWithName})`,
 	notInStock: `formula.sources.filter(!${stocked}).map(${linkWithName})`,
 };

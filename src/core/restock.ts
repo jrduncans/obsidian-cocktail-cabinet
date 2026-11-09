@@ -1,3 +1,4 @@
+import { kitchenStaple } from './stock-formulas';
 import { basePath } from './bases';
 import { COMMON_FORMULAS, kindIs, q, renderFormulaBase } from './base-formulas';
 import type { FormulaView, Sort } from './base-formulas';
@@ -71,7 +72,7 @@ const byUse: Sort[] = [[`note.${PROP.lastUsed}`, 'DESC'], ['file.name', 'ASC']];
 const VIEWS: readonly FormulaView[] = [
 	{ name: RESTOCK_VIEWS.low, type: 'table', filter: `(${stocked}) && formula.low`, columns: [name, type, ['formula.stock', 'Stock'], used, price, shopping], sort: byUse },
 	{ name: RESTOCK_VIEWS.out, type: 'table', filter: `(${stocked}) && formula.out`, columns: [name, type, used, price, shopping], sort: byUse },
-	{ name: RESTOCK_VIEWS.unknown, type: 'table', filter: `(${stocked}) && formula.unknown`, columns: [name, type, ['formula.unknownStock', 'Stock'], shopping] },
+	{ name: RESTOCK_VIEWS.unknown, type: 'table', filter: `(${stocked}) && formula.unknown && !(${kitchenStaple})`, columns: [name, type, ['formula.unknownStock', 'Stock'], shopping] },
 ];
 
 export function restockBase(root: string, thresholds: RestockThresholds = DEFAULT_RESTOCK): PlannedFile {

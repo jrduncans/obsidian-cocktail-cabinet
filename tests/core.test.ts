@@ -20,7 +20,7 @@ interface ParsedBase {
 	filters: { and: string[] };
 	formulas: Record<string, string>;
 	properties: Record<string, { displayName: string }>;
-	views: { name: string; filters?: { and: string[] }; order: string[]; sort: { property: string; direction: string }[] }[];
+	views: { groupBy?: { property: string; direction: string }; name: string; filters?: { and: string[] }; order: string[]; sort: { property: string; direction: string }[] }[];
 }
 const parseBase = (content: string) => parseYaml(content) as ParsedBase;
 
@@ -156,7 +156,7 @@ void test('home introduces all six resource Bases in context without embeds or s
 	const files = starterPlan('Drinks/Cabinet');
 	const home = files.find(file => file.kind === 'cabinet')!;
 	const bases = files.filter(file => file.kind === 'base');
-	assert.equal(bases.length, 9);
+	assert.equal(bases.length, 10);
 	assert.ok(home.content.includes(wikiLink(basePath('Drinks/Cabinet', RESTOCK_BASE), RESTOCK_BASE)));
 	assert.ok(bases.some(file => file.path === basePath('Drinks/Cabinet', NAVIGATION_BASE)));
 	assert.ok(bases.some(file => file.path === basePath('Drinks/Cabinet', SHOPPING_BASE)));
@@ -181,7 +181,9 @@ void test('Bases use the selected root and kind without requiring parents or cat
 	assert.equal(bases.length, RESOURCE_BASES.length);
 	for (const [index, base] of bases.entries()) {
 		const parsed = parseBase(base.content);
-		assert.deepEqual(parsed.filters.and, [`file.inFolder(${JSON.stringify(root)})`, 'file.ext == "md"', `note["cc-kind"] == "${RESOURCE_BASES[index]!.kind}"`]);
+		const kind = `note["cc-kind"] == "${RESOURCE_BASES[index]!.kind}"`;
+		assert.deepEqual(parsed.filters.and, [`file.inFolder(${JSON.stringify(root)})`, 'file.ext == "md"', ...parsed.views[0]!.filters ? [] : [kind]]);
+		if (parsed.views[0]!.filters) assert.deepEqual(parsed.views[0]!.filters.and, [kind]);
 		assert.ok(!base.content.includes(PROP.catalogId));
 		// One linked proper-name column instead of separate file name and cc-name columns.
 		assert.equal(parsed.formulas.name, 'file.asLink(if(note["cc-name"], note["cc-name"], file.name))');
@@ -556,4 +558,49 @@ void test('the starter ships kitchen staples at Unknown, with no Provides, and a
 void test('the Eggs source follows relocated types', () => {
 	const eggs = starterPlan('Cocktails', new Map([['type/Egg White', 'Cocktails/Pantry/Whites.md']])).find(file => file.catalogId === 'ingredient/Eggs')!;
 	assert.ok(eggs.content.includes('"[[Cocktails/Pantry/Whites|Egg White]]"') || eggs.content.includes('"[[Cocktails/Pantry/Whites.md|Egg White]]"'));
+});
+
+void test('Browse includes types and staples, grouped by hierarchy with stocked sources in Have', () => {
+	const files = starterPlan("My cabinet's/Drinks");
+	const types = parseBase(files.find(file => file.path.endsWith('/Ingredient types.base'))!.content);
+	assert.deepEqual(types.views.map(view => view.name), ['Ingredient types', 'Browse']);
+	assert.deepEqual(types.views[0]!.order, ['formula.name', 'cc-family', 'cc-sugar-water-ratio', 'cc-shopping-list']);
+	const browse = types.views[1]!;
+	assert.match(browse.filters!.and[0]!, /Kitchen staple/);
+	assert.match(browse.filters!.and[0]!, /cc-kind.*type/);
+	assert.deepEqual(browse.groupBy, { property: 'formula.group', direction: 'ASC' });
+	assert.deepEqual(browse.order, ['formula.name', 'formula.have', 'cc-shopping-list']);
+	for (const text of ['Standalone types', 'Kitchen staples', ' › ']) assert.ok(types.formulas.group!.includes(text));
+	assert.match(types.formulas.category!, /cc-category/);
+	assert.match(types.formulas.group!, /if\(formula.family.length > 0,/, 'a missing family must take the standalone fallback');
+	assert.match(types.formulas.sources!, /file.backlinks/);
+	assert.match(types.formulas.have!, /formula.sources.filter/);
+	assert.equal(types.properties['formula.group']!.displayName, '');
+});
+
+void test('Kitchen staples has focused columns while Other stock keeps its existing columns and labels', () => {
+	const base = parseBase(starterPlan('Cocktails').find(file => file.path.endsWith('/Other stock.base'))!.content);
+	assert.deepEqual(base.views.map(view => view.name), ['Other stock', 'Kitchen staples']);
+	assert.deepEqual(base.views[1]!.order, ['formula.name', 'cc-availability', 'cc-last-used', 'cc-shopping-list']);
+	assert.match(base.views[1]!.filters!.and[0]!, /cc-kind.*ingredient.*Kitchen staple/);
+	assert.equal(base.properties['note.cc-availability']!.displayName, 'Availability (status mode)');
+	assert.deepEqual(base.views[0]!.order, ['formula.name', 'cc-provides', 'cc-form', 'cc-stock-tracking', 'cc-remaining-ml', 'cc-availability', 'cc-last-used', 'cc-last-purchase-price', 'cc-last-purchased', 'cc-shopping-list']);
+});
+
+void test('In stock combines sources with blank-safe amounts, and only Unknown excludes staples', () => {
+	const files = starterPlan('Cocktails');
+	const stock = parseBase(files.find(file => file.path.endsWith('/In stock.base'))!.content);
+	assert.match(stock.views[0]!.filters!.and[0]!, /bottle.*ingredient.*formula.stocked/);
+	for (const key of ['cc-open-ml', 'cc-unopened', 'cc-remaining-ml']) {
+		assert.ok(stock.formulas.stocked!.includes(`if(note["${key}"] == null, false, note["${key}"] > 0)`));
+	}
+	assert.match(stock.formulas.stocked!, /Have.*Low/);
+	assert.ok(!stock.formulas.stocked!.includes('Unknown'));
+	const restock = parseBase(restockBase('Cocktails').content);
+	for (const view of restock.views.slice(0, 2)) assert.ok(!view.filters!.and[0]!.includes('Kitchen staple'));
+	assert.match(restock.views[2]!.filters!.and[0]!, /!\(if\(note\["cc-kind"\] == "ingredient"/);
+	const home = files.find(file => file.kind === 'cabinet')!.content;
+	assert.match(home, /## Start here/);
+	assert.match(home, /### Kitchen staples/);
+	assert.match(home, /Other stock.base#Kitchen staples/);
 });
