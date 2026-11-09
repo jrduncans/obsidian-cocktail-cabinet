@@ -100,7 +100,8 @@ function renderBase(root: string, resource: ResourceBase): string {
 		const extra: FormulaView = resource.kind === 'type' ? {
 			name: 'Browse', type: 'table', filter: `(${kindIs('type')}) || ${kitchenStaple}`,
 			columns: [['formula.name', 'Name'], ['formula.have', 'Have'], [`note.${PROP.shoppingList}`, 'Shopping list']],
-			groupBy: { property: 'formula.group', direction: 'ASC', label: '' },
+			// A blank label leaves only the group name in each heading; an empty one shows the formula's name.
+			groupBy: { property: 'formula.group', direction: 'ASC', label: ' ' },
 		} : {
 			name: 'Kitchen staples', type: 'table', filter: kitchenStaple,
 			// Availability keeps the default view's label: labels belong to the whole Base.

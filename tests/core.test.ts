@@ -575,7 +575,7 @@ void test('Browse includes types and staples, grouped by hierarchy with stocked 
 	assert.match(types.formulas.group!, /if\(formula.family.length > 0,/, 'a missing family must take the standalone fallback');
 	assert.match(types.formulas.sources!, /file.backlinks/);
 	assert.match(types.formulas.have!, /formula.sources.filter/);
-	assert.equal(types.properties['formula.group']!.displayName, '');
+	assert.equal(types.properties['formula.group']!.displayName, ' ');
 });
 
 void test('Kitchen staples has focused columns while Other stock keeps its existing columns and labels', () => {
