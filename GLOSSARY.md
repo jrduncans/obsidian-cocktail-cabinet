@@ -21,6 +21,10 @@ A specific kind of ingredient, such as rye whiskey, lime juice, or 2:1 demerara 
 **Catch-all type**:
 An ingredient type grouping products without close substitutes, such as Amaro or Specialty Bitters. Its bottles are likely substitutes for each other, offered but not assumed.
 
+**Kitchen staple**:
+An everyday ingredient, such as salt, mint, or saline solution, tracked as itself rather than as a source of an ingredient type, because which brand or batch it is doesn't matter.
+_Avoid_: Pantry item, Grocery
+
 **Ingredient note**:
 A cabinet note a recipe ingredient can link to: a bottle, other stock, ingredient type, family, or category. Recipes are cabinet notes but not ingredient notes.
 _Avoid_: Cabinet note, when only ingredient notes are meant
