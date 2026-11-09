@@ -68,7 +68,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
   - **Add kitchen staple**, the `Kitchen staple` form, and hiding Provides for it.
   - Starter staples at Unknown, Saline Solution among them, and an Eggs note providing Whole Egg and Egg White. Settle the final list and convert Salt, Mint, and the other types that become staples, in the starter and in `knowledge`.
   - Views: **Browse** in Ingredient types, **Kitchen staples** in Other stock, a new **In stock** view, staples out of Restock's Unknown tab, and the cabinet home's new section and "start here" order.
-  - **Review unlinked ingredients** covers unmeasured lines that match an existing note, leaving marked garnishes out by default.
+  - Built 2026-11-09: **Review unlinked ingredients** also covers unmeasured lines matching any ingredient note's name or alias, with marked garnishes hidden by default and a **Show garnishes** toggle. Logging still leaves unmeasured lines unsubtracted; the modal has not been checked in Obsidian from the worktree.
 
 ### 5. Reach: retire the remaining skills
 

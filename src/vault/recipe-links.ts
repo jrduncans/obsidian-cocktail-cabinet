@@ -1,7 +1,7 @@
 import { TFile } from 'obsidian';
 import type { App } from 'obsidian';
 import { groupUnlinked, linkLines, StaleLineError } from '../core/unlinked-lines';
-import type { LineEdit, UnlinkedGroup } from '../core/unlinked-lines';
+import type { LineEdit, UnlinkedGroup, UnlinkedReviewOptions } from '../core/unlinked-lines';
 import type { CabinetStore } from './cabinet-store';
 
 export interface RecipeLineEdit extends LineEdit { path: string; }
@@ -21,11 +21,12 @@ export class RecipeLinkStore {
 		return file;
 	}
 
-	/** Every recipe's unlinked measured lines, grouped by wording. */
-	async unlinked(): Promise<UnlinkedGroup[]> {
-		const recipes = this.cabinet.notes().filter(note => note.kind === 'recipe');
+	/** Every recipe's reviewable unlinked lines, grouped by wording. */
+	async unlinked(options: UnlinkedReviewOptions = {}): Promise<UnlinkedGroup[]> {
+		const notes = this.cabinet.notes();
+		const recipes = notes.filter(note => note.kind === 'recipe');
 		const contents = await Promise.all(recipes.map(note => this.app.vault.cachedRead(this.file(note.path))));
-		return groupUnlinked(recipes.map((note, index) => ({ note, content: contents[index]! })));
+		return groupUnlinked(recipes.map((note, index) => ({ note, content: contents[index]! })), notes, options);
 	}
 
 	/** Link one line; throws `StaleLineError` when the recipe changed since it was read. */

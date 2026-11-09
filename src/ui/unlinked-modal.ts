@@ -11,10 +11,11 @@ import { renderLinkText, renderPreview } from './link-text';
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 const recipeCount = (group: UnlinkedGroup) => new Set(group.uses.map(use => use.recipe.path)).size;
 
-/** Unlinked measured lines across recipes, by wording: link each wording once, or keep it as text. */
+/** Reviewable unlinked lines across recipes, linked in bulk by wording. */
 export class UnlinkedModal extends Modal {
 	private groups: UnlinkedGroup[] = [];
 	private filter = '';
+	private showGarnishes = false;
 	private busy = false;
 	private closed = false;
 	private summaryEl!: HTMLElement;
@@ -36,7 +37,7 @@ export class UnlinkedModal extends Modal {
 
 	private async load() {
 		try {
-			this.groups = await this.links.unlinked();
+			this.groups = await this.links.unlinked({ includeGarnishes: this.showGarnishes });
 			if (this.closed) return;
 			this.render();
 		} catch (error) {
@@ -54,6 +55,16 @@ export class UnlinkedModal extends Modal {
 			});
 			text.inputEl.setAttribute('aria-label', 'Filter wordings');
 		});
+		new Setting(this.contentEl).setName('Show garnishes').setDesc('Include marked garnishes that match an ingredient.').addToggle(toggle => {
+			toggle.setValue(this.showGarnishes).onChange(value => {
+				if (this.busy) { toggle.setValue(this.showGarnishes); return; }
+				this.showGarnishes = value;
+				this.pending.clear();
+				this.contentEl.empty();
+				this.contentEl.createEl('p', { text: 'Loading…' });
+				void this.load();
+			});
+		});
 		this.listEl = this.contentEl.createDiv({ cls: 'cocktail-cabinet-unlinked' });
 		this.renderList();
 	}
@@ -62,8 +73,8 @@ export class UnlinkedModal extends Modal {
 		const lines = this.groups.reduce((sum, group) => sum + group.uses.length, 0);
 		const recipes = new Set(this.groups.flatMap(group => group.uses.map(use => use.recipe.path))).size;
 		this.summaryEl.setText(lines
-			? `${plural(lines, 'measured line')} in ${plural(recipes, 'recipe')} have no link, so logging can’t subtract them. Linking a wording links it in every recipe listed; untick any that mean something else.`
-			: 'Every measured ingredient line is linked.');
+			? `${plural(lines, 'unlinked ingredient line')} in ${plural(recipes, 'recipe')}. Linking a wording links it in every recipe listed; untick any that mean something else.`
+			: 'No unlinked ingredients to review.');
 	}
 
 	private renderList() {
