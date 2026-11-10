@@ -17,7 +17,8 @@ export interface DrawdownPlan {
 	/** Sources whose stock can't cover their pours, with their error; editing their stock may fix it. */
 	blocked: { path: string; error: string }[];
 }
-export interface SelectedPour { path: string; ml: number; }
+/** `rest` takes everything open in a bottle, or all of other stock's amount, whatever the servings: finishing it off. */
+export interface SelectedPour { path: string; ml: number; rest?: boolean; }
 const EPSILON = 1e-8;
 
 /** Capture active stock fields; an empty unopened count means zero. */
@@ -76,6 +77,13 @@ export function bottleStockText(open: number | null, unopened: number | null, vo
 	return parts.join(', ') || 'None';
 }
 
+/** What's left to pour without opening another bottle; 0 when it can't be read. */
+function openMl(source: StockSource): number {
+	if (source.fields[PROP.stockTracking] !== 'volume') return 0;
+	const value = source.fields[source.note.kind === 'bottle' ? PROP.open : PROP.remaining];
+	return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
+}
+
 function drawdown(source: StockSource, consumedMl: number): StockChange {
 	const fields = source.fields;
 	if (fields[PROP.kind] !== source.note.kind) throw new Error('No longer a bottle or other stock.');
@@ -110,7 +118,10 @@ export function planDrawdown(sources: readonly StockSource[], pours: readonly Se
 	const totals = new Map<string, number>();
 	const errors: string[] = [];
 	for (const pour of pours) {
-		const ml = pour.ml * servings;
+		const source = pour.rest ? sources.find(item => item.note.path === pour.path) : undefined;
+		if (pour.rest && !source) { errors.push(`${pour.path}: Moved or deleted. Select another.`); continue; }
+		const ml = source ? openMl(source) : pour.ml * servings;
+		if (source && !(ml > 0)) { errors.push(`${source.note.name}: Nothing open to finish.`); continue; }
 		if (!Number.isFinite(ml) || ml <= 0) { errors.push('Invalid amount.'); continue; }
 		totals.set(pour.path, (totals.get(pour.path) ?? 0) + ml);
 	}

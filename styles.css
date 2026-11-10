@@ -269,6 +269,11 @@
 	height: auto;
 	font-size: var(--font-ui-smaller);
 }
+.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-log-part {
+	border-top: 0;
+	padding-block: var(--size-4-1);
+	padding-inline-start: var(--size-4-6);
+}
 .cocktail-cabinet-unlinked-group {
 	border-bottom: var(--border-width) solid var(--background-modifier-border);
 	padding: var(--size-4-2) 0;

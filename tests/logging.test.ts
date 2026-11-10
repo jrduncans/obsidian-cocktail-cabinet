@@ -259,3 +259,18 @@ void test('a skipped line that clearly uses one source names it for last used', 
 	// Unlinked lines use nothing.
 	assert.equal(classify('- 1 oz lime juice').skipped[0]!.used, undefined);
 });
+void test('a split line draws each part from its own source, with “rest” finishing what’s open', () => {
+	const lines = classify('- 60 ml [[London Dry Gin]]');
+	const id = lines.counted[0]!.id;
+	const split = (parts: { path: string | null; amount: string }[], servings = 1) =>
+		planLogging(lines, [bottle(a, 20), bottle(b, 100, 1), bottle(c)], new Map([[id, parts]]), servings);
+	const plan = split([{ path: a.path, amount: 'rest' }, { path: b.path, amount: '1.5 oz' }], 2);
+	assert.deepEqual(plan.errors, []);
+	assert.deepEqual(plan.changes.map(change => [change.source.note.path, Number(change.consumedMl.toFixed(3))]), [[a.path, 20], [b.path, 88.721]]);
+	assert.equal(plan.changes[0]!.updates[PROP.open], 0);
+	assert.deepEqual(plan.selected.map(source => source.note.path), [a.path, b.path]);
+	assert.deepEqual(split([{ path: b.path, amount: '30' }, { path: c.path, amount: '1 oz' }]).changes.map(change => change.consumedMl), [30, 29.5735295625]);
+	assert.equal(split([{ path: a.path, amount: '30 ml' }, { path: null, amount: '' }]).unselected, 1);
+	assert.match(split([{ path: a.path, amount: 'some' }]).errors[0]!, /First Gin: Enter mL, oz/);
+	assert.match(planLogging(lines, [bottle(a, 0)], new Map([[id, [{ path: a.path, amount: 'rest' }]]]), 1).errors[0]!, /Nothing open/);
+});

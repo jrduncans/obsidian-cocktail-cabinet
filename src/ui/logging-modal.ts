@@ -6,9 +6,11 @@ import type { SkippedLine } from '../core/logging-lines';
 import { ingredientParts, linkedLinePreview } from '../core/unlinked-lines';
 import { localDate } from '../core/notes';
 import { planLogging } from '../core/logging-plan';
+import type { LinePart, LineSelection } from '../core/logging-plan';
 import { bottleStockText, formatMl } from '../core/logging-stock';
 import { PROP } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
+import type { CountedLine } from '../core/logging-lines';
 import { LoggingStore, LoggingWriteError } from '../vault/logging-store';
 import type { LoggingReview } from '../vault/logging-store';
 import type CocktailCabinetPlugin from '../main';
@@ -19,6 +21,9 @@ import type { RecipeLinkStore } from '../vault/recipe-links';
 import { showLinkMenu } from './link-choice';
 import { LinkTextModal } from './link-text';
 
+/** Dropdown value for splitting a line between sources. */
+const SPLIT = '__split__';
+
 function ingredientLabel(text: string): string {
 	return text.replace(/\[\[([^\]]+)\]\]/g, (_link, target: string) => target.includes('|') ? target.split('|').at(-1)! : target.split('/').at(-1)!);
 }
@@ -26,7 +31,7 @@ function ingredientLabel(text: string): string {
 export class LoggingModal extends Modal {
 	private review?: LoggingReview;
 	private servings = 1;
-	private selections = new Map<number, string>();
+	private selections = new Map<number, LineSelection>();
 	private addDaily = true;
 	private date = localDate();
 	private dateRequest = 0;
@@ -116,10 +121,12 @@ export class LoggingModal extends Modal {
 		this.review = review;
 		// A choice carries over while its line reads the same, so linking another line keeps it.
 		const oldText = new Map(initial ? [] : old?.lines.counted.map(line => [line.id, line.text] as const) ?? []);
-		this.selections = new Map(review.lines.counted.flatMap(line => {
+		this.selections = new Map(review.lines.counted.flatMap((line): [number, LineSelection][] => {
 			const previous = oldText.get(line.id) === line.text ? this.selections.get(line.id) : undefined;
-			const path = previous && (previous === SKIP_LINE || review.sources.some(source => source.note.path === previous)) ? previous : line.initialSelection;
-			return path ? [[line.id, path] as const] : [];
+			const exists = (path: string | null) => !path || review.sources.some(source => source.note.path === path);
+			if (Array.isArray(previous)) return [[line.id, previous.map(part => exists(part.path) ? part : { ...part, path: null })]];
+			const path = previous && (previous === SKIP_LINE || exists(previous)) ? previous : line.initialSelection;
+			return path ? [[line.id, path]] : [];
 		}));
 		if (initial || review.daily.duplicate !== old?.daily.duplicate) this.addDaily = !review.daily.duplicate;
 	}
@@ -142,10 +149,11 @@ export class LoggingModal extends Modal {
 		});
 		if (review.lines.counted.length) new Setting(this.contentEl).setName('Used').setHeading();
 		for (const line of review.lines.counted) {
+			const choice = this.selections.get(line.id);
 			const row = new Setting(this.contentEl).setName(ingredientLabel(line.text));
 			row.addDropdown(dropdown => {
 				dropdown.addOption('', 'Select…');
-				const selected = this.selections.get(line.id);
+				const selected = Array.isArray(choice) ? undefined : choice;
 				const paths = [...line.candidates];
 				if (selected && selected !== SKIP_LINE && !paths.includes(selected) && !line.alternatives.includes(selected)) paths.push(selected);
 				const nameOf = (path: string) => review.sources.find(source => source.note.path === path)!.note.name;
@@ -156,13 +164,20 @@ export class LoggingModal extends Modal {
 					for (const path of line.alternatives) group.createEl('option', { value: path, text: nameOf(path) });
 				}
 				dropdown.addOption('__another__', 'Other bottle…');
+				dropdown.addOption(SPLIT, 'Split between bottles…');
 				dropdown.addOption(SKIP_LINE, 'Don’t subtract');
-				dropdown.setValue(selected ?? '');
+				const current = () => { const value = this.selections.get(line.id); return Array.isArray(value) ? SPLIT : value ?? ''; };
+				dropdown.setValue(current());
 				dropdown.selectEl.setAttribute('aria-label', ingredientLabel(line.text));
 				dropdown.onChange(path => {
-					if (this.busy || this.terminal) { dropdown.setValue(this.selections.get(line.id) ?? ''); return; }
-					if (path === '__another__') {
-						dropdown.setValue(this.selections.get(line.id) ?? '');
+					if (this.busy || this.terminal) { dropdown.setValue(current()); return; }
+					const wasSplit = Array.isArray(this.selections.get(line.id));
+					if (path === SPLIT) {
+						const first = selected && selected !== SKIP_LINE ? selected : null;
+						this.selections.set(line.id, [{ path: first, amount: `${formatMl(line.ml)} ml` }, { path: null, amount: '' }]);
+						this.render();
+					} else if (path === '__another__') {
+						dropdown.setValue(current());
 						new NotePicker(this.app, review.sources.filter(source => source.note.kind === 'bottle'
 							|| source.fields[PROP.stockTracking] === 'volume').map(source => source.note), note => {
 							if (this.closed || this.busy || this.terminal) return;
@@ -171,10 +186,11 @@ export class LoggingModal extends Modal {
 						}).open();
 					} else {
 						if (path) this.selections.set(line.id, path); else this.selections.delete(line.id);
-						this.refreshPreview();
+						if (wasSplit) this.render(); else this.refreshPreview();
 					}
 				});
 			});
+			if (Array.isArray(choice)) this.renderParts(line, choice);
 		}
 		this.previewEl = this.contentEl.createDiv();
 		new Setting(this.contentEl).setName('Date').addText(input => {
@@ -197,6 +213,56 @@ export class LoggingModal extends Modal {
 				this.applyButton = button.setButtonText('Log').setCta().onClick(() => { void this.apply(); });
 			});
 		this.refreshPreview();
+	}
+
+	/** A line split between sources: a source and an amount per part, so substitutes and finished bottles can be logged. */
+	private renderParts(line: CountedLine, parts: LinePart[]) {
+		const review = this.review!;
+		const label = ingredientLabel(line.text);
+		const fitting = [...line.candidates, ...line.alternatives];
+		const others = review.sources.filter(source => !fitting.includes(source.note.path) && source.fields[PROP.stockTracking] === 'volume')
+			.map(source => source.note.path);
+		const nameOf = (path: string) => review.sources.find(source => source.note.path === path)!.note.name;
+		parts.forEach((part, index) => {
+			const row = new Setting(this.contentEl).setClass('cocktail-cabinet-log-part');
+			row.addDropdown(dropdown => {
+				dropdown.addOption('', 'Select…');
+				for (const path of fitting) dropdown.addOption(path, nameOf(path));
+				if (part.path && !fitting.includes(part.path) && !others.includes(part.path)) dropdown.addOption(part.path, nameOf(part.path));
+				if (others.length) {
+					const group = dropdown.selectEl.createEl('optgroup', { attr: { label: 'Other stock' } });
+					for (const path of others) group.createEl('option', { value: path, text: nameOf(path) });
+				}
+				dropdown.setValue(part.path ?? '');
+				dropdown.selectEl.setAttribute('aria-label', `${label}, part ${index + 1}`);
+				dropdown.onChange(path => {
+					if (this.busy || this.terminal) { dropdown.setValue(part.path ?? ''); return; }
+					part.path = path || null;
+					this.refreshPreview();
+				});
+			});
+			row.addText(input => {
+				input.setPlaceholder('Amount or rest').setValue(part.amount);
+				input.inputEl.setAttribute('aria-label', `${label}, part ${index + 1} amount`);
+				input.onChange(value => {
+					if (this.busy || this.terminal) { input.setValue(part.amount); return; }
+					part.amount = value;
+					this.refreshPreview();
+				});
+			});
+			if (parts.length > 1) row.addExtraButton(button => button.setIcon('x').setTooltip('Remove').onClick(() => {
+				if (this.busy || this.terminal) return;
+				parts.splice(index, 1);
+				this.render();
+			}));
+		});
+		new Setting(this.contentEl).setClass('cocktail-cabinet-log-part')
+			.setDesc('Per serving. Type “rest” to finish what’s open.')
+			.addButton(button => button.setButtonText('Add bottle').onClick(() => {
+				if (this.busy || this.terminal) return;
+				parts.push({ path: null, amount: '' });
+				this.render();
+			}));
 	}
 
 	/** Re-read the daily note for another day; an empty or future date is kept as typed and blocks logging. */
