@@ -1,5 +1,5 @@
 import { Modal, Notice, Setting, setIcon } from 'obsidian';
-import type { ButtonComponent, ToggleComponent } from 'obsidian';
+import type { ButtonComponent, DropdownComponent, ToggleComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
 import { SKIP_LINE } from '../core/logging-lines';
 import type { SkippedLine } from '../core/logging-lines';
@@ -23,6 +23,8 @@ import { LinkTextModal } from './link-text';
 
 /** Dropdown value for splitting a line between sources. */
 const SPLIT = '__split__';
+/** Dropdown value that opens a search of every source. */
+const OTHER = '__another__';
 
 function ingredientLabel(text: string): string {
 	return text.replace(/\[\[([^\]]+)\]\]/g, (_link, target: string) => target.includes('|') ? target.split('|').at(-1)! : target.split('/').at(-1)!);
@@ -152,18 +154,8 @@ export class LoggingModal extends Modal {
 			const choice = this.selections.get(line.id);
 			const row = new Setting(this.contentEl).setName(ingredientLabel(line.text));
 			row.addDropdown(dropdown => {
-				dropdown.addOption('', 'Select…');
 				const selected = Array.isArray(choice) ? undefined : choice;
-				const paths = [...line.candidates];
-				if (selected && selected !== SKIP_LINE && !paths.includes(selected) && !line.alternatives.includes(selected)) paths.push(selected);
-				const nameOf = (path: string) => review.sources.find(source => source.note.path === path)!.note.name;
-				for (const path of paths) dropdown.addOption(path, nameOf(path));
-				if (line.alternatives.length) {
-					// Likely substitutes from a catch-all type, kept apart from what the recipe calls for.
-					const group = dropdown.selectEl.createEl('optgroup', { attr: { label: line.alternativesLabel ?? 'Other bottles' } });
-					for (const path of line.alternatives) group.createEl('option', { value: path, text: nameOf(path) });
-				}
-				dropdown.addOption('__another__', 'Other bottle…');
+				this.addSourceOptions(dropdown, line, selected === SKIP_LINE ? null : selected ?? null);
 				dropdown.addOption(SPLIT, 'Split between bottles…');
 				dropdown.addOption(SKIP_LINE, 'Don’t subtract');
 				const current = () => { const value = this.selections.get(line.id); return Array.isArray(value) ? SPLIT : value ?? ''; };
@@ -176,14 +168,9 @@ export class LoggingModal extends Modal {
 						const first = selected && selected !== SKIP_LINE ? selected : null;
 						this.selections.set(line.id, [{ path: first, amount: `${formatMl(line.ml)} ml` }, { path: null, amount: '' }]);
 						this.render();
-					} else if (path === '__another__') {
+					} else if (path === OTHER) {
 						dropdown.setValue(current());
-						new NotePicker(this.app, review.sources.filter(source => source.note.kind === 'bottle'
-							|| source.fields[PROP.stockTracking] === 'volume').map(source => source.note), note => {
-							if (this.closed || this.busy || this.terminal) return;
-							this.selections.set(line.id, note.path);
-							this.render();
-						}).open();
+						this.pickOther(note => { this.selections.set(line.id, note.path); this.render(); });
 					} else {
 						if (path) this.selections.set(line.id, path); else this.selections.delete(line.id);
 						if (wasSplit) this.render(); else this.refreshPreview();
@@ -215,28 +202,47 @@ export class LoggingModal extends Modal {
 		this.refreshPreview();
 	}
 
+	/** The sources offered for a line, the same for a whole line and each part of a split one. */
+	private addSourceOptions(dropdown: DropdownComponent, line: CountedLine, selected: string | null) {
+		const review = this.review!;
+		dropdown.addOption('', 'Select…');
+		const paths = [...line.candidates];
+		if (selected && !paths.includes(selected) && !line.alternatives.includes(selected)) paths.push(selected);
+		const nameOf = (path: string) => review.sources.find(source => source.note.path === path)!.note.name;
+		for (const path of paths) dropdown.addOption(path, nameOf(path));
+		if (line.alternatives.length) {
+			// Likely substitutes from a catch-all type, kept apart from what the recipe calls for.
+			const group = dropdown.selectEl.createEl('optgroup', { attr: { label: line.alternativesLabel ?? 'Other bottles' } });
+			for (const path of line.alternatives) group.createEl('option', { value: path, text: nameOf(path) });
+		}
+		dropdown.addOption(OTHER, 'Other bottle…');
+	}
+
+	/** Search every bottle and mL-tracked other stock for an exceptional substitute. */
+	private pickOther(choose: (note: CabinetNote) => void) {
+		const sources = this.review!.sources.filter(source => source.note.kind === 'bottle' || source.fields[PROP.stockTracking] === 'volume');
+		new NotePicker(this.app, sources.map(source => source.note), note => {
+			if (this.closed || this.busy || this.terminal) return;
+			choose(note);
+		}).open();
+	}
+
 	/** A line split between sources: a source and an amount per part, so substitutes and finished bottles can be logged. */
 	private renderParts(line: CountedLine, parts: LinePart[]) {
-		const review = this.review!;
 		const label = ingredientLabel(line.text);
-		const fitting = [...line.candidates, ...line.alternatives];
-		const others = review.sources.filter(source => !fitting.includes(source.note.path) && source.fields[PROP.stockTracking] === 'volume')
-			.map(source => source.note.path);
-		const nameOf = (path: string) => review.sources.find(source => source.note.path === path)!.note.name;
 		parts.forEach((part, index) => {
 			const row = new Setting(this.contentEl).setClass('cocktail-cabinet-log-part');
 			row.addDropdown(dropdown => {
-				dropdown.addOption('', 'Select…');
-				for (const path of fitting) dropdown.addOption(path, nameOf(path));
-				if (part.path && !fitting.includes(part.path) && !others.includes(part.path)) dropdown.addOption(part.path, nameOf(part.path));
-				if (others.length) {
-					const group = dropdown.selectEl.createEl('optgroup', { attr: { label: 'Other stock' } });
-					for (const path of others) group.createEl('option', { value: path, text: nameOf(path) });
-				}
+				this.addSourceOptions(dropdown, line, part.path);
 				dropdown.setValue(part.path ?? '');
 				dropdown.selectEl.setAttribute('aria-label', `${label}, part ${index + 1}`);
 				dropdown.onChange(path => {
 					if (this.busy || this.terminal) { dropdown.setValue(part.path ?? ''); return; }
+					if (path === OTHER) {
+						dropdown.setValue(part.path ?? '');
+						this.pickOther(note => { part.path = note.path; this.render(); });
+						return;
+					}
 					part.path = path || null;
 					this.refreshPreview();
 				});
