@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 
 const directory = await mkdtemp(join(tmpdir(), 'cocktail-cabinet-tests-'));
 try {
-	const suites = ['core.test', 'cabinet-store.test', 'stock.test', 'stock-edit.test', 'purchase.test', 'rename.test', 'note-edit.test', 'recipe-import.test', 'logging.test', 'unlinked-lines.test', 'logging-store.test', 'knowledge-migration.test', 'vault-install.test'];
+	const suites = ['core.test', 'cabinet-store.test', 'stock.test', 'stock-edit.test', 'purchase.test', 'rename.test', 'note-edit.test', 'recipe-import.test', 'logging.test', 'one-off.test', 'unlinked-lines.test', 'logging-store.test', 'knowledge-migration.test', 'vault-install.test'];
 	await build({
 		entryPoints: suites.map(suite => `tests/${suite}.ts`), outdir: directory, outExtension: { '.js': '.mjs' },
 		bundle: true, platform: 'node', format: 'esm', target: 'node20',

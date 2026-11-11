@@ -1,6 +1,8 @@
 import { Modal, Notice, Setting, setIcon } from 'obsidian';
 import type { ButtonComponent, DropdownComponent, ToggleComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
+import { oneOffDailyText } from '../core/one-off';
+import type { OneOff } from '../core/one-off';
 import { SKIP_LINE } from '../core/logging-lines';
 import type { SkippedLine } from '../core/logging-lines';
 import { ingredientParts, linkedLinePreview } from '../core/unlinked-lines';
@@ -47,13 +49,24 @@ export class LoggingModal extends Modal {
 	private dailySetting?: Setting;
 	private dailyToggle?: ToggleComponent;
 
+	private recipe?: CabinetNote;
+	private oneOff?: OneOff;
+
+	/** A one-off can go `back` to its ingredients, keeping what was entered. */
 	constructor(private plugin: CocktailCabinetPlugin, private logger: LoggingStore, private stocks: StockStore,
-		private links: RecipeLinkStore, private recipe: CabinetNote) { super(plugin.app); }
+		private links: RecipeLinkStore, subject: CabinetNote | OneOff, private back?: (oneOff: OneOff) => void) {
+		super(plugin.app);
+		if ('lines' in subject) this.oneOff = subject; else this.recipe = subject;
+	}
+
+	private read(): Promise<LoggingReview> {
+		return this.oneOff ? this.logger.reviewOneOff(this.oneOff, this.date) : this.logger.review(this.recipe!, this.date);
+	}
 
 	/** Link an ingredient line in the recipe, then re-read it so the line can be subtracted, keeping the other choices. */
 	private linkLine(line: SkippedLine, event: MouseEvent) {
 		const link = line.link;
-		if (!link || this.busy || this.terminal) return;
+		if (!link || !this.recipe || this.busy || this.terminal) return;
 		const wording = ingredientParts(line.text).wording;
 		showLinkMenu(this.plugin, event, wording, note => {
 			if (this.closed || this.busy || this.terminal) return;
@@ -61,7 +74,7 @@ export class LoggingModal extends Modal {
 				note, original: wording, originalLabel: 'Recipe wording',
 				preview: text => linkedLinePreview(line.text, text),
 				submit: async text => {
-					if (this.closed || this.busy || this.terminal) return;
+					if (this.closed || this.busy || this.terminal || !this.recipe) return;
 					try {
 						await this.links.linkLine({ path: this.recipe.path, line: link.line, raw: link.raw, text }, note.path);
 						await this.reload(`Linked ${wording} to ${note.name} in the recipe${text === wording ? '' : `, shown as ${text}`}.`);
@@ -89,7 +102,7 @@ export class LoggingModal extends Modal {
 
 	private async reload(notice = '') {
 		try {
-			const review = await this.logger.review(this.recipe, this.date);
+			const review = await this.read();
 			if (this.closed || this.busy || this.terminal) return;
 			this.acceptReview(review, false);
 			this.notice = notice;
@@ -100,7 +113,7 @@ export class LoggingModal extends Modal {
 	}
 
 	onOpen() {
-		this.titleEl.setText('Log this cocktail');
+		this.titleEl.setText(this.oneOff ? 'Log a one-off' : 'Log this cocktail');
 		this.modalEl.addClass('cocktail-cabinet-modal');
 		this.contentEl.addClass('cocktail-cabinet-form');
 		this.contentEl.createEl('p', { text: 'Loading…' });
@@ -109,7 +122,7 @@ export class LoggingModal extends Modal {
 
 	private async load() {
 		try {
-			const review = await this.logger.review(this.recipe, this.date);
+			const review = await this.read();
 			if (this.closed) return;
 			this.acceptReview(review, true);
 			this.render();
@@ -136,7 +149,7 @@ export class LoggingModal extends Modal {
 	private render() {
 		const review = this.review!;
 		this.contentEl.empty();
-		this.titleEl.setText(`Log ${review.recipe.name}`);
+		this.titleEl.setText(review.oneOff ? (review.oneOff.name ? `Log ${review.oneOff.name}` : 'Log a one-off') : `Log ${review.recipe!.name}`);
 		this.messageEl = this.contentEl.createEl('p', { cls: 'cocktail-cabinet-log-notice', attr: { role: 'status' }, text: this.notice });
 		new Setting(this.contentEl).setName('Servings').addText(input => {
 			input.inputEl.type = 'number';
@@ -194,9 +207,15 @@ export class LoggingModal extends Modal {
 				if (this.busy || this.terminal) { toggle.setValue(this.addDaily); return; }
 				this.addDaily = value; this.refreshPreview();
 			}));
-		new Setting(this.contentEl)
-			.addButton(button => button.setButtonText('Cancel').onClick(() => this.close()))
-			.addButton(button => {
+		const actions = new Setting(this.contentEl)
+			.addButton(button => button.setButtonText('Cancel').onClick(() => this.close()));
+		const back = this.back, oneOff = this.oneOff;
+		if (back && oneOff) actions.addButton(button => button.setButtonText('Edit ingredients').onClick(() => {
+			if (this.busy || this.terminal) return;
+			this.close();
+			back(oneOff);
+		}));
+		actions.addButton(button => {
 				this.applyButton = button.setButtonText('Log').setCta().onClick(() => { void this.apply(); });
 			});
 		this.refreshPreview();
@@ -277,7 +296,7 @@ export class LoggingModal extends Modal {
 		const request = ++this.dateRequest;
 		const review = this.review;
 		if (!review) return;
-		const daily = await this.logger.daily.preview(review.recipe, value);
+		const daily = await this.logger.daily.preview(review.recipe ?? null, value);
 		if (this.closed || this.busy || this.terminal || request !== this.dateRequest || !this.review) return;
 		const duplicateChanged = daily.duplicate !== this.review.daily.duplicate;
 		this.review = { ...this.review, daily };
@@ -337,7 +356,7 @@ export class LoggingModal extends Modal {
 		}
 		if (this.dailySetting) {
 			const valid = Number.isFinite(this.servings) && this.servings > 0;
-			const desc = review.daily.error ?? [valid ? dailyLogText(review.recipe, this.servings) : '', review.daily.duplicate ? `Already in the note for ${review.daily.date}.` : ''].filter(Boolean).join(' ');
+			const desc = review.daily.error ?? [valid ? (review.oneOff ? oneOffDailyText(review.oneOff, this.servings) : dailyLogText(review.recipe!, this.servings)) : '', review.daily.duplicate ? `Already in the note for ${review.daily.date}.` : ''].filter(Boolean).join(' ');
 			this.dailySetting.setDesc(desc);
 			this.dailySetting.descEl.toggleClass('cocktail-cabinet-error', !!review.daily.error && this.addDaily);
 		}

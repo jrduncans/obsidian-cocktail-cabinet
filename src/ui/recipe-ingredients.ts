@@ -1,9 +1,9 @@
-import { ButtonComponent, Menu, Setting } from 'obsidian';
+import { ButtonComponent, Menu, Setting, setIcon } from 'obsidian';
 import type { TextComponent } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
-import { recipeVolumeMl } from '../core/recipe-amount';
+import { recipeVolumeMl, splitIngredient } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
 import { addCreateItems, pickIngredient } from './link-choice';
 
@@ -23,13 +23,20 @@ export class RecipeIngredients {
 	private rowsEl: HTMLElement;
 	private notes: CabinetNote[];
 
-	constructor(private plugin: CocktailCabinetPlugin, container: HTMLElement, initial: IngredientRow[]) {
+	constructor(private plugin: CocktailCabinetPlugin, container: HTMLElement, initial: IngredientRow[],
+		description = 'Link to the specificity the recipe calls for. Plain text is fine for garnishes or ingredients you do not want to catalog. Links help you find related recipes and log the ingredients you use.') {
 		this.notes = recipeIngredientNotes(plugin.store.notes());
 		new Setting(container).setName('Ingredients').setHeading();
-		container.createEl('p', { text: 'Link to the specificity the recipe calls for. Plain text is fine for garnishes or ingredients you do not want to catalog. Links help you find related recipes and log the ingredients you use.' });
+		container.createEl('p', { text: description });
 		this.rowsEl = container.createDiv({ cls: 'cocktail-cabinet-ingredients' });
 		for (const data of initial.length ? initial : [{ amount: '', text: '' }]) this.add(data);
-		new Setting(container).addButton(button => button.setButtonText('Add ingredient').onClick(() => this.add({ amount: '', text: '' })));
+		// Left-aligned and joined to the list, so it reads as part of the list rather than a form action.
+		new Setting(container).setClass('cocktail-cabinet-add-ingredient')
+			.addButton(button => {
+				button.setButtonText('Add ingredient').onClick(() => this.add({ amount: '', text: '' }));
+				// setButtonText replaces the content, so the icon goes in afterward.
+				setIcon(button.buttonEl.createSpan({ cls: 'cocktail-cabinet-button-icon', prepend: true }), 'plus');
+			});
 	}
 
 	lines(): string[] {
@@ -116,6 +123,20 @@ export class RecipeIngredients {
 		}));
 		refresh();
 	}
+}
+
+/**
+ * Rows for saved ingredient lines, kept as written unless edited. A line whose ingredient is one cabinet
+ * link shows as that note with its display text, as if just linked.
+ */
+export function ingredientRows(plugin: CocktailCabinetPlugin, lines: readonly string[], sourcePath = ''): IngredientRow[] {
+	return lines.map(original => {
+		const { amount, text } = splitIngredient(original);
+		const link = text.match(/^\[\[([^\]]+)\]\]$/)?.[1];
+		const file = link ? plugin.store.resolve(link, sourcePath) : null;
+		const note = file ? plugin.store.notes().find(item => item.path === file.path) : undefined;
+		return note ? { amount, text: plainIngredient(text), note, original } : { amount, text, original };
+	});
 }
 
 function plainIngredient(text: string): string {
