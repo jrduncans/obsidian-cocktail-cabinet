@@ -6,6 +6,7 @@ import { wikiLink } from '../core/schema';
 import { recipeVolumeMl, splitIngredient } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
 import { addCreateItems, pickIngredient } from './link-choice';
+import { IngredientSuggest } from './ingredient-suggest';
 
 export interface IngredientRow {
 	amount: string;
@@ -24,7 +25,7 @@ export class RecipeIngredients {
 	private notes: CabinetNote[];
 
 	constructor(private plugin: CocktailCabinetPlugin, container: HTMLElement, initial: IngredientRow[],
-		description = 'Link to the specificity the recipe calls for. Plain text is fine for garnishes or ingredients you do not want to catalog. Links help you find related recipes and log the ingredients you use.') {
+		description = 'Link to the specificity the recipe calls for; start typing an ingredient to find one. Plain text is fine for garnishes or ingredients you do not want to catalog. Links help you find related recipes and log the ingredients you use.') {
 		this.notes = recipeIngredientNotes(plugin.store.notes());
 		new Setting(container).setName('Ingredients').setHeading();
 		container.createEl('p', { text: description });
@@ -65,10 +66,11 @@ export class RecipeIngredients {
 			const amount = ml === null ? 'Amount kept as written; review it when logging.' : `Volume recognized: ${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) && !/ml|millilit(?:er|re)s?/i.test(data.amount) ? ' (US fl oz)' : ''}.`;
 			status.setText(`${data.note ? `Linked to ${data.note.kind}: ${data.note.name}.` : /\[\[/.test(data.text) ? 'Existing Markdown links kept as written.' : 'Plain text; no cabinet link.'} ${amount}`);
 		};
-		const choose = (note: CabinetNote) => {
+		/** Link the row; suggestions and pickers keep the wording as display text, the type-ahead uses the note's name. */
+		const choose = (note: CabinetNote, label = plainIngredient(data.text) || note.name) => {
 			if (!this.notes.some(item => item.path === note.path)) this.notes.push(note);
 			data.note = note;
-			data.text = plainIngredient(data.text) || note.name;
+			data.text = label;
 			nameInput.setValue(data.text);
 			keepText = false;
 			refresh();
@@ -103,6 +105,8 @@ export class RecipeIngredients {
 			});
 			text.inputEl.setAttribute('aria-label', 'Ingredient name');
 			text.inputEl.addClass('cocktail-cabinet-ingredient-input');
+			// What was typed is only a search, so the link shows the note's name.
+			new IngredientSuggest(this.plugin.app, text.inputEl, () => this.notes, note => choose(note, note.name));
 		});
 		actions.addButton(button => button.setButtonText('Select link').onClick(() => pickIngredient(this.plugin, choose)));
 		actions.addButton(button => button.setButtonText('Create ingredient').onClick(event => {

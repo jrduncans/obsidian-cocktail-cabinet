@@ -16,15 +16,18 @@ export class OneOffModal extends CabinetForm {
 		const { riffOn } = this.initial;
 		this.begin(riffOn ? `Riff on ${riffOn.name}` : 'Log a one-off',
 			'Goes in your daily note, with no recipe note. If it’s a keeper, run Save one-off as recipe on that daily note.');
-		let name = this.initial.name;
-		this.text('Name', name, value => { name = value; }, 'Optional.').setClass('cocktail-cabinet-name');
 		const ingredients = new RecipeIngredients(this.plugin, this.contentEl, ingredientRows(this.plugin, this.initial.lines, riffOn?.path),
-			'Amounts per serving. Link what you poured so logging can subtract it; plain text is fine for anything else.');
+			'Amounts per serving. Start typing to pick what you poured, so logging can subtract it; plain text is fine for anything else.');
+		// After the ingredients, so the name reads as the extra it is.
+		let name = this.initial.name;
+		this.text('Name (optional)', name, value => { name = value; }).setClass('cocktail-cabinet-name');
 		this.submit('Review', () => {
 			const oneOff: OneOff = { name: checkOneOffName(name), lines: ingredients.lines(), riffOn };
 			this.close();
 			this.review(oneOff);
 			return Promise.resolve();
 		});
+		// Start where every one-off starts: the first amount. Modals focus their first field once open.
+		window.setTimeout(() => this.contentEl.querySelector<HTMLInputElement>('.cocktail-cabinet-amount-input')?.focus(), 0);
 	}
 }
