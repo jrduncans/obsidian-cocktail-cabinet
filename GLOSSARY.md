@@ -32,6 +32,10 @@ _Avoid_: Cabinet note, when only ingredient notes are meant
 **Unlinked line**:
 A measured recipe ingredient line without a cabinet link, so logging can't subtract it. Linking keeps the recipe's wording as the link's display text.
 
+**One-off**:
+A drink logged without a recipe note, recorded only as its ingredients in the daily note, optionally named, and possibly a riff on a recipe. Saving it as a recipe turns its daily entry into an ordinary made line.
+_Avoid_: Draft recipe, Scratch recipe
+
 **Recipe ingredient**:
 An ingredient requirement in a cocktail recipe, which may name a bottle, an ingredient type, or a broader classification such as rum.
 

@@ -150,6 +150,15 @@ Usage is recorded on every log (added 2026-11-06): `cc-last-used` on each source
 
 Preview and apply use fresh note properties, including immediately after a write while Obsidian’s metadata cache is rebuilding. Apply preflights all selected stock before writing and checks each source again inside `processFrontMatter`, changing only applicable stock fields. Shortfalls prevent all writes. Stock writes precede the daily entry. An I/O failure after writes begin reports confirmed changes and disables further logging in that review; operation IDs and recovery are in the roadmap's "Harden logging" phase.
 
+### One-off drinks
+
+Agreed on 2026-11-10 and built the same day. Logging needed a recipe note, so a drink made up on the spot meant inventing a name and keeping a file for something not yet worth keeping. That reluctance is likely shared, and an unlogged drink leaves stock wrong.
+
+- **Recorded in the daily note only.** No file is created. The entry is the header `Made a one-off (Name):`, or `Made 2 servings of a one-off:`, then the ingredient lines per serving as a list, links included. The name is optional, one line, without square brackets. A draft recipe in a holding folder was considered and rejected: it is still a file to name and clean up.
+- **Same review as a recipe.** **Log a one-off** asks for a name and ingredients with the recipe form's ingredient rows, then **Review** opens the logging dialog on those lines, read exactly as a recipe's: pickers, splits, **Don't subtract**, stock preview, date, and **Last used**. **Edit ingredients** goes back with everything kept. Lines can't be linked in place (**Link…** writes into a recipe; a one-off has none), so link them on the ingredients step. Nothing counts as a duplicate: the same one-off can be made twice in a day.
+- **Riffs.** **Riff on this cocktail**, on a recipe note, starts the same flow from that recipe's ingredient lines. The header adds `, a riff on [[Recipe]]`. A riff doesn't count as making the recipe: it isn't a duplicate for **Log this cocktail**, and the recipe's last made and times made don't change.
+- **Promotion from the daily note.** **Save one-off as recipe**, on the note holding the entry, reads the one-off back (picking one if there are several) and opens the recipe review with its name and ingredients, and for a riff a description naming the recipe. Once created, the header becomes an ordinary made line, `Made a [[Recipe]]:`, keeping the poured list, and the recipe counts as made once on that note's day (from the Daily notes format). Only the chosen entry is relinked; earlier makes of the same one-off stay one-offs. A header changed since it was read is left alone and the notice says so. Deciding at log time ("save as recipe" in the log dialog) was considered; promotion later covers it without a decision in the moment.
+
 ## Homemade stock
 
 Agreed on 2026-11-04, after managing syrups in the dev vault meant an other-stock note named the same as its type (Simple Syrup (1 to 1) providing Simple Syrup (1 to 1), before the ratio names below).

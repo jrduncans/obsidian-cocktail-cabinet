@@ -1,8 +1,9 @@
 import { Setting } from 'obsidian';
+import type { TFile } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { parseRecipeText } from '../core/recipe-import';
 import type { RecipeImport } from '../core/recipe-import';
-import { parseRating } from '../core/schema';
+import { noteName, parseRating } from '../core/schema';
 import type { NoteDraft } from '../core/schema';
 import { readRecipeDocument } from '../vault/recipe-document';
 import type { RecipeSnapshot } from '../vault/cabinet-store';
@@ -11,10 +12,17 @@ import { RecipeIngredients } from './recipe-ingredients';
 
 const IMPORTED_FIELDS = ['cc-name', 'name', 'title', 'source', 'rating', 'created', 'cc-kind'];
 
+/** A new recipe opened straight at review, such as a saved one-off, and what to do once it's created. */
+export interface RecipePrefill {
+	recipe: RecipeImport;
+	created: (file: TFile, name: string) => Promise<void>;
+}
+
 export class RecipeModal extends CabinetForm {
-	constructor(private plugin: CocktailCabinetPlugin, private snapshot?: RecipeSnapshot) { super(plugin.app); }
+	constructor(private plugin: CocktailCabinetPlugin, private snapshot?: RecipeSnapshot, private prefill?: RecipePrefill) { super(plugin.app); }
 
 	onOpen() {
+		if (this.prefill) { this.edit(this.prefill.recipe); return; }
 		this.begin(this.snapshot ? 'Enhance as cocktail recipe' : 'Create a cocktail recipe', 'Paste copied recipe text, or enter a recipe manually. To enhance an existing Obsidian page, open it and run Enhance as cocktail recipe.');
 		if (this.snapshot) {
 			try { this.review(this.snapshot.content); }
@@ -84,6 +92,7 @@ export class RecipeModal extends CabinetForm {
 			};
 			const file = this.snapshot ? await this.plugin.store.enhanceRecipe(this.snapshot, draft) : await this.plugin.store.create(draft);
 			this.close();
+			await this.prefill?.created(file, noteName(draft.name).normalize('NFC'));
 			await this.plugin.store.open(file.path);
 		});
 	}

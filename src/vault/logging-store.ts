@@ -8,13 +8,17 @@ import { sameStock, stockSnapshot } from '../core/logging-stock';
 import type { StockSource } from '../core/logging-stock';
 import { localDate } from '../core/notes';
 import type { CabinetNote } from '../core/schema';
+import { oneOffContent, oneOffDailyEntry, oneOffDailyText } from '../core/one-off';
+import type { OneOff } from '../core/one-off';
 import { madeUpdates, usedUpdates } from '../core/usage';
 import type { CabinetStore } from './cabinet-store';
 import { LoggingDaily } from './logging-daily';
 import type { DailyPreview } from './logging-daily';
 
+/** What a review logs: a recipe note, or a one-off, which has no note. Exactly one is set. */
 export interface LoggingReview {
-	recipe: CabinetNote;
+	recipe?: CabinetNote;
+	oneOff?: OneOff;
 	content: string;
 	sources: StockSource[];
 	lines: LoggingLines;
@@ -59,6 +63,21 @@ export class LoggingStore {
 		return { recipe, content, sources, lines, daily: await this.daily.preview(recipe, date) };
 	}
 
+	/** A one-off reads like a recipe made of its lines. Nothing in it can be linked in place, so no line offers to. */
+	async reviewOneOff(oneOff: OneOff, date?: string): Promise<LoggingReview> {
+		const notes = await this.cabinet.readNotes();
+		const content = oneOffContent(oneOff);
+		const sources = await Promise.all(notes.filter(note => note.kind === 'bottle' || note.kind === 'ingredient').map(note => this.readSource(note)));
+		const lines = classifyLoggingLines(content, notes, sources, link => this.cabinet.resolve(link, oneOff.riffOn?.path ?? '')?.path ?? null);
+		lines.skipped = lines.skipped.map(({ link: _link, ...line }) => line);
+		return { oneOff, content, sources, lines, daily: await this.daily.preview(null, date) };
+	}
+
+	/** A fresh review of the same recipe or one-off. */
+	again(review: LoggingReview, date = review.daily.date): Promise<LoggingReview> {
+		return review.oneOff ? this.reviewOneOff(review.oneOff, date) : this.review(review.recipe!, date);
+	}
+
 	async apply(review: LoggingReview, plan: LoggingPlan, addDaily: boolean): Promise<ApplyLogResult> {
 		if (this.writing) throw new Error('Another cocktail is still being logged.');
 		if (plan.errors.length || plan.unselected) throw new Error('Select what you used and check the amounts.');
@@ -72,21 +91,21 @@ export class LoggingStore {
 	}
 
 	private async applyReviewed(review: LoggingReview, plan: LoggingPlan, addDaily: boolean): Promise<ApplyLogResult> {
-		if (await this.app.vault.read(this.file(review.recipe.path)) !== review.content) {
-			return { status: 'stale', review: await this.review(review.recipe, review.daily.date), notice: 'The recipe changed. Nothing saved; check and log again.' };
+		if (review.recipe && await this.app.vault.read(this.file(review.recipe.path)) !== review.content) {
+			return { status: 'stale', review: await this.again(review), notice: 'The recipe changed. Nothing saved; check and log again.' };
 		}
 		if (addDaily) {
-			const daily = await this.daily.preview(review.recipe, review.daily.date);
+			const daily = await this.daily.preview(review.recipe ?? null, review.daily.date);
 			if (daily.error) throw new Error(daily.error);
 			if (daily.path !== review.daily.path || daily.configuration !== review.daily.configuration
 				|| daily.date !== review.daily.date || daily.duplicate !== review.daily.duplicate) {
-				return { status: 'stale', review: await this.review(review.recipe, review.daily.date), notice: 'Your daily note changed. Nothing saved; check and log again.' };
+				return { status: 'stale', review: await this.again(review), notice: 'Your daily note changed. Nothing saved; check and log again.' };
 			}
 		}
 		// Re-read all selections before the first write, never using metadata-cache stock.
 		const current = await Promise.all(plan.selected.map(source => this.readSource(source.note)));
 		if (plan.selected.some((source, index) => !sameStock(source, current[index]!))) {
-			return { status: 'stale', review: await this.review(review.recipe, review.daily.date), notice: 'Stock changed. Nothing saved; check and log again.' };
+			return { status: 'stale', review: await this.again(review), notice: 'Stock changed. Nothing saved; check and log again.' };
 		}
 		const date = review.daily.date;
 		const written: string[] = [];
@@ -104,13 +123,16 @@ export class LoggingStore {
 			}
 		}
 		const missed = await this.recordUse(review.recipe, plan, date);
+		const [entry, text] = review.oneOff
+			? [oneOffDailyEntry(review.oneOff, plan.servings), oneOffDailyText(review.oneOff, plan.servings)]
+			: [dailyLogLine(review.recipe!, plan.servings), dailyLogText(review.recipe!, plan.servings)];
 		const usage = missed.length ? ` Couldn’t record last used or times made on ${missed.join(', ')}.` : '';
 		if (addDaily) {
 			try {
-				const appended = await this.daily.append(review.daily, review.recipe, dailyLogLine(review.recipe, plan.servings));
+				const appended = await this.daily.append(review.daily, review.recipe ?? null, entry);
 				return { status: 'applied', notice: (appended ? 'Cocktail logged.' : `Stock updated. Already in the note for ${date}.`) + usage };
 			} catch (error) {
-				throw new LoggingWriteError(`Stock updated, but the daily note wasn’t (${(error instanceof Error ? error.message : 'unknown error').replace(/\.$/, '')}). Add “${dailyLogText(review.recipe, plan.servings)}” yourself; don’t log again, or the stock is subtracted twice.`);
+				throw new LoggingWriteError(`Stock updated, but the daily note wasn’t (${(error instanceof Error ? error.message : 'unknown error').replace(/\.$/, '')}). Add “${text}”${review.oneOff ? ' and its ingredients' : ''} yourself; don’t log again, or the stock is subtracted twice.`);
 			}
 		}
 		return { status: 'applied', notice: 'Stock updated.' + usage };
@@ -118,9 +140,9 @@ export class LoggingStore {
 
 	/**
 	 * Last used on sources the stock writes didn't cover (status-tracked, or lines without mL), and the
-	 * recipe's last made and times made. Bookkeeping: a failure is reported, never undoing the log.
+	 * recipe's last made and times made (a one-off has no recipe). Bookkeeping: a failure is reported, never undoing the log.
 	 */
-	private async recordUse(recipe: CabinetNote, plan: LoggingPlan, date: string): Promise<string[]> {
+	private async recordUse(recipe: CabinetNote | undefined, plan: LoggingPlan, date: string): Promise<string[]> {
 		const missed: string[] = [];
 		const changed = new Set(plan.changes.map(change => change.source.note.path));
 		const write = async (note: CabinetNote, updates: (properties: Record<string, unknown>) => Record<string, unknown>) => {
@@ -134,7 +156,7 @@ export class LoggingStore {
 		for (const note of notes.filter(note => !changed.has(note.path))) {
 			await write(note, properties => usedUpdates(properties, date));
 		}
-		await write(recipe, properties => madeUpdates(properties, date));
+		if (recipe) await write(recipe, properties => madeUpdates(properties, date));
 		return missed;
 	}
 }

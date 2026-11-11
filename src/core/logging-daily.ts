@@ -27,11 +27,14 @@ export function dailyLogText(recipe: CabinetNote, servings: number): string {
 	return dailySentence(recipe, servings, recipe.name);
 }
 
-/** Restrict duplicate matching to made-cocktail sentences, on the same line as the recipe link. */
+/** A one-off's daily header: servings, name, and the riffed recipe's link target. */
+export const ONE_OFF_HEADER = /^Made (?:a|(\d+(?:\.\d+)?) servings of a) one-off(?: \((.+?)\))?(?:, a riff on \[\[([^\]]+)\]\])?:\s*$/;
+
+/** Restrict duplicate matching to made-cocktail sentences, on the same line as the recipe link; a riff isn't the recipe. */
 export function hasDailyLog(content: string, recipe: CabinetNote, resolve?: (link: string) => string | null): boolean {
 	const full = recipe.path.replace(/\.md$/, '');
 	const bare = full.split('/').at(-1)!;
-	return content.split(/\r?\n/).some(line => /\bmade\b/i.test(line) && [...line.matchAll(/\[\[([^\]]+)\]\]/g)].some(match => {
+	return content.split(/\r?\n/).some(line => /\bmade\b/i.test(line) && !ONE_OFF_HEADER.test(line) && [...line.matchAll(/\[\[([^\]]+)\]\]/g)].some(match => {
 		const target = match[1]!.split('|')[0]!.split('#')[0]!.replace(/\.md$/, '');
 		const resolved = resolve?.(target);
 		return resolved ? resolved === recipe.path : target === full || target === bare;

@@ -280,3 +280,26 @@ void test('a future or malformed log date is rejected before any write', async (
 	}
 	assert.deepEqual(f.events, []);
 });
+void test('a one-off subtracts stock and writes its lines to the daily note, with no recipe to count', async () => {
+	const f = fixture();
+	const review = await f.logger.reviewOneOff({ name: 'Scratch', lines: ['30 ml [[Test A]]', '15 ml lemon juice', 'Mint sprig'] });
+	assert.equal(review.recipe, undefined);
+	assert.ok(review.lines.skipped.every(line => !line.link));
+	const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+	assert.deepEqual(plan.errors, []);
+	assert.equal((await f.logger.apply(review, plan, true)).status, 'applied');
+	assert.deepEqual(f.events, [f.a.path, 'daily-create', 'daily-append']);
+	assert.equal(f.properties.get(f.a.path)![PROP.open], 50);
+	assert.deepEqual(f.recipeProperties, { [PROP.timesMade]: 2, [PROP.lastMade]: '2000-01-01' });
+	assert.match(f.contents.get(f.dailyPath)!, /Made a one-off \(Scratch\):\n- 30 ml \[\[Test A\]\]\n- 15 ml lemon juice\n- Mint sprig\n$/);
+});
+void test('the same one-off can be logged twice on one day', async () => {
+	const f = fixture();
+	for (let round = 0; round < 2; round++) {
+		const review = await f.logger.reviewOneOff({ name: '', lines: ['10 ml [[Test B]]'] });
+		assert.equal(review.daily.duplicate, false);
+		const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+		assert.equal((await f.logger.apply(review, plan, true)).status, 'applied');
+	}
+	assert.equal(f.contents.get(f.dailyPath)!.match(/Made a one-off:/g)!.length, 2);
+});

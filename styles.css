@@ -53,6 +53,20 @@
 .cocktail-cabinet-ingredient-actions .setting-item-info {
 	display: none;
 }
+.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-add-ingredient {
+	border-top: 0;
+	padding-top: var(--size-4-2);
+}
+.cocktail-cabinet-add-ingredient .setting-item-info {
+	display: none;
+}
+.cocktail-cabinet-add-ingredient .setting-item-control {
+	justify-content: flex-start;
+}
+.cocktail-cabinet-button-icon {
+	display: inline-flex;
+	margin-inline-end: var(--size-4-1);
+}
 .cocktail-cabinet-amount-input {
 	flex: 1 1 9rem;
 	min-width: 0;

@@ -38,6 +38,7 @@ For a cabinet created before Bases support, rerun **Set up cabinet** to add miss
 - **Edit this ingredient link**: with the cursor in a link in a recipe's Ingredients, change just that link (its note or its text); other links on the line stay. In Live Preview, clicking a link opens it, so click just after it and press ←.
 - These commands are also in the editor's right-click menu in cabinet notes, each only where it applies.
 - **Log this cocktail**: from a cabinet recipe, review servings, what you used, how much will be left, and the proposed daily entry, then select **Log**. See the logging details below.
+- **Log a one-off**, **Riff on this cocktail**, and **Save one-off as recipe**: log a drink without a recipe note, and keep it as a recipe later. See [one-off drinks](#one-off-drinks).
 - **Navigation in each note**: category, family, type, bottle, and other-stock notes embed sections from the shared `Views/Related.base`: a category's families; a family's types; the bottles and other stock under a family or type, with their stock; other stock of the same type on a bottle; and related recipes on all of them. Recipes count every link in the recipe note, followed up the hierarchy, so a family lists recipes that call for any of its types or bottles. They are grouped into recipes that call for the note (or something under it) and recipes it can fill through a broader requirement, each showing its rating as stars, highest first. These are core Bases, so they render with Cocktail Cabinet disabled. `Related.base` is managed by the plugin: rerunning setup updates it unless you've changed it. Sort or column changes made in an embed apply to every note.
 - **Note actions**: commands about one note are also in that note's file menu: right-click it in the file explorer or its tab, or open the note's **More options** menu (⋯), which is the easiest way on mobile. Recipes also get a **Log this cocktail** button in the note's header, and bottles and other stock an **Edit stock** button.
 
@@ -65,6 +66,10 @@ Open a cabinet recipe and run **Cocktail Cabinet: Log this cocktail**.
 - **Usage:** logging records the log date (today unless you change it) as **Last used** on each bottle and other stock you used, including ones it doesn't subtract from (limes you track as Have, dashes of bitters), and **Last made** and **Times made** on the recipe.
 - **Date:** defaults to today. If you forgot to log yesterday’s drink, pick that day; the daily entry goes in that day’s note, and **Last used** and **Last made** are only ever moved forward, so an older date never overwrites a later one. Future dates aren’t allowed.
 - **Add to daily note:** appends “Made an Old Fashioned.” (or “Made 2 servings of …”) to the note for the chosen date, using the Daily notes core plugin’s folder, format, and template. Off by default if that day’s note already has this cocktail.
+
+### One-off drinks
+
+For a drink with no recipe note, run **Cocktail Cabinet: Log a one-off**, or **Riff on this cocktail** on a recipe to start from its ingredients. Enter an optional name and the ingredients per serving, link what you poured, and select **Review** for the same dialog as above (**Edit ingredients** goes back). No note is created: the daily note gets “Made a one-off (Name):” with the ingredients listed under it. If it's a keeper, open that daily note and run **Save one-off as recipe**: the recipe review opens with the name and ingredients filled in, and once saved the daily line links the new recipe, which counts as made that day.
 
 If your stock or the recipe changed since the preview, nothing is saved and the preview refreshes. If saving fails partway, the message says what was already updated so the drink isn’t subtracted twice.
 

@@ -20,6 +20,10 @@ import { registerNoteActions } from './note-actions';
 import { RecipeLinkStore } from '../vault/recipe-links';
 import { UnlinkedModal } from '../ui/unlinked-modal';
 import { registerEditorLinks } from './editor-links';
+import { OneOffModal } from '../ui/one-off-modal';
+import { saveOneOff } from '../ui/save-one-off';
+import type { OneOff } from '../core/one-off';
+import { ingredientLines } from '../core/unlinked-lines';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(plugin.app, plugin.store);
@@ -41,6 +45,22 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 	};
 	// On a type note, open a stock form with the type already filled in.
 	const forType = (bottle: boolean) => (file: TFile) => void handle(() => ready(() => new StockModal(plugin, bottle, { types: [noteFor(file)] }).open()));
+	// A one-off goes from its ingredients to the logging review, and back to them to edit.
+	const logOneOff = (initial?: OneOff) => {
+		const step = (oneOff?: OneOff) => new OneOffModal(plugin, reviewed => new LoggingModal(plugin, logger, stocks, links, reviewed, step).open(), oneOff).open();
+		step(initial);
+	};
+	plugin.addCommand({ id: 'log-one-off', name: 'Log a one-off', icon: 'flask-conical', callback: () => handle(() => ready(() => logOneOff())) });
+	plugin.addCommand({
+		id: 'save-one-off-as-recipe',
+		name: 'Save one-off as recipe',
+		checkCallback: checking => {
+			const file = plugin.app.workspace.getActiveFile();
+			if (!file || file.extension !== 'md') return false;
+			if (!checking) void handle(() => ready(() => saveOneOff(plugin, logger.daily, file)));
+			return true;
+		},
+	});
 	const recordPurchases = () => handle(() => ready(() => new PurchaseModal(plugin, stocks).open()));
 	plugin.addCommand({ id: 'record-purchases', name: 'Record purchases', icon: 'shopping-cart', callback: recordPurchases });
 	registerNoteActions(plugin, [
@@ -48,6 +68,13 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		{
 			id: 'log-this-cocktail', name: 'Log this cocktail', icon: 'martini', kinds: ['recipe'], header: true,
 			run: file => void handle(async () => new LoggingModal(plugin, logger, stocks, links, noteFor(file)).open()),
+		},
+		{
+			id: 'riff-on-this-cocktail', name: 'Riff on this cocktail', icon: 'flask-conical', kinds: ['recipe'],
+			run: file => void handle(async () => {
+				const recipe = noteFor(file);
+				logOneOff({ name: '', lines: ingredientLines(await plugin.app.vault.read(file)).map(line => line.text), riffOn: recipe });
+			}),
 		},
 		{
 			id: 'edit-stock', name: 'Edit stock', icon: 'gauge', kinds: ['bottle', 'ingredient'], header: true,

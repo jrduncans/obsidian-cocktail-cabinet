@@ -33,8 +33,11 @@ export class LoggingDaily {
 
 	private resolve = (link: string, source: string): string | null => this.app.metadataCache.getFirstLinkpathDest(link, source)?.path ?? null;
 
-	/** The daily note for `day` (`YYYY-MM-DD`, default today); a drink remembered later is logged on the day it was made. */
-	async preview(recipe: CabinetNote, day = moment().format('YYYY-MM-DD')): Promise<DailyPreview> {
+	/**
+	 * The daily note for `day` (`YYYY-MM-DD`, default today); a drink remembered later is logged on the day it was made.
+	 * Without a recipe (a one-off) nothing counts as a duplicate: the same one-off can be made twice.
+	 */
+	async preview(recipe: CabinetNote | null, day = moment().format('YYYY-MM-DD')): Promise<DailyPreview> {
 		const date = moment(day, 'YYYY-MM-DD');
 		const result: DailyPreview = { date: day, path: '', configuration: '', duplicate: false };
 		try {
@@ -56,7 +59,7 @@ export class LoggingDaily {
 			if (existing && !(existing instanceof TFile)) throw new Error('A folder has that day’s daily note name.');
 			if (existing instanceof TFile) {
 				result.path = existing.path;
-				result.duplicate = hasDailyLog(await this.app.vault.read(existing), recipe, link => this.resolve(link, existing.path));
+				result.duplicate = !!recipe && hasDailyLog(await this.app.vault.read(existing), recipe, link => this.resolve(link, existing.path));
 			} else {
 				// Verify the template and path before touching inventory; creation stays native.
 				const templatePath = instance.options.template;
@@ -75,7 +78,18 @@ export class LoggingDaily {
 		return result;
 	}
 
-	async append(preview: DailyPreview, recipe: CabinetNote, line: string): Promise<boolean> {
+	/** The day a daily note is for, from its path and the configured format; null for any other note. */
+	dateOf(file: TFile): string | null {
+		try {
+			const instance = this.instance();
+			const folder = instance.options.folder ? normalizePath(instance.options.folder) : '';
+			if (folder && !file.path.startsWith(`${folder}/`)) return null;
+			const date = moment(file.path.slice(folder ? folder.length + 1 : 0).replace(/\.md$/, ''), instance.getFormat(), true);
+			return date.isValid() ? date.format('YYYY-MM-DD') : null;
+		} catch { return null; }
+	}
+
+	async append(preview: DailyPreview, recipe: CabinetNote | null, line: string): Promise<boolean> {
 		const instance = this.instance();
 		if (preview.configuration !== JSON.stringify(instance.options)) {
 			throw new Error('The daily note settings changed.');
@@ -84,7 +98,7 @@ export class LoggingDaily {
 		if (!(file instanceof TFile) || file.path !== preview.path) throw new Error('Couldn’t open or create the daily note.');
 		let appended = false;
 		await this.app.vault.process(file, content => {
-			if (!preview.duplicate && hasDailyLog(content, recipe, link => this.resolve(link, file.path))) return content;
+			if (recipe && !preview.duplicate && hasDailyLog(content, recipe, link => this.resolve(link, file.path))) return content;
 			appended = true;
 			return `${content}${content && !content.endsWith('\n') ? '\n' : ''}${line}\n`;
 		});
