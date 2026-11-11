@@ -95,9 +95,9 @@ void test('unlinked, unmeasured, ambiguous, and status-only requirements have ex
 void test('a type with only status-tracked sources is not drawn down', () => {
 	assert.match(classify('- 20 ml [[Lime Juice]]', [status()]).skipped[0]!.reason, /Not tracked in mL/);
 });
-void test('explicit nonvolume equivalents use recipeVolumeMl while bare barspoons are skipped', () => {
-	const lines = classify('- 1 barspoon (1/8 oz) [[First Gin]]\n- 1 barspoon [[First Gin]]');
-	assert.equal(lines.counted.length, 1);
+void test('explicit nonvolume equivalents use recipeVolumeMl while bare barspoons count as a teaspoon and dashes are skipped', () => {
+	const lines = classify('- 1 barspoon (1/8 oz) [[First Gin]]\n- 1 barspoon [[First Gin]]\n- 2 dashes [[First Gin]]');
+	assert.equal(lines.counted.length, 2);
 	assert.equal(lines.skipped.length, 1);
 	assert.equal(lines.counted[0]!.ml, 29.5735295625 / 8);
 });

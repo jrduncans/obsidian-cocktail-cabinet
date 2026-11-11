@@ -61,7 +61,7 @@ void test('familiar amounts remain text while only single precise volumes are re
 		['30 mL', 30], ['3 cl', 30], ['1 oz', 29.5735295625], ['1½ fl. oz.', 44.36029434375],
 		['1 1/2 ounces', 44.36029434375], ['¾ oz', 22.180147171875], ['.5 oz', 14.78676478125], ['2,5 cl', 25],
 	] as const) assert.ok(Math.abs(recipeVolumeMl(amount)! - expected) < 1e-9, amount);
-	for (const amount of ['', '2 dashes', '1 barspoon', '1–2 oz', 'about 30 ml', '1 oz (about 30 ml)', '1 part', '0 ml', '1/0 oz', '-1 oz', '2 oz + 1 oz']) {
+	for (const amount of ['', '2 dashes', '1–2 barspoon', '1–2 oz', 'about 30 ml', '1 oz (about 30 ml)', '1 part', '0 ml', '1/0 oz', '-1 oz', '2 oz + 1 oz']) {
 		assert.equal(recipeVolumeMl(amount), null, amount);
 	}
 	for (const line of ['1½ oz Gin', '1 1/2 ounces Gin', '2 dashes bitters', '1–2 oz Gin', '1 oz (30 ml) Gin', 'a splash of Gin', '1 lime wheel']) {
@@ -147,8 +147,14 @@ void test('unknown prose and embedded code remain content for review', () => {
 	assert.ok(recipe.description.includes('unusual preparation'));
 });
 
-void test('explicit barspoon volumes use the source measurement without assuming a barspoon size', () => {
-	assert.equal(recipeVolumeMl('1 barspoon'), null);
+void test('bare barspoons and teaspoons count as one US teaspoon; explicit volumes win', () => {
+	assert.equal(recipeVolumeMl('1 barspoon'), 4.92892159375);
+	assert.equal(recipeVolumeMl('2 barspoons'), 2 * 4.92892159375);
+	assert.equal(recipeVolumeMl('1/2 tsp'), 4.92892159375 / 2);
+	assert.equal(recipeVolumeMl('1 teaspoon'), 4.92892159375);
+	assert.equal(recipeVolumeMl('1 tablespoon'), 3 * 4.92892159375);
+	assert.equal(recipeVolumeMl('1/2 tbsp'), 1.5 * 4.92892159375);
+	assert.equal(recipeVolumeMl('1 tbsp (15 ml)'), 15);
 	assert.equal(recipeVolumeMl('1 barspoon (1/8 oz)'), 29.5735295625 / 8);
 	assert.equal(recipeVolumeMl('1 barspoon (5 ml)'), 5);
 	assert.equal(recipeVolumeMl('1/0 barspoon (5 ml)'), null);
