@@ -25,8 +25,8 @@ export interface MissingAbv {
 	path: string;
 	name: string;
 	kind: 'bottle' | 'type' | 'family';
-	/** `cc-abv` for a bottle, `cc-abv-typical` for a type or family. */
-	property: string;
+	/** `cc-abv` for a bottle, `cc-abv-typical` for a type; null for a family, which has no ABV of its own. */
+	property: string | null;
 	recipes: string[];
 }
 export interface MissingAbvs {
@@ -140,19 +140,36 @@ export class RecipeSync {
 		return this.links(targets, file.path);
 	}
 
-	/** The `cc-abv` of every bottle, by the path of its type. */
+	/**
+	 * ABVs to fall back on, by path: each type's and each family's bottles (`cc-abv`), and under
+	 * `types:<family path>`, each family's types' typical ABVs (NaN when a type has none).
+	 */
 	private bottleAbvs(): Map<string, number[]> {
-		const byType = new Map<string, number[]>();
+		const index = new Map<string, number[]>();
+		const add = (key: string, value: number) => index.set(key, [...(index.get(key) ?? []), value]);
+		const familyOf = (type: TFile) => {
+			const link = asLinks(this.frontmatter(type)[PROP.family])[0];
+			return link ? this.resolve(link, type.path) : null;
+		};
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (!this.inCabinet(file)) continue;
 			const properties = this.frontmatter(file);
+			if (properties[PROP.kind] === 'type') {
+				const family = familyOf(file);
+				const typical = properties[PROP.abvTypical];
+				if (family) add(`types:${family.path}`, typeof typical === 'number' ? typical : NaN);
+				continue;
+			}
 			const abv = properties[PROP.abv];
 			if (properties[PROP.kind] !== 'bottle' || typeof abv !== 'number') continue;
-			const type = asLinks(properties[PROP.type])[0];
-			const target = type ? this.resolve(type, file.path) : null;
-			if (target) byType.set(target.path, [...(byType.get(target.path) ?? []), abv]);
+			const link = asLinks(properties[PROP.type])[0];
+			const type = link ? this.resolve(link, file.path) : null;
+			if (!type) continue;
+			add(type.path, abv);
+			const family = familyOf(type);
+			if (family) add(family.path, abv);
 		}
-		return byType;
+		return index;
 	}
 
 	/** A linked note as the calculator sees it, with the facts of everything in its chain. */
@@ -181,7 +198,8 @@ export class RecipeSync {
 			kind,
 			abv: properties[PROP.abv],
 			abvTypical: properties[PROP.abvTypical],
-			bottleAbvs: kind === 'type' ? bottles.get(file.path) : undefined,
+			bottleAbvs: kind === 'type' || kind === 'family' ? bottles.get(file.path) : undefined,
+			typeAbvs: kind === 'family' ? bottles.get(`types:${file.path}`) : undefined,
 			parent,
 		};
 	}
@@ -323,7 +341,12 @@ export class RecipeSync {
 		const kind = properties[PROP.kind];
 		const name = typeof properties[PROP.name] === 'string' ? (properties[PROP.name] as string) : file.basename;
 		if (kind === 'bottle' || kind === 'type' || kind === 'family')
-			return { path: file.path, name, kind, property: kind === 'bottle' ? PROP.abv : PROP.abvTypical };
+			return {
+				path: file.path,
+				name,
+				kind,
+				property: kind === 'bottle' ? PROP.abv : kind === 'type' ? PROP.abvTypical : null,
+			};
 		if (kind === 'ingredient' && depth === 0) {
 			const first = asLinks(properties[PROP.provides])[0];
 			const type = first ? this.resolve(first, file.path) : null;

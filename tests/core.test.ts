@@ -1001,18 +1001,10 @@ void test('the Recipes section reads cc-ingredients, falling back to every link 
 	assert.match(base, /file\.links/);
 });
 
-void test('the starter marks non-alcoholic types and families with a typical ABV of 0, and leaves alcoholic ones blank', () => {
+void test('the starter marks non-alcoholic types with a typical ABV of 0, and leaves alcoholic ones and families blank', () => {
 	const abv = (name: string) => STARTER_CATALOG.find((entry) => entry.name === name)?.properties?.[PROP.abvTypical];
-	for (const name of [
-		'Lime Juice',
-		'Citrus Juice',
-		'Simple Syrup (1:1)',
-		'Orgeat',
-		'Soda Water',
-		'Egg White',
-		'Cocktail Cherry',
-	])
+	for (const name of ['Lime Juice', 'Simple Syrup (1:1)', 'Orgeat', 'Soda Water', 'Egg White', 'Cocktail Cherry'])
 		assert.equal(abv(name), 0, name);
-	for (const name of ['London Dry Gin', 'Gin', 'Angostura Bitters', 'Dry Vermouth', 'Champagne'])
+	for (const name of ['London Dry Gin', 'Gin', 'Angostura Bitters', 'Dry Vermouth', 'Champagne', 'Citrus Juice'])
 		assert.equal(abv(name), undefined, name);
 });

@@ -17,7 +17,7 @@ const close = (actual: number | null, expected: number, digits = 3) =>
 	assert.ok(actual !== null && Math.abs(actual - expected) < 10 ** -digits, `${actual} ≈ ${expected}`);
 
 void test('a note’s ABV comes from the bottle, then the type, your bottles of it, then the family', () => {
-	const family: AbvNote = { kind: 'family', abvTypical: 0.4 };
+	const family: AbvNote = { kind: 'family', bottleAbvs: [0.4, 0.5, 0.42] };
 	const type: AbvNote = { kind: 'type', abvTypical: 0.43, parent: family };
 	assert.deepEqual(noteAbv({ kind: 'bottle', abv: 0.47, parent: type }), { abv: 0.47, source: 'bottle' });
 	assert.deepEqual(noteAbv({ kind: 'bottle', parent: type }), { abv: 0.43, source: 'typical' });
@@ -26,9 +26,13 @@ void test('a note’s ABV comes from the bottle, then the type, your bottles of 
 		source: 'bottles',
 	});
 	assert.deepEqual(noteAbv({ kind: 'type', bottleAbvs: [0.4, 0.5] }), { abv: 0.45, source: 'bottles' });
-	assert.deepEqual(noteAbv({ kind: 'type', parent: family }), { abv: 0.4, source: 'typical' });
+	assert.deepEqual(noteAbv({ kind: 'type', parent: family }), { abv: 0.42, source: 'bottles' });
 	assert.deepEqual(noteAbv({ kind: 'type' }), { abv: null, source: 'unknown' });
 	assert.deepEqual(noteAbv({ kind: 'type', abvTypical: 0 }), { abv: 0, source: 'typical' });
+	// A family has no ABV of its own: your bottles in it, or 0 when every type is non-alcoholic.
+	assert.deepEqual(noteAbv({ kind: 'family', abvTypical: 0.4 }), { abv: null, source: 'unknown' });
+	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [0, 0] }), { abv: 0, source: 'typical' });
+	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [0, NaN] }), { abv: null, source: 'unknown' });
 	assert.deepEqual(noteAbv({ kind: 'ingredient', provides: [{ kind: 'type', abvTypical: 0 }] }), {
 		abv: 0,
 		source: 'typical',

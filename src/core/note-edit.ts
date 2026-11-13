@@ -9,7 +9,7 @@ import { parseTags } from './recipe-tags';
  * bottle's or other stock's stock, price, and shopping flag to Edit stock.
  */
 export const EDIT_FIELDS = {
-	family: [PROP.category, PROP.abvTypical],
+	family: [PROP.category],
 	type: [PROP.family, PROP.catchAll, PROP.shoppingList, PROP.abvTypical],
 	bottle: [PROP.type, PROP.volume, PROP.abv],
 	ingredient: [PROP.provides, PROP.form],
@@ -35,7 +35,7 @@ export interface FieldEdit {
 	volume?: string;
 	/** Percent, as typed. */
 	abv?: string;
-	/** A type's or family's typical ABV: percent, as typed. */
+	/** A type's typical ABV: percent, as typed. */
 	typicalAbv?: string;
 	form?: string;
 	shoppingList?: boolean;
@@ -130,7 +130,7 @@ export function planFieldEdit(kind: EditableKind, before: Record<string, unknown
 		}
 	}
 	if (
-		(kind === 'type' || kind === 'family') &&
+		kind === 'type' &&
 		edit.typicalAbv !== undefined &&
 		edit.typicalAbv.trim() !== abvText(before[PROP.abvTypical])
 	) {
