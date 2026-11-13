@@ -345,3 +345,6 @@
 	gap: var(--size-4-2);
 	width: 100%;
 }
+.cocktail-cabinet-dilution {
+	width: 5em;
+}

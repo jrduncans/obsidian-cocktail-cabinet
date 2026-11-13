@@ -211,7 +211,8 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 		else pour += ml!;
 		if (shape === 'range' || shape === 'top') rough = true;
 		if (abv === null) {
-			partial = true;
+			// A few dashes of unknown strength hold well under a mL of alcohol: too little to make the estimate partial.
+			if (shape !== 'dash') partial = true;
 			continue;
 		}
 		alcohol += ml! * abv;
@@ -254,4 +255,32 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 export const STANDARD_DRINK_GRAMS = { us: 14, uk: 8 } as const;
 export function standardDrinks(alcoholMl: number, unit: keyof typeof STANDARD_DRINK_GRAMS = 'us'): number {
 	return (alcoholMl * 0.789) / STANDARD_DRINK_GRAMS[unit];
+}
+
+/**
+ * Ingredient facts by starter catalog ID, with the starter name as a fallback for notes without one.
+ * A note's facts are those of every note in its chain: the note, its type, family, and category,
+ * and for other stock the types it provides.
+ */
+const FACTS: Record<string, readonly Fact[]> = {
+	'category/Juice': ['juice'],
+	'family/Citrus Juice': ['citrus'],
+	'family/Sparkling Wine': ['sparkling'],
+	'family/Carbonated Mixer': ['sparkling'],
+	'type/Egg White': ['egg'],
+	'type/Whole Egg': ['egg'],
+	'ingredient/Heavy Cream': ['dairy'],
+	'ingredient/Milk': ['dairy'],
+};
+const FACTS_BY_NAME: Record<string, readonly Fact[]> = Object.fromEntries(
+	Object.entries(FACTS).map(([id, facts]) => [
+		`${id.split('/')[0]}/${id.slice(id.indexOf('/') + 1).toLowerCase()}`,
+		facts,
+	]),
+);
+
+/** Facts for one note in a chain, from its kind and catalog ID or name. */
+export function factsOf(kind: string, catalogId: unknown, name: string): readonly Fact[] {
+	if (typeof catalogId === 'string' && FACTS[catalogId]) return FACTS[catalogId];
+	return FACTS_BY_NAME[`${kind}/${name.toLowerCase()}`] ?? [];
 }

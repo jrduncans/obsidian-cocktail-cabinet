@@ -3,11 +3,12 @@ import { registerCommands } from './commands';
 import { loadSettings, CocktailCabinetSettingTab } from './settings';
 import type { CocktailCabinetSettings } from './settings';
 import { CabinetStore } from './vault/cabinet-store';
-import { IngredientLinkSync } from './vault/ingredient-link-sync';
+import { RecipeSync } from './vault/recipe-sync';
 
 export default class CocktailCabinetPlugin extends Plugin {
 	settings!: CocktailCabinetSettings;
 	store!: CabinetStore;
+	recipes!: RecipeSync;
 
 	async onload() {
 		this.settings = loadSettings(await this.loadData());
@@ -20,21 +21,26 @@ export default class CocktailCabinetPlugin extends Plugin {
 		this.addSettingTab(new CocktailCabinetSettingTab(this.app, this));
 		// Views a release changed are rewritten once the vault is indexed.
 		this.app.workspace.onLayoutReady(() => void this.syncViews());
-		this.syncIngredientLinks();
+		this.syncRecipes();
 	}
 
 	/**
-	 * Keep recipes' `cc-ingredients` in step with their Ingredients sections: after each change, and once
-	 * shortly after startup for edits made while Obsidian was closed or before this release.
+	 * Keep recipes' derived properties (`cc-ingredients`, the alcohol estimate) in step: after each change,
+	 * after a linked note's ABV or hierarchy changes, and once shortly after startup for edits made while
+	 * Obsidian was closed or before this release.
 	 */
-	private syncIngredientLinks() {
-		const links = new IngredientLinkSync(this.app, () => this.settings.cabinetFolder);
-		this.register(() => links.cancel());
+	private syncRecipes() {
+		this.recipes = new RecipeSync(
+			this.app,
+			() => this.settings.cabinetFolder,
+			() => ({ dilution: this.settings.dilution, topMl: this.settings.topMl }),
+		);
+		this.register(() => this.recipes.cancel());
 		this.app.workspace.onLayoutReady(() => {
 			this.registerEvent(
-				this.app.metadataCache.on('changed', (file, _data, cache) => links.changed(file, cache)),
+				this.app.metadataCache.on('changed', (file, _data, cache) => this.recipes.changed(file, cache)),
 			);
-			const timer = window.setTimeout(() => void links.syncAll(), 5000);
+			const timer = window.setTimeout(() => void this.recipes.syncAll(), 5000);
 			this.register(() => window.clearTimeout(timer));
 		});
 	}
