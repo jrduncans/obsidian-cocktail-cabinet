@@ -21,9 +21,13 @@ export const DROP_ML = 0.05;
 export const DEFAULT_TOP_ML = 60;
 
 export type Fact = 'citrus' | 'juice' | 'dairy' | 'egg' | 'sparkling';
-/** Where a line's ABV came from: a bottle, a type's or family's typical value, or your bottles of the type. */
-export type AbvSource = 'bottle' | 'typical' | 'bottles' | 'unknown';
-export type Basis = 'exact' | 'typical' | 'bottles' | 'rough' | 'partial' | 'none';
+/**
+ * Where a line's ABV came from: the named bottle; your in-stock bottles of the type or family; the
+ * type's typical value; or bottles you've had, out of stock included.
+ */
+export type AbvSource = 'bottle' | 'stocked' | 'typical' | 'past' | 'unknown';
+/** `bottles` is your in-stock bottles, `past` any bottles you've had; stored in `cc-est-basis`. */
+export type Basis = 'exact' | 'bottles' | 'typical' | 'past' | 'rough' | 'partial' | 'none';
 
 /** What the vault knows about a linked note, enough to choose its ABV. */
 export interface AbvNote {
@@ -32,8 +36,10 @@ export interface AbvNote {
 	abv?: unknown;
 	/** A type's `cc-abv-typical`. */
 	abvTypical?: unknown;
-	/** The `cc-abv` of your bottles of a type, or of every type in a family. */
+	/** The `cc-abv` of your bottles of a type, or of every type in a family, in stock or not. */
 	bottleAbvs?: readonly number[];
+	/** The same, for bottles in stock. */
+	stockedAbvs?: readonly number[];
 	/** A family: its types' typical ABVs, so a family of non-alcoholic types counts as 0. */
 	typeAbvs?: readonly unknown[];
 	/** A bottle's type, or a type's family. */
@@ -55,11 +61,12 @@ function median(values: readonly number[]): number | null {
 }
 
 /**
- * A note's ABV, stopping at the first that applies: a bottle's own ABV; a type's typical ABV;
- * the median of your bottles of the type; then the family. A family has no ABV of its own, since
- * most span too wide a range: it uses the median of your bottles anywhere in it, or 0 when all its
- * types are non-alcoholic. Other stock uses its first provided type, and a staple is 0. A bottle
- * without an ABV falls back to its type.
+ * A note's ABV, stopping at the first that applies: a bottle's own ABV; for a type, the median of
+ * your in-stock bottles of it (what you'd pour), its typical ABV (a reference value), then the median
+ * of every bottle of it you've had; then the family. A family has no ABV of its own, since most span
+ * too wide a range: it uses the median of your in-stock bottles in it, then of every bottle in it, or
+ * 0 when all its types are non-alcoholic. Other stock uses its first provided type, and a staple is 0.
+ * A bottle without an ABV falls back to its type.
  */
 export function noteAbv(note: AbvNote | null | undefined): { abv: number | null; source: AbvSource } {
 	if (!note) return { abv: null, source: 'unknown' };
@@ -68,15 +75,19 @@ export function noteAbv(note: AbvNote | null | undefined): { abv: number | null;
 		return own !== null ? { abv: own, source: 'bottle' } : noteAbv(note.parent);
 	}
 	if (note.kind === 'type') {
+		const stocked = median(note.stockedAbvs ?? []);
+		if (stocked !== null) return { abv: stocked, source: 'stocked' };
 		const typical = fraction(note.abvTypical);
 		if (typical !== null) return { abv: typical, source: 'typical' };
-		const mine = median(note.bottleAbvs ?? []);
-		if (mine !== null) return { abv: mine, source: 'bottles' };
+		const past = median(note.bottleAbvs ?? []);
+		if (past !== null) return { abv: past, source: 'past' };
 		return noteAbv(note.parent);
 	}
 	if (note.kind === 'family') {
-		const mine = median(note.bottleAbvs ?? []);
-		if (mine !== null) return { abv: mine, source: 'bottles' };
+		const stocked = median(note.stockedAbvs ?? []);
+		if (stocked !== null) return { abv: stocked, source: 'stocked' };
+		const past = median(note.bottleAbvs ?? []);
+		if (past !== null) return { abv: past, source: 'past' };
 		const types = note.typeAbvs ?? [];
 		return types.length && types.every((value) => fraction(value) === 0)
 			? { abv: 0, source: 'typical' }
@@ -199,6 +210,7 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 	let rough = false;
 	let typical = false;
 	let mine = false;
+	let past = false;
 	for (const line of input.lines) {
 		const links = [...line.matchAll(LINK)].map((match) => input.link(linkTarget(match[1]!)));
 		for (const link of links) link?.facts.forEach((fact) => facts.add(fact));
@@ -226,7 +238,8 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 		alcohol += ml! * abv;
 		// Non-alcoholic lines don't make an estimate less certain.
 		if (abv > 0 && source === 'typical') typical = true;
-		if (abv > 0 && source === 'bottles') mine = true;
+		if (abv > 0 && source === 'stocked') mine = true;
+		if (abv > 0 && source === 'past') past = true;
 	}
 	const override = typeof input.dilution === 'number' && input.dilution >= 0 && input.dilution <= 2;
 	const named = methodPreparation(input.method);
@@ -241,11 +254,13 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 				? 'partial'
 				: rough
 					? 'rough'
-					: mine
-						? 'bottles'
+					: past
+						? 'past'
 						: typical
 							? 'typical'
-							: 'exact';
+							: mine
+								? 'bottles'
+								: 'exact';
 	return {
 		alcoholMl: alcohol,
 		abv: volume > 0 ? alcohol / volume : null,
@@ -297,6 +312,7 @@ const BASIS_TEXT: Record<Exclude<Basis, 'none'>, string> = {
 	exact: 'exact',
 	typical: 'typical ABVs',
 	bottles: 'from your bottles',
+	past: 'from bottles you’ve had',
 	rough: 'rough',
 	partial: 'some ABVs or amounts unknown',
 };

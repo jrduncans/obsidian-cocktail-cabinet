@@ -40,14 +40,17 @@ The logging parser already turns a line into a volume. The estimate reuses it an
 
 ## Where each line's ABV comes from
 
-In order, stopping at the first that applies:
+Revised 2026-11-13 so bottles drive the estimate and reference values fill gaps. In order, stopping at the first that applies:
 
-1. **The named bottle's `cc-abv`.** Exact.
-2. **The linked type's typical ABV**, a new optional property on types, `cc-abv-typical`, a fraction like `cc-abv`, editable in **Edit cabinet note**. The starter catalog supplies 0 for non-alcoholic types (juices, syrups, mixers, staples) and a value for some spirit, liqueur, and wine types where one is representative; many stay blank. Values come from reviewed sources, BevNap and Mixel among them.
-3. **The median ABV of your bottles of that type**, when the type has none. The estimate says so (basis “Your bottles”), and the recipe hints that linking a bottle gives a more precise answer. A recipe's figures shift as bottles are bought or finished; that is accepted because it's labeled.
-4. **The family**, for family links (`[[Rum|rum]]`) and types with nothing above: the median of your bottles anywhere in the family (basis “Your bottles”), or 0 when every type in it is 0. Families have no typical ABV of their own: decided 2026-11-13, since most families span too wide a range for one value (Sherry 15–20%, Apple Brandy 40–50%, Rum 37.5–75%) and a generic line is usually better linked to a type.
-5. **Other stock** uses the ABV of the first type it provides; House syrups and fresh juice come out at 0.
-6. Otherwise **unknown**, and the estimate is Partial.
+1. **The named bottle's `cc-abv`.** Exact. A bottle without one falls back to its type.
+2. **The median of your in-stock bottles of the type**: what you'd pour today. In stock is the In stock view's test: Have or Low, or a positive amount.
+3. **The type's typical ABV**, `cc-abv-typical`, a fraction like `cc-abv`, editable in **Edit cabinet note**: a reference value for types you don't have on hand, from BevNap, Mixel, or later the starter catalog. The starter supplies 0 for non-alcoholic types and leaves the rest blank for now.
+4. **The median of every bottle of the type you've had**, out of stock included, labeled “from bottles you've had”: better than unknown, and only reached with no bottle in stock and no typical value.
+5. **The family**, for family links (`[[Rum|rum]]`) and types with nothing above: the median of your in-stock bottles in the family, then of every bottle in it, or 0 when every type in it is 0. Families have no typical ABV of their own: decided 2026-11-13, since most span too wide a range for one value (Sherry 15–20%, Apple Brandy 40–50%, Rum 37.5–75%) and a generic line is usually better linked to a type.
+6. **Other stock** uses its first provided type; kitchen staples are 0.
+7. Otherwise **unknown**, and the estimate is Partial.
+
+A typical value never overrides your shelf: with an atypical shelf (only navy-strength gin), gin recipes read strong, and choosing the bottle in the logging dialog gives the precise figure. This lets the catalog ship reference values later without fighting a user's own bottles.
 
 ## Choosing bottles: what if I use this one?
 
@@ -76,8 +79,9 @@ There is no method property, so the estimate picks the preparation:
 Each recipe gets a basis label alongside the numbers:
 
 - **Exact**: every alcoholic line names a bottle with an ABV, and every amount is measured.
-- **Typical ABVs**: some lines use a type's typical value.
-- **Your bottles**: some lines use the median of your bottles of a type; linking a bottle is more precise.
+- **From your bottles** (`bottles`): some lines use the median of your in-stock bottles of a type or family; linking a bottle is more precise.
+- **Typical ABVs** (`typical`): some lines use a type's typical value.
+- **From bottles you've had** (`past`): some lines use the median of bottles you've had, out of stock included.
 - **Rough**: a range or an assumed top, on top of any of the above.
 - **Partial**: an alcoholic line has an unknown ABV; alcohol is a lower bound.
 - **No estimate**: nothing alcoholic could be read.
@@ -90,7 +94,7 @@ Bases formulas can't read ingredient lines or follow them to other notes' ABVs, 
 
 - `cc-est-alcohol-ml`, `cc-est-abv` (a fraction), `cc-est-volume-ml`, and `cc-est-basis`, plus `cc-contains` (below). The `est` makes clear they are derived.
 - The same background sync that keeps `cc-ingredients` updates them: when a recipe has been quiet for two seconds, and for every recipe shortly after startup.
-- They also depend on other notes. When a bottle's `cc-abv`, a type's typical ABV, or the bottles used for a median change, the recipes linking them are recalculated (found through Obsidian's resolved links). A dilution setting change recalculates every recipe.
+- They also depend on other notes. When a bottle's `cc-abv`, a type's typical ABV, a bottle going in or out of stock (not each pour), or the bottles used for a median change, the recipes linking them are recalculated (found through Obsidian's resolved links). A dilution setting change recalculates every recipe.
 - Values are rounded (alcohol to 0.1 mL, ABV to 0.1 point) and written only when they change, so recalculation doesn't churn notes or sync.
 
 ## Ingredient facts in the same pass
@@ -132,3 +136,4 @@ Reviewed with the user on 2026-11-13:
 
 - Built 2026-11-13: **Review missing ABV values**, listing the bottles, types, and families whose ABV would complete partial estimates, most recipes first, each with a percent field that writes `cc-abv` (bottle) or `cc-abv-typical` (type or family). A line linking other stock counts against its first provided type. It also counts recipes partial because a measured line links nothing, with a button to **Review unlinked ingredients**. In the dev copy of `knowledge`, unlinked lines held back 226 recipes and 15 notes the rest, led by Sparkling Wine, Apple Brandy Family, Prosecco, and Sherry. The lint rule's acronym list gained ABV, and the plural is avoided because the rule can't keep it uppercase.
 - Changed 2026-11-13: families lost their typical ABV (in **Edit cabinet note**, the Ingredient families Base, and the starter's six non-alcoholic families) in favor of the median of your bottles in the family, or 0 when all its types are 0. **Review missing ABV values** lists a family only when you own no bottle in it, naming the recipes and suggesting relinking those lines to a type; it has no field. In the dev copy this resolved six families from bottles and cut partial estimates from 266 to 248.
+- Changed 2026-11-13: in-stock bottles first, then the type's typical ABV, then bottles you've had (a new `past` basis), as described above. The basis now ranks, least sure first: partial, rough, past, typical, bottles, exact. Other notes' stock is watched as in or out of stock, so logging doesn't recalculate every recipe on each pour. In the dev copy: 21 exact, 159 from your bottles, 69 from bottles you've had, 2 rough, 248 partial, 8 none.

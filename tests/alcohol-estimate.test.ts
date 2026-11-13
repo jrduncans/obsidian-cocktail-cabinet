@@ -12,24 +12,37 @@ import {
 } from '../src/core/alcohol-estimate';
 import type { AbvNote, LinkInfo } from '../src/core/alcohol-estimate';
 import { storedEstimate } from '../src/vault/recipe-sync';
+import { hasStock } from '../src/core/stock-formulas';
 
 const close = (actual: number | null, expected: number, digits = 3) =>
 	assert.ok(actual !== null && Math.abs(actual - expected) < 10 ** -digits, `${actual} ≈ ${expected}`);
 
-void test('a note’s ABV comes from the bottle, then the type, your bottles of it, then the family', () => {
+void test('a note’s ABV comes from the bottle, your in-stock bottles, the typical value, bottles you’ve had, then the family', () => {
 	const family: AbvNote = { kind: 'family', bottleAbvs: [0.4, 0.5, 0.42] };
-	const type: AbvNote = { kind: 'type', abvTypical: 0.43, parent: family };
-	assert.deepEqual(noteAbv({ kind: 'bottle', abv: 0.47, parent: type }), { abv: 0.47, source: 'bottle' });
-	assert.deepEqual(noteAbv({ kind: 'bottle', parent: type }), { abv: 0.43, source: 'typical' });
-	assert.deepEqual(noteAbv({ kind: 'type', bottleAbvs: [0.4, 0.5, 0.45], parent: family }), {
-		abv: 0.45,
-		source: 'bottles',
+	assert.deepEqual(noteAbv({ kind: 'bottle', abv: 0.47, parent: { kind: 'type', abvTypical: 0.43 } }), {
+		abv: 0.47,
+		source: 'bottle',
 	});
-	assert.deepEqual(noteAbv({ kind: 'type', bottleAbvs: [0.4, 0.5] }), { abv: 0.45, source: 'bottles' });
-	assert.deepEqual(noteAbv({ kind: 'type', parent: family }), { abv: 0.42, source: 'bottles' });
+	assert.deepEqual(noteAbv({ kind: 'bottle', parent: { kind: 'type', abvTypical: 0.43 } }), {
+		abv: 0.43,
+		source: 'typical',
+	});
+	// In-stock bottles win over the typical value; bottles you've had only follow it.
+	const type = (extra: Partial<AbvNote>): AbvNote => ({ kind: 'type', parent: family, ...extra });
+	assert.deepEqual(noteAbv(type({ stockedAbvs: [0.5], abvTypical: 0.43, bottleAbvs: [0.5, 0.4] })), {
+		abv: 0.5,
+		source: 'stocked',
+	});
+	assert.deepEqual(noteAbv(type({ abvTypical: 0.43, bottleAbvs: [0.5, 0.4] })), { abv: 0.43, source: 'typical' });
+	assert.deepEqual(noteAbv(type({ bottleAbvs: [0.4, 0.5] })), { abv: 0.45, source: 'past' });
+	assert.deepEqual(noteAbv(type({})), { abv: 0.42, source: 'past' });
 	assert.deepEqual(noteAbv({ kind: 'type' }), { abv: null, source: 'unknown' });
 	assert.deepEqual(noteAbv({ kind: 'type', abvTypical: 0 }), { abv: 0, source: 'typical' });
-	// A family has no ABV of its own: your bottles in it, or 0 when every type is non-alcoholic.
+	// A family has no ABV of its own: your in-stock bottles in it, then any, or 0 when every type is non-alcoholic.
+	assert.deepEqual(noteAbv({ kind: 'family', stockedAbvs: [0.4], bottleAbvs: [0.4, 0.6] }), {
+		abv: 0.4,
+		source: 'stocked',
+	});
 	assert.deepEqual(noteAbv({ kind: 'family', abvTypical: 0.4 }), { abv: null, source: 'unknown' });
 	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [0, 0] }), { abv: 0, source: 'typical' });
 	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [0, NaN] }), { abv: null, source: 'unknown' });
@@ -45,7 +58,8 @@ void test('a note’s ABV comes from the bottle, then the type, your bottles of 
 const LINKS: Record<string, LinkInfo> = {
 	Rum: { abv: 0.4, source: 'bottle', facts: [] },
 	Gin: { abv: 0.43, source: 'typical', facts: [] },
-	Rye: { abv: 0.5, source: 'bottles', facts: [] },
+	Rye: { abv: 0.5, source: 'stocked', facts: [] },
+	OldRye: { abv: 0.45, source: 'past', facts: [] },
 	Vermouth: { abv: 0.16, source: 'bottle', facts: [] },
 	Lime: { abv: 0, source: 'typical', facts: ['citrus', 'juice'] },
 	Syrup: { abv: 0, source: 'typical', facts: [] },
@@ -132,7 +146,9 @@ void test('the basis says how sure it is, and non-alcoholic lines never lower it
 	const basis = (lines: string[]) => estimateAlcohol({ lines, method: 'Shake.', link }).basis;
 	assert.equal(basis(['2 oz [[Rum]]', '1 oz [[Lime]]']), 'exact');
 	assert.equal(basis(['2 oz [[Gin]]', '1 oz [[Lime]]']), 'typical');
-	assert.equal(basis(['2 oz [[Rye]]', '1 oz [[Gin]]']), 'bottles');
+	assert.equal(basis(['2 oz [[Rye]]', '1 oz [[Rum]]']), 'bottles');
+	assert.equal(basis(['2 oz [[Rye]]', '1 oz [[Gin]]']), 'typical');
+	assert.equal(basis(['2 oz [[OldRye]]', '1 oz [[Gin]]']), 'past');
 	assert.equal(basis(['2 oz [[Rum]]', '1 oz [[Mystery]]']), 'partial');
 	assert.equal(basis(['2 oz gin, unlinked', '1 oz [[Lime]]']), 'partial');
 	assert.equal(basis(['Splash of [[Overproof]]', '2 oz [[Rum]]']), 'partial');
@@ -200,4 +216,19 @@ void test('the logging line scales by servings and says how sure it is', () => {
 	const partial = estimateAlcohol({ lines: ['2 oz (60 ml) [[Rum]]', '1 oz [[Mystery]]'], method: 'Stir.', link });
 	assert.match(estimateText(partial, 1), /^≥ 1\.4 drinks .* ≥ \d+\.\d% ABV · some ABVs or amounts unknown$/);
 	assert.equal(estimateText(estimateAlcohol({ lines: ['Garnish: cherry'], method: '', link }), 1), '');
+});
+
+void test('in stock means Have or Low, or a positive amount, as in the In stock view', () => {
+	const bottle = (extra: Record<string, unknown>) => ({
+		'cc-kind': 'bottle',
+		'cc-stock-tracking': 'volume',
+		...extra,
+	});
+	assert.equal(hasStock(bottle({ 'cc-open-ml': 120 })), true);
+	assert.equal(hasStock(bottle({ 'cc-open-ml': 0, 'cc-unopened': 1 })), true);
+	assert.equal(hasStock(bottle({ 'cc-open-ml': 0, 'cc-unopened': null })), false);
+	assert.equal(hasStock({ 'cc-kind': 'ingredient', 'cc-stock-tracking': 'volume', 'cc-remaining-ml': 50 }), true);
+	assert.equal(hasStock({ 'cc-stock-tracking': 'status', 'cc-availability': 'Low' }), true);
+	assert.equal(hasStock({ 'cc-stock-tracking': 'status', 'cc-availability': 'Unknown' }), false);
+	assert.equal(hasStock({ 'cc-kind': 'bottle', 'cc-open-ml': 500 }), false);
 });
