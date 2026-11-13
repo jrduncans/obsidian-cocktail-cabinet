@@ -51,3 +51,18 @@ export function stringifyYaml(value: unknown): string {
 export function parseFrontMatterAliases(): string[] {
 	return [];
 }
+
+/** Tags from a cache: inline tags and the tags property, each with `#`. */
+export function getAllTags(cache: {
+	tags?: { tag: string }[];
+	frontmatter?: Record<string, unknown>;
+}): string[] | null {
+	const property = cache.frontmatter?.tags;
+	const listed = Array.isArray(property) ? property : typeof property === 'string' ? property.split(/[\s,]+/) : [];
+	return [
+		...listed
+			.filter((tag): tag is string => typeof tag === 'string' && !!tag)
+			.map((tag) => `#${tag.replace(/^#/, '')}`),
+		...(cache.tags ?? []).map((item) => item.tag),
+	];
+}

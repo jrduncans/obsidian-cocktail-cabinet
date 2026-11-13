@@ -5,7 +5,7 @@ import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
 import { renderNote } from '../src/core/notes';
 import { wikiLink } from '../src/core/schema';
 import type { CabinetNote } from '../src/core/schema';
-import { duplicateRecipes, joinTags, normalizeTag, splitTags, suggestPrep, tagChoices } from '../src/core/recipe-tags';
+import { duplicateRecipes, normalizeTag, parseTags, splitTags, tagChoices } from '../src/core/recipe-tags';
 import { enhancedRecipeContent } from '../src/vault/recipe-document';
 
 void test('Markdown review extracts source sections without inventing missing recipe details', () => {
@@ -276,7 +276,7 @@ void test('parenthetical ounce and mL equivalents prefer the printed mL while pr
 	}
 });
 
-void test('recipe tags split off the end of tasting notes and join back on their own line', () => {
+void test('inline tags split off the end of tasting notes, and the tags property reads either shape', () => {
 	assert.deepEqual(splitTags('Bright and dry.\n\n#shaken #tiki\n'), {
 		text: 'Bright and dry.',
 		tags: ['shaken', 'tiki'],
@@ -285,37 +285,21 @@ void test('recipe tags split off the end of tasting notes and join back on their
 	assert.deepEqual(splitTags('Good with #mezcal in it.'), { text: 'Good with #mezcal in it.', tags: [] });
 	assert.deepEqual(splitTags('Notes\n#shaken\n#Tiki #tiki'), { text: 'Notes', tags: ['shaken', 'Tiki'] });
 	assert.deepEqual(splitTags('# Heading'), { text: '# Heading', tags: [] });
-	assert.equal(joinTags('Bright.', ['shaken', 'tiki']), 'Bright.\n\n#shaken #tiki');
-	assert.equal(joinTags('', ['stirred']), '#stirred');
-	assert.equal(joinTags('Bright.', []), 'Bright.');
+	assert.deepEqual(parseTags(['#tiki', 'Tiki', 'cocktail/sour', 'bad tag', 3]), ['tiki', 'cocktail/sour']);
+	assert.deepEqual(parseTags('tiki, highball #bubbles'), ['tiki', 'highball', 'bubbles']);
+	assert.deepEqual(parseTags(null), []);
 	assert.equal(normalizeTag('#lower-abv'), 'lower-abv');
 	assert.equal(normalizeTag('two words'), null);
 	assert.equal(normalizeTag('1984'), null);
 });
-void test('the prep tag comes from the first of shake, stir, or blend in the method', () => {
-	assert.equal(suggestPrep('Add to a shaker tin. Shake hard with ice; strain.'), 'shaken');
-	assert.equal(suggestPrep('Stir with ice until cold. Strain into a coupe.'), 'stirred');
-	assert.equal(suggestPrep('Dry shake, then shake with ice. Top with soda and stir gently.'), 'shaken');
-	assert.equal(suggestPrep('Flash blend with crushed ice.'), 'blended');
-	assert.equal(suggestPrep('Build in a highball glass over ice.'), 'built');
-	assert.equal(suggestPrep('Combine in a shaker.'), null);
-});
-void test('tag choices offer prep tags, then common cabinet tags, then the recipe’s own', () => {
+void test('tag choices are only tags already used, most used first, then the recipe’s own', () => {
 	const counts = new Map([
 		['tiki', 85],
 		['Shaken', 200],
-		['highball', 37],
 		['onegulpchallenge', 1],
 	]);
-	assert.deepEqual(tagChoices(['custom'], counts), [
-		'shaken',
-		'stirred',
-		'built',
-		'blended',
-		'tiki',
-		'highball',
-		'custom',
-	]);
+	assert.deepEqual(tagChoices(['custom', 'shaken'], counts), ['Shaken', 'tiki', 'onegulpchallenge', 'custom']);
+	assert.deepEqual(tagChoices([], new Map()), []);
 });
 void test('duplicate recipes match loosely on name, filename, and aliases', () => {
 	const recipe = (name: string, file = name, aliases: string[] = []): CabinetNote => ({
@@ -352,4 +336,12 @@ void test('enhancing takes the reviewed rating, and keeps an unreadable one when
 	};
 	assert.match(enhancedRecipeContent(original, { ...draft, properties: { rating: 4 } }), /"rating":4/);
 	assert.match(enhancedRecipeContent(original, { ...draft, properties: {} }), /"rating":"great"/);
+});
+void test('enhancing replaces saved tags with the reviewed ones, and none removes the property', () => {
+	const original = '---\ntags: [old]\n---\nText';
+	const draft = { kind: 'recipe' as const, name: 'Test', ingredients: ['1 oz Gin'], method: '', description: '' };
+	assert.match(enhancedRecipeContent(original, { ...draft, properties: { tags: ['tiki'] } }), /"tags":\["tiki"\]/);
+	assert.doesNotMatch(enhancedRecipeContent(original, { ...draft, properties: { tags: null } }), /tags/);
+	assert.doesNotMatch(enhancedRecipeContent(original, draft), /Tasting Notes/);
+	assert.match(enhancedRecipeContent(original, { ...draft, tastingNotes: 'Kept.' }), /### Tasting Notes\n\nKept\./);
 });

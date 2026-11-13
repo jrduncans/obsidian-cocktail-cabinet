@@ -16,7 +16,8 @@ export interface EditSnapshot {
 
 export interface EditChanges {
 	properties: Properties;
-	sections: Partial<Record<RecipeSection, string>>;
+	/** New text for each changed section; null removes the section. */
+	sections: Partial<Record<RecipeSection, string | null>>;
 }
 
 export function hasChanges(changes: EditChanges): boolean {
@@ -63,6 +64,8 @@ export class EditStore {
 				await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
 					if (!sameFields(snapshot.kind, snapshot.properties, properties)) throw new Error(stale);
 					Object.assign(properties, changes.properties);
+					// No tags left removes the property rather than leaving it empty.
+					if (properties.tags === null) delete properties.tags;
 				});
 			}
 		} finally {

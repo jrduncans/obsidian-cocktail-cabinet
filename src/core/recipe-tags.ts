@@ -1,11 +1,5 @@
 import type { CabinetNote } from './schema';
 
-/** How a drink is mixed: always offered, and suggested from the method. */
-export const PREP_TAGS = ['shaken', 'stirred', 'built', 'blended'] as const;
-
-/** Tags on other recipes are offered once they're on at least this many. */
-const COMMON = 2;
-
 const key = (tag: string) => tag.toLowerCase();
 
 /**
@@ -18,8 +12,8 @@ export function normalizeTag(input: string): string | null {
 }
 
 /**
- * Split recipe tags off the end of Tasting Notes, where recipes keep them: trailing lines made only
- * of `#tags`. Tags elsewhere in the text are part of it.
+ * Split inline tags off the end of Tasting Notes, where recipes used to keep them: trailing lines
+ * made only of `#tags`. The forms move them into the `tags` property. Tags elsewhere in the text are part of it.
  */
 export function splitTags(tastingNotes: string): { text: string; tags: string[] } {
 	const lines = tastingNotes.replace(/\r/g, '').trimEnd().split('\n');
@@ -34,48 +28,31 @@ export function splitTags(tastingNotes: string): { text: string; tags: string[] 
 		tags.unshift(...words.map((word) => word.slice(1)));
 		lines.pop();
 	}
-	const unique = tags.filter((tag, index) => tags.findIndex((other) => key(other) === key(tag)) === index);
-	return { text: lines.join('\n').trim(), tags: unique };
+	return { text: lines.join('\n').trim(), tags: uniqueTags(tags) };
 }
 
-/** Tasting Notes with tags on their own last line. */
-export function joinTags(text: string, tags: readonly string[]): string {
-	const line = tags.map((tag) => `#${tag}`).join(' ');
-	return [text.trim(), line].filter(Boolean).join('\n\n');
+/** A `tags` property as a list of tags without `#`: a list, or one string of tags separated by spaces or commas. */
+export function parseTags(value: unknown): string[] {
+	const items = Array.isArray(value) ? value : typeof value === 'string' ? value.split(/[\s,]+/) : [];
+	return uniqueTags(
+		items.flatMap((item: unknown) => {
+			const tag = typeof item === 'string' ? normalizeTag(item) : null;
+			return tag ? [tag] : [];
+		}),
+	);
 }
 
-/**
- * The prep tag a method describes: the first of shake, stir, or blend it mentions,
- * or built when it only says build. Null when it names none.
- */
-export function suggestPrep(method: string): (typeof PREP_TAGS)[number] | null {
-	const found = (
-		[
-			['shaken', /\b(?:shak(?:e|en|ing)|whip)\b/i],
-			['stirred', /\bstir(?:s|red|ring)?\b/i],
-			['blended', /\bblend(?:s|ed|ing)?\b/i],
-		] as const
-	)
-		.map(([tag, pattern]) => ({ tag, at: method.search(pattern) }))
-		.filter((item) => item.at >= 0)
-		.sort((a, b) => a.at - b.at);
-	if (found.length) return found[0]!.tag;
-	return /\b(?:build|built)\b/i.test(method) ? 'built' : null;
+/** Tags with case-insensitive repeats removed, keeping the first spelling. */
+export function uniqueTags(tags: readonly string[]): string[] {
+	return tags.filter((tag, index) => tags.findIndex((other) => key(other) === key(tag)) === index);
 }
 
-/** Tags to offer: prep tags, then tags common on other recipes (most used first), then this recipe's own. */
+/** Tags to offer: tags on other recipes, most used first, then this recipe's own. The plugin defines none. */
 export function tagChoices(current: readonly string[], counts: ReadonlyMap<string, number>): string[] {
-	const choices: string[] = [];
-	const add = (tag: string) => {
-		if (!choices.some((other) => key(other) === key(tag))) choices.push(tag);
-	};
-	PREP_TAGS.forEach(add);
-	[...counts]
-		.filter(([, count]) => count >= COMMON)
-		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-		.forEach(([tag]) => add(tag));
-	current.forEach(add);
-	return choices;
+	return uniqueTags([
+		...[...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([tag]) => tag),
+		...current,
+	]);
 }
 
 /** A name compared loosely: accents, case, punctuation, “&”/“and”, and a leading “The” don't matter. */

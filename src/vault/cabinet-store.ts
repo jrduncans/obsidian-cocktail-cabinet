@@ -1,4 +1,4 @@
-import { App, TFile, TFolder, parseFrontMatterAliases, parseYaml } from 'obsidian';
+import { App, TFile, TFolder, getAllTags, parseFrontMatterAliases, parseYaml } from 'obsidian';
 import { cabinetFolder, contentFingerprint, KINDS, PROP, wikiLink } from '../core/schema';
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { localDate, renderNote } from '../core/notes';
@@ -41,7 +41,7 @@ export class CabinetStore {
 		);
 	}
 
-	/** How many cabinet recipes carry each tag in their text, by the spelling seen first. */
+	/** How many cabinet recipes carry each tag, in the tags property or the text, by the spelling seen first. */
 	recipeTagCounts(): Map<string, number> {
 		const counts = new Map<string, number>();
 		const spelling = new Map<string, string>();
@@ -49,7 +49,7 @@ export class CabinetStore {
 			const cache = this.app.metadataCache.getFileCache(file);
 			if (cache?.frontmatter?.[PROP.kind] !== 'recipe') continue;
 			const seen = new Set<string>();
-			for (const { tag } of cache.tags ?? []) {
+			for (const tag of getAllTags(cache) ?? []) {
 				const name = tag.replace(/^#/, '');
 				const key = name.toLowerCase();
 				if (seen.has(key)) continue;

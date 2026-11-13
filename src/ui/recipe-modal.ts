@@ -4,7 +4,7 @@ import type CocktailCabinetPlugin from '../main';
 import { parseRecipeText } from '../core/recipe-import';
 import type { RecipeImport } from '../core/recipe-import';
 import { RATING_OPTIONS, ratingText } from '../core/note-edit';
-import { duplicateRecipes, joinTags, splitTags } from '../core/recipe-tags';
+import { duplicateRecipes, parseTags, splitTags, uniqueTags } from '../core/recipe-tags';
 import { noteName, parseRating } from '../core/schema';
 import type { NoteDraft } from '../core/schema';
 import { readRecipeDocument } from '../vault/recipe-document';
@@ -13,7 +13,7 @@ import { CabinetForm } from './form';
 import { RecipeIngredients } from './recipe-ingredients';
 import { RecipeTagsField } from './recipe-tags';
 
-const IMPORTED_FIELDS = ['cc-name', 'name', 'title', 'source', 'rating', 'created', 'cc-kind'];
+const IMPORTED_FIELDS = ['cc-name', 'name', 'title', 'source', 'rating', 'created', 'cc-kind', 'tags'];
 
 /** A new recipe opened straight at review, such as a saved one-off, and what to do once it's created. */
 export interface RecipePrefill {
@@ -162,17 +162,23 @@ export class RecipeModal extends CabinetForm {
 		const ingredients = new RecipeIngredients(this.plugin, this.contentEl, recipe.ingredients);
 		this.area('Method', recipe.method, (value) => {
 			recipe.method = value;
-			tags.methodChanged(value);
 		}).setClass('cocktail-cabinet-name');
 		this.area('Description', recipe.description, (value) => {
 			recipe.description = value;
 		}).setClass('cocktail-cabinet-name');
+		// Tags at the end of Tasting Notes move into the tags property; other tasting notes are kept as written.
 		const notes = splitTags(recipe.tastingNotes);
-		this.area('Tasting notes', notes.text, (value) => {
-			notes.text = value;
-		}).setClass('cocktail-cabinet-name');
-		const tags = new RecipeTagsField(this.contentEl, notes.tags, this.plugin.store.recipeTagCounts(), true);
-		tags.methodChanged(recipe.method);
+		const tags = new RecipeTagsField(
+			this.contentEl,
+			uniqueTags([...parseTags(metadata.tags), ...notes.tags]),
+			this.plugin.store.recipeTagCounts(),
+			notes.tags.length ? 'The tags at the end of Tasting Notes move into the tags property.' : '',
+		);
+		if (notes.text)
+			this.contentEl.createEl('p', {
+				text: 'Tasting notes are kept as written. To change them, edit the note.',
+				cls: 'setting-item-description',
+			});
 		const moving = this.snapshot && this.plugin.store.recipeDestination(this.snapshot.path) !== this.snapshot.path;
 		this.submit(moving ? 'Move and save recipe' : this.snapshot ? 'Save recipe' : 'Create recipe', async () => {
 			const draft: NoteDraft = {
@@ -181,11 +187,12 @@ export class RecipeModal extends CabinetForm {
 				ingredients: ingredients.lines(),
 				method: recipe.method,
 				description: recipe.description,
-				tastingNotes: joinTags(notes.text, tags.tags()),
+				tastingNotes: notes.text,
 				// Keep as written leaves the rating out, so Enhance keeps the saved value.
 				properties: {
 					source: recipe.source.trim() || null,
 					...(rating === 'keep' ? {} : { rating: rating ? (parseRating(rating) ?? null) : null }),
+					tags: tags.tags().length ? tags.tags() : null,
 				},
 			};
 			const file = this.snapshot
