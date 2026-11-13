@@ -5,6 +5,8 @@ import { cabinetFolder } from './core/schema';
 import { CUSTOM_VIEWS_FOLDER } from './core/setup';
 import { isLogRecord, KEPT_LOGS } from './core/log-undo';
 import type { LogRecord } from './core/log-undo';
+import { DEFAULT_DILUTION, DEFAULT_TOP_ML } from './core/alcohol-estimate';
+import type { Preparation } from './core/alcohol-estimate';
 import { SetupModal } from './ui/setup-modal';
 
 export interface CocktailCabinetSettings {
@@ -17,6 +19,12 @@ export interface CocktailCabinetSettings {
 	viewVersions: Record<string, string>;
 	/** The latest logs, oldest first, kept for **Undo last log**. */
 	recentLogs: LogRecord[];
+	/** Alcohol estimate: water added by chilling, as a share of the pour, by preparation. */
+	dilution: Record<Preparation, number>;
+	/** Alcohol estimate: the pour assumed for a “top” or “fill” with no amount, in mL. */
+	topMl: number;
+	/** How alcohol is shown in standard drinks: US (14 g) or UK units (8 g). */
+	drinkUnit: 'us' | 'uk';
 }
 
 export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
@@ -25,13 +33,21 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	lowStockMl: DEFAULT_RESTOCK.ml,
 	viewVersions: {},
 	recentLogs: [],
+	dilution: { ...DEFAULT_DILUTION },
+	topMl: DEFAULT_TOP_ML,
+	drinkUnit: 'us',
 };
 
 const positive = (value: unknown, max = Infinity): value is number =>
 	typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= max;
 
 export function loadSettings(data: unknown): CocktailCabinetSettings {
-	const settings: CocktailCabinetSettings = { ...DEFAULT_SETTINGS, viewVersions: {}, recentLogs: [] };
+	const settings: CocktailCabinetSettings = {
+		...DEFAULT_SETTINGS,
+		viewVersions: {},
+		recentLogs: [],
+		dilution: { ...DEFAULT_DILUTION },
+	};
 	if (!data || typeof data !== 'object') return settings;
 	const saved = data as Record<string, unknown>;
 	if (typeof saved.cabinetFolder === 'string') {
@@ -49,6 +65,16 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 			Object.entries(versions).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
 		);
 	}
+	const dilution = saved.dilution;
+	if (dilution && typeof dilution === 'object') {
+		for (const key of Object.keys(DEFAULT_DILUTION) as Preparation[]) {
+			const value = (dilution as Record<string, unknown>)[key];
+			if (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 2)
+				settings.dilution[key] = value;
+		}
+	}
+	if (positive(saved.topMl, 1000)) settings.topMl = saved.topMl;
+	if (saved.drinkUnit === 'uk') settings.drinkUnit = 'uk';
 	if (Array.isArray(saved.recentLogs)) settings.recentLogs = saved.recentLogs.filter(isLogRecord).slice(-KEPT_LOGS);
 	return settings;
 }
@@ -93,6 +119,33 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 		});
 	}
 
+	/** Save an estimate setting once typing pauses, then recalculate recipes. */
+	private saveEstimate = debounce(
+		async () => {
+			await this.plugin.saveSettings();
+			this.plugin.recipes.refresh();
+		},
+		800,
+		true,
+	);
+
+	/** A percent field for one preparation's dilution; other input is ignored until fixed. */
+	private dilutionInput(setting: Setting, preparation: Preparation, label: string) {
+		setting.addText((text) => {
+			text.inputEl.inputMode = 'decimal';
+			text.inputEl.setAttribute('aria-label', `${label} dilution (%)`);
+			text.inputEl.addClass('cocktail-cabinet-dilution');
+			text.setPlaceholder(label)
+				.setValue(String(Number((this.plugin.settings.dilution[preparation] * 100).toFixed(2))))
+				.onChange((value) => {
+					const number = Number(value.trim());
+					if (!value.trim() || !Number.isFinite(number) || number < 0 || number > 200) return;
+					this.plugin.settings.dilution[preparation] = number / 100;
+					this.saveEstimate();
+				});
+		});
+	}
+
 	getSettingDefinitions() {
 		return [
 			{
@@ -113,6 +166,46 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 				name: 'Running low: mL',
 				desc: 'For bottles without a size, and other stock tracked in mL, running low means at or under this many mL.',
 				render: (setting: Setting) => this.threshold(setting, 'lowStockMl', Infinity),
+			},
+			{
+				name: 'Standard drink',
+				desc: 'Alcohol estimates show mL of alcohol and standard drinks of this size.',
+				render: (setting: Setting) => {
+					setting.addDropdown((dropdown) =>
+						dropdown
+							.addOptions({ us: 'US: 14 g of alcohol', uk: 'UK unit: 8 g of alcohol' })
+							.setValue(this.plugin.settings.drinkUnit)
+							.onChange(async (value) => {
+								this.plugin.settings.drinkUnit = value === 'uk' ? 'uk' : 'us';
+								await this.plugin.saveSettings();
+							}),
+					);
+				},
+			},
+			{
+				name: 'Dilution (%)',
+				desc: 'Water that chilling adds, as a percent of the pour: built, stirred, shaken, and blended. A recipe’s cc-dilution property replaces it. Defaults follow BevNap.',
+				render: (setting: Setting) => {
+					this.dilutionInput(setting, 'built', 'Built');
+					this.dilutionInput(setting, 'stirred', 'Stirred');
+					this.dilutionInput(setting, 'shaken', 'Shaken');
+					this.dilutionInput(setting, 'blended', 'Blended');
+				},
+			},
+			{
+				name: 'Assumed top (mL)',
+				desc: 'The pour assumed for “top with” or “fill with” lines that give no amount. Estimates using it are marked rough.',
+				render: (setting: Setting) => {
+					setting.addText((text) => {
+						text.inputEl.inputMode = 'decimal';
+						text.setValue(String(this.plugin.settings.topMl)).onChange((value) => {
+							const number = Number(value.trim());
+							if (!value.trim() || !positive(number, 1000)) return;
+							this.plugin.settings.topMl = number;
+							this.saveEstimate();
+						});
+					});
+				},
 			},
 			{
 				name: 'Cabinet views',

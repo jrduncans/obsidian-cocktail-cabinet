@@ -66,3 +66,12 @@ export function getAllTags(cache: {
 		...(cache.tags ?? []).map((item) => item.tag),
 	];
 }
+
+/** Calls through at once; timing is checked in the dev vault. */
+export function debounce<T extends unknown[]>(fn: (...args: T) => unknown) {
+	const call = (...args: T) => {
+		fn(...args);
+		return call;
+	};
+	return Object.assign(call, { cancel: () => call, run: () => undefined });
+}

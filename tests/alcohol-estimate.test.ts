@@ -4,11 +4,13 @@ import {
 	DASH_ML,
 	DEFAULT_TOP_ML,
 	estimateAlcohol,
+	factsOf,
 	methodPreparation,
 	noteAbv,
 	standardDrinks,
 } from '../src/core/alcohol-estimate';
 import type { AbvNote, LinkInfo } from '../src/core/alcohol-estimate';
+import { storedEstimate } from '../src/vault/recipe-sync';
 
 const close = (actual: number | null, expected: number, digits = 3) =>
 	assert.ok(actual !== null && Math.abs(actual - expected) < 10 ** -digits, `${actual} ≈ ${expected}`);
@@ -131,6 +133,7 @@ void test('the basis says how sure it is, and non-alcoholic lines never lower it
 	assert.equal(basis(['Splash of [[Overproof]]', '2 oz [[Rum]]']), 'partial');
 	assert.equal(basis(['1 [[Egg White]]', '2 oz [[Rum]]']), 'exact');
 	assert.equal(basis(['Pinch of salt', '2 oz [[Rum]]']), 'exact');
+	assert.equal(basis(['2 dashes [[Mystery]]', '2 oz [[Rum]]']), 'exact');
 	assert.equal(basis(['Garnish: cherry']), 'none');
 	const mocktail = estimateAlcohol({ lines: ['2 oz [[Lime]]', '1 oz [[Syrup]]'], method: 'Shake.', link });
 	assert.equal(mocktail.basis, 'exact');
@@ -148,4 +151,34 @@ void test('alternatives on one line use the first link and flag a wide spread', 
 void test('standard drinks use 14 g (US) or 8 g (UK) of ethanol', () => {
 	close(standardDrinks(17.74), 1, 2);
 	close(standardDrinks(10.14, 'uk'), 1, 2);
+});
+
+void test('facts come from catalog IDs, or starter names when a note has none', () => {
+	assert.deepEqual(factsOf('family', 'family/Citrus Juice', 'Anything'), ['citrus']);
+	assert.deepEqual(factsOf('category', undefined, 'juice'), ['juice']);
+	assert.deepEqual(factsOf('ingredient', undefined, 'Heavy Cream'), ['dairy']);
+	assert.deepEqual(factsOf('type', 'type/London Dry Gin', 'London Dry Gin'), []);
+});
+
+void test('stored estimates are rounded, and a recipe with nothing to pour stores no numbers', () => {
+	const estimate = estimateAlcohol({
+		lines: ['2 oz (60 ml) [[Rum]]', '1 oz (30 ml) [[Lime]]', '¾ oz (22.5 ml) [[Syrup]]'],
+		method: 'Shake.',
+		link,
+	});
+	assert.deepEqual(storedEstimate(estimate), {
+		'cc-est-alcohol-ml': 24,
+		'cc-est-abv': 0.171,
+		'cc-est-volume-ml': 141,
+		'cc-est-basis': 'exact',
+		'cc-contains': ['citrus', 'juice'],
+	});
+	const none = estimateAlcohol({ lines: ['Garnish: cherry'], method: '', link });
+	assert.deepEqual(storedEstimate(none), {
+		'cc-est-alcohol-ml': null,
+		'cc-est-abv': null,
+		'cc-est-volume-ml': null,
+		'cc-est-basis': 'none',
+		'cc-contains': [],
+	});
 });
