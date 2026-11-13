@@ -5,7 +5,10 @@ import { oneOffDailyText } from '../core/one-off';
 import type { OneOff } from '../core/one-off';
 import { SKIP_LINE } from '../core/logging-lines';
 import type { SkippedLine } from '../core/logging-lines';
-import { ingredientParts, linkedLinePreview } from '../core/unlinked-lines';
+import { ingredientLines, ingredientParts, linkedLinePreview } from '../core/unlinked-lines';
+import { estimateText } from '../core/alcohol-estimate';
+import { readRecipeSections } from '../core/recipe-sections';
+import { DILUTION_PROP } from '../vault/recipe-sync';
 import { localDate } from '../core/notes';
 import { planLogging } from '../core/logging-plan';
 import type { LinePart, LineSelection } from '../core/logging-plan';
@@ -417,6 +420,8 @@ export class LoggingModal extends Modal {
 		const review = this.review;
 		const plan = planLogging(review.lines, review.sources, this.selections, this.servings);
 		this.previewEl.empty();
+		const estimate = this.estimateLine();
+		if (estimate) this.previewEl.createEl('p', { text: estimate, cls: 'setting-item-description' });
 		if (plan.changes.length) {
 			new Setting(this.previewEl).setName('Stock').setHeading();
 			const table = this.previewEl.createEl('table', { cls: 'cocktail-cabinet-log-preview' });
@@ -523,6 +528,35 @@ export class LoggingModal extends Modal {
 		} finally {
 			this.busy = false;
 			if (!this.closed) this.refreshPreview();
+		}
+	}
+
+	/** The alcohol estimate for the bottles selected: each counted line's link becomes the chosen source. */
+	private estimateLine(): string {
+		const review = this.review;
+		if (!review) return '';
+		try {
+			const lines = ingredientLines(review.content).map(({ line, text }) => {
+				const choice = this.selections.get(line);
+				const path = Array.isArray(choice) ? choice[0]?.path : choice;
+				if (!path || path === SKIP_LINE || !review.lines.counted.some((counted) => counted.id === line))
+					return text;
+				return text.replace(/\[\[[^\]]+\]\]/, `[[${path.replace(/\.md$/, '')}]]`);
+			});
+			const source = review.recipe?.path ?? review.oneOff?.riffOn?.path ?? '';
+			const file = review.recipe ? this.app.vault.getFileByPath(review.recipe.path) : null;
+			const properties: Record<string, unknown> =
+				(file && this.app.metadataCache.getFileCache(file)?.frontmatter) || {};
+			const dilution = properties[DILUTION_PROP];
+			const estimate = this.plugin.recipes.estimateLines(
+				source,
+				lines,
+				readRecipeSections(review.content).method,
+				dilution,
+			);
+			return estimateText(estimate, this.servings, this.plugin.settings.drinkUnit);
+		} catch {
+			return '';
 		}
 	}
 

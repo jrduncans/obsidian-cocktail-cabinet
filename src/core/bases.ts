@@ -16,13 +16,24 @@ import type { NoteKind, PlannedFile } from './schema';
 /** A note property, or `formula.<name>` for one of the Base's formulas. */
 type Column = [property: string, label: string];
 
+const ALCOHOL = `note[${q('cc-est-alcohol-ml')}]`;
+const ABV = `note[${q('cc-est-abv')}]`;
+const BASIS = `note[${q('cc-est-basis')}]`;
+/** Partial estimates are lower bounds. */
+const atLeast = `if(${BASIS} == "partial", "≥ ", "")`;
+
 /** Formulas every resource Base can show; core Bases only, no plugin functions. */
-const FORMULAS = {
-	// The proper name as a link, so it opens and previews like the file name.
-	name: COMMON_FORMULAS.name,
-	// Ratings as stars; unrated stays empty, which is easy to spot.
-	rating: COMMON_FORMULAS.rating,
-} as const;
+function formulas(drinkGrams: number): Record<string, string> {
+	return {
+		// The proper name as a link, so it opens and previews like the file name.
+		name: COMMON_FORMULAS.name,
+		// Ratings as stars; unrated stays empty, which is easy to spot.
+		rating: COMMON_FORMULAS.rating,
+		// Standard drinks from the estimated mL of alcohol (ethanol is 0.789 g/mL), and ABV as a percent.
+		drinks: `if(${ALCOHOL} == null, "", ${atLeast} + (${ALCOHOL} * 0.789 / ${drinkGrams}).toFixed(1))`,
+		abv: `if(${ABV} == null, "", ${atLeast} + (${ABV} * 100).toFixed(1) + "%")`,
+	};
+}
 
 interface ResourceBase {
 	kind: NoteKind;
@@ -30,7 +41,7 @@ interface ResourceBase {
 	/** After the linked name, in display order: narrow screens scroll the last ones off. */
 	columns: Column[];
 	/** More table views after the default one, which sorts by file name. */
-	views?: { name: string; sort: Sort }[];
+	views?: { name: string; sort: Sort[]; filter?: string }[];
 }
 
 const purchasingColumns: Column[] = [
@@ -92,14 +103,25 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 		name: 'Recipes',
 		columns: [
 			['formula.rating', 'Rating'],
+			['formula.drinks', 'Drinks'],
+			// The stored mL, not a formula: a view sorts only on properties it shows.
+			['cc-est-alcohol-ml', 'Alcohol (mL)'],
+			['formula.abv', 'ABV'],
+			['cc-est-basis', 'Estimate'],
 			[PROP.lastMade, 'Last made'],
 			[PROP.timesMade, 'Times made'],
 			['created', 'Created'],
 			['source', 'Source'],
 		],
 		views: [
-			{ name: 'Latest', sort: ['note.created', 'DESC'] },
-			{ name: 'Recently made', sort: [`note.${PROP.lastMade}`, 'DESC'] },
+			{ name: 'Latest', sort: [['note.created', 'DESC']] },
+			{ name: 'Recently made', sort: [[`note.${PROP.lastMade}`, 'DESC']] },
+			// Partial estimates are lower bounds, so they'd sort misleadingly low; they're left out.
+			{
+				name: 'Lower alcohol',
+				sort: [['note.cc-est-alcohol-ml', 'ASC']],
+				filter: `${ALCOHOL} != null && ${BASIS} != "partial" && ${BASIS} != "none"`,
+			},
 		],
 	},
 ];
@@ -108,7 +130,8 @@ export function basePath(root: string, name: string): string {
 	return `${cabinetFolder(root)}/Views/${name}.base`;
 }
 
-function renderBase(root: string, resource: ResourceBase): string {
+function renderBase(root: string, resource: ResourceBase, drinkGrams: number): string {
+	const FORMULAS = formulas(drinkGrams);
 	const columns: Column[] = [
 		['formula.name', 'Name'],
 		...resource.columns.map(([property, label]): Column => [
@@ -119,7 +142,10 @@ function renderBase(root: string, resource: ResourceBase): string {
 	const used = Object.entries(FORMULAS).filter(([name]) =>
 		columns.some(([property]) => property === `formula.${name}`),
 	);
-	const views = [{ name: resource.name, sort: ['file.name', 'ASC'] as Sort }, ...(resource.views ?? [])];
+	const views = [
+		{ name: resource.name, sort: [['file.name', 'ASC']] as Sort[], filter: undefined },
+		...(resource.views ?? []),
+	];
 	if (resource.kind === 'type' || resource.kind === 'ingredient') {
 		const defaultView: FormulaView = {
 			name: resource.name,
@@ -175,19 +201,20 @@ function renderBase(root: string, resource: ResourceBase): string {
 		views: views.map((view) => ({
 			type: 'table',
 			name: view.name,
+			...(view.filter ? { filters: { and: [view.filter] } } : {}),
 			order: columns.map(([property]) => viewProperty(property)),
-			sort: sortEntries([view.sort]),
+			sort: sortEntries(view.sort),
 		})),
 	});
 }
 
 /** Standalone core Bases configuration, with no plugin functions or generated data. */
-export function resourceBases(root: string): PlannedFile[] {
+export function resourceBases(root: string, drinkGrams = 14): PlannedFile[] {
 	root = cabinetFolder(root);
 	return RESOURCE_BASES.map((resource) => ({
 		path: basePath(root, resource.name),
 		kind: 'base',
-		content: renderBase(root, resource),
+		content: renderBase(root, resource, drinkGrams),
 	}));
 }
 

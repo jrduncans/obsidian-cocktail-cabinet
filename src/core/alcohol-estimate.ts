@@ -284,3 +284,26 @@ export function factsOf(kind: string, catalogId: unknown, name: string): readonl
 	if (typeof catalogId === 'string' && FACTS[catalogId]) return FACTS[catalogId];
 	return FACTS_BY_NAME[`${kind}/${name.toLowerCase()}`] ?? [];
 }
+
+const BASIS_TEXT: Record<Exclude<Basis, 'none'>, string> = {
+	exact: 'exact',
+	typical: 'typical ABVs',
+	bottles: 'from your bottles',
+	rough: 'rough',
+	partial: 'some ABVs or amounts unknown',
+};
+
+/** One line for the logging dialog: “≈ 1.6 drinks (28.4 mL alcohol), 18.0% ABV · typical ABVs”; empty with no estimate. */
+export function estimateText(
+	estimate: Estimate,
+	servings: number,
+	unit: keyof typeof STANDARD_DRINK_GRAMS = 'us',
+): string {
+	if (estimate.basis === 'none' || estimate.abv === null || !(servings > 0)) return '';
+	const lead = estimate.basis === 'partial' ? '≥ ' : '≈ ';
+	const bound = estimate.basis === 'partial' ? '≥ ' : '';
+	const alcohol = estimate.alcoholMl * servings;
+	const drinks = standardDrinks(alcohol, unit).toFixed(1);
+	const noun = unit === 'uk' ? (drinks === '1.0' ? 'unit' : 'units') : drinks === '1.0' ? 'drink' : 'drinks';
+	return `${lead}${drinks} ${noun} (${alcohol.toFixed(1)} mL alcohol), ${bound}${(estimate.abv * 100).toFixed(1)}% ABV · ${BASIS_TEXT[estimate.basis]}`;
+}

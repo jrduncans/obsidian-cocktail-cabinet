@@ -173,21 +173,31 @@ export class RecipeSync {
 
 	/** The recipe's estimate from its text and the notes it links. */
 	async estimate(file: TFile, bottles = this.bottleAbvs()): Promise<Estimate> {
-		const content = await this.app.vault.cachedRead(file);
-		const sections = readRecipeSections(content);
+		const sections = readRecipeSections(await this.app.vault.cachedRead(file));
+		return this.estimateLines(
+			file.path,
+			sections.ingredients,
+			sections.method,
+			this.frontmatter(file)[DILUTION_PROP],
+			bottles,
+		);
+	}
+
+	/** An estimate for ingredient lines as given, such as with the bottles chosen when logging; links resolve from `source`. */
+	estimateLines(
+		source: string,
+		lines: readonly string[],
+		method: string,
+		dilution?: unknown,
+		bottles = this.bottleAbvs(),
+	): Estimate {
 		const link = (target: string): LinkInfo | null => {
 			const facts = new Set<Fact>();
-			const note = this.abvNote(this.app.metadataCache.getFirstLinkpathDest(target, file.path), bottles, facts);
+			const note = this.abvNote(this.app.metadataCache.getFirstLinkpathDest(target, source), bottles, facts);
 			if (!note) return null;
 			return { ...noteAbv(note), facts: [...facts] };
 		};
-		return estimateAlcohol({
-			lines: sections.ingredients,
-			method: sections.method,
-			dilution: this.frontmatter(file)[DILUTION_PROP],
-			link,
-			settings: this.settings(),
-		});
+		return estimateAlcohol({ lines, method, dilution, link, settings: this.settings() });
 	}
 
 	async sync(file: TFile, bottles?: Map<string, number[]>): Promise<boolean> {

@@ -178,6 +178,7 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 							.onChange(async (value) => {
 								this.plugin.settings.drinkUnit = value === 'uk' ? 'uk' : 'us';
 								await this.plugin.saveSettings();
+								await this.plugin.syncViews();
 							}),
 					);
 				},

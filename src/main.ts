@@ -4,6 +4,7 @@ import { loadSettings, CocktailCabinetSettingTab } from './settings';
 import type { CocktailCabinetSettings } from './settings';
 import { CabinetStore } from './vault/cabinet-store';
 import { RecipeSync } from './vault/recipe-sync';
+import { STANDARD_DRINK_GRAMS } from './core/alcohol-estimate';
 
 export default class CocktailCabinetPlugin extends Plugin {
 	settings!: CocktailCabinetSettings;
@@ -16,6 +17,7 @@ export default class CocktailCabinetPlugin extends Plugin {
 			this.app,
 			() => this.settings.cabinetFolder,
 			() => ({ percent: this.settings.lowStockPercent, ml: this.settings.lowStockMl }),
+			() => STANDARD_DRINK_GRAMS[this.settings.drinkUnit],
 		);
 		registerCommands(this);
 		this.addSettingTab(new CocktailCabinetSettingTab(this.app, this));

@@ -69,6 +69,8 @@ Open a cabinet recipe and run **Cocktail Cabinet: Log this cocktail**.
 - **Date:** defaults to today. If you forgot to log yesterday’s drink, pick that day; the daily entry goes in that day’s note, and **Last used** and **Last made** are only ever moved forward, so an older date never overwrites a later one. Future dates aren’t allowed.
 - **Add to daily note:** appends “Made an Old Fashioned.” (or “Made 2 servings of …”) to the note for the chosen date, using the Daily notes core plugin’s folder, format, and template. Off by default if that day’s note already has this cocktail.
 
+- **Alcohol:** above the stock table, an estimate for the bottles you've selected, such as “≈ 1.6 drinks (28.4 mL alcohol), 18.0% ABV · typical ABVs”, scaled by servings. Change a bottle to see what it does; cancel to log nothing.
+
 ### Undoing a log
 
 Logged the wrong servings or the wrong bottle? Select **Undo** in the notice after logging, or run **Cocktail Cabinet: Undo last log**. It lists what it will put back: each bottle's stock and **Last used**, the recipe's **Last made** and **Times made**, and the daily-note entry. Run it again to undo the log before that; the last 10 logs are kept. If a log stopped partway, undo puts back what it saved.
@@ -80,6 +82,16 @@ Undo won't touch stock that changed after the log, from another log or **Edit st
 For a drink with no recipe note, run **Cocktail Cabinet: Log a one-off**, or **Riff on this cocktail** on a recipe to start from its ingredients. Enter the ingredients per serving, linking what you poured as you type, then an optional name, and select **Review** for the same dialog as above (**Edit ingredients** goes back). No note is created: the daily note gets “Made a one-off (Name):” with the ingredients listed under it. If it's a keeper, open that daily note and run **Save one-off as recipe**: the recipe review opens with the name and ingredients filled in, and once saved the daily line links the new recipe, which counts as made that day.
 
 If your stock or the recipe changed since the preview, nothing is saved and the preview refreshes. If saving fails partway, the message says what was already updated so the drink isn’t subtracted twice.
+
+## Alcohol estimates
+
+Each recipe gets an estimate of one serving's alcohol, ABV as served, and volume, which the plugin keeps current in the recipe's `cc-est-` properties. The **Recipes** view shows Drinks, Alcohol (mL), ABV, and Estimate columns, and its **Lower alcohol** view lists recipes from the least alcohol up.
+
+- Each ingredient's ABV comes from the bottle the recipe names; otherwise the type's **Typical ABV** (set it in **Edit cabinet note**); otherwise the median of your bottles of that type; otherwise the family's typical ABV. Juices, syrups, and mixers in the starter are 0.
+- Chilling adds water: by default 10% of the pour for built drinks, 18% stirred, 25% shaken, and 30% blended. The Method text decides which; otherwise a drink with juice, dairy, or egg counts as shaken. A recipe's `cc-dilution` property overrides it.
+- A dash counts as 0.92 mL, a range as its midpoint, and a “top with” line without an amount as 60 mL. Garnishes and rinses don't count.
+- **Estimate** says how sure it is: exact (named bottles), typical (type or family values), bottles (your bottles of a type), rough (a range or assumed top), or partial (an ingredient with no known ABV or amount; the figures are a minimum, shown with ≥, and the recipe stays out of Lower alcohol). Linking unlinked ingredients and filling in typical ABVs makes estimates more precise.
+- **Settings → Community plugins → Cocktail Cabinet** sets the standard drink (US 14 g by default, or UK units of 8 g), the dilution percentages, and the assumed top.
 
 ## Current limits
 
