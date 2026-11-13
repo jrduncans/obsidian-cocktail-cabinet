@@ -1,6 +1,6 @@
 # Alcohol estimate design
 
-Drafted on 2026-11-13 from the [roadmap item](roadmap.md#4-everyday-polish-less-command-hunting) and the [decision against a method category](cabinet-design.md#recipe-tags-rating-and-duplicates). Reviewed the same day: the [decisions](#decisions) record what was agreed, and the dilution model is a proposal awaiting confirmation. Not yet built.
+Drafted on 2026-11-13 from the [roadmap item](roadmap.md#4-everyday-polish-less-command-hunting) and the [decision against a method category](cabinet-design.md#recipe-tags-rating-and-duplicates). Reviewed the same day: the [decisions](#decisions) record what was agreed. Not yet built.
 
 ## Goal
 
@@ -57,9 +57,12 @@ A type line's estimate is a stand-in until a bottle is chosen. The logging dialo
 
 Chilling with ice adds water, which lowers ABV and adds volume but leaves alcohol unchanged.
 
-**Proposed, to confirm:** fixed percentages per preparation, as settings, with defaults taken from BevNap's calculator (Jeffrey Morgenthaler): built 10%, stirred 18%, shaken 25%, blended 30%. Before building, confirm what BevNap's percentage is a share of (the pour before dilution, or the finished drink); the plugin uses water added as a share of the pour.
+**Decided:** fixed percentages per preparation, as settings, with BevNap's defaults: built 10%, stirred 18%, shaken 25%, blended 30%. BevNap's calculator comes from Jeffrey Morgenthaler's [cocktail ABV calculator](https://jeffreymorgenthaler.com/cocktail-abv-calculator/) (2022). Its example confirms what the percentage is a share of: a 4.5 oz Mai Tai at 25% dilution becomes 5.63 oz, so the water added is a share of the pour before dilution:
 
-The first draft proposed Dave Arnold's formulas from _Liquid Intelligence_, where dilution grows with the starting ABV. They are more precise in principle, but the coefficients recalled for the draft weren't verified and gave much higher dilution than BevNap's figures. Fixed percentages are easier to understand, match a calculator already trusted, and can be revisited.
+- volume as served = pour × (1 + dilution)
+- ABV as served = alcohol ÷ volume as served
+
+The first draft proposed Dave Arnold's formulas from _Liquid Intelligence_, where dilution grows with the starting ABV. They were dropped: the coefficients recalled for the draft weren't verified and gave much higher dilution than BevNap's figures, and fixed percentages are easier to understand and match a calculator already trusted. Dilution never changes total alcohol, the figure that matters most.
 
 There is no method property, so the estimate picks the preparation:
 
@@ -113,7 +116,7 @@ Reviewed with the user on 2026-11-13:
 3. **Units.** Standard drinks as a setting, US by default, always shown with mL of ethanol.
 4. **Tops.** Assume a pour (a setting) and label the estimate Rough.
 5. **Storage.** The four `cc-est-` properties plus `cc-contains`, kept by background sync. What-if figures for chosen bottles are live only.
-6. **Dilution.** Open: the fixed-percentage proposal above, with a per-recipe override.
+6. **Dilution.** Fixed percentages per preparation, as settings defaulting to BevNap's (built 10%, stirred 18%, shaken 25%, blended 30%), applied to the pour; an optional per-recipe `cc-dilution` overrides them.
 7. **`#lowerabv`.** Retired in `knowledge` once the Lower alcohol view exists, during the tagging session.
 8. **Sugar** (Mixel shows it): not needed.
 

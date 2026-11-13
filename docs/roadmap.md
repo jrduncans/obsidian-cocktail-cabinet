@@ -73,13 +73,11 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
     - Not built: Convert Salt, Mint, Heavy Cream, and Milk in `knowledge`, and add its Eggs note, once this release is installed there.
 - Not built: a `knowledge` session to decide the personal tag set and move each recipe's trailing inline tags into the `tags` property (Edit already moves them one recipe at a time). `#lowerabv` waits for the alcohol estimate.
 
-- New, raised 2026-11-13, [design reviewed](alcohol-estimate.md) the same day, with dilution still open: estimate each recipe's alcohol, so lower-alcohol drinks are found by a number rather than a `#lowerabv` tag.
-    - Two figures, since they answer different questions: total alcohol (mL of ethanol, or standard drinks), for how much a drink delivers, and final ABV after dilution, for how strong it tastes. A large spritz can be low in ABV yet high in total alcohol.
-    - ABV comes from a named bottle's `cc-abv`, else from a typical ABV on the linked type (a new optional property), else a family default, else unknown. Dashes count as a small fixed volume or are ignored; unmeasured lines ("top with soda", ranges) are unknown.
-    - Dilution is inferred, not stored: shaken-style for recipes with juice, dairy, or egg, stirred-style otherwise, more for blending or crushed ice. No method property; see [the decision](cabinet-design.md#recipe-tags-rating-and-duplicates). The same pass can store ingredient facts a Base can group on: citrus or juice, dairy or egg, sparkling, else spirit-forward.
-    - Each estimate says how far it rests on assumptions (exact, type defaults, or partial with unknown lines), so a guess never reads as a measurement.
-    - Bases formulas can't read ingredient lines, so the figures are likely stored as recipe properties, recalculated when a recipe is saved or edited and by a refresh command after bottles change.
-    - Until then `#lowerabv` stays in `knowledge`; it retires once the estimate covers it.
+- New, raised 2026-11-13, [design reviewed and agreed](alcohol-estimate.md) the same day: estimate each recipe's alcohol, so lower-alcohol drinks are found by a number rather than a `#lowerabv` tag.
+    - Total alcohol (mL and standard drinks), ABV as served, and volume per recipe, stored as `cc-est-` properties with a basis label, plus `cc-contains` facts; the logging dialog shows figures for the bottles selected.
+    - ABV from the bottle, else the type's `cc-abv-typical`, else the median of your bottles (labeled), else the family. Fixed dilution percentages by preparation (BevNap's), with a per-recipe override.
+    - Five build slices, starting with typical ABVs on types and families; see the design.
+    - Until then `#lowerabv` stays in `knowledge`; it retires once the Lower alcohol view exists.
 
 ### 5. Reach: retire the remaining skills
 
