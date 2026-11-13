@@ -953,6 +953,10 @@ void test('In stock combines sources with blank-safe amounts, and only Unknown e
 	}
 	assert.match(stock.formulas.stocked!, /Have.*Low/);
 	assert.ok(!stock.formulas.stocked!.includes('Unknown'));
+	const least = stock.views.find((view) => view.name === 'Least used')!;
+	assert.match(least.filters!.and[0]!, /formula\.stocked && !\(if\(note\["cc-kind"\] == "ingredient"/);
+	assert.deepEqual(least.sort, [{ property: 'formula.lastUsed', direction: 'ASC' }]);
+	assert.match(stock.formulas.lastUsed!, /"\(never\)"/);
 	const restock = parseBase(restockBase('Cocktails').content);
 	for (const view of restock.views.slice(0, 2)) assert.ok(!view.filters!.and[0]!.includes('Kitchen staple'));
 	assert.match(restock.views[2]!.filters!.and[0]!, /!\(if\(note\["cc-kind"\] == "ingredient"/);
