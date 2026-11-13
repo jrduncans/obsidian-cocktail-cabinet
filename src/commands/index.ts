@@ -10,6 +10,7 @@ import { SetupModal } from '../ui/setup-modal';
 import { LoggingModal } from '../ui/logging-modal';
 import { LoggingStore } from '../vault/logging-store';
 import { UndoLogModal } from '../ui/undo-log-modal';
+import { TastingNoteModal } from '../ui/tasting-note-modal';
 import { StockStore } from '../vault/stock-store';
 import { EditStockModal } from '../ui/edit-stock-modal';
 import { RenameStore } from '../vault/rename-store';
@@ -110,6 +111,14 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 			header: true,
 			run: (file) =>
 				void handle(async () => new LoggingModal(plugin, logger, stocks, links, noteFor(file)).open()),
+		},
+		{
+			id: 'add-tasting-note',
+			name: 'Add tasting note',
+			icon: 'notebook-pen',
+			kinds: ['recipe'],
+			run: (file) =>
+				void handle(async () => new TastingNoteModal(plugin.app, logger.daily, noteFor(file)).open()),
 		},
 		{
 			id: 'riff-on-this-cocktail',
