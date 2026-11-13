@@ -1,4 +1,5 @@
 import obsidianmd from 'eslint-plugin-obsidianmd';
+import { DEFAULT_ACRONYMS } from 'eslint-plugin-obsidianmd/dist/lib/rules/ui/acronyms.js';
 import globals from 'globals';
 import { globalIgnores, defineConfig } from 'eslint/config';
 
@@ -33,6 +34,15 @@ export default defineConfig(
 		},
 	},
 	...obsidianmd.configs.recommended,
+	{
+		// ABV (alcohol by volume) stays uppercase; the option replaces the defaults, so they're kept.
+		rules: {
+			'obsidianmd/ui/sentence-case': [
+				'warn',
+				{ enforceCamelCaseLower: true, acronyms: [...DEFAULT_ACRONYMS, 'ABV'] },
+			],
+		},
+	},
 	{
 		files: ['tests/**/*.ts', 'scripts/**/*.ts'],
 		languageOptions: { globals: globals.node },

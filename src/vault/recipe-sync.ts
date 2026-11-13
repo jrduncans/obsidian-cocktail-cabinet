@@ -20,6 +20,21 @@ export const ESTIMATE_PROPS = {
 	basis: 'cc-est-basis',
 	contains: 'cc-contains',
 } as const;
+/** A note whose ABV would complete partial estimates, and the recipes it would help. */
+export interface MissingAbv {
+	path: string;
+	name: string;
+	kind: 'bottle' | 'type' | 'family';
+	/** `cc-abv` for a bottle, `cc-abv-typical` for a type or family. */
+	property: string;
+	recipes: string[];
+}
+export interface MissingAbvs {
+	notes: MissingAbv[];
+	/** Recipes partial because a line with an amount links nothing. */
+	unlinked: string[];
+}
+
 /** A recipe's own dilution, replacing the assumed percentage. */
 export const DILUTION_PROP = 'cc-dilution';
 
@@ -265,6 +280,56 @@ export class RecipeSync {
 			}
 		}
 		return updated;
+	}
+
+	/**
+	 * What leaves estimates partial: notes whose ABV would complete them (a bottle's `cc-abv`, or a
+	 * type's or family's typical ABV), with the recipes each would help, most first; and recipes
+	 * partial because a line with an amount isn't linked to anything.
+	 */
+	async missingAbvs(): Promise<MissingAbvs> {
+		const bottles = this.bottleAbvs();
+		const notes = new Map<string, MissingAbv>();
+		const unlinked = new Set<string>();
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			if (!this.isRecipe(file, this.app.metadataCache.getFileCache(file))) continue;
+			const estimate = await this.estimate(file, bottles);
+			if (estimate.basis !== 'partial') continue;
+			for (const line of estimate.lines) {
+				if (line.abv !== null || line.shape === 'ignored' || line.shape === 'dash') continue;
+				const link = line.line.match(/\[\[([^\]]+)\]\]/)?.[1];
+				const target = link ? this.resolve(link, file.path) : null;
+				const fill = target ? this.toFill(target) : null;
+				if (!fill) {
+					if (line.shape !== 'unmeasured') unlinked.add(file.path);
+					continue;
+				}
+				const entry = notes.get(fill.path) ?? { ...fill, recipes: [] };
+				if (!entry.recipes.includes(file.path)) entry.recipes.push(file.path);
+				notes.set(fill.path, entry);
+			}
+		}
+		return {
+			notes: [...notes.values()].sort(
+				(a, b) => b.recipes.length - a.recipes.length || a.name.localeCompare(b.name),
+			),
+			unlinked: [...unlinked],
+		};
+	}
+
+	/** The note whose ABV would settle a line linking `file`: the bottle, type, or family; other stock's first type. */
+	private toFill(file: TFile, depth = 0): Omit<MissingAbv, 'recipes'> | null {
+		const properties = this.frontmatter(file);
+		const kind = properties[PROP.kind];
+		const name = typeof properties[PROP.name] === 'string' ? (properties[PROP.name] as string) : file.basename;
+		if (kind === 'bottle' || kind === 'type' || kind === 'family')
+			return { path: file.path, name, kind, property: kind === 'bottle' ? PROP.abv : PROP.abvTypical };
+		if (kind === 'ingredient' && depth === 0) {
+			const first = asLinks(properties[PROP.provides])[0];
+			const type = first ? this.resolve(first, file.path) : null;
+			return type ? this.toFill(type, depth + 1) : null;
+		}
+		return null;
 	}
 
 	/** Recalculate every recipe soon, such as after an estimate setting changes. */
