@@ -3,6 +3,8 @@ import type CocktailCabinetPlugin from './main';
 import { DEFAULT_RESTOCK } from './core/restock';
 import { cabinetFolder } from './core/schema';
 import { CUSTOM_VIEWS_FOLDER } from './core/setup';
+import { isLogRecord, KEPT_LOGS } from './core/log-undo';
+import type { LogRecord } from './core/log-undo';
 import { SetupModal } from './ui/setup-modal';
 
 export interface CocktailCabinetSettings {
@@ -13,6 +15,8 @@ export interface CocktailCabinetSettings {
 	lowStockMl: number;
 	/** Fingerprint of the version of each plugin view last written, by path (see `CabinetStore.syncViews`). */
 	viewVersions: Record<string, string>;
+	/** The latest logs, oldest first, kept for **Undo last log**. */
+	recentLogs: LogRecord[];
 }
 
 export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
@@ -20,13 +24,14 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	lowStockPercent: DEFAULT_RESTOCK.percent,
 	lowStockMl: DEFAULT_RESTOCK.ml,
 	viewVersions: {},
+	recentLogs: [],
 };
 
 const positive = (value: unknown, max = Infinity): value is number =>
 	typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= max;
 
 export function loadSettings(data: unknown): CocktailCabinetSettings {
-	const settings: CocktailCabinetSettings = { ...DEFAULT_SETTINGS, viewVersions: {} };
+	const settings: CocktailCabinetSettings = { ...DEFAULT_SETTINGS, viewVersions: {}, recentLogs: [] };
 	if (!data || typeof data !== 'object') return settings;
 	const saved = data as Record<string, unknown>;
 	if (typeof saved.cabinetFolder === 'string') {
@@ -44,6 +49,7 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 			Object.entries(versions).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
 		);
 	}
+	if (Array.isArray(saved.recentLogs)) settings.recentLogs = saved.recentLogs.filter(isLogRecord).slice(-KEPT_LOGS);
 	return settings;
 }
 

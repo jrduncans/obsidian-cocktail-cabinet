@@ -9,6 +9,7 @@ import { RecipeModal } from '../ui/recipe-modal';
 import { SetupModal } from '../ui/setup-modal';
 import { LoggingModal } from '../ui/logging-modal';
 import { LoggingStore } from '../vault/logging-store';
+import { UndoLogModal } from '../ui/undo-log-modal';
 import { StockStore } from '../vault/stock-store';
 import { EditStockModal } from '../ui/edit-stock-modal';
 import { RenameStore } from '../vault/rename-store';
@@ -26,7 +27,19 @@ import type { OneOff } from '../core/one-off';
 import { ingredientLines } from '../core/unlinked-lines';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
-	const logger = new LoggingStore(plugin.app, plugin.store);
+	const logger = new LoggingStore(plugin.app, plugin.store, {
+		load: () => plugin.settings.recentLogs,
+		save: async (records) => {
+			plugin.settings.recentLogs = records;
+			await plugin.saveSettings();
+		},
+	});
+	plugin.addCommand({
+		id: 'undo-last-log',
+		name: 'Undo last log',
+		icon: 'undo-2',
+		callback: () => handle(() => UndoLogModal.openLast(plugin.app, logger.undo)),
+	});
 	const stocks = new StockStore(plugin.app);
 	const renamer = new RenameStore(plugin.app);
 	const edits = new EditStore(plugin.app);

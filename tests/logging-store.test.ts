@@ -402,3 +402,97 @@ void test('the same one-off can be logged twice on one day', async () => {
 	}
 	assert.equal(f.contents.get(f.dailyPath)!.match(/Made a one-off:/g)!.length, 2);
 });
+
+/** Undo reads the recipe's properties from its file, as Obsidian stores them. */
+function undoable(f: ReturnType<typeof fixture>) {
+	const read = f.app.vault.read;
+	f.app.vault.read = (file: TFile) =>
+		file.path === f.recipe.path
+			? Promise.resolve(`---\n${JSON.stringify(f.recipeProperties)}\n---\n${f.contents.get(file.path)}`)
+			: read(file);
+	return f;
+}
+
+void test('undo puts back the stock, dates, count, and daily entry a log changed', async () => {
+	const f = undoable(fixture());
+	f.contents.set(f.dailyPath, '# Day\nWent out.\n');
+	const before = structuredClone(f.properties.get(f.a.path)!);
+	const recipeBefore = structuredClone(f.recipeProperties);
+	const { review, plan } = await ready(f);
+	const result = await f.logger.apply(review, plan, true);
+	assert.ok(result.status === 'applied' && result.undoable);
+	const undo = await f.logger.undo.preview();
+	assert.ok(undo);
+	assert.deepEqual(undo.blocked, []);
+	assert.equal(undo.restores.length, 3);
+	assert.match(undo.restores[0]!.text, /^Test A: open 60 mL → 80 mL, last used \S+ → none$/);
+	assert.equal((await f.logger.undo.undo(undo)).status, 'done');
+	assert.deepEqual(f.properties.get(f.a.path), before);
+	assert.deepEqual(f.recipeProperties, recipeBefore);
+	assert.equal(f.contents.get(f.dailyPath), '# Day\nWent out.\n');
+	assert.equal(f.logger.undo.last(), null);
+});
+void test('undo refuses when stock changed since the log, and a stale review is refreshed', async () => {
+	const f = undoable(fixture());
+	const { review, plan } = await ready(f);
+	await f.logger.apply(review, plan, true);
+	const undo = (await f.logger.undo.preview())!;
+	f.properties.get(f.b.path)![PROP.open] = 50;
+	const result = await f.logger.undo.undo(undo);
+	assert.equal(result.status, 'stale');
+	if (result.status === 'stale') assert.deepEqual(result.plan!.blocked, ['Test B: open changed since (now 50 mL).']);
+	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
+	assert.match(f.contents.get(f.dailyPath)!, /Made a/);
+});
+void test('undo keeps dates and counts a later change moved, and removes only the last matching entry', async () => {
+	const f = undoable(fixture());
+	f.contents.set(f.dailyPath, 'Made a [[Test drink]].\n');
+	const { review, plan } = await ready(f);
+	await f.logger.apply(review, plan, true);
+	f.recipeProperties[PROP.timesMade] = 7;
+	const undo = (await f.logger.undo.preview())!;
+	assert.deepEqual(undo.kept, ['Test drink: times made changed since; left as 7.']);
+	await f.logger.undo.undo(undo);
+	assert.equal(f.recipeProperties[PROP.timesMade], 7);
+	assert.equal(f.recipeProperties[PROP.lastMade], '2000-01-01');
+	assert.equal(f.contents.get(f.dailyPath), 'Made a [[Test drink]].\n');
+});
+void test('a log that failed partway undoes what it saved', async () => {
+	const f = undoable(fixture());
+	const { review, plan } = await ready(f);
+	f.failBottle(f.b.path);
+	await assert.rejects(f.logger.apply(review, plan, true), /Use Undo last log to put those back/);
+	const undo = (await f.logger.undo.preview())!;
+	assert.deepEqual(
+		undo.restores.map((restore) => restore.name),
+		['Test A'],
+	);
+	f.failBottle('');
+	await f.logger.undo.undo(undo);
+	assert.equal(f.properties.get(f.a.path)![PROP.open], 80);
+	assert.equal(f.properties.get(f.a.path)![PROP.lastUsed], undefined);
+	assert.equal(f.properties.get(f.b.path)![PROP.open], 80);
+});
+void test('a log that saved nothing is dropped, so undo reaches the one before', async () => {
+	const f = undoable(fixture());
+	let { review, plan } = await ready(f);
+	await f.logger.apply(review, plan, false);
+	const first = f.logger.undo.last()!.id;
+	({ review, plan } = await ready(f));
+	f.failBottle(f.a.path);
+	await assert.rejects(f.logger.apply(review, plan, true), /Check those bottles/);
+	assert.equal(f.logger.undo.last()!.id, first);
+});
+void test('only the latest logs are kept, and undoing them in turn walks back', async () => {
+	const f = undoable(fixture());
+	f.properties.get(f.a.path)![PROP.unopened] = 20;
+	f.properties.get(f.b.path)![PROP.unopened] = 20;
+	for (let index = 0; index < 12; index++) {
+		const { review, plan } = await ready(f);
+		await f.logger.apply(review, plan, false);
+	}
+	assert.equal(f.logger.journal.load().length, 10);
+	for (let index = 0; index < 2; index++) await f.logger.undo.undo((await f.logger.undo.preview())!);
+	assert.equal(f.recipeProperties[PROP.timesMade], 12);
+	assert.equal(f.logger.journal.load().length, 8);
+});

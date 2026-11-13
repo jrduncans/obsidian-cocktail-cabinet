@@ -22,6 +22,7 @@ import type { StockStore } from '../vault/stock-store';
 import type { RecipeLinkStore } from '../vault/recipe-links';
 import { showLinkMenu } from './link-choice';
 import { LinkTextModal } from './link-text';
+import { undoNotice } from './undo-log-modal';
 
 /** Dropdown value for splitting a line between sources. */
 const SPLIT = '__split__';
@@ -506,7 +507,8 @@ export class LoggingModal extends Modal {
 			const result = await this.logger.apply(review, plan, this.addDaily);
 			if (result.status === 'applied') {
 				this.terminal = true;
-				new Notice(result.notice);
+				if (result.undoable) undoNotice(this.app, this.logger.undo, result.notice);
+				else new Notice(result.notice);
 				this.close();
 			} else {
 				this.acceptReview(result.review, false);

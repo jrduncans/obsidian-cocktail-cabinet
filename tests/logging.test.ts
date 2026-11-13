@@ -5,6 +5,8 @@ import { dailyLogLine, dailyLogText, hasDailyLog, indefiniteArticle } from '../s
 import { planLogging } from '../src/core/logging-plan';
 import { isStocked, planDrawdown, sameStock, stockSnapshot } from '../src/core/logging-stock';
 import { PROP } from '../src/core/schema';
+import { applyRestore, isLogRecord, planUndo, removeDailyEntry } from '../src/core/log-undo';
+import type { LogRecord } from '../src/core/log-undo';
 import type { CabinetNote, NoteKind } from '../src/core/schema';
 
 function note(name: string, kind: NoteKind, parents: string[] = []): CabinetNote {
@@ -454,4 +456,73 @@ void test('a split line draws each part from its own source, with “rest” fin
 		planLogging(lines, [bottle(a, 0)], new Map([[id, [{ path: a.path, amount: 'rest' }]]]), 1).errors[0]!,
 		/Nothing open/,
 	);
+});
+
+void test('undo planning restores what a log set, skips what it never saved, and blocks on changed stock', () => {
+	const record: LogRecord = {
+		id: 'x',
+		title: 'Gimlet',
+		date: '2026-11-13',
+		servings: 1,
+		notes: [
+			{
+				path: 'a.md',
+				name: 'First Gin',
+				fields: [
+					{ key: PROP.open, before: 100, after: 40 },
+					{ key: PROP.unopened, before: null, after: 1 },
+				],
+			},
+			{ path: 'b.md', name: 'Second Gin', fields: [{ key: PROP.open, before: 50, after: 20 }] },
+			{ path: 'c.md', name: 'Third Gin', fields: [{ key: PROP.lastUsed, after: '2026-11-13' }] },
+		],
+	};
+	const plan = planUndo(record, (path) =>
+		path === 'a.md' ? { [PROP.open]: 40, [PROP.unopened]: 1 } : path === 'b.md' ? { [PROP.open]: 50 } : null,
+	);
+	assert.deepEqual(plan.blocked, []);
+	assert.deepEqual(plan.kept, ['Third Gin: Moved or deleted.']);
+	assert.deepEqual(plan.restores, [
+		{
+			path: 'a.md',
+			name: 'First Gin',
+			expected: { [PROP.open]: 40, [PROP.unopened]: 1 },
+			updates: { [PROP.open]: 100, [PROP.unopened]: null },
+			text: 'First Gin: open 40 mL → 100 mL, unopened 1 → none',
+		},
+	]);
+	const changed = planUndo(record, (path) => (path === 'b.md' ? { [PROP.open]: 10 } : null));
+	assert.deepEqual(changed.blocked, ['First Gin: Moved or deleted.', 'Second Gin: open changed since (now 10 mL).']);
+	const properties: Record<string, unknown> = { [PROP.lastUsed]: '2026-11-13', other: 1 };
+	applyRestore(
+		{ path: 'c.md', name: 'c', expected: {}, updates: { [PROP.lastUsed]: undefined }, text: '' },
+		properties,
+	);
+	assert.deepEqual(properties, { other: 1 });
+});
+void test('removing a daily entry takes the last whole copy, one line or several', () => {
+	assert.equal(removeDailyEntry('Made a [[X]].\nNote\nMade a [[X]].\n', 'Made a [[X]].'), 'Made a [[X]].\nNote\n');
+	assert.equal(
+		removeDailyEntry(
+			'Intro\nMade a one-off (Y):\n- 1 oz A\n- 2 oz B\n',
+			'Made a one-off (Y):\n- 1 oz A\n- 2 oz B\n',
+		),
+		'Intro\n',
+	);
+	assert.equal(removeDailyEntry('Made a [[X]] again.\n', 'Made a [[X]].'), null);
+	assert.equal(removeDailyEntry('A\r\nMade a [[X]].\r\n', 'Made a [[X]].'), 'A\r\n');
+});
+void test('saved logs are checked before undo trusts them', () => {
+	assert.equal(isLogRecord({ id: 'x', title: 'T', date: 'd', servings: 1, notes: [] }), true);
+	assert.equal(
+		isLogRecord({
+			id: 'x',
+			title: 'T',
+			date: 'd',
+			servings: 1,
+			notes: [{ path: 'a', name: 'a', fields: [{ key: 'k' }] }],
+		}),
+		false,
+	);
+	assert.equal(isLogRecord({ id: 'x', title: 'T', date: 'd', notes: [] }), false);
 });
