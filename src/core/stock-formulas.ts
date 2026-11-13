@@ -22,3 +22,17 @@ export const sourceStocked = stockedExpression(prop);
 export const typeSources =
 	`file.backlinks.map(value.asFile()).filter(value).filter((${prop(PROP.kind)} == "bottle" || ${prop(PROP.kind)} == "ingredient")` +
 	` && [list(${prop(PROP.type)}), list(${prop(PROP.provides)})].flat().filter(value).map(link(value).asFile()).filter(value).map(value.path).contains(file.path))`;
+
+/** The same test as `stockedExpression`, on a note's properties: Have or Low, or a positive amount. */
+export function hasStock(properties: Record<string, unknown>): boolean {
+	const positive = (key: string) => {
+		const value = properties[key];
+		return typeof value === 'number' && value > 0;
+	};
+	if (properties[PROP.stockTracking] === 'status')
+		return properties[PROP.availability] === 'Have' || properties[PROP.availability] === 'Low';
+	if (properties[PROP.stockTracking] !== 'volume') return false;
+	return properties[PROP.kind] === 'bottle'
+		? positive(PROP.open) || positive(PROP.unopened)
+		: positive(PROP.remaining);
+}

@@ -6,6 +6,7 @@ import { ingredientLinkTargets, linkTarget, sameKeys } from '../core/ingredient-
 import { readRecipeSections } from '../core/recipe-sections';
 import { PROP, wikiLink } from '../core/schema';
 import { KITCHEN_STAPLE_FORM } from '../core/stock';
+import { hasStock } from '../core/stock-formulas';
 
 /** How long a recipe has to sit unchanged before its properties are updated, so typing isn't interrupted. */
 const QUIET_MS = 2000;
@@ -141,8 +142,9 @@ export class RecipeSync {
 	}
 
 	/**
-	 * ABVs to fall back on, by path: each type's and each family's bottles (`cc-abv`), and under
-	 * `types:<family path>`, each family's types' typical ABVs (NaN when a type has none).
+	 * ABVs to fall back on, by path: each type's and each family's bottles (`cc-abv`); under
+	 * `stocked:<path>`, only those in stock; and under `types:<family path>`, each family's types'
+	 * typical ABVs (NaN when a type has none).
 	 */
 	private bottleAbvs(): Map<string, number[]> {
 		const index = new Map<string, number[]>();
@@ -165,9 +167,12 @@ export class RecipeSync {
 			const link = asLinks(properties[PROP.type])[0];
 			const type = link ? this.resolve(link, file.path) : null;
 			if (!type) continue;
-			add(type.path, abv);
+			const stocked = hasStock(properties);
 			const family = familyOf(type);
-			if (family) add(family.path, abv);
+			for (const path of family ? [type.path, family.path] : [type.path]) {
+				add(path, abv);
+				if (stocked) add(`stocked:${path}`, abv);
+			}
 		}
 		return index;
 	}
@@ -199,6 +204,7 @@ export class RecipeSync {
 			abv: properties[PROP.abv],
 			abvTypical: properties[PROP.abvTypical],
 			bottleAbvs: kind === 'type' || kind === 'family' ? bottles.get(file.path) : undefined,
+			stockedAbvs: kind === 'type' || kind === 'family' ? bottles.get(`stocked:${file.path}`) : undefined,
 			typeAbvs: kind === 'family' ? bottles.get(`types:${file.path}`) : undefined,
 			parent,
 		};
@@ -249,9 +255,10 @@ export class RecipeSync {
 		return true;
 	}
 
+	/** A note's estimate inputs; for stock, whether it's in stock rather than how much, so pours don't recalculate. */
 	private inputsOf(cache: CachedMetadata | null | undefined): string {
 		const properties: Record<string, unknown> = cache?.frontmatter ?? {};
-		return JSON.stringify(INPUTS.map((key) => properties[key] ?? null));
+		return JSON.stringify([...INPUTS.map((key) => properties[key] ?? null), hasStock(properties)]);
 	}
 
 	/** A note changed: a recipe updates once quiet; a change to another note's ABV or hierarchy recalculates recipes. */
