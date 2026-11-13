@@ -21,6 +21,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => void this.syncViews());
 	}
 
+	/** Settings synced from another device, including its recent logs, replace the ones loaded here. */
+	async onExternalSettingsChange() {
+		this.settings = loadSettings(await this.loadData());
+	}
+
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}

@@ -11,8 +11,11 @@ import type { CabinetNote } from '../core/schema';
 import { oneOffContent, oneOffDailyEntry, oneOffDailyText } from '../core/one-off';
 import type { OneOff } from '../core/one-off';
 import { madeUpdates, usedUpdates } from '../core/usage';
+import { fieldChanges, KEPT_LOGS, recordFields } from '../core/log-undo';
+import type { LogRecord } from '../core/log-undo';
 import type { CabinetStore } from './cabinet-store';
 import { LoggingDaily } from './logging-daily';
+import { LogUndoStore } from './log-undo-store';
 import type { DailyPreview } from './logging-daily';
 
 /** What a review logs: a recipe note, or a one-off, which has no note. Exactly one is set. */
@@ -25,7 +28,9 @@ export interface LoggingReview {
 	daily: DailyPreview;
 }
 export type ApplyLogResult =
-	{ status: 'stale'; review: LoggingReview; notice: string } | { status: 'applied'; notice: string };
+	| { status: 'stale'; review: LoggingReview; notice: string }
+	/** `undoable`: the log was saved for **Undo last log**. */
+	| { status: 'applied'; notice: string; undoable: boolean };
 
 /** An I/O failure after writes begin must close the review to prevent another decrement. */
 export class LoggingWriteError extends Error {
@@ -35,15 +40,42 @@ export class LoggingWriteError extends Error {
 	}
 }
 
+/** Where the last few logs are kept for undo: the plugin's data. */
+export interface LogJournal {
+	load(): LogRecord[];
+	save(records: LogRecord[]): Promise<void>;
+}
+
+/** A journal that lasts until Obsidian closes, for tests and callers without plugin data. */
+export function memoryJournal(): LogJournal {
+	let records: LogRecord[] = [];
+	return {
+		load: () => records,
+		save: (next) => {
+			records = next;
+			return Promise.resolve();
+		},
+	};
+}
+
 export class LoggingStore {
 	private writing = false;
 	readonly daily: LoggingDaily;
+	readonly undo: LogUndoStore;
 
 	constructor(
 		private app: App,
 		private cabinet: CabinetStore,
+		readonly journal: LogJournal = memoryJournal(),
 	) {
 		this.daily = new LoggingDaily(app);
+		this.undo = new LogUndoStore(app, this);
+	}
+
+	/** Save a log's record, replacing an earlier save of the same log and keeping only the latest few. */
+	private async remember(record: LogRecord): Promise<void> {
+		const records = this.journal.load().filter((item) => item.id !== record.id);
+		await this.journal.save([...records, structuredClone(record)].slice(-KEPT_LOGS));
 	}
 
 	private file(path: string): TFile {
@@ -52,13 +84,18 @@ export class LoggingStore {
 		return file;
 	}
 
-	async readSource(note: CabinetNote): Promise<StockSource> {
-		const content = await this.app.vault.read(this.file(note.path));
+	/** A note's properties read from the file, never from the metadata cache, which lags behind writes. */
+	async readProperties(path: string, name: string): Promise<Record<string, unknown>> {
+		const content = await this.app.vault.read(this.file(path));
 		const yaml = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
 		const properties: unknown = yaml ? parseYaml(yaml) : {};
 		if (!properties || typeof properties !== 'object' || Array.isArray(properties))
-			throw new Error(`Couldn’t read the stock for ${note.name}.`);
-		return stockSnapshot(note, properties as Record<string, unknown>);
+			throw new Error(`Couldn’t read the properties of ${name}.`);
+		return properties as Record<string, unknown>;
+	}
+
+	async readSource(note: CabinetNote): Promise<StockSource> {
+		return stockSnapshot(note, await this.readProperties(note.path, note.name));
 	}
 
 	async review(recipe: CabinetNote, date?: string): Promise<LoggingReview> {
@@ -155,52 +192,107 @@ export class LoggingStore {
 			};
 		}
 		const date = review.daily.date;
+		// The record is saved before the first write, with the planned stock changes, so a log that stops
+		// partway can still be undone; each write then records what it actually changed.
+		const record: LogRecord = {
+			id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+			title: review.recipe?.name ?? review.oneOff!.name,
+			date,
+			servings: plan.servings,
+			notes: [],
+		};
+		for (const change of plan.changes)
+			recordFields(
+				record,
+				change.source.note.path,
+				change.source.note.name,
+				fieldChanges(change.source.fields, change.updates),
+			);
+		await this.remember(record);
 		const written: string[] = [];
 		for (const change of plan.changes) {
+			const note = change.source.note;
 			try {
 				await this.app.fileManager.processFrontMatter(
-					this.file(change.source.note.path),
+					this.file(note.path),
 					(properties: Record<string, unknown>) => {
 						// Protect edits that race the preflight while another bottle is being written.
-						if (!sameStock(change.source, stockSnapshot(change.source.note, properties)))
+						if (!sameStock(change.source, stockSnapshot(note, properties)))
 							throw new Error('Its stock changed while saving.');
-						Object.assign(properties, change.updates, usedUpdates(properties, date));
+						const updates = { ...change.updates, ...usedUpdates(properties, date) };
+						recordFields(record, note.path, note.name, fieldChanges(properties, updates));
+						Object.assign(properties, updates);
 					},
 				);
-				written.push(change.source.note.name);
+				written.push(note.name);
 			} catch (error) {
 				const reason = (error instanceof Error ? error.message : 'write failed').replace(/\.$/, '');
+				// Nothing saved: drop the record, so undo still reaches the log before it.
+				const saved = written.length ? await this.rememberQuietly(record) : await this.forget(record.id);
 				throw new LoggingWriteError(
-					`Couldn’t save ${change.source.note.name} (${reason}). Already updated: ${written.join(', ') || 'none'}. Daily note unchanged. Check those bottles before logging again, or this drink is subtracted twice.`,
+					`Couldn’t save ${note.name} (${reason}). Already updated: ${written.join(', ') || 'none'}. Daily note unchanged. ` +
+						(written.length && saved
+							? 'Use Undo last log to put those back before logging again.'
+							: 'Check those bottles before logging again, or this drink is subtracted twice.'),
 				);
 			}
 		}
-		const missed = await this.recordUse(review.recipe, plan, date);
+		const missed = await this.recordUse(review.recipe, plan, date, record);
 		const [entry, text] = review.oneOff
 			? [oneOffDailyEntry(review.oneOff, plan.servings), oneOffDailyText(review.oneOff, plan.servings)]
 			: [dailyLogLine(review.recipe!, plan.servings), dailyLogText(review.recipe!, plan.servings)];
 		const usage = missed.length ? ` Couldn’t record last used or times made on ${missed.join(', ')}.` : '';
+		let notice = 'Stock updated.';
 		if (addDaily) {
 			try {
 				const appended = await this.daily.append(review.daily, review.recipe ?? null, entry);
-				return {
-					status: 'applied',
-					notice: (appended ? 'Cocktail logged.' : `Stock updated. Already in the note for ${date}.`) + usage,
-				};
+				if (appended) record.daily = { path: review.daily.path, entry };
+				notice = appended ? 'Cocktail logged.' : `Stock updated. Already in the note for ${date}.`;
 			} catch (error) {
+				const saved = await this.rememberQuietly(record);
 				throw new LoggingWriteError(
-					`Stock updated, but the daily note wasn’t (${(error instanceof Error ? error.message : 'unknown error').replace(/\.$/, '')}). Add “${text}”${review.oneOff ? ' and its ingredients' : ''} yourself; don’t log again, or the stock is subtracted twice.`,
+					`Stock updated, but the daily note wasn’t (${(error instanceof Error ? error.message : 'unknown error').replace(/\.$/, '')}). Add “${text}”${review.oneOff ? ' and its ingredients' : ''} yourself${saved ? ', or use Undo last log to put the stock back' : ''}; don’t log again, or the stock is subtracted twice.`,
 				);
 			}
 		}
-		return { status: 'applied', notice: 'Stock updated.' + usage };
+		const saved = await this.rememberQuietly(record);
+		return {
+			status: 'applied',
+			notice: notice + usage + (saved ? '' : ' Couldn’t save this log for undo.'),
+			undoable: saved,
+		};
+	}
+
+	/** Drop a record: it was undone, or its log saved nothing. */
+	async forget(id: string): Promise<boolean> {
+		try {
+			await this.journal.save(this.journal.load().filter((record) => record.id !== id));
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/** Save the record after writes began; a failure is reported, never undoing the log. */
+	private async rememberQuietly(record: LogRecord): Promise<boolean> {
+		try {
+			await this.remember(record);
+			return true;
+		} catch {
+			return false;
+		}
 	}
 
 	/**
 	 * Last used on sources the stock writes didn't cover (status-tracked, or lines without mL), and the
 	 * recipe's last made and times made (a one-off has no recipe). Bookkeeping: a failure is reported, never undoing the log.
 	 */
-	private async recordUse(recipe: CabinetNote | undefined, plan: LoggingPlan, date: string): Promise<string[]> {
+	private async recordUse(
+		recipe: CabinetNote | undefined,
+		plan: LoggingPlan,
+		date: string,
+		record: LogRecord,
+	): Promise<string[]> {
 		const missed: string[] = [];
 		const changed = new Set(plan.changes.map((change) => change.source.note.path));
 		const write = async (
@@ -211,7 +303,9 @@ export class LoggingStore {
 				await this.app.fileManager.processFrontMatter(
 					this.file(note.path),
 					(properties: Record<string, unknown>) => {
-						Object.assign(properties, updates(properties));
+						const changes = updates(properties);
+						recordFields(record, note.path, note.name, fieldChanges(properties, changes));
+						Object.assign(properties, changes);
 					},
 				);
 			} catch {
