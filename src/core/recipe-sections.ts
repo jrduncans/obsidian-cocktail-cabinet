@@ -108,16 +108,24 @@ export function ingredientList(lines: readonly string[]): string {
 /**
  * Replace the given sections' text and leave everything else in the note as it is:
  * other headings, embeds, and extra sections. A missing section with text is added
- * after the section that precedes it.
+ * after the section that precedes it. Null removes a section, heading and all.
  */
-export function replaceRecipeSections(content: string, changes: Partial<Record<RecipeSection, string>>): string {
+export function replaceRecipeSections(content: string, changes: Partial<Record<RecipeSection, string | null>>): string {
 	let result = content;
 	for (const key of ORDER) {
 		const value = changes[key];
 		if (value === undefined) continue;
-		const text = value.replace(/\r/g, '').trim();
 		const sections = locate(result);
 		const section = sections[key];
+		if (value === null) {
+			if (section) {
+				const head = result.slice(0, section.start).replace(/\n*$/, '');
+				const tail = result.slice(section.end).replace(/^\n*/, '');
+				result = head && tail ? `${head}\n\n${tail}` : head ? `${head}\n` : tail;
+			}
+			continue;
+		}
+		const text = value.replace(/\r/g, '').trim();
 		if (section) {
 			const following = section.end < result.length;
 			const lead = result[section.body - 1] === '\n' ? '' : '\n';

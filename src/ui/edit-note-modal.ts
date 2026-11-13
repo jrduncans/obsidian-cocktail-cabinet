@@ -22,7 +22,7 @@ import type { EditChanges, EditSnapshot, EditStore } from '../vault/edit-store';
 import { CabinetForm } from './form';
 import { RecipeIngredients } from './recipe-ingredients';
 import { RecipeTagsField } from './recipe-tags';
-import { joinTags, splitTags } from '../core/recipe-tags';
+import { parseTags, splitTags, uniqueTags } from '../core/recipe-tags';
 import type { IngredientRow } from './recipe-ingredients';
 
 const PARENT_KIND: Partial<Record<NoteKind, NoteKind>> = {
@@ -44,8 +44,9 @@ export class EditNoteModal extends CabinetForm {
 	private sections?: RecipeSections;
 	private sectionText: Partial<Record<Exclude<RecipeSection, 'ingredients'>, string>> = {};
 	private ingredients?: RecipeIngredients;
-	/** Tasting notes as shown, with their trailing tags split off into the Tags row. */
-	private notes?: { saved: { text: string; tags: string[] }; text: string; field: RecipeTagsField };
+	private tags?: RecipeTagsField;
+	/** Tasting Notes text left once its trailing inline tags move into the tags property; undefined when it has none. */
+	private untagged?: string;
 
 	constructor(
 		private plugin: CocktailCabinetPlugin,
@@ -169,12 +170,15 @@ export class EditNoteModal extends CabinetForm {
 				this.sectionText[key] = value;
 			}).setClass('cocktail-cabinet-name');
 		}
-		const saved = splitTags(sections.tastingNotes);
-		this.area('Tasting notes', saved.text, (value) => {
-			this.notes!.text = value;
-		}).setClass('cocktail-cabinet-name');
-		const field = new RecipeTagsField(this.contentEl, saved.tags, this.plugin.store.recipeTagCounts());
-		this.notes = { saved, text: saved.text, field };
+		// Tasting Notes stay in the note; only their trailing inline tags come into the Tags row.
+		const inline = splitTags(sections.tastingNotes);
+		if (inline.tags.length) this.untagged = inline.text;
+		this.tags = new RecipeTagsField(
+			this.contentEl,
+			uniqueTags([...parseTags(properties.tags), ...inline.tags]),
+			this.plugin.store.recipeTagCounts(),
+			inline.tags.length ? 'Saving moves the tags at the end of Tasting Notes into the tags property.' : '',
+		);
 	}
 
 	/** A saved ingredient line; a line that is one link to a cabinet note opens as a linked row. */
@@ -190,7 +194,10 @@ export class EditNoteModal extends CabinetForm {
 
 	private changes(): EditChanges {
 		const changes: EditChanges = {
-			properties: planFieldEdit(this.snapshot.kind, this.snapshot.properties, this.edit),
+			properties: planFieldEdit(this.snapshot.kind, this.snapshot.properties, {
+				...this.edit,
+				...(this.tags ? { tags: this.tags.tags() } : {}),
+			}),
 			sections: {},
 		};
 		const sections = this.sections;
@@ -206,16 +213,8 @@ export class EditNoteModal extends CabinetForm {
 		][]) {
 			if (value.trim() !== sections[key]) changes.sections[key] = value;
 		}
-		// Rewritten only when the text or the tags changed, so saved tag formatting otherwise stays.
-		const notes = this.notes;
-		if (notes) {
-			const tags = notes.field.tags();
-			if (
-				notes.text.trim() !== notes.saved.text ||
-				[...tags].sort().join(' ') !== [...notes.saved.tags].sort().join(' ')
-			)
-				changes.sections.tastingNotes = joinTags(notes.text, tags);
-		}
+		// Inline tags leave Tasting Notes on any save, and an emptied section goes with them.
+		if (this.untagged !== undefined) changes.sections.tastingNotes = this.untagged || null;
 		return changes;
 	}
 }

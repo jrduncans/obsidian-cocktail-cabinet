@@ -188,3 +188,22 @@ void test('saving writes sections and properties, and refuses a note changed sin
 	);
 	assert.equal(properties.state.frontmatter.rating, 2);
 });
+
+void test('removing a section takes its heading and keeps the sections around it', () => {
+	const removed = replaceRecipeSections(recipe, { tastingNotes: null });
+	assert.ok(removed.includes('Shake.\n\n### AI Tasting Notes\n\nKeep me.'), removed);
+	assert.equal(
+		replaceRecipeSections('### Method\n\nStir.\n\n### Tasting Notes\n', { tastingNotes: null }),
+		'### Method\n\nStir.\n',
+	);
+	assert.equal(replaceRecipeSections('### Method\n\nStir.\n', { tastingNotes: null }), '### Method\n\nStir.\n');
+});
+void test('recipe tags are saved as a list, left alone when only their order differs, and removed when cleared', () => {
+	assert.deepEqual(planFieldEdit('recipe', { tags: ['tiki', 'shaken'] }, { tags: ['shaken', 'tiki'] }), {});
+	assert.deepEqual(planFieldEdit('recipe', {}, { tags: ['shaken'] }), { tags: ['shaken'] });
+	assert.deepEqual(planFieldEdit('recipe', { tags: 'shaken tiki' }, { tags: ['shaken', 'tiki'] }), {
+		tags: ['shaken', 'tiki'],
+	});
+	assert.deepEqual(planFieldEdit('recipe', { tags: ['shaken'] }, { tags: [] }), { tags: null });
+	assert.deepEqual(planFieldEdit('recipe', {}, { tags: [] }), {});
+});

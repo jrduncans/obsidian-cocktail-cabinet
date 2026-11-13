@@ -34,6 +34,8 @@ export function renderNote(root: string, draft: NoteDraft, date: string): Planne
 		properties.created = date;
 		properties.rating ??= null;
 		properties.source ??= null;
+		if (properties.tags === null || (Array.isArray(properties.tags) && !properties.tags.length))
+			delete properties.tags;
 		body = recipeBody(draft);
 	} else if (draft.method?.trim()) {
 		body += `\n\n### Preparation\n\n${draft.method.trim()}`;
@@ -52,7 +54,8 @@ export function recipeBody(draft: NoteDraft): string {
 		`### Ingredients\n\n${draft.ingredients?.map((line) => `- ${line}`).join('\n') || '- '}` +
 		`\n\n### Method\n\n${draft.method?.trim() || ''}` +
 		`\n\n### Description\n\n${draft.description.trim()}` +
-		`\n\n### Tasting Notes\n\n${draft.tastingNotes?.trim() || ''}`
+		// Tasting Notes aren't a form field; a section is written only to keep text a source or note had.
+		(draft.tastingNotes?.trim() ? `\n\n### Tasting Notes\n\n${draft.tastingNotes.trim()}` : '')
 	);
 }
 

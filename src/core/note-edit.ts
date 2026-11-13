@@ -2,6 +2,7 @@ import { optionalNumber, parseRating, PROP, RATING_MAX } from './schema';
 import type { NoteKind, Properties, PropertyValue } from './schema';
 import { formatMl } from './logging-stock';
 import { STOCK_FORMS } from './stock';
+import { parseTags } from './recipe-tags';
 
 /**
  * Fields **Edit cabinet note** changes. The name belongs to Rename cabinet note, and a
@@ -12,7 +13,7 @@ export const EDIT_FIELDS = {
 	type: [PROP.family, PROP.catchAll, PROP.shoppingList],
 	bottle: [PROP.type, PROP.volume, PROP.abv],
 	ingredient: [PROP.provides, PROP.form],
-	recipe: ['source', 'rating'],
+	recipe: ['source', 'rating', 'tags'],
 } as const;
 export type EditableKind = keyof typeof EDIT_FIELDS;
 
@@ -40,6 +41,8 @@ export interface FieldEdit {
 	source?: string;
 	/** Empty for unrated, a whole number, or `keep` for an unreadable saved value. */
 	rating?: string;
+	/** Recipe tags without `#`. */
+	tags?: string[];
 }
 
 /** The saved values the form edits, plus a bottle's open amount, which limits its size. */
@@ -138,6 +141,13 @@ export function planFieldEdit(kind: EditableKind, before: Record<string, unknown
 			const rating = edit.rating ? parseRating(edit.rating) : null;
 			if (rating === undefined) throw new Error(`Select a rating from 1 to ${RATING_MAX}, or Unrated.`);
 			set('rating', rating);
+		}
+		if (edit.tags !== undefined) {
+			const saved = parseTags(before.tags);
+			const sorted = (tags: readonly string[]) => [...tags].sort().join(' ');
+			// A list that only differs in order, or in how it was written, is left as saved.
+			if (sorted(edit.tags) !== sorted(saved) || (edit.tags.length > 0 && !Array.isArray(before.tags)))
+				set('tags', edit.tags.length ? edit.tags : null);
 		}
 	}
 	return updates;

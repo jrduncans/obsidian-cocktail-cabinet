@@ -26,7 +26,7 @@ export function enhancedRecipeContent(original: string, draft: NoteDraft): strin
 			'This note already represents another cabinet resource. Select a recipe or an unclassified note.',
 		);
 	const name = noteName(draft.name).normalize('NFC');
-	const properties = {
+	const properties: Record<string, unknown> = {
 		...metadata,
 		[PROP.kind]: 'recipe',
 		[PROP.name]: name,
@@ -37,5 +37,11 @@ export function enhancedRecipeContent(original: string, draft: NoteDraft): strin
 				? draft.properties.rating
 				: (parseRating(metadata.rating) ?? metadata.rating ?? null),
 	};
+	// The review's tags replace saved ones; none removes the property.
+	if (draft.properties && 'tags' in draft.properties) {
+		const tags = draft.properties.tags;
+		if (Array.isArray(tags) && tags.length) properties.tags = tags;
+		else delete properties.tags;
+	}
 	return `---\n${stringifyYaml(properties).trimEnd()}\n---\n# ${name}\n\n${recipeBody(draft)}\n`;
 }
