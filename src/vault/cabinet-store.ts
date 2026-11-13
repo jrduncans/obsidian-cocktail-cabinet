@@ -41,6 +41,26 @@ export class CabinetStore {
 		);
 	}
 
+	/** How many cabinet recipes carry each tag in their text, by the spelling seen first. */
+	recipeTagCounts(): Map<string, number> {
+		const counts = new Map<string, number>();
+		const spelling = new Map<string, string>();
+		for (const file of this.cabinetFiles()) {
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (cache?.frontmatter?.[PROP.kind] !== 'recipe') continue;
+			const seen = new Set<string>();
+			for (const { tag } of cache.tags ?? []) {
+				const name = tag.replace(/^#/, '');
+				const key = name.toLowerCase();
+				if (seen.has(key)) continue;
+				seen.add(key);
+				if (!spelling.has(key)) spelling.set(key, name);
+				counts.set(spelling.get(key)!, (counts.get(spelling.get(key)!) ?? 0) + 1);
+			}
+		}
+		return counts;
+	}
+
 	/** Logging needs current properties even while a recent write invalidates the metadata cache. */
 	async readNotes(): Promise<CabinetNote[]> {
 		const files = this.cabinetFiles();

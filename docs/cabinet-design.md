@@ -264,6 +264,16 @@ Built on 2026-11-05 as the last Phase 2 item, replacing hand edits of the fields
 - **Ratings.** A dropdown from Unrated to five stars. A saved value that can't be read stays unless another is chosen.
 - **Stale protection.** When recipe sections change, the save refuses, changing nothing, if the note changed at all since the form opened; property changes are checked against the edited fields through `processFrontMatter`.
 
+## Recipe tags, rating, and duplicates
+
+Built on 2026-11-13, finishing the recipe review's Phase 4 item.
+
+- **Tags live in Tasting Notes.** Recipes keep inline tags on the last line of Tasting Notes, as the `knowledge` vault does, not in a `tags` property. The forms split trailing lines made only of `#tags` off into a **Tags** row and write them back as one line under the text. Tags elsewhere in the text stay part of it. **Edit cabinet note** rewrites Tasting Notes only when its text or its set of tags changed, so saved formatting otherwise stays.
+- **Which tags are offered.** The four prep tags (`shaken`, `stirred`, `built`, `blended`) always; then tags on at least two cabinet recipes, most used first, read from the metadata cache; then the recipe's own. A text field adds any valid tag. Nothing is hard-coded beyond prep, so a new cabinet sees only prep tags, and `knowledge` also sees its `#tiki`, `#highball`, `#bubbles`, and `#lowerabv`.
+- **Prep from the method.** In the create and enhance review, the first of shake, stir, or blend the method mentions is selected, or built when it only says build or built, and it follows edits to the method until a prep tag is toggled or typed by hand. A recipe that already has a prep tag keeps it. Edit doesn't suggest: it changes only what's chosen.
+- **Rating.** The same dropdown as **Edit cabinet note**, filled from the pasted or enhanced note's rating. A saved value that can't be read stays when **Keep as written** is chosen.
+- **Duplicates warn, never block.** As the name is typed, a recipe whose name, filename, or alias matches it loosely (accents, case, punctuation, `&` as “and”, and a leading “The” ignored) is named under the field, with a link that opens it in a new tab. Different drinks can share a name, so saving is still allowed; a filename clash is refused as before.
+
 ## Navigation in notes
 
 Agreed on 2026-11-04, after testing logging in the dev vault showed that moving around the hierarchy was missing.

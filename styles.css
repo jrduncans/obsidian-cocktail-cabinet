@@ -333,3 +333,15 @@
 .cocktail-cabinet-unlinked-recipe {
 	color: var(--text-muted);
 }
+.cocktail-cabinet-warning {
+	color: var(--text-warning);
+}
+.cocktail-cabinet-warning:empty {
+	display: none;
+}
+.cocktail-cabinet-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+	width: 100%;
+}
