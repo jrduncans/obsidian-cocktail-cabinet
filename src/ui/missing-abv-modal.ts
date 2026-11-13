@@ -46,7 +46,7 @@ export class MissingAbvModal extends Modal {
 		this.contentEl.empty();
 		this.contentEl.createEl('p', {
 			text: notes.length
-				? 'Setting an ABV here completes the alcohol estimates of the recipes that use it. For a type or family, give a representative value; 0 for non-alcoholic.'
+				? 'Setting an ABV here completes the alcohol estimates of the recipes that use it. For a type, give a representative value; 0 for non-alcoholic. A family has none of its own: link those lines to a type, or add a bottle in the family.'
 				: 'No bottle, type, or family is missing an ABV that recipes need.',
 		});
 		if (unlinked.length) {
@@ -63,11 +63,24 @@ export class MissingAbvModal extends Modal {
 		for (const note of notes) this.row(note);
 	}
 
+	/** “Bamboo, Adonis, and 3 more”: the recipes a row would help, by name. */
+	private recipeNames(paths: readonly string[]): string {
+		const notes = this.plugin.store.notes();
+		const names = paths.map(
+			(path) => notes.find((note) => note.path === path)?.name ?? path.split('/').at(-1)!.replace(/\.md$/, ''),
+		);
+		return names.length > 3 ? `${names.slice(0, 3).join(', ')}, and ${names.length - 3} more` : names.join(', ');
+	}
+
 	private row(note: MissingAbv) {
 		let value = '';
-		const setting = new Setting(this.contentEl)
-			.setName(note.name)
-			.setDesc(`${KIND[note.kind]} · ${plural(note.recipes.length, 'recipe')}`);
+		const summary = `${KIND[note.kind]} · ${plural(note.recipes.length, 'recipe')}: ${this.recipeNames(note.recipes)}`;
+		const setting = new Setting(this.contentEl).setName(note.name).setDesc(summary);
+		const property = note.property;
+		if (!property) {
+			setting.setDesc(`${summary}. Link these lines to a type, or add a bottle in this family.`);
+			return;
+		}
 		setting.addText((text) => {
 			text.inputEl.inputMode = 'decimal';
 			text.inputEl.setAttribute('aria-label', `${note.name} ABV (%)`);
@@ -90,7 +103,7 @@ export class MissingAbvModal extends Modal {
 				}
 				try {
 					await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
-						properties[note.property] = Number((percent / 100).toFixed(6));
+						properties[property] = Number((percent / 100).toFixed(6));
 					});
 					this.saved++;
 					setting.setDesc(`${KIND[note.kind]} · Saved ${percent}%`);

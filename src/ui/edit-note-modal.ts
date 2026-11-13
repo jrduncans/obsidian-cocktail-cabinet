@@ -87,13 +87,11 @@ export class EditNoteModal extends CabinetForm {
 				this.edit.abv = value;
 			});
 		}
-		if (kind === 'type' || kind === 'family') {
+		if (kind === 'type') {
 			this.number('Typical ABV (%)', abvText(properties[PROP.abvTypical]), (value) => {
 				this.edit.typicalAbv = value;
 			}).setDesc(
-				kind === 'type'
-					? 'For recipes that name this type rather than a bottle. 0 for non-alcoholic ingredients; blank if it varies too much to say.'
-					: 'For recipes that name this family, such as “rum”. Blank if it varies too much to say.',
+				'For recipes that name this type rather than a bottle. Use 0 for non-alcoholic ingredients, or leave it blank if it varies too much to say.',
 			);
 		}
 		if (kind === 'ingredient') {

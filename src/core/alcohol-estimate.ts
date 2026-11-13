@@ -30,10 +30,12 @@ export interface AbvNote {
 	kind: string;
 	/** A bottle's `cc-abv`. */
 	abv?: unknown;
-	/** A type's or family's `cc-abv-typical`. */
+	/** A type's `cc-abv-typical`. */
 	abvTypical?: unknown;
-	/** A type: the `cc-abv` of the bottles of that type. */
+	/** The `cc-abv` of your bottles of a type, or of every type in a family. */
 	bottleAbvs?: readonly number[];
+	/** A family: its types' typical ABVs, so a family of non-alcoholic types counts as 0. */
+	typeAbvs?: readonly unknown[];
 	/** A bottle's type, or a type's family. */
 	parent?: AbvNote | null;
 	/** Other stock: the types it provides, first first. */
@@ -54,8 +56,10 @@ function median(values: readonly number[]): number | null {
 
 /**
  * A note's ABV, stopping at the first that applies: a bottle's own ABV; a type's typical ABV;
- * the median of your bottles of the type; the family's typical ABV. Other stock uses its first
- * provided type, and a staple is 0. A bottle without an ABV falls back to its type.
+ * the median of your bottles of the type; then the family. A family has no ABV of its own, since
+ * most span too wide a range: it uses the median of your bottles anywhere in it, or 0 when all its
+ * types are non-alcoholic. Other stock uses its first provided type, and a staple is 0. A bottle
+ * without an ABV falls back to its type.
  */
 export function noteAbv(note: AbvNote | null | undefined): { abv: number | null; source: AbvSource } {
 	if (!note) return { abv: null, source: 'unknown' };
@@ -71,8 +75,12 @@ export function noteAbv(note: AbvNote | null | undefined): { abv: number | null;
 		return noteAbv(note.parent);
 	}
 	if (note.kind === 'family') {
-		const typical = fraction(note.abvTypical);
-		return typical !== null ? { abv: typical, source: 'typical' } : { abv: null, source: 'unknown' };
+		const mine = median(note.bottleAbvs ?? []);
+		if (mine !== null) return { abv: mine, source: 'bottles' };
+		const types = note.typeAbvs ?? [];
+		return types.length && types.every((value) => fraction(value) === 0)
+			? { abv: 0, source: 'typical' }
+			: { abv: null, source: 'unknown' };
 	}
 	if (note.kind === 'ingredient') {
 		if (note.staple) return { abv: 0, source: 'typical' };

@@ -148,7 +148,7 @@ void test('recipe source and rating, keeping an unreadable rating unless one is 
 void test('stale checks look only at the edited fields', () => {
 	assert.ok(sameFields('type', { [PROP.family]: '[[F]]', other: 1 }, { [PROP.family]: '[[F]]', other: 2 }));
 	assert.ok(!sameFields('bottle', { [PROP.open]: 600 }, { [PROP.open]: 300 }));
-	assert.deepEqual(editedFields('family', {}), { [PROP.category]: null, [PROP.abvTypical]: null });
+	assert.deepEqual(editedFields('family', {}), { [PROP.category]: null });
 });
 
 function fixture(content: string) {
@@ -218,7 +218,7 @@ void test('recipe tags are saved as a list, left alone when only their order dif
 
 void test('a type or family takes a typical ABV as a percent and stores a fraction', () => {
 	assert.deepEqual(planFieldEdit('type', {}, { typicalAbv: '43' }), { [PROP.abvTypical]: 0.43 });
-	assert.deepEqual(planFieldEdit('family', { [PROP.abvTypical]: 0.4 }, { typicalAbv: '40' }), {});
+	assert.deepEqual(planFieldEdit('family', {}, { typicalAbv: '40' }), {});
 	assert.deepEqual(planFieldEdit('type', { [PROP.abvTypical]: 0 }, { typicalAbv: '' }), { [PROP.abvTypical]: null });
 	assert.deepEqual(planFieldEdit('type', {}, { typicalAbv: '0' }), { [PROP.abvTypical]: 0 });
 	assert.throws(() => planFieldEdit('type', {}, { typicalAbv: '140' }));

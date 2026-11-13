@@ -64,10 +64,7 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 	{
 		kind: 'family',
 		name: 'Ingredient families',
-		columns: [
-			[PROP.category, 'Category'],
-			[PROP.abvTypical, 'Typical ABV (fraction)'],
-		],
+		columns: [[PROP.category, 'Category']],
 	},
 	{ kind: 'category', name: 'Ingredient categories', columns: [] },
 	{
