@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { classifyLoggingLines, SKIP_LINE } from '../src/core/logging-lines';
-import { dailyLogLine, dailyLogText, hasDailyLog, indefiniteArticle } from '../src/core/logging-daily';
+import {
+	dailyLogLine,
+	dailyLogText,
+	hasDailyLog,
+	indefiniteArticle,
+	insertTastingNote,
+	tastingNoteLine,
+} from '../src/core/logging-daily';
 import { planLogging } from '../src/core/logging-plan';
 import { isStocked, planDrawdown, sameStock, stockSnapshot } from '../src/core/logging-stock';
 import { PROP } from '../src/core/schema';
@@ -525,4 +532,26 @@ void test('saved logs are checked before undo trusts them', () => {
 		false,
 	);
 	assert.equal(isLogRecord({ id: 'x', title: 'T', date: 'd', notes: [] }), false);
+});
+
+void test('a tasting note goes under the day’s last Made line for the recipe, after notes already there', () => {
+	const recipe = note('Daiquiri', 'recipe');
+	const line = tastingNoteLine(recipe, '  Too tart\n today. ');
+	assert.equal(line, `Tasting note on [[${recipe.path.replace(/\.md$/, '')}|Daiquiri]]: Too tart today.`);
+	assert.throws(() => tastingNoteLine(recipe, '  '), /Write a tasting note/);
+	const made = `Made a [[${recipe.path.replace(/\.md$/, '')}|Daiquiri]].`;
+	assert.equal(
+		insertTastingNote(`# Day\n${made}\nWent out.\n`, recipe, line),
+		`# Day\n${made}\n${line}\nWent out.\n`,
+	);
+	const earlier = 'Tasting note on [[Daiquiri]]: Fine.';
+	assert.equal(
+		insertTastingNote(`${made}\n${earlier}\n${made}\n${earlier}\nLater.`, recipe, line),
+		`${made}\n${earlier}\n${made}\n${earlier}\n${line}\nLater.`,
+	);
+	assert.equal(insertTastingNote('# Day\nNothing made.', recipe, line), `# Day\nNothing made.\n${line}\n`);
+	assert.equal(insertTastingNote('', recipe, line), `${line}\n`);
+	// A note mentioning “made” isn't a log, so it doesn't make the drink a duplicate.
+	assert.equal(hasDailyLog('Tasting note on [[Daiquiri]]: Made with too much lime.', recipe), false);
+	assert.equal(hasDailyLog(made, recipe), true);
 });

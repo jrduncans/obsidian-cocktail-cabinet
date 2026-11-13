@@ -277,6 +277,15 @@ Built on 2026-11-13, finishing the recipe review's Phase 4 item, and revised the
 - **Rating.** The same dropdown as **Edit cabinet note**, filled from the pasted or enhanced note's rating. A saved value that can't be read stays when **Keep as written** is chosen.
 - **Duplicates warn, never block.** As the name is typed, a recipe whose name, filename, or alias matches it loosely (accents, case, punctuation, `&` as “and”, and a leading “The” ignored) is named under the field, with a link that opens it in a new tab. Different drinks can share a name, so saving is still allowed; a filename clash is refused as before.
 
+## Tasting notes
+
+Built on 2026-11-13, after Tasting Notes left the recipe forms.
+
+- **In the daily note, not the recipe.** **Add tasting note**, on recipe notes (command, file menu, More options), writes `Tasting note on [[Recipe]]: …` to the daily note for a chosen day, today by default and never in the future. The line links the recipe, so its **Backlinks** pane collects a dated tasting history with no plugin view.
+- **Placement.** Under the day's last “Made …” line for the recipe, after any tasting notes already there, or at the end of the note when the drink wasn't logged that day. The daily note is created from the Daily notes template if needed, as logging does.
+- **Not part of logging.** Drinks are logged when made, before they're tasted, so the logging dialog has no notes field.
+- **One line.** Line breaks in the text become spaces, so the backlink context shows the whole note. A tasting note that mentions “made” doesn't count as a log for the duplicate check.
+
 ## Navigation in notes
 
 Agreed on 2026-11-04, after testing logging in the dev vault showed that moving around the hierarchy was missing.
