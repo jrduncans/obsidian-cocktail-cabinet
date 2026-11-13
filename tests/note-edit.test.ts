@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { abvText, editedFields, formOptions, planFieldEdit, ratingText, sameFields } from '../src/core/note-edit';
+import {
+	abvText,
+	editedFields,
+	formOptions,
+	planFieldEdit,
+	ratingOptions,
+	ratingText,
+	sameFields,
+} from '../src/core/note-edit';
 import { readRecipeSections, replaceRecipeSections } from '../src/core/recipe-sections';
 import { PROP } from '../src/core/schema';
 import { EditStore } from '../src/vault/edit-store';
@@ -215,4 +223,12 @@ void test('a type or family takes a typical ABV as a percent and stores a fracti
 	assert.deepEqual(planFieldEdit('type', {}, { typicalAbv: '0' }), { [PROP.abvTypical]: 0 });
 	assert.throws(() => planFieldEdit('type', {}, { typicalAbv: '140' }));
 	assert.deepEqual(planFieldEdit('bottle', {}, { typicalAbv: '40' }), {});
+});
+
+void test('rating options list Unrated first, then one to five stars, after any unreadable saved value', () => {
+	assert.deepEqual(
+		ratingOptions(4).map(([value]) => value),
+		['', '1', '2', '3', '4', '5'],
+	);
+	assert.deepEqual(ratingOptions('great')[0], ['keep', 'Keep as written: great']);
 });

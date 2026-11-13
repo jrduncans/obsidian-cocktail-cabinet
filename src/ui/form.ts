@@ -43,16 +43,21 @@ export abstract class CabinetForm extends Modal {
 			});
 	}
 
+	/** A dropdown; pass a list of `[value, label]` pairs to keep an order an object can't, such as numeric values. */
 	protected select(
 		label: string,
-		options: Record<string, string>,
+		options: Record<string, string> | readonly (readonly [string, string])[],
 		value: string,
 		change: (value: string) => void,
 		container = this.contentEl,
 	) {
-		return new Setting(container)
-			.setName(label)
-			.addDropdown((dropdown) => dropdown.addOptions(options).setValue(value).onChange(change));
+		return new Setting(container).setName(label).addDropdown((dropdown) => {
+			const entries: readonly (readonly [string, string])[] = Array.isArray(options)
+				? (options as readonly (readonly [string, string])[])
+				: Object.entries(options);
+			for (const [option, text] of entries) dropdown.addOption(option, text);
+			dropdown.setValue(value).onChange(change);
+		});
 	}
 
 	protected toggle(label: string, value: boolean, change: (value: boolean) => void, description?: string) {

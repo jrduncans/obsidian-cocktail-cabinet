@@ -345,3 +345,22 @@ void test('enhancing replaces saved tags with the reviewed ones, and none remove
 	assert.doesNotMatch(enhancedRecipeContent(original, draft), /Tasting Notes/);
 	assert.match(enhancedRecipeContent(original, { ...draft, tastingNotes: 'Kept.' }), /### Tasting Notes\n\nKept\./);
 });
+
+void test('a short first line without a heading becomes the recipe name', () => {
+	const named = parseRecipeText('Adonis\n\n- 1 oz sweet vermouth\n- 2 oz amontillado sherry\n\nStir with ice.');
+	assert.equal(named.name, 'Adonis');
+	assert.equal(named.description, '');
+	assert.equal(named.ingredients.length, 2);
+	assert.equal(parseRecipeText('**Last Word**\n3/4 oz gin\n3/4 oz lime').name, 'Last Word');
+	for (const first of [
+		'A bright, bitter aperitif.',
+		'2 oz gin',
+		'- 1 oz rye',
+		'Source: Death & Co',
+		'Stir with ice',
+		'https://example.test/recipe',
+		'Ingredients',
+	])
+		assert.equal(parseRecipeText(`${first}\n\n- 1 oz rye\n- 1 oz sweet vermouth`).name, '', first);
+	assert.equal(parseRecipeText('# Proper Title\n\n- 1 oz rye').name, 'Proper Title');
+});

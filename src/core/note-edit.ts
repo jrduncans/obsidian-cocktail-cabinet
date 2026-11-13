@@ -82,8 +82,15 @@ export function ratingText(value: unknown): string {
 	return rating === undefined ? 'keep' : rating === null ? '' : String(rating);
 }
 
-export const RATING_OPTIONS: Record<string, string> = { '': 'Unrated' };
-for (let rating = 1; rating <= RATING_MAX; rating++) RATING_OPTIONS[String(rating)] = '⭐'.repeat(rating);
+/**
+ * The rating dropdown's options in order: Unrated, one to five stars, and first a “Keep as written”
+ * choice for a saved value that can't be read. A list, since an object would put the numeric keys first.
+ */
+export function ratingOptions(saved: unknown): [value: string, label: string][] {
+	const options: [string, string][] = [['', 'Unrated']];
+	for (let rating = 1; rating <= RATING_MAX; rating++) options.push([String(rating), '⭐'.repeat(rating)]);
+	return ratingText(saved) === 'keep' ? [['keep', `Keep as written: ${String(saved)}`], ...options] : options;
+}
 
 /** The form options, keeping a saved form that isn't one of the standard ones. */
 export function formOptions(current: unknown): Record<string, string> {
