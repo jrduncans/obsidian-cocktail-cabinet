@@ -1,4 +1,13 @@
-import { COMMON_FORMULAS, kindIs, linkWithName, q, renderFormulaBase, serializeBase, sortEntries, viewProperty } from './base-formulas';
+import {
+	COMMON_FORMULAS,
+	kindIs,
+	linkWithName,
+	q,
+	renderFormulaBase,
+	serializeBase,
+	sortEntries,
+	viewProperty,
+} from './base-formulas';
 import type { FormulaView, Sort } from './base-formulas';
 import { kitchenStaple, sourceStocked, stockedExpression, typeSources } from './stock-formulas';
 import { cabinetFolder, PROP } from './schema';
@@ -77,8 +86,17 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 	{
 		kind: 'recipe',
 		name: 'Recipes',
-		columns: [['formula.rating', 'Rating'], [PROP.lastMade, 'Last made'], [PROP.timesMade, 'Times made'], ['created', 'Created'], ['source', 'Source']],
-		views: [{ name: 'Latest', sort: ['note.created', 'DESC'] }, { name: 'Recently made', sort: [`note.${PROP.lastMade}`, 'DESC'] }],
+		columns: [
+			['formula.rating', 'Rating'],
+			[PROP.lastMade, 'Last made'],
+			[PROP.timesMade, 'Times made'],
+			['created', 'Created'],
+			['source', 'Source'],
+		],
+		views: [
+			{ name: 'Latest', sort: ['note.created', 'DESC'] },
+			{ name: 'Recently made', sort: [`note.${PROP.lastMade}`, 'DESC'] },
+		],
 	},
 ];
 
@@ -89,34 +107,68 @@ export function basePath(root: string, name: string): string {
 function renderBase(root: string, resource: ResourceBase): string {
 	const columns: Column[] = [
 		['formula.name', 'Name'],
-		...resource.columns.map(([property, label]): Column => [property.startsWith('formula.') ? property : `note.${property}`, label]),
+		...resource.columns.map(([property, label]): Column => [
+			property.startsWith('formula.') ? property : `note.${property}`,
+			label,
+		]),
 	];
-	const used = Object.entries(FORMULAS).filter(([name]) => columns.some(([property]) => property === `formula.${name}`));
-	const views = [{ name: resource.name, sort: ['file.name', 'ASC'] as Sort }, ...resource.views ?? []];
+	const used = Object.entries(FORMULAS).filter(([name]) =>
+		columns.some(([property]) => property === `formula.${name}`),
+	);
+	const views = [{ name: resource.name, sort: ['file.name', 'ASC'] as Sort }, ...(resource.views ?? [])];
 	if (resource.kind === 'type' || resource.kind === 'ingredient') {
 		const defaultView: FormulaView = {
-			name: resource.name, type: 'table', filter: kindIs(resource.kind), columns,
+			name: resource.name,
+			type: 'table',
+			filter: kindIs(resource.kind),
+			columns,
 		};
-		const extra: FormulaView = resource.kind === 'type' ? {
-			name: 'Browse', type: 'table', filter: `(${kindIs('type')}) || ${kitchenStaple}`,
-			columns: [['formula.name', 'Name'], ['formula.have', 'Have'], [`note.${PROP.shoppingList}`, 'Shopping list']],
-			// A blank label leaves only the group name in each heading; an empty one shows the formula's name.
-			groupBy: { property: 'formula.group', direction: 'ASC', label: ' ' },
-		} : {
-			name: 'Kitchen staples', type: 'table', filter: kitchenStaple,
-			// Availability keeps the default view's label: labels belong to the whole Base.
-			columns: [['formula.name', 'Name'], [`note.${PROP.availability}`, 'Availability (status mode)'], [`note.${PROP.lastUsed}`, 'Last used'], [`note.${PROP.shoppingList}`, 'Shopping list']],
-		};
-		return renderFormulaBase(root, {
-			...Object.fromEntries(used),
-			...resource.kind === 'type' ? browseFormulas : {},
-		}, [defaultView, extra]);
+		const extra: FormulaView =
+			resource.kind === 'type'
+				? {
+						name: 'Browse',
+						type: 'table',
+						filter: `(${kindIs('type')}) || ${kitchenStaple}`,
+						columns: [
+							['formula.name', 'Name'],
+							['formula.have', 'Have'],
+							[`note.${PROP.shoppingList}`, 'Shopping list'],
+						],
+						// A blank label leaves only the group name in each heading; an empty one shows the formula's name.
+						groupBy: { property: 'formula.group', direction: 'ASC', label: ' ' },
+					}
+				: {
+						name: 'Kitchen staples',
+						type: 'table',
+						filter: kitchenStaple,
+						// Availability keeps the default view's label: labels belong to the whole Base.
+						columns: [
+							['formula.name', 'Name'],
+							[`note.${PROP.availability}`, 'Availability (status mode)'],
+							[`note.${PROP.lastUsed}`, 'Last used'],
+							[`note.${PROP.shoppingList}`, 'Shopping list'],
+						],
+					};
+		return renderFormulaBase(
+			root,
+			{
+				...Object.fromEntries(used),
+				...(resource.kind === 'type' ? browseFormulas : {}),
+			},
+			[defaultView, extra],
+		);
 	}
 	return serializeBase({
-		filters: { and: [`file.inFolder(${JSON.stringify(root)})`, 'file.ext == "md"', `note[${JSON.stringify(PROP.kind)}] == ${JSON.stringify(resource.kind)}`] },
+		filters: {
+			and: [
+				`file.inFolder(${JSON.stringify(root)})`,
+				'file.ext == "md"',
+				`note[${JSON.stringify(PROP.kind)}] == ${JSON.stringify(resource.kind)}`,
+			],
+		},
 		formulas: Object.fromEntries(used),
 		properties: Object.fromEntries(columns.map(([property, label]) => [property, { displayName: label }])),
-		views: views.map(view => ({
+		views: views.map((view) => ({
 			type: 'table',
 			name: view.name,
 			order: columns.map(([property]) => viewProperty(property)),
@@ -128,7 +180,7 @@ function renderBase(root: string, resource: ResourceBase): string {
 /** Standalone core Bases configuration, with no plugin functions or generated data. */
 export function resourceBases(root: string): PlannedFile[] {
 	root = cabinetFolder(root);
-	return RESOURCE_BASES.map(resource => ({
+	return RESOURCE_BASES.map((resource) => ({
 		path: basePath(root, resource.name),
 		kind: 'base',
 		content: renderBase(root, resource),
@@ -136,11 +188,12 @@ export function resourceBases(root: string): PlannedFile[] {
 }
 
 /** Link traversal uses proper names, with filenames as a fallback for user notes. */
-const displayName = (file: string) => `if(${file}.properties[${q(PROP.name)}], ${file}.properties[${q(PROP.name)}], ${file}.name)`;
+const displayName = (file: string) =>
+	`if(${file}.properties[${q(PROP.name)}], ${file}.properties[${q(PROP.name)}], ${file}.name)`;
 const browseFormulas = {
 	family: `list(note[${q(PROP.family)}]).filter(value).map(link(value).asFile()).filter(value)`,
 	category: `formula.family.map(list(value.properties[${q(PROP.category)}])).flat().filter(value).map(link(value).asFile()).filter(value)`,
 	group: `if(${kitchenStaple}, "Kitchen staples", if(formula.family.length > 0, if(formula.category.length > 0, formula.category.map(${displayName('value')}).join(", ") + " › ", "") + formula.family.map(${displayName('value')}).join(", "), "Standalone types"))`,
 	sources: typeSources,
-	have: `if(${kitchenStaple}, if(${stockedExpression(key => `note[${q(key)}]`)}, [${COMMON_FORMULAS.name}], []), formula.sources.filter(${sourceStocked}).map(${linkWithName}))`,
+	have: `if(${kitchenStaple}, if(${stockedExpression((key) => `note[${q(key)}]`)}, [${COMMON_FORMULAS.name}], []), formula.sources.filter(${sourceStocked}).map(${linkWithName}))`,
 };

@@ -33,17 +33,19 @@ export function registerNoteActions(plugin: CocktailCabinetPlugin, actions: read
 		if (!file || file.extension !== 'md' || !file.path.startsWith(`${plugin.store.root}/`)) return undefined;
 		const kind: unknown = app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind];
 		if (kind === 'shopping') return 'shopping';
-		return KINDS.find(value => value === kind);
+		return KINDS.find((value) => value === kind);
 	};
 	const applies = (action: NoteAction, kind: ActionKind | undefined): kind is ActionKind =>
-		!!kind && (action.kinds === 'any' ? kind !== 'shopping' : action.kinds.includes(kind)) && (kind === 'shopping' || (action.when?.(kind) ?? true));
+		!!kind &&
+		(action.kinds === 'any' ? kind !== 'shopping' : action.kinds.includes(kind)) &&
+		(kind === 'shopping' || (action.when?.(kind) ?? true));
 
-	for (const action of actions.filter(action => action.command !== false)) {
+	for (const action of actions.filter((action) => action.command !== false)) {
 		plugin.addCommand({
 			id: action.id,
 			name: action.name,
 			icon: action.icon,
-			checkCallback: checking => {
+			checkCallback: (checking) => {
 				const file = app.workspace.getActiveFile();
 				if (!file || !applies(action, kindOf(file))) return false;
 				if (!checking) action.run(file);
@@ -54,13 +56,21 @@ export function registerNoteActions(plugin: CocktailCabinetPlugin, actions: read
 
 	// The untitled section is the menus' own group just above Delete. Obsidian appends any
 	// section name it doesn't list after everything, below Delete (checked in 1.15).
-	plugin.registerEvent(app.workspace.on('file-menu', (menu, file) => {
-		if (!(file instanceof TFile)) return;
-		const kind = kindOf(file);
-		for (const action of actions.filter(action => applies(action, kind))) {
-			menu.addItem(item => item.setTitle(action.name).setIcon(action.icon).setSection('').onClick(() => action.run(file)));
-		}
-	}));
+	plugin.registerEvent(
+		app.workspace.on('file-menu', (menu, file) => {
+			if (!(file instanceof TFile)) return;
+			const kind = kindOf(file);
+			for (const action of actions.filter((action) => applies(action, kind))) {
+				menu.addItem((item) =>
+					item
+						.setTitle(action.name)
+						.setIcon(action.icon)
+						.setSection('')
+						.onClick(() => action.run(file)),
+				);
+			}
+		}),
+	);
 
 	// Header buttons follow the note shown in each view, which changes as the user navigates.
 	const shown = new Map<MarkdownView, { key: string; buttons: HTMLElement[] }>();
@@ -69,15 +79,23 @@ export function registerNoteActions(plugin: CocktailCabinetPlugin, actions: read
 		const key = `${view.file?.path ?? ''}\n${kind ?? ''}`;
 		const current = shown.get(view);
 		if (current?.key === key) return;
-		current?.buttons.forEach(button => button.remove());
-		const buttons = actions.filter(action => action.header && applies(action, kind)).map(action =>
-			view.addAction(action.icon, action.name, () => { if (view.file) action.run(view.file); }));
+		current?.buttons.forEach((button) => button.remove());
+		const buttons = actions
+			.filter((action) => action.header && applies(action, kind))
+			.map((action) =>
+				view.addAction(action.icon, action.name, () => {
+					if (view.file) action.run(view.file);
+				}),
+			);
 		shown.set(view, { key, buttons });
 	};
 	const refresh = () => {
 		const open = new Set<MarkdownView>();
-		app.workspace.iterateAllLeaves(leaf => {
-			if (leaf.view instanceof MarkdownView) { open.add(leaf.view); sync(leaf.view); }
+		app.workspace.iterateAllLeaves((leaf) => {
+			if (leaf.view instanceof MarkdownView) {
+				open.add(leaf.view);
+				sync(leaf.view);
+			}
 		});
 		for (const view of shown.keys()) if (!open.has(view)) shown.delete(view);
 	};
@@ -87,7 +105,7 @@ export function registerNoteActions(plugin: CocktailCabinetPlugin, actions: read
 	// A note can gain or lose its cc-kind while open.
 	plugin.registerEvent(app.metadataCache.on('changed', refresh));
 	plugin.register(() => {
-		for (const { buttons } of shown.values()) buttons.forEach(button => button.remove());
+		for (const { buttons } of shown.values()) buttons.forEach((button) => button.remove());
 		shown.clear();
 	});
 }

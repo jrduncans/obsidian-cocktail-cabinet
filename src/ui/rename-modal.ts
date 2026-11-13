@@ -11,20 +11,35 @@ export class RenameModal extends CabinetForm {
 	private keepOld = false;
 	private previewEl!: HTMLElement;
 
-	constructor(app: App, private renamer: RenameStore, private note: CabinetNote) {
+	constructor(
+		app: App,
+		private renamer: RenameStore,
+		private note: CabinetNote,
+	) {
 		super(app);
 		this.input = note.name;
 	}
 
 	onOpen() {
 		const linking = this.renamer.linkingNotes(this.note.path).length;
-		this.begin(`Rename: ${this.note.name}`, linking
-			? `Links from ${linking} ${linking === 1 ? 'note follow' : 'notes follow'}. Link text showing “${this.note.name}” changes to the new name; other wording stays.`
-			: 'No other notes link here yet.');
-		this.text('New name', this.input, value => { this.input = value; this.refresh(); }, 'The proper name, shown in the heading and new links.')
-			.setClass('cocktail-cabinet-name');
-		this.toggle('Keep the old name as an alias', this.keepOld, value => { this.keepOld = value; })
-			.setDesc('So searching for the old name still finds it.');
+		this.begin(
+			`Rename: ${this.note.name}`,
+			linking
+				? `Links from ${linking} ${linking === 1 ? 'note follow' : 'notes follow'}. Link text showing “${this.note.name}” changes to the new name; other wording stays.`
+				: 'No other notes link here yet.',
+		);
+		this.text(
+			'New name',
+			this.input,
+			(value) => {
+				this.input = value;
+				this.refresh();
+			},
+			'The proper name, shown in the heading and new links.',
+		).setClass('cocktail-cabinet-name');
+		this.toggle('Keep the old name as an alias', this.keepOld, (value) => {
+			this.keepOld = value;
+		}).setDesc('So searching for the old name still finds it.');
 		this.previewEl = this.contentEl.createEl('p');
 		this.refresh();
 		this.submit('Rename', async () => {
@@ -51,7 +66,11 @@ export class RenameModal extends CabinetForm {
 		if (this.input.trim().normalize('NFC') === this.note.name.normalize('NFC')) return;
 		try {
 			const target = this.target();
-			this.previewEl.setText(target.path === this.note.path ? 'The filename stays the same.' : `New file: ${target.path.split('/').at(-1)}`);
+			this.previewEl.setText(
+				target.path === this.note.path
+					? 'The filename stays the same.'
+					: `New file: ${target.path.split('/').at(-1)}`,
+			);
 		} catch (error) {
 			this.errorEl.setText(error instanceof Error ? error.message : 'Enter a valid name.');
 		}

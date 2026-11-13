@@ -1,6 +1,13 @@
 import { parseYaml, TFile } from 'obsidian';
 import type { App } from 'obsidian';
-import { frontmatterOf, linkTargets, renamedAliases, renameHeading, renameLinks, renamePropertyLinks } from '../core/rename';
+import {
+	frontmatterOf,
+	linkTargets,
+	renamedAliases,
+	renameHeading,
+	renameLinks,
+	renamePropertyLinks,
+} from '../core/rename';
 import type { LinkRename, RenameTarget } from '../core/rename';
 import { fileName, PROP } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
@@ -31,7 +38,10 @@ export class RenameStore {
 	conflict(note: CabinetNote, path: string): string | null {
 		if (path === note.path) return null;
 		const lower = path.toLowerCase();
-		return this.app.vault.getFiles().find(file => file.path !== note.path && file.path.toLowerCase() === lower)?.path ?? null;
+		return (
+			this.app.vault.getFiles().find((file) => file.path !== note.path && file.path.toLowerCase() === lower)
+				?.path ?? null
+		);
 	}
 
 	async rename(note: CabinetNote, target: RenameTarget, keepOld: boolean): Promise<RenameResult> {
@@ -56,21 +66,25 @@ export class RenameStore {
 		for (const source of [note.path, ...this.linkingNotes(note.path)]) {
 			const sourceFile = this.app.vault.getAbstractFileByPath(source);
 			if (!(sourceFile instanceof TFile)) continue;
-			const targets = [...linkTargets(await this.app.vault.read(sourceFile))]
-				.filter(link => this.app.metadataCache.getFirstLinkpathDest(link, source)?.path === note.path);
+			const targets = [...linkTargets(await this.app.vault.read(sourceFile))].filter(
+				(link) => this.app.metadataCache.getFirstLinkpathDest(link, source)?.path === note.path,
+			);
 			if (targets.length) sources.set(source, new Set(targets));
 		}
 
 		await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
 			const current: unknown = properties[PROP.name];
 			const name = typeof current === 'string' && current.trim() ? current.trim() : oldBasename;
-			if (name !== note.name) throw new Error('This note’s name changed after the form opened. Nothing saved; close and rename again.');
+			if (name !== note.name)
+				throw new Error(
+					'This note’s name changed after the form opened. Nothing saved; close and rename again.',
+				);
 			properties[PROP.name] = target.name;
 			const aliases = renamedAliases(properties.aliases, note.name, target.name, keepOld);
 			if (aliases) properties.aliases = aliases;
 		});
 		let heading = false;
-		await this.app.vault.process(file, content => {
+		await this.app.vault.process(file, (content) => {
 			const next = renameHeading(content, [note.name, oldBasename], target.name);
 			heading = next !== null;
 			return next ?? content;
@@ -80,12 +94,13 @@ export class RenameStore {
 		const failed: string[] = [];
 		for (const [before, targets] of sources) {
 			const source = before === note.path ? file.path : before;
-			const resolves = (link: string) => this.app.metadataCache.getFirstLinkpathDest(link, source)?.path === file.path;
+			const resolves = (link: string) =>
+				this.app.metadataCache.getFirstLinkpathDest(link, source)?.path === file.path;
 			// Obsidian's link updating follows the vault's link format; keep a note's full-path links full.
-			const paths = [...targets].every(link => link.includes('/'));
+			const paths = [...targets].every((link) => link.includes('/'));
 			const rename: LinkRename = {
-				matches: link => targets.has(link) || resolves(link),
-				repoint: link => !resolves(link) || (paths && !link.includes('/')),
+				matches: (link) => targets.has(link) || resolves(link),
+				repoint: (link) => !resolves(link) || (paths && !link.includes('/')),
 				target: file.path.replace(/\.md$/, ''),
 				names: [note.name, oldBasename, fileName(target.name)],
 				name: target.name,
@@ -96,20 +111,27 @@ export class RenameStore {
 				failed.push(source);
 			}
 		}
-		return { linked: [...sources.keys()].filter(path => path !== note.path).length, failed, heading };
+		return { linked: [...sources.keys()].filter((path) => path !== note.path).length, failed, heading };
 	}
 
 	private async relink(path: string, rename: LinkRename): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(path);
 		if (!(file instanceof TFile)) throw new Error(`${path} was moved or deleted.`);
-		const yaml = frontmatterOf(await this.app.vault.read(file)).replace(/^\uFEFF?---\r?\n/, '').replace(/\r?\n---(?:\r?\n|$)$/, '');
+		const yaml = frontmatterOf(await this.app.vault.read(file))
+			.replace(/^\uFEFF?---\r?\n/, '')
+			.replace(/\r?\n---(?:\r?\n|$)$/, '');
 		const parsed: unknown = yaml.trim() ? parseYaml(yaml) : null;
-		if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && renamePropertyLinks({ ...parsed as Record<string, unknown> }, rename)) {
+		if (
+			parsed &&
+			typeof parsed === 'object' &&
+			!Array.isArray(parsed) &&
+			renamePropertyLinks({ ...(parsed as Record<string, unknown>) }, rename)
+		) {
 			await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
 				renamePropertyLinks(properties, rename);
 			});
 		}
-		await this.app.vault.process(file, content => {
+		await this.app.vault.process(file, (content) => {
 			const frontmatter = frontmatterOf(content);
 			return frontmatter + renameLinks(content.slice(frontmatter.length), rename);
 		});

@@ -10,13 +10,23 @@ import { RecipeModal } from './recipe-modal';
 import { ingredientRows } from './recipe-ingredients';
 
 class OneOffPicker extends FuzzySuggestModal<LoggedOneOff> {
-	constructor(plugin: CocktailCabinetPlugin, private found: LoggedOneOff[], private choose: (oneOff: LoggedOneOff) => void) {
+	constructor(
+		plugin: CocktailCabinetPlugin,
+		private found: LoggedOneOff[],
+		private choose: (oneOff: LoggedOneOff) => void,
+	) {
 		super(plugin.app);
 		this.setPlaceholder('Which one-off?');
 	}
-	getItems(): LoggedOneOff[] { return this.found; }
-	getItemText(oneOff: LoggedOneOff): string { return oneOffLabel(oneOff); }
-	onChooseItem(oneOff: LoggedOneOff) { this.choose(oneOff); }
+	getItems(): LoggedOneOff[] {
+		return this.found;
+	}
+	getItemText(oneOff: LoggedOneOff): string {
+		return oneOffLabel(oneOff);
+	}
+	onChooseItem(oneOff: LoggedOneOff) {
+		this.choose(oneOff);
+	}
 }
 
 /**
@@ -28,16 +38,25 @@ export async function saveOneOff(plugin: CocktailCabinetPlugin, daily: LoggingDa
 	if (!found.length) throw new Error('No one-offs in this note.');
 	const open = (oneOff: LoggedOneOff) => {
 		const riff = oneOff.riffOn ? plugin.store.resolve(oneOff.riffOn, file.path) : null;
-		const riffOn = riff && plugin.store.notes().find(note => note.path === riff.path);
+		const riffOn = riff && plugin.store.notes().find((note) => note.path === riff.path);
 		new RecipeModal(plugin, undefined, {
 			recipe: {
-				name: oneOff.name, source: '', ingredients: ingredientRows(plugin, oneOff.ingredients, file.path),
-				method: '', description: riffOn ? `A riff on ${wikiLink(riffOn.path, riffOn.name)}.` : '', tastingNotes: '', warnings: [],
+				name: oneOff.name,
+				source: '',
+				ingredients: ingredientRows(plugin, oneOff.ingredients, file.path),
+				method: '',
+				description: riffOn ? `A riff on ${wikiLink(riffOn.path, riffOn.name)}.` : '',
+				tastingNotes: '',
+				warnings: [],
 			},
 			created: async (recipe, name) => {
 				let linked = false;
-				await plugin.app.vault.process(file, content => {
-					const updated = replaceOneOffHeader(content, oneOff, savedOneOffHeader(oneOff, { path: recipe.path, name, kind: 'recipe', parents: [] }));
+				await plugin.app.vault.process(file, (content) => {
+					const updated = replaceOneOffHeader(
+						content,
+						oneOff,
+						savedOneOffHeader(oneOff, { path: recipe.path, name, kind: 'recipe', parents: [] }),
+					);
 					linked = updated !== null;
 					return updated ?? content;
 				});
@@ -45,15 +64,24 @@ export async function saveOneOff(plugin: CocktailCabinetPlugin, daily: LoggingDa
 				let counted = false;
 				if (linked && date) {
 					try {
-						await plugin.app.fileManager.processFrontMatter(recipe, (properties: Record<string, unknown>) => {
-							Object.assign(properties, madeUpdates(properties, date));
-						});
+						await plugin.app.fileManager.processFrontMatter(
+							recipe,
+							(properties: Record<string, unknown>) => {
+								Object.assign(properties, madeUpdates(properties, date));
+							},
+						);
 						counted = true;
-					} catch { /* bookkeeping: reported below */ }
+					} catch {
+						/* bookkeeping: reported below */
+					}
 				}
-				new Notice(!linked ? `Saved ${name}. The daily note changed, so its line wasn’t linked; link it yourself.`
-					: date && !counted ? `Saved ${name} and linked it in the daily note. Couldn’t record times made.`
-						: `Saved ${name} and linked it in the daily note.`);
+				new Notice(
+					!linked
+						? `Saved ${name}. The daily note changed, so its line wasn’t linked; link it yourself.`
+						: date && !counted
+							? `Saved ${name} and linked it in the daily note. Couldn’t record times made.`
+							: `Saved ${name} and linked it in the daily note.`,
+				);
 			},
 		}).open();
 	};

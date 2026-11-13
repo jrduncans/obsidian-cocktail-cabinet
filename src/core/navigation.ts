@@ -17,7 +17,7 @@ export const NAVIGATION_VIEWS = {
 	sameType: 'Same type',
 	recipes: 'Recipes',
 } as const;
-type View = typeof NAVIGATION_VIEWS[keyof typeof NAVIGATION_VIEWS];
+type View = (typeof NAVIGATION_VIEWS)[keyof typeof NAVIGATION_VIEWS];
 
 const SECTIONS: Partial<Record<NoteKind, readonly View[]>> = {
 	category: [NAVIGATION_VIEWS.families, NAVIGATION_VIEWS.recipes],
@@ -64,14 +64,35 @@ const FORMULAS: Record<string, string> = {
 	rating: COMMON_FORMULAS.rating,
 };
 
-interface ViewDefinition extends FormulaView { name: View; }
+interface ViewDefinition extends FormulaView {
+	name: View;
+}
 
-const stockColumns: [string, string][] = [['formula.name', 'Name'], ['formula.parentLinks', 'Type'], ['formula.stock', 'Stock']];
+const stockColumns: [string, string][] = [
+	['formula.name', 'Name'],
+	['formula.parentLinks', 'Type'],
+	['formula.stock', 'Stock'],
+];
 
 const VIEWS: readonly ViewDefinition[] = [
-	{ name: NAVIGATION_VIEWS.families, type: 'list', filter: `(${kindIs('family')}) && formula.parentPaths.contains(this.file.path)`, columns: [['formula.name', 'Name']] },
-	{ name: NAVIGATION_VIEWS.types, type: 'list', filter: `(${kindIs('type')}) && formula.parentPaths.contains(this.file.path)`, columns: [['formula.name', 'Name']] },
-	{ name: NAVIGATION_VIEWS.stock, type: 'table', filter: `(${kindIs('bottle', 'ingredient')}) && formula.ancestors.contains(this.file.path)`, columns: stockColumns },
+	{
+		name: NAVIGATION_VIEWS.families,
+		type: 'list',
+		filter: `(${kindIs('family')}) && formula.parentPaths.contains(this.file.path)`,
+		columns: [['formula.name', 'Name']],
+	},
+	{
+		name: NAVIGATION_VIEWS.types,
+		type: 'list',
+		filter: `(${kindIs('type')}) && formula.parentPaths.contains(this.file.path)`,
+		columns: [['formula.name', 'Name']],
+	},
+	{
+		name: NAVIGATION_VIEWS.stock,
+		type: 'table',
+		filter: `(${kindIs('bottle', 'ingredient')}) && formula.ancestors.contains(this.file.path)`,
+		columns: stockColumns,
+	},
 	{
 		name: NAVIGATION_VIEWS.sameType,
 		type: 'table',
@@ -83,11 +104,17 @@ const VIEWS: readonly ViewDefinition[] = [
 		// A table lines ratings up, so the drop from 5 to 4 stars is easy to scan.
 		type: 'table',
 		filter: `(${kindIs('recipe')}) && formula.related`,
-		columns: [['formula.name', 'Name'], ['formula.rating', 'Rating']],
+		columns: [
+			['formula.name', 'Name'],
+			['formula.rating', 'Rating'],
+		],
 		// A blank label leaves only the group name in each heading.
 		groupBy: { property: 'formula.match', direction: 'ASC', label: ' ' },
 		// Unrated recipes sort after rated ones.
-		sort: [['note.rating', 'DESC'], ['file.name', 'ASC']],
+		sort: [
+			['note.rating', 'DESC'],
+			['file.name', 'ASC'],
+		],
 	},
 ];
 
@@ -99,5 +126,5 @@ export function navigationBase(root: string): PlannedFile {
 /** Embed lines for a resource note; empty for recipes and other kinds. */
 export function navigationEmbeds(root: string, kind: NoteKind): string {
 	const path = basePath(cabinetFolder(root), NAVIGATION_BASE);
-	return (SECTIONS[kind] ?? []).map(view => `![[${path}#${view}]]`).join('\n\n');
+	return (SECTIONS[kind] ?? []).map((view) => `![[${path}#${view}]]`).join('\n\n');
 }

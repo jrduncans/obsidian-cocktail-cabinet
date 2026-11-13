@@ -62,115 +62,115 @@ Renamed types are rewritten automatically (see the types table). These depend on
 
 Every current type note. **Starter**: ships today. **Starter addition**: added to the catalog by this mapping. **Local**: created in this cabinet only. **Retired**: the note is removed once its bottles and links move. Recipes counts recipes whose Ingredients section links the type.
 
-| Current type | New type | Family | Status | Recipes |
-| --- | --- | --- | --- | --- |
-| Aged Aquavit | same | Aquavit | Starter | 0 |
-| Aged Blended Rum | same | Rum | Starter | 16 |
-| Aged Column Still Rum | same | Rum | Starter | 8 |
-| Aged Jamaican Rum | same | Rum | Starter | 25 |
-| Aged Overproof Jamaican Rum | same | Rum | Starter | 10 |
-| Allspice Dram | same | Herbal & Spice Liqueur | Starter | 17 |
-| Aloe Liqueur | Herbal Liqueur | Herbal & Spice Liqueur | Starter addition | 3 |
-| Alpine Liqueur | — | — | Retired: Braulio → Amaro, Bluebird → Spice Liqueur | 0 |
-| Amaro | same | Amaro Family | Starter | 5 |
-| Amontillado Sherry | same | Sherry | Starter | 8 |
-| Apple Brandy | same | Apple Brandy Family | Starter | 12 |
-| Apricot Liqueur | same | Fruit Liqueur | Starter | 6 |
-| Banana Liqueur | same | Fruit Liqueur | Starter | 14 |
-| Barbados Rum | Aged Barbados Rum | Rum | Starter (renamed) | 11 |
-| Bergamot Liqueur | same | Fruit Liqueur | Starter addition | 3 |
-| Bitter Aperitif Wine | same | Aperitif Wine | Starter addition | 0 |
-| Black Jamaican Rum | same | Rum | Starter | 5 |
-| Blackberry Liqueur | same | Fruit Liqueur | Local | 3 |
-| Blackstrap Bitters | — | — | Retired: one product; bottle → Aromatic Bitters | 0 |
-| Blanc Vermouth | same | Vermouth | Starter | 29 |
-| Blended Overproof Rum | same | Rum | Starter | 4 |
-| Bolivar Bitters | — | — | Retired: one product; bottle → Specialty Bitters | 0 |
-| Bourbon | same | Whiskey | Starter | 25 |
-| Calvados | same | Apple Brandy Family | Starter | 7 |
-| Cardamom Bitters | same | Bitters | Local | 2 |
-| Cassis Liqueur | Blackcurrant Liqueur | Fruit Liqueur | Starter (renamed) | 3 |
-| Celery Bitters | same | Bitters | Local | 0 |
-| Chai Spice Liqueur | Spice Liqueur | Herbal & Spice Liqueur | Starter addition | 1 |
-| Cherry Bark Vanilla Bitters | — | — | Retired: one product; bottle → Specialty Bitters | 0 |
-| Cherry Blossom Liqueur | same | Floral Liqueur | Local | 0 |
-| Cherry Liqueur | same | Fruit Liqueur | Starter | 1 |
-| Chinese Bitters | — | — | Retired: one product; bottle → Specialty Bitters | 0 |
-| Chocolate Bitters | same | Bitters | Starter | 7 |
-| Cinnamon Syrup | same | Flavored Syrup | Starter | 23 |
-| Classic Aromatic Bitters | Aromatic Bitters | Bitters | Starter (renamed) | 7 |
-| Coconut Rum | Flavored Rum | Rum | Starter addition | 1 |
-| Coffee Liqueur | same | — | Starter | 8 |
-| Cognac | same | Brandy | Starter | 46 |
-| Contemporary Gin | same | Gin | Starter | 3 |
-| Crème de Cacao (dark) | Crème de Cacao | — | Starter (renamed) | 6 |
-| Crème de Cacao (white) | Crème de Cacao | — | Starter (renamed) | 0 |
-| Crème de Menthe | same | Herbal & Spice Liqueur | Starter | 9 |
-| Demerara 151 Rum | same | Rum | Starter | 5 |
-| Demerara Rum | same | Rum | Starter | 9 |
-| Demerara Syrup | Demerara Syrup (2:1) | Sugar Syrup | Starter (renamed) | 12 |
-| Dill Aquavit | same | Aquavit | Local | 0 |
-| Dry Vermouth | same | Vermouth | Starter | 23 |
-| Falernum | Falernum Syrup | Flavored Syrup | Starter (renamed) | 21 |
-| Falernum Liqueur | Falernum | Herbal & Spice Liqueur | Starter (renamed) | 2 |
-| Gentian Liqueur | same | Amaro Family | Starter | 1 |
-| Grapefruit Bitters | same | Bitters | Starter addition | 5 |
-| Grapefruit Juice | same | Citrus Juice | Starter | 25 |
-| Grapefruit Liqueur | same | Fruit Liqueur | Local | 1 |
-| Grenadine | same | Flavored Syrup | Starter | 5 |
-| Haitian Rum | Aged Haitian Rum | Rum | Starter (renamed) | 1 |
-| Honey Liqueur | same | — | Local | 0 |
-| Honey Syrup | same | Sugar Syrup | Starter | 27 |
-| Jamaican No. 2 Bitters | — | — | Retired: one product; bottle → Specialty Bitters | 0 |
-| Krupnik Herbal Honey Bitters | — | — | Retired: one product; bottle → Specialty Bitters, recipe links the bottle | 1 |
-| Lavender Bitters | same | Bitters | Local | 0 |
-| Lemon Bitters | same | Bitters | Local | 1 |
-| Lemon Juice | same | Citrus Juice | Starter | 117 |
-| Lime Bitters | same | Bitters | Local | 2 |
-| Lime Juice | same | Citrus Juice | Starter | 138 |
-| London Dry Gin | same | Gin | Starter | 92 |
-| Maple Syrup | same | Sugar Syrup | Local | 2 |
-| Maraschino Liqueur | same | Fruit Liqueur | Starter | 25 |
-| Melon Liqueur | same | Fruit Liqueur | Starter addition | 1 |
-| Mole Bitters | same | Bitters | Local | 3 |
-| Navy Strength Gin | same | Gin | Starter | 5 |
-| Navy Strength Rum | — | — | Retired: FALSE IDOL links Smith & Cross; Mister Fogg → Blended Overproof Rum | 1 |
-| New Orleans-Style Bitters | Creole Bitters | Bitters | Starter (renamed) | 0 |
-| Oaxacan Rum | Unaged Mexican Rum | Rum | Starter (renamed) | 0 |
-| Old Tom Gin | same | Gin | Starter | 11 |
-| Orange Bitters | same | Bitters | Starter | 40 |
-| Orange Juice | same | Citrus Juice | Starter | 18 |
-| Orange Liqueur | same | Fruit Liqueur | Starter | 17 |
-| Orgeat | same | Flavored Syrup | Starter | 25 |
-| Other Herbal Liqueur | — | — | Retired: catch-all; bottles reassigned individually | 0 |
-| Other Liqueur | — | — | Retired: catch-all; bottles reassigned individually | 0 |
-| Passionfruit Syrup | Passion Fruit Syrup | Flavored Syrup | Starter (renamed) | 11 |
-| Pastis | same | Anise Spirit | Starter | 3 |
-| Peach Bitters | same | Bitters | Local | 1 |
-| Pineapple Liqueur | same | Fruit Liqueur | Starter addition | 4 |
-| Pineapple Rum | same | Rum | Starter | 11 |
-| Pisco | same | — | Local | 4 |
-| Prosecco | same | Sparkling Wine | Starter | 7 |
-| PX Sherry | Pedro Ximénez Sherry | Sherry | Starter (renamed) | 4 |
-| Quince Liqueur | same | Fruit Liqueur | Local | 0 |
-| Rhum Agricole Blanc | Unaged Rhum Agricole | Rum | Starter (renamed) | 1 |
-| Rye Whiskey | same | Whiskey | Starter | 20 |
-| Sea Buckthorn Liqueur | same | Fruit Liqueur | Local | 1 |
-| Simple Syrup | Simple Syrup (1:1) | Sugar Syrup | Starter (renamed) | 78 |
-| Sloe Gin | same | Fruit Liqueur | Local | 4 |
-| Spiced Pear Liqueur | same | Fruit Liqueur | Local | 1 |
-| Strawberry Liqueur | same | Fruit Liqueur | Local | 1 |
-| Swedish Punsch | same | — | Local | 11 |
-| Sweet Vermouth | same | Vermouth | Starter | 59 |
-| Tiki Bitters | same | Bitters | Starter addition | 5 |
-| Unaged Column Still Rum | Light Rum | Rum | Starter (renamed) | 3 |
-| Unaged Overproof Jamaican Rum | same | Rum | Starter | 3 |
-| Vanilla Syrup | same | Flavored Syrup | Starter | 10 |
-| Vermouth Amaro | same | Vermouth | Starter | 0 |
-| Whiskey Barrel-Aged Bitters | — | — | Retired: one product; recipe links a new Fee Brothers bottle note | 1 |
-| White Blended Rum | same | Rum | Starter | 14 |
-| Winter Melon Bitters | same | Bitters | Local | 1 |
-| Yuzu Liqueur | same | Fruit Liqueur | Local | 0 |
+| Current type                  | New type             | Family                 | Status                                                                       | Recipes |
+| ----------------------------- | -------------------- | ---------------------- | ---------------------------------------------------------------------------- | ------- |
+| Aged Aquavit                  | same                 | Aquavit                | Starter                                                                      | 0       |
+| Aged Blended Rum              | same                 | Rum                    | Starter                                                                      | 16      |
+| Aged Column Still Rum         | same                 | Rum                    | Starter                                                                      | 8       |
+| Aged Jamaican Rum             | same                 | Rum                    | Starter                                                                      | 25      |
+| Aged Overproof Jamaican Rum   | same                 | Rum                    | Starter                                                                      | 10      |
+| Allspice Dram                 | same                 | Herbal & Spice Liqueur | Starter                                                                      | 17      |
+| Aloe Liqueur                  | Herbal Liqueur       | Herbal & Spice Liqueur | Starter addition                                                             | 3       |
+| Alpine Liqueur                | —                    | —                      | Retired: Braulio → Amaro, Bluebird → Spice Liqueur                           | 0       |
+| Amaro                         | same                 | Amaro Family           | Starter                                                                      | 5       |
+| Amontillado Sherry            | same                 | Sherry                 | Starter                                                                      | 8       |
+| Apple Brandy                  | same                 | Apple Brandy Family    | Starter                                                                      | 12      |
+| Apricot Liqueur               | same                 | Fruit Liqueur          | Starter                                                                      | 6       |
+| Banana Liqueur                | same                 | Fruit Liqueur          | Starter                                                                      | 14      |
+| Barbados Rum                  | Aged Barbados Rum    | Rum                    | Starter (renamed)                                                            | 11      |
+| Bergamot Liqueur              | same                 | Fruit Liqueur          | Starter addition                                                             | 3       |
+| Bitter Aperitif Wine          | same                 | Aperitif Wine          | Starter addition                                                             | 0       |
+| Black Jamaican Rum            | same                 | Rum                    | Starter                                                                      | 5       |
+| Blackberry Liqueur            | same                 | Fruit Liqueur          | Local                                                                        | 3       |
+| Blackstrap Bitters            | —                    | —                      | Retired: one product; bottle → Aromatic Bitters                              | 0       |
+| Blanc Vermouth                | same                 | Vermouth               | Starter                                                                      | 29      |
+| Blended Overproof Rum         | same                 | Rum                    | Starter                                                                      | 4       |
+| Bolivar Bitters               | —                    | —                      | Retired: one product; bottle → Specialty Bitters                             | 0       |
+| Bourbon                       | same                 | Whiskey                | Starter                                                                      | 25      |
+| Calvados                      | same                 | Apple Brandy Family    | Starter                                                                      | 7       |
+| Cardamom Bitters              | same                 | Bitters                | Local                                                                        | 2       |
+| Cassis Liqueur                | Blackcurrant Liqueur | Fruit Liqueur          | Starter (renamed)                                                            | 3       |
+| Celery Bitters                | same                 | Bitters                | Local                                                                        | 0       |
+| Chai Spice Liqueur            | Spice Liqueur        | Herbal & Spice Liqueur | Starter addition                                                             | 1       |
+| Cherry Bark Vanilla Bitters   | —                    | —                      | Retired: one product; bottle → Specialty Bitters                             | 0       |
+| Cherry Blossom Liqueur        | same                 | Floral Liqueur         | Local                                                                        | 0       |
+| Cherry Liqueur                | same                 | Fruit Liqueur          | Starter                                                                      | 1       |
+| Chinese Bitters               | —                    | —                      | Retired: one product; bottle → Specialty Bitters                             | 0       |
+| Chocolate Bitters             | same                 | Bitters                | Starter                                                                      | 7       |
+| Cinnamon Syrup                | same                 | Flavored Syrup         | Starter                                                                      | 23      |
+| Classic Aromatic Bitters      | Aromatic Bitters     | Bitters                | Starter (renamed)                                                            | 7       |
+| Coconut Rum                   | Flavored Rum         | Rum                    | Starter addition                                                             | 1       |
+| Coffee Liqueur                | same                 | —                      | Starter                                                                      | 8       |
+| Cognac                        | same                 | Brandy                 | Starter                                                                      | 46      |
+| Contemporary Gin              | same                 | Gin                    | Starter                                                                      | 3       |
+| Crème de Cacao (dark)         | Crème de Cacao       | —                      | Starter (renamed)                                                            | 6       |
+| Crème de Cacao (white)        | Crème de Cacao       | —                      | Starter (renamed)                                                            | 0       |
+| Crème de Menthe               | same                 | Herbal & Spice Liqueur | Starter                                                                      | 9       |
+| Demerara 151 Rum              | same                 | Rum                    | Starter                                                                      | 5       |
+| Demerara Rum                  | same                 | Rum                    | Starter                                                                      | 9       |
+| Demerara Syrup                | Demerara Syrup (2:1) | Sugar Syrup            | Starter (renamed)                                                            | 12      |
+| Dill Aquavit                  | same                 | Aquavit                | Local                                                                        | 0       |
+| Dry Vermouth                  | same                 | Vermouth               | Starter                                                                      | 23      |
+| Falernum                      | Falernum Syrup       | Flavored Syrup         | Starter (renamed)                                                            | 21      |
+| Falernum Liqueur              | Falernum             | Herbal & Spice Liqueur | Starter (renamed)                                                            | 2       |
+| Gentian Liqueur               | same                 | Amaro Family           | Starter                                                                      | 1       |
+| Grapefruit Bitters            | same                 | Bitters                | Starter addition                                                             | 5       |
+| Grapefruit Juice              | same                 | Citrus Juice           | Starter                                                                      | 25      |
+| Grapefruit Liqueur            | same                 | Fruit Liqueur          | Local                                                                        | 1       |
+| Grenadine                     | same                 | Flavored Syrup         | Starter                                                                      | 5       |
+| Haitian Rum                   | Aged Haitian Rum     | Rum                    | Starter (renamed)                                                            | 1       |
+| Honey Liqueur                 | same                 | —                      | Local                                                                        | 0       |
+| Honey Syrup                   | same                 | Sugar Syrup            | Starter                                                                      | 27      |
+| Jamaican No. 2 Bitters        | —                    | —                      | Retired: one product; bottle → Specialty Bitters                             | 0       |
+| Krupnik Herbal Honey Bitters  | —                    | —                      | Retired: one product; bottle → Specialty Bitters, recipe links the bottle    | 1       |
+| Lavender Bitters              | same                 | Bitters                | Local                                                                        | 0       |
+| Lemon Bitters                 | same                 | Bitters                | Local                                                                        | 1       |
+| Lemon Juice                   | same                 | Citrus Juice           | Starter                                                                      | 117     |
+| Lime Bitters                  | same                 | Bitters                | Local                                                                        | 2       |
+| Lime Juice                    | same                 | Citrus Juice           | Starter                                                                      | 138     |
+| London Dry Gin                | same                 | Gin                    | Starter                                                                      | 92      |
+| Maple Syrup                   | same                 | Sugar Syrup            | Local                                                                        | 2       |
+| Maraschino Liqueur            | same                 | Fruit Liqueur          | Starter                                                                      | 25      |
+| Melon Liqueur                 | same                 | Fruit Liqueur          | Starter addition                                                             | 1       |
+| Mole Bitters                  | same                 | Bitters                | Local                                                                        | 3       |
+| Navy Strength Gin             | same                 | Gin                    | Starter                                                                      | 5       |
+| Navy Strength Rum             | —                    | —                      | Retired: FALSE IDOL links Smith & Cross; Mister Fogg → Blended Overproof Rum | 1       |
+| New Orleans-Style Bitters     | Creole Bitters       | Bitters                | Starter (renamed)                                                            | 0       |
+| Oaxacan Rum                   | Unaged Mexican Rum   | Rum                    | Starter (renamed)                                                            | 0       |
+| Old Tom Gin                   | same                 | Gin                    | Starter                                                                      | 11      |
+| Orange Bitters                | same                 | Bitters                | Starter                                                                      | 40      |
+| Orange Juice                  | same                 | Citrus Juice           | Starter                                                                      | 18      |
+| Orange Liqueur                | same                 | Fruit Liqueur          | Starter                                                                      | 17      |
+| Orgeat                        | same                 | Flavored Syrup         | Starter                                                                      | 25      |
+| Other Herbal Liqueur          | —                    | —                      | Retired: catch-all; bottles reassigned individually                          | 0       |
+| Other Liqueur                 | —                    | —                      | Retired: catch-all; bottles reassigned individually                          | 0       |
+| Passionfruit Syrup            | Passion Fruit Syrup  | Flavored Syrup         | Starter (renamed)                                                            | 11      |
+| Pastis                        | same                 | Anise Spirit           | Starter                                                                      | 3       |
+| Peach Bitters                 | same                 | Bitters                | Local                                                                        | 1       |
+| Pineapple Liqueur             | same                 | Fruit Liqueur          | Starter addition                                                             | 4       |
+| Pineapple Rum                 | same                 | Rum                    | Starter                                                                      | 11      |
+| Pisco                         | same                 | —                      | Local                                                                        | 4       |
+| Prosecco                      | same                 | Sparkling Wine         | Starter                                                                      | 7       |
+| PX Sherry                     | Pedro Ximénez Sherry | Sherry                 | Starter (renamed)                                                            | 4       |
+| Quince Liqueur                | same                 | Fruit Liqueur          | Local                                                                        | 0       |
+| Rhum Agricole Blanc           | Unaged Rhum Agricole | Rum                    | Starter (renamed)                                                            | 1       |
+| Rye Whiskey                   | same                 | Whiskey                | Starter                                                                      | 20      |
+| Sea Buckthorn Liqueur         | same                 | Fruit Liqueur          | Local                                                                        | 1       |
+| Simple Syrup                  | Simple Syrup (1:1)   | Sugar Syrup            | Starter (renamed)                                                            | 78      |
+| Sloe Gin                      | same                 | Fruit Liqueur          | Local                                                                        | 4       |
+| Spiced Pear Liqueur           | same                 | Fruit Liqueur          | Local                                                                        | 1       |
+| Strawberry Liqueur            | same                 | Fruit Liqueur          | Local                                                                        | 1       |
+| Swedish Punsch                | same                 | —                      | Local                                                                        | 11      |
+| Sweet Vermouth                | same                 | Vermouth               | Starter                                                                      | 59      |
+| Tiki Bitters                  | same                 | Bitters                | Starter addition                                                             | 5       |
+| Unaged Column Still Rum       | Light Rum            | Rum                    | Starter (renamed)                                                            | 3       |
+| Unaged Overproof Jamaican Rum | same                 | Rum                    | Starter                                                                      | 3       |
+| Vanilla Syrup                 | same                 | Flavored Syrup         | Starter                                                                      | 10      |
+| Vermouth Amaro                | same                 | Vermouth               | Starter                                                                      | 0       |
+| Whiskey Barrel-Aged Bitters   | —                    | —                      | Retired: one product; recipe links a new Fee Brothers bottle note            | 1       |
+| White Blended Rum             | same                 | Rum                    | Starter                                                                      | 14      |
+| Winter Melon Bitters          | same                 | Bitters                | Local                                                                        | 1       |
+| Yuzu Liqueur                  | same                 | Fruit Liqueur          | Local                                                                        | 0       |
 
 Types with no current note, created by migration: **Vanilla Liqueur** (Herbal & Spice Liqueur, starter addition), **Specialty Bitters** (Bitters, starter addition), **French Brandy** (Brandy, local), **Macerated Strawberry Juice** (Other Fruit Juice, local), **Kirsch** (—, local).
 
@@ -178,59 +178,59 @@ Types with no current note, created by migration: **Vanilla Liqueur** (Herbal & 
 
 Other bottles keep a type with the same name as today. Each bottle gets exactly one type.
 
-| Bottle | Current type | New type | Family | Recipes naming it |
-| --- | --- | --- | --- | --- |
-| Mount Gay Eclipse | Barbados Rum | Aged Barbados Rum | Rum | 1 |
-| Real McCoy 5 | Barbados Rum | Aged Barbados Rum | Rum | 1 |
-| Rhum Barbancourt 3 Star | Haitian Rum | Aged Haitian Rum | Rum | 2 |
-| Braulio | Alpine Liqueur | Amaro | Amaro Family | 14 |
-| Angostura Bitters | Classic Aromatic Bitters | Aromatic Bitters | Bitters | 105 |
-| Bitter Truth Aromatic Bitters | Classic Aromatic Bitters | Aromatic Bitters | Bitters | 0 |
-| Bittercube Blackstrap Bitters | Blackstrap Bitters | Aromatic Bitters | Bitters | 0 |
-| Cynar | Amaro | Artichoke Amaro | Amaro Family | 27 |
-| Clear Creek Cassis Liqueur (375 mL) | Cassis Liqueur | Blackcurrant Liqueur | Fruit Liqueur | 0 |
-| Planteray Mister Fogg | Navy Strength Rum | Blended Overproof Rum | Rum | 0 |
-| Laird's Straight Apple Brandy (Bottled in Bond) | Apple Brandy | Bonded Apple Brandy | Apple Brandy Family | 1 |
-| Giffard Cacao | Crème de Cacao (white) | Crème de Cacao | — | 1 |
-| Tempus Fugit Crème de Cacao a la Vinelle | Crème de Cacao (dark) | Crème de Cacao | — | 1 |
-| Peychaud's Bitters | New Orleans-Style Bitters | Creole Bitters | Bitters | 15 |
-| Scrappy's Orleans Bitters | New Orleans-Style Bitters | Creole Bitters | Bitters | 0 |
-| Demerara Syrup, 2 to 1 | Demerara Syrup | Demerara Syrup (2:1) | Sugar Syrup | 6 |
-| Avuá Falernum | Falernum Liqueur | Falernum | Herbal & Spice Liqueur | 2 |
-| Velvet Falernum | Falernum Liqueur | Falernum | Herbal & Spice Liqueur | 3 |
-| Latitude 29 Falernum | Falernum | Falernum Syrup | Flavored Syrup | 0 |
-| Portland Syrups Falernum | Falernum | Falernum Syrup | Flavored Syrup | 1 |
-| Fernet Branca | Amaro | Fernet | Amaro Family | 11 |
-| Doctor Bird Coco Atoll | Coconut Rum | Flavored Rum | Rum | 1 |
-| Planteray Cut & Dry | Coconut Rum | Flavored Rum | Rum | 2 |
-| St-Remy VSOP | Cognac | French Brandy | Brandy | 0 |
-| Cascadia Liqueur | Other Herbal Liqueur | Gentian Liqueur | Amaro Family | 0 |
-| Luxardo Bitter Bianco | Other Herbal Liqueur | Gentian Liqueur | Amaro Family | 7 |
-| Flora Green | Other Herbal Liqueur | Green Herbal Liqueur | Herbal & Spice Liqueur | 0 |
-| Green Chartreuse | Other Herbal Liqueur | Green Herbal Liqueur | Herbal & Spice Liqueur | 29 |
-| Luxardo Del Santo | Other Herbal Liqueur | Green Herbal Liqueur | Herbal & Spice Liqueur | 1 |
-| Becherovka | Other Herbal Liqueur | Herbal Liqueur | Herbal & Spice Liqueur | 1 |
-| Bénédictine | Other Herbal Liqueur | Herbal Liqueur | Herbal & Spice Liqueur | 27 |
-| Chareau | Aloe Liqueur | Herbal Liqueur | Herbal & Spice Liqueur | 2 |
-| Don Q Cristal | Unaged Column Still Rum | Light Rum | Rum | 2 |
-| Flor de Caña Extra Seco | Unaged Column Still Rum | Light Rum | Rum | 0 |
-| Accompani Mari Gold | Amaro | Orange Bitter Liqueur | Amaro Family | 0 |
-| Aperol | Amaro | Orange Bitter Liqueur | Amaro Family | 30 |
-| Lustau Pedro Ximénez San Emilio | PX Sherry | Pedro Ximénez Sherry | Sherry | 0 |
-| Campari | Amaro | Red Bitter Liqueur | Amaro Family | 19 |
-| Crimson Snap | Amaro | Red Bitter Liqueur | Amaro Family | 2 |
-| Simple Syrup, 1 to 1 | Simple Syrup | Simple Syrup (1:1) | Sugar Syrup | 3 |
-| Bar Keep Chinese Bitters | Chinese Bitters | Specialty Bitters | Bitters | 1 |
-| Bittercube Bolivar Bitters | Bolivar Bitters | Specialty Bitters | Bitters | 1 |
-| Bittercube Cherry Bark Vanilla Bitters | Cherry Bark Vanilla Bitters | Specialty Bitters | Bitters | 0 |
-| Bittercube Jamaican No. 2 Bitters | Jamaican No. 2 Bitters | Specialty Bitters | Bitters | 0 |
-| Bittermens Krupnik Herbal Honey Bitters | Krupnik Herbal Honey Bitters | Specialty Bitters | Bitters | 0 |
-| Freeland Spirits Chai Spice Liqueur | Chai Spice Liqueur | Spice Liqueur | Herbal & Spice Liqueur | 1 |
-| Townshend's Bluebird Alpine Liqueur | Alpine Liqueur | Spice Liqueur | Herbal & Spice Liqueur | 0 |
-| Paranubes | Oaxacan Rum | Unaged Mexican Rum | Rum | 1 |
-| Clément Canne Bleue | Rhum Agricole Blanc | Unaged Rhum Agricole | Rum | 0 |
-| Licor 43 | Other Liqueur | Vanilla Liqueur | Herbal & Spice Liqueur | 4 |
-| Liquore Strega | Other Herbal Liqueur | Yellow Herbal Liqueur | Herbal & Spice Liqueur | 5 |
-| Yellow Chartreuse | Other Herbal Liqueur | Yellow Herbal Liqueur | Herbal & Spice Liqueur | 20 |
+| Bottle                                          | Current type                 | New type              | Family                 | Recipes naming it |
+| ----------------------------------------------- | ---------------------------- | --------------------- | ---------------------- | ----------------- |
+| Mount Gay Eclipse                               | Barbados Rum                 | Aged Barbados Rum     | Rum                    | 1                 |
+| Real McCoy 5                                    | Barbados Rum                 | Aged Barbados Rum     | Rum                    | 1                 |
+| Rhum Barbancourt 3 Star                         | Haitian Rum                  | Aged Haitian Rum      | Rum                    | 2                 |
+| Braulio                                         | Alpine Liqueur               | Amaro                 | Amaro Family           | 14                |
+| Angostura Bitters                               | Classic Aromatic Bitters     | Aromatic Bitters      | Bitters                | 105               |
+| Bitter Truth Aromatic Bitters                   | Classic Aromatic Bitters     | Aromatic Bitters      | Bitters                | 0                 |
+| Bittercube Blackstrap Bitters                   | Blackstrap Bitters           | Aromatic Bitters      | Bitters                | 0                 |
+| Cynar                                           | Amaro                        | Artichoke Amaro       | Amaro Family           | 27                |
+| Clear Creek Cassis Liqueur (375 mL)             | Cassis Liqueur               | Blackcurrant Liqueur  | Fruit Liqueur          | 0                 |
+| Planteray Mister Fogg                           | Navy Strength Rum            | Blended Overproof Rum | Rum                    | 0                 |
+| Laird's Straight Apple Brandy (Bottled in Bond) | Apple Brandy                 | Bonded Apple Brandy   | Apple Brandy Family    | 1                 |
+| Giffard Cacao                                   | Crème de Cacao (white)       | Crème de Cacao        | —                      | 1                 |
+| Tempus Fugit Crème de Cacao a la Vinelle        | Crème de Cacao (dark)        | Crème de Cacao        | —                      | 1                 |
+| Peychaud's Bitters                              | New Orleans-Style Bitters    | Creole Bitters        | Bitters                | 15                |
+| Scrappy's Orleans Bitters                       | New Orleans-Style Bitters    | Creole Bitters        | Bitters                | 0                 |
+| Demerara Syrup, 2 to 1                          | Demerara Syrup               | Demerara Syrup (2:1)  | Sugar Syrup            | 6                 |
+| Avuá Falernum                                   | Falernum Liqueur             | Falernum              | Herbal & Spice Liqueur | 2                 |
+| Velvet Falernum                                 | Falernum Liqueur             | Falernum              | Herbal & Spice Liqueur | 3                 |
+| Latitude 29 Falernum                            | Falernum                     | Falernum Syrup        | Flavored Syrup         | 0                 |
+| Portland Syrups Falernum                        | Falernum                     | Falernum Syrup        | Flavored Syrup         | 1                 |
+| Fernet Branca                                   | Amaro                        | Fernet                | Amaro Family           | 11                |
+| Doctor Bird Coco Atoll                          | Coconut Rum                  | Flavored Rum          | Rum                    | 1                 |
+| Planteray Cut & Dry                             | Coconut Rum                  | Flavored Rum          | Rum                    | 2                 |
+| St-Remy VSOP                                    | Cognac                       | French Brandy         | Brandy                 | 0                 |
+| Cascadia Liqueur                                | Other Herbal Liqueur         | Gentian Liqueur       | Amaro Family           | 0                 |
+| Luxardo Bitter Bianco                           | Other Herbal Liqueur         | Gentian Liqueur       | Amaro Family           | 7                 |
+| Flora Green                                     | Other Herbal Liqueur         | Green Herbal Liqueur  | Herbal & Spice Liqueur | 0                 |
+| Green Chartreuse                                | Other Herbal Liqueur         | Green Herbal Liqueur  | Herbal & Spice Liqueur | 29                |
+| Luxardo Del Santo                               | Other Herbal Liqueur         | Green Herbal Liqueur  | Herbal & Spice Liqueur | 1                 |
+| Becherovka                                      | Other Herbal Liqueur         | Herbal Liqueur        | Herbal & Spice Liqueur | 1                 |
+| Bénédictine                                     | Other Herbal Liqueur         | Herbal Liqueur        | Herbal & Spice Liqueur | 27                |
+| Chareau                                         | Aloe Liqueur                 | Herbal Liqueur        | Herbal & Spice Liqueur | 2                 |
+| Don Q Cristal                                   | Unaged Column Still Rum      | Light Rum             | Rum                    | 2                 |
+| Flor de Caña Extra Seco                         | Unaged Column Still Rum      | Light Rum             | Rum                    | 0                 |
+| Accompani Mari Gold                             | Amaro                        | Orange Bitter Liqueur | Amaro Family           | 0                 |
+| Aperol                                          | Amaro                        | Orange Bitter Liqueur | Amaro Family           | 30                |
+| Lustau Pedro Ximénez San Emilio                 | PX Sherry                    | Pedro Ximénez Sherry  | Sherry                 | 0                 |
+| Campari                                         | Amaro                        | Red Bitter Liqueur    | Amaro Family           | 19                |
+| Crimson Snap                                    | Amaro                        | Red Bitter Liqueur    | Amaro Family           | 2                 |
+| Simple Syrup, 1 to 1                            | Simple Syrup                 | Simple Syrup (1:1)    | Sugar Syrup            | 3                 |
+| Bar Keep Chinese Bitters                        | Chinese Bitters              | Specialty Bitters     | Bitters                | 1                 |
+| Bittercube Bolivar Bitters                      | Bolivar Bitters              | Specialty Bitters     | Bitters                | 1                 |
+| Bittercube Cherry Bark Vanilla Bitters          | Cherry Bark Vanilla Bitters  | Specialty Bitters     | Bitters                | 0                 |
+| Bittercube Jamaican No. 2 Bitters               | Jamaican No. 2 Bitters       | Specialty Bitters     | Bitters                | 0                 |
+| Bittermens Krupnik Herbal Honey Bitters         | Krupnik Herbal Honey Bitters | Specialty Bitters     | Bitters                | 0                 |
+| Freeland Spirits Chai Spice Liqueur             | Chai Spice Liqueur           | Spice Liqueur         | Herbal & Spice Liqueur | 1                 |
+| Townshend's Bluebird Alpine Liqueur             | Alpine Liqueur               | Spice Liqueur         | Herbal & Spice Liqueur | 0                 |
+| Paranubes                                       | Oaxacan Rum                  | Unaged Mexican Rum    | Rum                    | 1                 |
+| Clément Canne Bleue                             | Rhum Agricole Blanc          | Unaged Rhum Agricole  | Rum                    | 0                 |
+| Licor 43                                        | Other Liqueur                | Vanilla Liqueur       | Herbal & Spice Liqueur | 4                 |
+| Liquore Strega                                  | Other Herbal Liqueur         | Yellow Herbal Liqueur | Herbal & Spice Liqueur | 5                 |
+| Yellow Chartreuse                               | Other Herbal Liqueur         | Yellow Herbal Liqueur | Herbal & Spice Liqueur | 20                |
 
 113 bottles keep a same-named type and are not listed. Three bottle notes are added with unknown stock, for recipes that link products you do not own: **Mr Black** (Coffee Liqueur), **Don Q Gold** (Aged Column Still Rum), and **Fee Brothers Whiskey Barrel-Aged Bitters** (Aromatic Bitters, unconfirmed).

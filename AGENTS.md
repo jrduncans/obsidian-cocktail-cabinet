@@ -12,11 +12,11 @@ Turn the cocktail workflows already implemented as skills, scripts, and template
 
 This project spans three workspace folders:
 
-| Folder | Role | Local path |
-| --- | --- | --- |
-| `obsidian-cocktail-cabinet` | Plugin source, build tooling, and project guidance | `/Users/jrduncans/workspace/personal/obsidian-cocktail-cabinet` |
-| `knowledge` | Personal vault containing the existing cocktail workflows and real data | `/Users/jrduncans/Library/Mobile Documents/iCloud~md~obsidian/Documents/knowledge` |
-| `Cocktail Cabinet Dev` | Vault for plugin development and testing | `/Users/jrduncans/Library/Mobile Documents/iCloud~md~obsidian/Documents/Cocktail Cabinet Dev` |
+| Folder                      | Role                                                                    | Local path                                                                                    |
+| --------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `obsidian-cocktail-cabinet` | Plugin source, build tooling, and project guidance                      | `/Users/jrduncans/workspace/personal/obsidian-cocktail-cabinet`                               |
+| `knowledge`                 | Personal vault containing the existing cocktail workflows and real data | `/Users/jrduncans/Library/Mobile Documents/iCloud~md~obsidian/Documents/knowledge`            |
+| `Cocktail Cabinet Dev`      | Vault for plugin development and testing                                | `/Users/jrduncans/Library/Mobile Documents/iCloud~md~obsidian/Documents/Cocktail Cabinet Dev` |
 
 - Run plugin development commands from the repository. Use absolute paths when working across workspace folders.
 - Keep shared project context here. Before working in another folder, read its applicable `AGENTS.md`; this repository's instructions do not automatically govern sibling vaults.
@@ -29,7 +29,6 @@ This project spans three workspace folders:
 - Plugin settings written to `data.json` also land in the repository through that symlink. Keep that local state ignored by Git.
 - The Hot Reload community plugin is installed in `Cocktail Cabinet Dev` to support development reloads.
 - Real vaults, including `knowledge`, get a copy, not a symlink, so it syncs to mobile and only merged work reaches them: `npm run install:vault -- --vault PATH` from a clean `main`. Run it only when the user asks to install or update.
-
 
 ## Development conventions
 

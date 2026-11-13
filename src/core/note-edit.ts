@@ -17,7 +17,10 @@ export const EDIT_FIELDS = {
 export type EditableKind = keyof typeof EDIT_FIELDS;
 
 export const PARENT_FIELD: Partial<Record<EditableKind, string>> = {
-	family: PROP.category, type: PROP.family, bottle: PROP.type, ingredient: PROP.provides,
+	family: PROP.category,
+	type: PROP.family,
+	bottle: PROP.type,
+	ingredient: PROP.provides,
 };
 
 export function isEditable(kind: NoteKind): kind is EditableKind {
@@ -43,11 +46,15 @@ export interface FieldEdit {
 export function editedFields(kind: EditableKind, properties: Record<string, unknown>): Record<string, unknown> {
 	const keys: string[] = [...EDIT_FIELDS[kind]];
 	if (kind === 'bottle') keys.push(PROP.open);
-	return Object.fromEntries(keys.map(key => [key, properties[key] ?? null]));
+	return Object.fromEntries(keys.map((key) => [key, properties[key] ?? null]));
 }
 
 /** Whether a fresh read still matches the values the form opened with. */
-export function sameFields(kind: EditableKind, expected: Record<string, unknown>, current: Record<string, unknown>): boolean {
+export function sameFields(
+	kind: EditableKind,
+	expected: Record<string, unknown>,
+	current: Record<string, unknown>,
+): boolean {
 	return JSON.stringify(editedFields(kind, expected)) === JSON.stringify(editedFields(kind, current));
 }
 
@@ -75,7 +82,9 @@ for (let rating = 1; rating <= RATING_MAX; rating++) RATING_OPTIONS[String(ratin
 
 /** The form options, keeping a saved form that isn't one of the standard ones. */
 export function formOptions(current: unknown): Record<string, string> {
-	return typeof current === 'string' && current && !(current in STOCK_FORMS) ? { ...STOCK_FORMS, [current]: current } : { ...STOCK_FORMS };
+	return typeof current === 'string' && current && !(current in STOCK_FORMS)
+		? { ...STOCK_FORMS, [current]: current }
+		: { ...STOCK_FORMS };
 }
 
 const same = (left: unknown, right: unknown) => JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
@@ -89,7 +98,7 @@ export function planFieldEdit(kind: EditableKind, before: Record<string, unknown
 	const parentKey = PARENT_FIELD[kind];
 	if (parentKey && edit.parents) {
 		if (kind !== 'ingredient' && edit.parents.length > 1) throw new Error('Select one parent.');
-		set(parentKey, kind === 'ingredient' ? edit.parents : edit.parents[0] ?? null);
+		set(parentKey, kind === 'ingredient' ? edit.parents : (edit.parents[0] ?? null));
 	}
 	if (kind === 'bottle') {
 		if (edit.volume !== undefined && edit.volume.trim() !== numberText(before[PROP.volume])) {
@@ -97,7 +106,9 @@ export function planFieldEdit(kind: EditableKind, before: Record<string, unknown
 			if (volume === 0) throw new Error('Bottle volume must be greater than zero.');
 			const open = before[PROP.open];
 			if (volume !== null && typeof open === 'number' && open > volume) {
-				throw new Error(`The open bottle has ${formatMl(open)} mL, more than ${formatMl(volume)} mL. Correct it with Edit stock first.`);
+				throw new Error(
+					`The open bottle has ${formatMl(open)} mL, more than ${formatMl(volume)} mL. Correct it with Edit stock first.`,
+				);
 			}
 			set(PROP.volume, volume);
 		}
@@ -113,11 +124,16 @@ export function planFieldEdit(kind: EditableKind, before: Record<string, unknown
 	if (kind === 'type' && edit.catchAll !== undefined && edit.catchAll !== (before[PROP.catchAll] === true)) {
 		set(PROP.catchAll, edit.catchAll);
 	}
-	if (kind === 'type' && edit.shoppingList !== undefined && edit.shoppingList !== (before[PROP.shoppingList] === true)) {
+	if (
+		kind === 'type' &&
+		edit.shoppingList !== undefined &&
+		edit.shoppingList !== (before[PROP.shoppingList] === true)
+	) {
 		set(PROP.shoppingList, edit.shoppingList);
 	}
 	if (kind === 'recipe') {
-		if (edit.source !== undefined && edit.source.trim() !== sourceText(before.source).trim()) set('source', edit.source.trim() || null);
+		if (edit.source !== undefined && edit.source.trim() !== sourceText(before.source).trim())
+			set('source', edit.source.trim() || null);
 		if (edit.rating !== undefined && edit.rating !== 'keep' && edit.rating !== ratingText(before.rating)) {
 			const rating = edit.rating ? parseRating(edit.rating) : null;
 			if (rating === undefined) throw new Error(`Select a rating from 1 to ${RATING_MAX}, or Unrated.`);

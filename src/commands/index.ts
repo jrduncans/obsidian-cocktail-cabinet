@@ -32,29 +32,40 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const edits = new EditStore(plugin.app);
 	const links = new RecipeLinkStore(plugin.app, plugin.store);
 	const ready = async (action: () => void | Promise<void>) => {
-		if (!await plugin.store.isSetUp()) {
+		if (!(await plugin.store.isSetUp())) {
 			new SetupModal(plugin).open();
 		} else {
 			await action();
 		}
 	};
 	const noteFor = (file: TFile) => {
-		const note = plugin.store.notes().find(note => note.path === file.path);
+		const note = plugin.store.notes().find((note) => note.path === file.path);
 		if (!note) throw new Error('This note isn’t in the cabinet.');
 		return note;
 	};
 	// On a type note, open a stock form with the type already filled in.
-	const forType = (bottle: boolean) => (file: TFile) => void handle(() => ready(() => new StockModal(plugin, bottle, { types: [noteFor(file)] }).open()));
+	const forType = (bottle: boolean) => (file: TFile) =>
+		void handle(() => ready(() => new StockModal(plugin, bottle, { types: [noteFor(file)] }).open()));
 	// A one-off goes from its ingredients to the logging review, and back to them to edit.
 	const logOneOff = (initial?: OneOff) => {
-		const step = (oneOff?: OneOff) => new OneOffModal(plugin, reviewed => new LoggingModal(plugin, logger, stocks, links, reviewed, step).open(), oneOff).open();
+		const step = (oneOff?: OneOff) =>
+			new OneOffModal(
+				plugin,
+				(reviewed) => new LoggingModal(plugin, logger, stocks, links, reviewed, step).open(),
+				oneOff,
+			).open();
 		step(initial);
 	};
-	plugin.addCommand({ id: 'log-one-off', name: 'Log a one-off', icon: 'flask-conical', callback: () => handle(() => ready(() => logOneOff())) });
+	plugin.addCommand({
+		id: 'log-one-off',
+		name: 'Log a one-off',
+		icon: 'flask-conical',
+		callback: () => handle(() => ready(() => logOneOff())),
+	});
 	plugin.addCommand({
 		id: 'save-one-off-as-recipe',
 		name: 'Save one-off as recipe',
-		checkCallback: checking => {
+		checkCallback: (checking) => {
 			const file = plugin.app.workspace.getActiveFile();
 			if (!file || file.extension !== 'md') return false;
 			if (!checking) void handle(() => ready(() => saveOneOff(plugin, logger.daily, file)));
@@ -62,44 +73,93 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		},
 	});
 	const recordPurchases = () => handle(() => ready(() => new PurchaseModal(plugin, stocks).open()));
-	plugin.addCommand({ id: 'record-purchases', name: 'Record purchases', icon: 'shopping-cart', callback: recordPurchases });
+	plugin.addCommand({
+		id: 'record-purchases',
+		name: 'Record purchases',
+		icon: 'shopping-cart',
+		callback: recordPurchases,
+	});
 	registerNoteActions(plugin, [
-		{ id: 'record-purchases-here', name: 'Record purchases', icon: 'shopping-cart', kinds: ['shopping'], header: true, command: false, run: () => void recordPurchases() },
 		{
-			id: 'log-this-cocktail', name: 'Log this cocktail', icon: 'martini', kinds: ['recipe'], header: true,
-			run: file => void handle(async () => new LoggingModal(plugin, logger, stocks, links, noteFor(file)).open()),
+			id: 'record-purchases-here',
+			name: 'Record purchases',
+			icon: 'shopping-cart',
+			kinds: ['shopping'],
+			header: true,
+			command: false,
+			run: () => void recordPurchases(),
 		},
 		{
-			id: 'riff-on-this-cocktail', name: 'Riff on this cocktail', icon: 'flask-conical', kinds: ['recipe'],
-			run: file => void handle(async () => {
-				const recipe = noteFor(file);
-				logOneOff({ name: '', lines: ingredientLines(await plugin.app.vault.read(file)).map(line => line.text), riffOn: recipe });
-			}),
+			id: 'log-this-cocktail',
+			name: 'Log this cocktail',
+			icon: 'martini',
+			kinds: ['recipe'],
+			header: true,
+			run: (file) =>
+				void handle(async () => new LoggingModal(plugin, logger, stocks, links, noteFor(file)).open()),
 		},
 		{
-			id: 'edit-stock', name: 'Edit stock', icon: 'gauge', kinds: ['bottle', 'ingredient'], header: true,
-			run: file => void handle(async () => {
-				const note = noteFor(file);
-				new EditStockModal(plugin.app, stocks, note, await stocks.read(note)).open();
-			}),
+			id: 'riff-on-this-cocktail',
+			name: 'Riff on this cocktail',
+			icon: 'flask-conical',
+			kinds: ['recipe'],
+			run: (file) =>
+				void handle(async () => {
+					const recipe = noteFor(file);
+					logOneOff({
+						name: '',
+						lines: ingredientLines(await plugin.app.vault.read(file)).map((line) => line.text),
+						riffOn: recipe,
+					});
+				}),
 		},
 		{
-			id: 'edit-cabinet-note', name: 'Edit cabinet note', icon: 'pencil', kinds: 'any', when: isEditable,
-			run: file => void handle(async () => {
-				const note = noteFor(file);
-				new EditNoteModal(plugin, edits, note, await edits.read(note)).open();
-			}),
+			id: 'edit-stock',
+			name: 'Edit stock',
+			icon: 'gauge',
+			kinds: ['bottle', 'ingredient'],
+			header: true,
+			run: (file) =>
+				void handle(async () => {
+					const note = noteFor(file);
+					new EditStockModal(plugin.app, stocks, note, await stocks.read(note)).open();
+				}),
 		},
 		{
-			id: 'rename-cabinet-note', name: 'Rename cabinet note', icon: 'text-cursor-input', kinds: 'any',
-			run: file => void handle(async () => new RenameModal(plugin.app, renamer, noteFor(file)).open()),
+			id: 'edit-cabinet-note',
+			name: 'Edit cabinet note',
+			icon: 'pencil',
+			kinds: 'any',
+			when: isEditable,
+			run: (file) =>
+				void handle(async () => {
+					const note = noteFor(file);
+					new EditNoteModal(plugin, edits, note, await edits.read(note)).open();
+				}),
 		},
-		{ id: 'add-bottle-of-type', name: 'Add a bottle of this type', icon: 'wine', kinds: ['type'], run: forType(true) },
-		{ id: 'add-other-stock-for-type', name: 'Add other stock for this type', icon: 'package-plus', kinds: ['type'], run: forType(false) },
+		{
+			id: 'rename-cabinet-note',
+			name: 'Rename cabinet note',
+			icon: 'text-cursor-input',
+			kinds: 'any',
+			run: (file) => void handle(async () => new RenameModal(plugin.app, renamer, noteFor(file)).open()),
+		},
+		{
+			id: 'add-bottle-of-type',
+			name: 'Add a bottle of this type',
+			icon: 'wine',
+			kinds: ['type'],
+			run: forType(true),
+		},
+		{
+			id: 'add-other-stock-for-type',
+			name: 'Add other stock for this type',
+			icon: 'package-plus',
+			kinds: ['type'],
+			run: forType(false),
+		},
 	]);
-	const open = () => handle(() => ready(() =>
-		plugin.store.open(`${plugin.store.root}/Cocktail Cabinet.md`),
-	));
+	const open = () => handle(() => ready(() => plugin.store.open(`${plugin.store.root}/Cocktail Cabinet.md`)));
 	plugin.addRibbonIcon('martini', 'Open cocktail cabinet', open);
 	plugin.addCommand({
 		id: 'open-cabinet',
@@ -162,14 +222,18 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 	plugin.addCommand({
 		id: 'enhance-recipe',
 		name: 'Enhance as cocktail recipe',
-		checkCallback: checking => {
+		checkCallback: (checking) => {
 			const file = plugin.app.workspace.getActiveFile();
 			if (!file || file.extension !== 'md') return false;
-			if (!checking) void handle(() => ready(async () => {
-				const view = plugin.app.workspace.getActiveViewOfType(MarkdownView);
-				const content = view?.file === file ? view.editor.getValue() : await plugin.app.vault.read(file);
-				new RecipeModal(plugin, { path: file.path, content }).open();
-			}));
+			if (!checking)
+				void handle(() =>
+					ready(async () => {
+						const view = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+						const content =
+							view?.file === file ? view.editor.getValue() : await plugin.app.vault.read(file);
+						new RecipeModal(plugin, { path: file.path, content }).open();
+					}),
+				);
 			return true;
 		},
 	});

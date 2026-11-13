@@ -27,7 +27,8 @@ export class StockStore {
 		const content = await this.app.vault.read(this.file(note));
 		const yaml = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
 		const properties: unknown = yaml ? parseYaml(yaml) : {};
-		if (!properties || typeof properties !== 'object' || Array.isArray(properties)) throw new Error(`Couldn’t read the stock for ${note.name}.`);
+		if (!properties || typeof properties !== 'object' || Array.isArray(properties))
+			throw new Error(`Couldn’t read the stock for ${note.name}.`);
 		return readStockState(this.kind(note), properties as Record<string, unknown>);
 	}
 
@@ -39,7 +40,9 @@ export class StockStore {
 		try {
 			await this.app.fileManager.processFrontMatter(this.file(note), (properties: Record<string, unknown>) => {
 				if (!sameStockState(before, readStockState(this.kind(note), properties))) {
-					throw new Error('This note’s stock changed after the form opened. Nothing saved; close and edit again.');
+					throw new Error(
+						'This note’s stock changed after the form opened. Nothing saved; close and edit again.',
+					);
 				}
 				for (const key of plan.remove) delete properties[key];
 				Object.assign(properties, plan.updates);
@@ -54,7 +57,12 @@ export class StockStore {
 	 * `before`, refuses (changing nothing) if the stock changed since the form read it. Without,
 	 * only the date and shopping flag are written: a new note, or an ingredient type bought for.
 	 */
-	async recordPurchase(note: CabinetNote, before: StockState | null, updates: Properties, date: string): Promise<void> {
+	async recordPurchase(
+		note: CabinetNote,
+		before: StockState | null,
+		updates: Properties,
+		date: string,
+	): Promise<void> {
 		const file = this.file(note);
 		await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
 			if (before && !sameStockState(before, readStockState(this.kind(note), properties))) {

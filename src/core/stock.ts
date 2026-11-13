@@ -91,7 +91,11 @@ export function stockProperties(input: StockInput): Properties {
 		properties[PROP.availability] = input.availability;
 	} else if (input.kind === 'bottle') {
 		const volume = properties[PROP.volume];
-		properties[PROP.open] = openBottleMl(input.open, input.openUnit ?? 'ml', typeof volume === 'number' ? volume : null);
+		properties[PROP.open] = openBottleMl(
+			input.open,
+			input.openUnit ?? 'ml',
+			typeof volume === 'number' ? volume : null,
+		);
 		properties[PROP.unopened] = optionalNumber(input.unopened, 'Unopened bottles', 0, Infinity, true) ?? 0;
 	} else {
 		properties[PROP.remaining] = optionalNumber(input.remaining, 'Remaining volume', 0);
@@ -102,7 +106,16 @@ export function stockProperties(input: StockInput): Properties {
 /** A kitchen staple's properties: tracked by availability, with no Provides. */
 export function stapleProperties(availability: string): Properties {
 	return stockProperties({
-		kind: 'ingredient', tracking: 'status', volume: '', abv: '', open: '', unopened: '', remaining: '',
-		availability, form: KITCHEN_STAPLE_FORM, lastPurchasePrice: '', shoppingList: false,
+		kind: 'ingredient',
+		tracking: 'status',
+		volume: '',
+		abv: '',
+		open: '',
+		unopened: '',
+		remaining: '',
+		availability,
+		form: KITCHEN_STAPLE_FORM,
+		lastPurchasePrice: '',
+		shoppingList: false,
 	});
 }

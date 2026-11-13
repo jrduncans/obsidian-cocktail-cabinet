@@ -30,7 +30,7 @@ export function checkOneOffName(name: string): string {
 
 /** The ingredient lines as a recipe body, so logging reads them exactly as it reads a recipe. */
 export function oneOffContent(oneOff: OneOff): string {
-	return `### Ingredients\n${oneOff.lines.map(line => `- ${line}`).join('\n')}\n`;
+	return `### Ingredients\n${oneOff.lines.map((line) => `- ${line}`).join('\n')}\n`;
 }
 
 function header(oneOff: OneOff, servings: number, riff: string | undefined): string {
@@ -43,7 +43,7 @@ function header(oneOff: OneOff, servings: number, riff: string | undefined): str
 /** The daily entry: a header sentence and the ingredients per serving, as written in the log dialog. */
 export function oneOffDailyEntry(oneOff: OneOff, servings: number): string {
 	const riff = oneOff.riffOn && wikiLink(oneOff.riffOn.path, oneOff.riffOn.name);
-	return `${header(oneOff, servings, riff)}:\n${oneOff.lines.map(line => `- ${line}`).join('\n')}`;
+	return `${header(oneOff, servings, riff)}:\n${oneOff.lines.map((line) => `- ${line}`).join('\n')}`;
 }
 
 /** The header as a reader sees it, for previews and failure guidance. */
@@ -53,7 +53,7 @@ export function oneOffDailyText(oneOff: OneOff, servings: number): string {
 
 /** Every one-off entry in a note, with the list lines directly under each header. */
 export function findOneOffs(content: string): LoggedOneOff[] {
-	const lines = content.split('\n').map(line => line.replace(/\r$/, ''));
+	const lines = content.split('\n').map((line) => line.replace(/\r$/, ''));
 	const found: LoggedOneOff[] = [];
 	lines.forEach((text, line) => {
 		const match = text.match(ONE_OFF_HEADER);
@@ -64,7 +64,14 @@ export function findOneOffs(content: string): LoggedOneOff[] {
 			if (!item) break;
 			ingredients.push(item[1]!);
 		}
-		found.push({ line, header: text, name: match[2]?.trim() ?? '', servings: match[1] ? Number(match[1]) : 1, riffOn: match[3]?.split('|')[0], ingredients });
+		found.push({
+			line,
+			header: text,
+			name: match[2]?.trim() ?? '',
+			servings: match[1] ? Number(match[1]) : 1,
+			riffOn: match[3]?.split('|')[0],
+			ingredients,
+		});
 	});
 	return found;
 }
@@ -78,7 +85,9 @@ export function oneOffLabel(oneOff: LoggedOneOff): string {
 /** The header once the one-off is a recipe: an ordinary made line, still followed by what was poured. */
 export function savedOneOffHeader(oneOff: LoggedOneOff, recipe: CabinetNote): string {
 	const link = wikiLink(recipe.path, recipe.name);
-	return oneOff.servings === 1 ? `Made ${indefiniteArticle(recipe.name)} ${link}:` : `Made ${oneOff.servings} servings of ${link}:`;
+	return oneOff.servings === 1
+		? `Made ${indefiniteArticle(recipe.name)} ${link}:`
+		: `Made ${oneOff.servings} servings of ${link}:`;
 }
 
 /** Replace the header, only if that line still reads as it did when found. */

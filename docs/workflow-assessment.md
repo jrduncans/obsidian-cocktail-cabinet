@@ -24,17 +24,17 @@ The [approved stock design](cabinet-design.md#approved-stock-and-purchasing-desi
 
 Paths below are relative to the `knowledge` vault; read the current sources before implementing a port.
 
-| Source | Behavior or reference value |
-| --- | --- |
-| `.agents/skills/cocktail-inventory-query/SKILL.md` | Live stock query, exact/type/subcategory/substitution matching, recommendation ranking, and distinction between missing and untracked ingredients. |
-| `.agents/skills/cocktail-inventory-update/SKILL.md` | Bottle selection, mandatory Green Chartreuse check, preview and confirmation, daily-note logging, and inventory-only requests. |
-| `.agents/skills/cocktail-inventory-update/scripts/update_inventory.py` | Amount parsing, conversion, aggregation, bottle rollover, and proposed inventory changes. |
-| `.agents/skills/cocktail-inventory-update/scripts/test_update_inventory.py` | Regression examples for mutually exclusive ingredient alternatives. |
-| `.agents/skills/cocktail-recipe-import/SKILL.md` | Source fidelity, approved mappings, Bevnap block CSV conventions, duplicate handling, and note creation rules. |
-| `Templates/Cocktails/` | Recipe, bottle, ingredient-source, and taxonomy note shapes. |
-| `Cocktails/Views/IngredientAvailability/view.js` | Source notes providing ingredients through `Provides`, with `Have`, `Low`, and `Out` availability. |
-| `Cocktails/Views/RelatedRecipes/view.js` | Relationships among bottles, types, subcategories, substitutions, and recipes. |
-| `Cocktails/*.base` | Existing inventory and taxonomy views, especially `Bottles.base` → `Liquor Cabinet`. |
+| Source                                                                      | Behavior or reference value                                                                                                                        |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.agents/skills/cocktail-inventory-query/SKILL.md`                          | Live stock query, exact/type/subcategory/substitution matching, recommendation ranking, and distinction between missing and untracked ingredients. |
+| `.agents/skills/cocktail-inventory-update/SKILL.md`                         | Bottle selection, mandatory Green Chartreuse check, preview and confirmation, daily-note logging, and inventory-only requests.                     |
+| `.agents/skills/cocktail-inventory-update/scripts/update_inventory.py`      | Amount parsing, conversion, aggregation, bottle rollover, and proposed inventory changes.                                                          |
+| `.agents/skills/cocktail-inventory-update/scripts/test_update_inventory.py` | Regression examples for mutually exclusive ingredient alternatives.                                                                                |
+| `.agents/skills/cocktail-recipe-import/SKILL.md`                            | Source fidelity, approved mappings, Bevnap block CSV conventions, duplicate handling, and note creation rules.                                     |
+| `Templates/Cocktails/`                                                      | Recipe, bottle, ingredient-source, and taxonomy note shapes.                                                                                       |
+| `Cocktails/Views/IngredientAvailability/view.js`                            | Source notes providing ingredients through `Provides`, with `Have`, `Low`, and `Out` availability.                                                 |
+| `Cocktails/Views/RelatedRecipes/view.js`                                    | Relationships among bottles, types, subcategories, substitutions, and recipes.                                                                     |
+| `Cocktails/*.base`                                                          | Existing inventory and taxonomy views, especially `Bottles.base` → `Liquor Cabinet`.                                                               |
 
 Important porting cases:
 

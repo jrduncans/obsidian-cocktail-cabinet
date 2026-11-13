@@ -11,9 +11,18 @@ import type { MigrationPlan } from './plan';
 
 /** One-to-one type renames from the mapping done in the pre-pass. */
 export const PREPASS_TYPES: readonly string[] = [
-	'Barbados Rum', 'Cassis Liqueur', 'Classic Aromatic Bitters', 'Demerara Syrup', 'Haitian Rum',
-	'New Orleans-Style Bitters', 'Oaxacan Rum', 'PX Sherry', 'Passionfruit Syrup', 'Rhum Agricole Blanc',
-	'Simple Syrup', 'Unaged Column Still Rum',
+	'Barbados Rum',
+	'Cassis Liqueur',
+	'Classic Aromatic Bitters',
+	'Demerara Syrup',
+	'Haitian Rum',
+	'New Orleans-Style Bitters',
+	'Oaxacan Rum',
+	'PX Sherry',
+	'Passionfruit Syrup',
+	'Rhum Agricole Blanc',
+	'Simple Syrup',
+	'Unaged Column Still Rum',
 ];
 /** Homemade syrup bottles take their House names; the migration later moves them to other stock. */
 const HOUSE: Record<string, string> = {
@@ -46,12 +55,20 @@ export function prepassRenames(paths: Iterable<string>, mapping: AdoptionMapping
 		let next: string | undefined, alias: string | undefined;
 		const rule = folder === 'Types' && PREPASS_TYPES.includes(name) ? mapping.types.get(name) : undefined;
 		if (rule) next = fileName(rule.name);
-		else if (folder === 'Bottles' && HOUSE[name]) { next = HOUSE[name]; alias = name; }
-		else if (folder === 'Categories' && CATEGORIES[name]) next = CATEGORIES[name];
+		else if (folder === 'Bottles' && HOUSE[name]) {
+			next = HOUSE[name];
+			alias = name;
+		} else if (folder === 'Categories' && CATEGORIES[name]) next = CATEGORIES[name];
 		// Types that merge or change name (Crème de Cacao (dark)) are the migration's.
-		else if (FILENAME_FOLDERS.includes(folder) && fileName(name) !== name
-			&& (folder !== 'Types' || mapping.types.get(name)?.name === name)) { next = fileName(name); alias = name; }
-		if (next && next !== name) renames.push({ path, name: next, ...alias ? { alias } : {} });
+		else if (
+			FILENAME_FOLDERS.includes(folder) &&
+			fileName(name) !== name &&
+			(folder !== 'Types' || mapping.types.get(name)?.name === name)
+		) {
+			next = fileName(name);
+			alias = name;
+		}
+		if (next && next !== name) renames.push({ path, name: next, ...(alias ? { alias } : {}) });
 	}
 	return renames;
 }
@@ -71,7 +88,8 @@ export interface Restored {
 export function restorePrepass(source: ReadonlyMap<string, string>, mapping: AdoptionMapping): Restored {
 	const reverse = new Map<string, string>();
 	const add = (folder: string, renamed: string, old: string) => {
-		const from = `Cocktails/${folder}/${renamed}.md`, to = `Cocktails/${folder}/${old}.md`;
+		const from = `Cocktails/${folder}/${renamed}.md`,
+			to = `Cocktails/${folder}/${old}.md`;
 		if (source.has(from) && !source.has(to)) reverse.set(from, to);
 	};
 	for (const name of PREPASS_TYPES) {
@@ -86,19 +104,31 @@ export function restorePrepass(source: ReadonlyMap<string, string>, mapping: Ado
 		if (!FILENAME_FOLDERS.includes(folder)) continue;
 		const aliases: unknown = readDocument(content).metadata.aliases;
 		const list = Array.isArray(aliases) ? aliases : typeof aliases === 'string' ? [aliases] : [];
-		const proper = list.filter((alias): alias is string => typeof alias === 'string' && alias !== name && validName(alias) && fileName(alias) === name);
+		const proper = list.filter(
+			(alias): alias is string =>
+				typeof alias === 'string' && alias !== name && validName(alias) && fileName(alias) === name,
+		);
 		if (proper.length === 1) add(folder, name, proper[0]!);
 	}
 	// A bare link is reversed only when its name is unique; Obsidian writes a path otherwise.
 	const counts = new Map<string, number>();
-	for (const path of source.keys()) if (path.endsWith('.md')) counts.set(parts(path).name, (counts.get(parts(path).name) ?? 0) + 1);
-	const names = new Map([...reverse].filter(([from]) => counts.get(parts(from).name) === 1)
-		.map(([from, to]) => [parts(from).name, parts(to).name]));
+	for (const path of source.keys())
+		if (path.endsWith('.md')) counts.set(parts(path).name, (counts.get(parts(path).name) ?? 0) + 1);
+	const names = new Map(
+		[...reverse]
+			.filter(([from]) => counts.get(parts(from).name) === 1)
+			.map(([from, to]) => [parts(from).name, parts(to).name]),
+	);
 	const restoreLink = (_: string, target: string, rest: string) => {
 		const path = target.replace(/\.md$/, '');
-		const explicit = path.includes('/') ? reverse.get(`${path.startsWith('Cocktails/') ? path : `Cocktails/${path}`}.md`) : undefined;
-		const old = explicit ? (path.startsWith('Cocktails/') ? explicit : explicit.slice('Cocktails/'.length)).replace(/\.md$/, '')
-			: !path.includes('/') ? names.get(path) : undefined;
+		const explicit = path.includes('/')
+			? reverse.get(`${path.startsWith('Cocktails/') ? path : `Cocktails/${path}`}.md`)
+			: undefined;
+		const old = explicit
+			? (path.startsWith('Cocktails/') ? explicit : explicit.slice('Cocktails/'.length)).replace(/\.md$/, '')
+			: !path.includes('/')
+				? names.get(path)
+				: undefined;
 		return `[[${old ?? target}${rest}]]`;
 	};
 	const restored = new Map<string, string>();
@@ -111,14 +141,19 @@ export function restorePrepass(source: ReadonlyMap<string, string>, mapping: Ado
 
 /** Point the plan's removals at the files' actual paths. */
 export function actualRemovals(plan: MigrationPlan, actual: ReadonlyMap<string, string>): void {
-	plan.remove = plan.remove.map(path => {
+	plan.remove = plan.remove.map((path) => {
 		const real = actual.get(`Cocktails/${path.slice(plan.root.length + 1)}`);
 		return real ? `${plan.root}/${real.slice('Cocktails/'.length)}` : path;
 	});
 }
 
 function validName(value: string): boolean {
-	try { noteName(value); return true; } catch { return false; }
+	try {
+		noteName(value);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -128,12 +163,16 @@ function validName(value: string): boolean {
  */
 export function withDisplayText(content: string, renamed: ReadonlySet<string>): string {
 	const frontmatter = content.match(/^\uFEFF?---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/)?.[0] ?? '';
-	const body = content.slice(frontmatter.length).split('\n').map(line => {
-		const pipe = /^\s*\|/.test(line) ? '\\|' : '|';
-		return line.replace(/(!?)\[\[([^\]|#\n]+)\]\]/g, (link: string, embed: string, target: string) => {
-			const name = target.replace(/\.md$/, '').split('/').at(-1)!;
-			return embed || !renamed.has(name) ? link : `[[${target}${pipe}${name}]]`;
-		});
-	}).join('\n');
+	const body = content
+		.slice(frontmatter.length)
+		.split('\n')
+		.map((line) => {
+			const pipe = /^\s*\|/.test(line) ? '\\|' : '|';
+			return line.replace(/(!?)\[\[([^\]|#\n]+)\]\]/g, (link: string, embed: string, target: string) => {
+				const name = target.replace(/\.md$/, '').split('/').at(-1)!;
+				return embed || !renamed.has(name) ? link : `[[${target}${pipe}${name}]]`;
+			});
+		})
+		.join('\n');
 	return frontmatter + body;
 }

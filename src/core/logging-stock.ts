@@ -18,7 +18,11 @@ export interface DrawdownPlan {
 	blocked: { path: string; error: string }[];
 }
 /** `rest` takes everything open in a bottle, or all of other stock's amount, whatever the servings: finishing it off. */
-export interface SelectedPour { path: string; ml: number; rest?: boolean; }
+export interface SelectedPour {
+	path: string;
+	ml: number;
+	rest?: boolean;
+}
 const EPSILON = 1e-8;
 
 /** Capture active stock fields; an empty unopened count means zero. */
@@ -28,17 +32,21 @@ export function stockSnapshot(note: CabinetNote, properties: Record<string, unkn
 	if (properties[PROP.stockTracking] === 'volume') {
 		keys.push(...(note.kind === 'bottle' ? [PROP.open, PROP.unopened] : [PROP.remaining]));
 	} else if (properties[PROP.stockTracking] === 'status') keys.push(PROP.availability);
-	const fields = Object.fromEntries(keys.map(key => [key, properties[key]]));
+	const fields = Object.fromEntries(keys.map((key) => [key, properties[key]]));
 	if (note.kind === 'bottle' && properties[PROP.stockTracking] === 'volume') {
 		const unopened = fields[PROP.unopened];
-		if (unopened === undefined || unopened === null || (typeof unopened === 'string' && !unopened.trim())) fields[PROP.unopened] = 0;
+		if (unopened === undefined || unopened === null || (typeof unopened === 'string' && !unopened.trim()))
+			fields[PROP.unopened] = 0;
 	}
 	return { note, fields };
 }
 
 export function sameStock(expected: StockSource, current: StockSource): boolean {
 	const keys = new Set([...Object.keys(expected.fields), ...Object.keys(current.fields)]);
-	return expected.note.path === current.note.path && [...keys].every(key => Object.is(expected.fields[key], current.fields[key]));
+	return (
+		expected.note.path === current.note.path &&
+		[...keys].every((key) => Object.is(expected.fields[key], current.fields[key]))
+	);
 }
 
 export function isStocked(source: StockSource): boolean {
@@ -55,13 +63,20 @@ function quantity(fields: Record<string, unknown>, key: string, integer = false)
 	const value = fields[key];
 	if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) return null;
 	if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || (integer && !Number.isInteger(value))) {
-		const labels: Record<string, string> = { [PROP.open]: 'Open amount', [PROP.unopened]: 'Unopened count', [PROP.volume]: 'Bottle size', [PROP.remaining]: 'Amount left' };
+		const labels: Record<string, string> = {
+			[PROP.open]: 'Open amount',
+			[PROP.unopened]: 'Unopened count',
+			[PROP.volume]: 'Bottle size',
+			[PROP.remaining]: 'Amount left',
+		};
 		throw new Error(`${labels[key] ?? 'Amount'} must be ${integer ? 'a whole number' : 'a number'}, 0 or more.`);
 	}
 	return value;
 }
 
-export function formatMl(value: number): string { return String(Number(value.toFixed(3))); }
+export function formatMl(value: number): string {
+	return String(Number(value.toFixed(3)));
+}
 
 /**
  * A bottle's stock in words: "88% (660 mL), 2 unopened". Percent of the bottle size when known,
@@ -70,8 +85,12 @@ export function formatMl(value: number): string { return String(Number(value.toF
 export function bottleStockText(open: number | null, unopened: number | null, volume: number | null): string {
 	const parts: string[] = [];
 	if (open !== null && open > 0) {
-		const percent = volume !== null && volume > 0 ? open / volume * 100 : null;
-		parts.push(percent === null ? `${formatMl(open)} mL` : `${percent < 1 ? '<1' : Math.round(percent)}% (${formatMl(open)} mL)`);
+		const percent = volume !== null && volume > 0 ? (open / volume) * 100 : null;
+		parts.push(
+			percent === null
+				? `${formatMl(open)} mL`
+				: `${percent < 1 ? '<1' : Math.round(percent)}% (${formatMl(open)} mL)`,
+		);
 	}
 	if (unopened !== null && unopened > 0) parts.push(`${unopened} unopened`);
 	return parts.join(', ') || 'None';
@@ -107,28 +126,48 @@ function drawdown(source: StockSource, consumedMl: number): StockChange {
 	const needed = consumedMl - open;
 	if (needed > unopened * volume + EPSILON) throw new Error(`${formatMl(needed - unopened * volume)} mL short.`);
 	const opened = Math.max(1, Math.ceil((needed - EPSILON) / volume));
-	return { source, consumedMl, opened, updates: {
-		[PROP.open]: Math.max(0, opened * volume - needed), [PROP.unopened]: unopened - opened,
-	} };
+	return {
+		source,
+		consumedMl,
+		opened,
+		updates: {
+			[PROP.open]: Math.max(0, opened * volume - needed),
+			[PROP.unopened]: unopened - opened,
+		},
+	};
 }
 
 /** Aggregate each source before arithmetic. Any error invalidates the entire plan. */
-export function planDrawdown(sources: readonly StockSource[], pours: readonly SelectedPour[], servings: number): DrawdownPlan {
-	if (!Number.isFinite(servings) || servings <= 0) return { changes: [], errors: ['Enter more than 0 servings.'], blocked: [] };
+export function planDrawdown(
+	sources: readonly StockSource[],
+	pours: readonly SelectedPour[],
+	servings: number,
+): DrawdownPlan {
+	if (!Number.isFinite(servings) || servings <= 0)
+		return { changes: [], errors: ['Enter more than 0 servings.'], blocked: [] };
 	const totals = new Map<string, number>();
 	const errors: string[] = [];
 	for (const pour of pours) {
-		const source = pour.rest ? sources.find(item => item.note.path === pour.path) : undefined;
-		if (pour.rest && !source) { errors.push(`${pour.path}: Moved or deleted. Select another.`); continue; }
+		const source = pour.rest ? sources.find((item) => item.note.path === pour.path) : undefined;
+		if (pour.rest && !source) {
+			errors.push(`${pour.path}: Moved or deleted. Select another.`);
+			continue;
+		}
 		const ml = source ? openMl(source) : pour.ml * servings;
-		if (source && !(ml > 0)) { errors.push(`${source.note.name}: Nothing open to finish.`); continue; }
-		if (!Number.isFinite(ml) || ml <= 0) { errors.push('Invalid amount.'); continue; }
+		if (source && !(ml > 0)) {
+			errors.push(`${source.note.name}: Nothing open to finish.`);
+			continue;
+		}
+		if (!Number.isFinite(ml) || ml <= 0) {
+			errors.push('Invalid amount.');
+			continue;
+		}
 		totals.set(pour.path, (totals.get(pour.path) ?? 0) + ml);
 	}
 	const changes: StockChange[] = [];
 	const blocked: DrawdownPlan['blocked'] = [];
 	for (const [path, ml] of totals) {
-		const source = sources.find(item => item.note.path === path);
+		const source = sources.find((item) => item.note.path === path);
 		try {
 			if (!source) throw new Error('Moved or deleted. Select another.');
 			if (!Number.isFinite(ml)) throw new Error('Too many servings.');

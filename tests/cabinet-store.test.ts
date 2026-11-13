@@ -10,23 +10,40 @@ import type { RestockThresholds } from '../src/core/restock';
 import { TFile, TFolder } from './obsidian-stub';
 
 function fixture() {
-	const contents = new Map(starterPlan('Cocktails').map(note => {
-		if (note.kind === 'base') return [note.path, note.content];
-		const frontmatter = note.content.split('---\n')[1] || '';
-		const properties: Record<string, unknown> = Object.fromEntries(frontmatter.trim().split('\n').map(line => {
-			const colon = line.indexOf(':');
-			return [line.slice(0, colon), JSON.parse(line.slice(colon + 1)) as unknown];
-		}));
-		return [note.path, `---\n${JSON.stringify(properties)}\n---\nPersonal content to preserve.\n`];
-	}));
-	const folders = new Set(['Cocktails', 'Cocktails/Views', 'Cocktails/Types', 'Cocktails/Families', 'Cocktails/Categories']);
+	const contents = new Map(
+		starterPlan('Cocktails').map((note) => {
+			if (note.kind === 'base') return [note.path, note.content];
+			const frontmatter = note.content.split('---\n')[1] || '';
+			const properties: Record<string, unknown> = Object.fromEntries(
+				frontmatter
+					.trim()
+					.split('\n')
+					.map((line) => {
+						const colon = line.indexOf(':');
+						return [line.slice(0, colon), JSON.parse(line.slice(colon + 1)) as unknown];
+					}),
+			);
+			return [note.path, `---\n${JSON.stringify(properties)}\n---\nPersonal content to preserve.\n`];
+		}),
+	);
+	const folders = new Set([
+		'Cocktails',
+		'Cocktails/Views',
+		'Cocktails/Types',
+		'Cocktails/Families',
+		'Cocktails/Categories',
+	]);
 	const app = {
 		vault: {
-			getFiles: () => [...contents.keys()].map(path => new TFile(path)),
-			getAllLoadedFiles: () => [...contents.keys()].map(path => new TFile(path)),
-			getAbstractFileByPath: (path: string) => contents.has(path) ? new TFile(path) : folders.has(path) ? new TFolder() : null,
+			getFiles: () => [...contents.keys()].map((path) => new TFile(path)),
+			getAllLoadedFiles: () => [...contents.keys()].map((path) => new TFile(path)),
+			getAbstractFileByPath: (path: string) =>
+				contents.has(path) ? new TFile(path) : folders.has(path) ? new TFolder() : null,
 			read: (file: TFile) => Promise.resolve(contents.get(file.path)),
-			createFolder: (path: string) => { folders.add(path); return Promise.resolve(); },
+			createFolder: (path: string) => {
+				folders.add(path);
+				return Promise.resolve();
+			},
 			create: (path: string, content: string) => {
 				assert.ok(!contents.has(path), 'Existing files must not be overwritten.');
 				contents.set(path, content);
@@ -49,7 +66,17 @@ function fixture() {
 		},
 	} as unknown as App;
 	const thresholds: RestockThresholds = { percent: 10, ml: 70 };
-	return { app, contents, folders, thresholds, store: new CabinetStore(app, () => 'Cocktails', () => thresholds) };
+	return {
+		app,
+		contents,
+		folders,
+		thresholds,
+		store: new CabinetStore(
+			app,
+			() => 'Cocktails',
+			() => thresholds,
+		),
+	};
 }
 
 void test('setup preserves a complete cabinet', async () => {
@@ -102,8 +129,14 @@ void test('setup adds missing views, replaces changed ones, keeps the home, and 
 	const home = contents.get('Cocktails/Cocktail Cabinet.md');
 	contents.delete('Cocktails/Views/Ingredient types.base');
 	const preview = await store.previewSetup('Cocktails');
-	assert.deepEqual(preview.create.map(file => file.path), ['Cocktails/Views/Ingredient types.base']);
-	assert.deepEqual(preview.update.map(file => file.path), [edited]);
+	assert.deepEqual(
+		preview.create.map((file) => file.path),
+		['Cocktails/Views/Ingredient types.base'],
+	);
+	assert.deepEqual(
+		preview.update.map((file) => file.path),
+		[edited],
+	);
 	assert.deepEqual(preview.conflicts, []);
 	assert.deepEqual(await store.setup('Cocktails'), { created: 1, updated: 1, kept: contents.size - 2 });
 	assert.equal(contents.get(edited), original);
@@ -118,7 +151,7 @@ void test('views are rewritten when the generated version changes, not when Obsi
 	// The first sync adopts views that already match and records every view.
 	const first = await store.syncViews({});
 	assert.deepEqual(first.updated, []);
-	assert.deepEqual(Object.keys(first.written).sort(), views.map(view => view.path).sort());
+	assert.deepEqual(Object.keys(first.written).sort(), views.map((view) => view.path).sort());
 	// A view saved with column widths, or deleted, stays while the plugin's version is the same.
 	const bottles = 'Cocktails/Views/Bottles.base';
 	contents.set(bottles, `${contents.get(bottles)!}columnSize: {}\n`);
@@ -134,7 +167,10 @@ void test('views are rewritten when the generated version changes, not when Obsi
 	const restock = await store.syncViews(first.written);
 	assert.deepEqual(restock.updated, ['Cocktails/Views/Restock.base']);
 	assert.equal(contents.get('Cocktails/Views/Restock.base'), restockBase('Cocktails', thresholds).content);
-	assert.equal(restock.written['Cocktails/Views/Restock.base'], contentFingerprint(restockBase('Cocktails', thresholds).content, 'Cocktails'));
+	assert.equal(
+		restock.written['Cocktails/Views/Restock.base'],
+		contentFingerprint(restockBase('Cocktails', thresholds).content, 'Cocktails'),
+	);
 });
 
 void test('Refresh rewrites every changed or missing view, and nothing syncs before setup', async () => {
@@ -144,7 +180,10 @@ void test('Refresh rewrites every changed or missing view, and nothing syncs bef
 	const original = contents.get(related)!;
 	contents.set(related, '# changed\n');
 	contents.delete('Cocktails/Views/Restock.base');
-	assert.deepEqual((await store.syncViews(written, true)).updated.sort(), ['Cocktails/Views/Related.base', 'Cocktails/Views/Restock.base']);
+	assert.deepEqual((await store.syncViews(written, true)).updated.sort(), [
+		'Cocktails/Views/Related.base',
+		'Cocktails/Views/Restock.base',
+	]);
 	assert.equal(contents.get(related), original);
 	contents.delete('Cocktails/Cocktail Cabinet.md');
 	contents.set(related, '# changed\n');
@@ -157,13 +196,19 @@ void test('a new cabinet gets the worked example; reruns never restore a deleted
 	contents.delete('Cocktails/Cocktail Cabinet.md');
 	const fresh = await store.previewSetup('Cocktails');
 	assert.deepEqual(fresh.conflicts, []);
-	assert.deepEqual(fresh.create.filter(file => file.example).map(file => file.path).sort(), [
-		'Cocktails/Ingredients/House Simple Syrup (1 to 1).md',
-		'Cocktails/Ingredients/Lemons.md',
-		'Cocktails/Ingredients/Limes.md',
-		'Cocktails/Recipes/Daiquiri.md',
-		'Cocktails/Recipes/Whiskey Sour.md',
-	]);
+	assert.deepEqual(
+		fresh.create
+			.filter((file) => file.example)
+			.map((file) => file.path)
+			.sort(),
+		[
+			'Cocktails/Ingredients/House Simple Syrup (1 to 1).md',
+			'Cocktails/Ingredients/Lemons.md',
+			'Cocktails/Ingredients/Limes.md',
+			'Cocktails/Recipes/Daiquiri.md',
+			'Cocktails/Recipes/Whiskey Sour.md',
+		],
+	);
 	await store.setup('Cocktails');
 	assert.ok(contents.get('Cocktails/Cocktail Cabinet.md')?.includes('[[Cocktails/Recipes/Daiquiri|Daiquiri]]'));
 	contents.delete('Cocktails/Recipes/Daiquiri.md');
@@ -183,7 +228,10 @@ void test('an existing note at an example path is kept rather than blocking a ne
 });
 
 void test('view fingerprints ignore the cabinet folder and line endings', () => {
-	assert.equal(contentFingerprint('a "Cocktails" b\n', 'Cocktails'), contentFingerprint('a "Drinks/Bar" b\r\n', 'Drinks/Bar'));
+	assert.equal(
+		contentFingerprint('a "Cocktails" b\n', 'Cocktails'),
+		contentFingerprint('a "Drinks/Bar" b\r\n', 'Drinks/Bar'),
+	);
 	assert.notEqual(contentFingerprint('a', 'Cocktails'), contentFingerprint('b', 'Cocktails'));
 });
 
@@ -216,27 +264,42 @@ void test('bottle classification reads one scalar type without broadening, while
 		[second, { 'cc-kind': 'type', 'cc-name': 'Aged Barbados Rum' }],
 		[bottle, { 'cc-kind': 'bottle', 'cc-name': 'Example', 'cc-type': `[[${first}]]` }],
 		[alternatives, { 'cc-kind': 'bottle', 'cc-name': 'Alternative', 'cc-type': `[[${first}]]` }],
-		['Cocktails/Ingredients/Other.md', { 'cc-kind': 'ingredient', 'cc-name': 'Other', 'cc-provides': [`[[${first}]]`, `[[${second}]]`] }],
+		[
+			'Cocktails/Ingredients/Other.md',
+			{ 'cc-kind': 'ingredient', 'cc-name': 'Other', 'cc-provides': [`[[${first}]]`, `[[${second}]]`] },
+		],
 	]);
 	const app = {
-		vault: { getMarkdownFiles: () => [...frontmatters.keys()].map(path => new TFile(path)) },
+		vault: { getMarkdownFiles: () => [...frontmatters.keys()].map((path) => new TFile(path)) },
 		metadataCache: {
 			getFileCache: (file: TFile) => ({ frontmatter: frontmatters.get(file.path) }),
-			getFirstLinkpathDest: (path: string) => frontmatters.has(path) ? new TFile(path) : null,
+			getFirstLinkpathDest: (path: string) => (frontmatters.has(path) ? new TFile(path) : null),
 		},
 	} as unknown as App;
 	const store = new CabinetStore(app, () => 'Cocktails');
-	const read = () => store.notes().find(note => note.path === bottle)!;
+	const read = () => store.notes().find((note) => note.path === bottle)!;
 	assert.deepEqual(read().parents, [first]);
-	assert.deepEqual(store.notes().find(note => note.kind === 'ingredient')?.parents, [first, second]);
+	assert.deepEqual(store.notes().find((note) => note.kind === 'ingredient')?.parents, [first, second]);
 	assert.ok(relatedTargets(store.notes(), read()).has(alternatives));
 	assert.ok(!relatedTargets(store.notes(), read()).has(second));
-	for (const value of [undefined, null, [], [`[[${first}]]`], [`[[${first}]]`, `[[${second}]]`], `[[${bottle}]]`, '[[Missing]]']) {
+	for (const value of [
+		undefined,
+		null,
+		[],
+		[`[[${first}]]`],
+		[`[[${first}]]`, `[[${second}]]`],
+		`[[${bottle}]]`,
+		'[[Missing]]',
+	]) {
 		frontmatters.set(bottle, { 'cc-kind': 'bottle', 'cc-name': 'Example', 'cc-type': value });
 		assert.deepEqual(read().parents, []);
 		assert.ok(!relatedTargets(store.notes(), read()).has(alternatives));
 	}
-	frontmatters.set(bottle, { 'cc-kind': 'bottle', 'cc-name': 'Example', 'cc-types': [`[[${first}]]`, `[[${second}]]`] });
+	frontmatters.set(bottle, {
+		'cc-kind': 'bottle',
+		'cc-name': 'Example',
+		'cc-types': [`[[${first}]]`, `[[${second}]]`],
+	});
 	assert.deepEqual(read().parents, []);
 });
 
@@ -250,14 +313,14 @@ void test('types and families read one scalar parent and ignore lists', () => {
 		[type, { 'cc-kind': 'type', 'cc-name': 'Light Rum', 'cc-family': `[[${family}]]` }],
 	]);
 	const app = {
-		vault: { getMarkdownFiles: () => [...frontmatters.keys()].map(path => new TFile(path)) },
+		vault: { getMarkdownFiles: () => [...frontmatters.keys()].map((path) => new TFile(path)) },
 		metadataCache: {
 			getFileCache: (file: TFile) => ({ frontmatter: frontmatters.get(file.path) }),
-			getFirstLinkpathDest: (path: string) => frontmatters.has(path) ? new TFile(path) : null,
+			getFirstLinkpathDest: (path: string) => (frontmatters.has(path) ? new TFile(path) : null),
 		},
 	} as unknown as App;
 	const store = new CabinetStore(app, () => 'Cocktails');
-	const parents = (path: string) => store.notes().find(note => note.path === path)!.parents;
+	const parents = (path: string) => store.notes().find((note) => note.path === path)!.parents;
 	assert.deepEqual(parents(type), [family]);
 	assert.deepEqual(parents(family), [category]);
 	frontmatters.set(type, { 'cc-kind': 'type', 'cc-name': 'Light Rum', 'cc-family': [`[[${family}]]`] });
@@ -267,9 +330,12 @@ void test('types and families read one scalar parent and ignore lists', () => {
 });
 
 const enhancementDraft = {
-	kind: 'recipe' as const, name: 'A clipped recipe',
+	kind: 'recipe' as const,
+	name: 'A clipped recipe',
 	ingredients: ['2 oz [[Cocktails/Families/Gin|Gin (Cold River)]]'],
-	method: 'Stir with ice.', description: 'Personal annotation.', properties: { source: 'https://example.test/recipe' },
+	method: 'Stir with ice.',
+	description: 'Personal annotation.',
+	properties: { source: 'https://example.test/recipe' },
 };
 
 void test('enhancing an existing page moves it into Recipes and preserves metadata', async () => {
@@ -305,7 +371,8 @@ void test('enhancement converts a star rating to a number', async () => {
 
 void test('enhancement retains the location of a note already inside the cabinet', async () => {
 	const { store, contents } = fixture();
-	const path = 'Cocktails/My recipes/Original.md', original = '2 oz Gin\n\nStir with ice.';
+	const path = 'Cocktails/My recipes/Original.md',
+		original = '2 oz Gin\n\nStir with ice.';
 	contents.set(path, original);
 	assert.equal(store.recipeDestination(path), path);
 	assert.equal((await store.enhanceRecipe({ path, content: original }, enhancementDraft)).path, path);
@@ -314,7 +381,8 @@ void test('enhancement retains the location of a note already inside the cabinet
 
 void test('a stale review, renamed original, conflicting destination, or different resource kind cannot overwrite notes', async () => {
 	const { store, contents } = fixture();
-	const path = 'Clippings/Original.md', original = '2 oz Gin';
+	const path = 'Clippings/Original.md',
+		original = '2 oz Gin';
 	contents.set(path, 'Edited while review is open.');
 	await assert.rejects(store.enhanceRecipe({ path, content: original }, enhancementDraft), /note changed/);
 	assert.equal(contents.get(path), 'Edited while review is open.');
@@ -334,10 +402,14 @@ void test('a stale review, renamed original, conflicting destination, or differe
 
 void test('a failed move restores the source content but never overwrites concurrent edits', async () => {
 	const { app, store, contents } = fixture();
-	const path = 'Clippings/Original.md', original = '2 oz Gin';
+	const path = 'Clippings/Original.md',
+		original = '2 oz Gin';
 	contents.set(path, original);
 	app.fileManager.renameFile = () => Promise.reject(new Error('Move failed'));
-	await assert.rejects(store.enhanceRecipe({ path, content: original }, enhancementDraft), /original note content was restored/);
+	await assert.rejects(
+		store.enhanceRecipe({ path, content: original }, enhancementDraft),
+		/original note content was restored/,
+	);
 	assert.equal(contents.get(path), original);
 	app.fileManager.renameFile = () => {
 		contents.set(path, contents.get(path)! + '\nConcurrent edit.');
@@ -358,9 +430,15 @@ void test('editor newline normalization does not make an unchanged note appear s
 void test('fresh cabinet reads retain a just-edited resource while metadata cache is temporarily missing', async () => {
 	const { app, contents, store } = fixture();
 	const original = 'Cocktails/Bottles/Cache race.md';
-	contents.set(original, `\uFEFF---\n${JSON.stringify({ 'cc-kind': 'bottle', 'cc-name': 'Cache race', 'cc-open-ml': 25 })}\n---\n`);
-	app.vault.getMarkdownFiles = () => [...contents.keys()].filter(path => path.endsWith('.md')).map(path => new TFile(path)) as unknown as ReturnType<typeof app.vault.getMarkdownFiles>;
+	contents.set(
+		original,
+		`\uFEFF---\n${JSON.stringify({ 'cc-kind': 'bottle', 'cc-name': 'Cache race', 'cc-open-ml': 25 })}\n---\n`,
+	);
+	app.vault.getMarkdownFiles = () =>
+		[...contents.keys()]
+			.filter((path) => path.endsWith('.md'))
+			.map((path) => new TFile(path)) as unknown as ReturnType<typeof app.vault.getMarkdownFiles>;
 	Object.assign(app, { metadataCache: { getFileCache: () => undefined, getFirstLinkpathDest: () => null } });
 	assert.deepEqual(store.notes(), []);
-	assert.equal((await store.readNotes()).find(note => note.path === original)?.name, 'Cache race');
+	assert.equal((await store.readNotes()).find((note) => note.path === original)?.name, 'Cache race');
 });

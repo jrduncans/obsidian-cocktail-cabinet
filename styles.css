@@ -114,7 +114,7 @@
 }
 
 /* Leave room for the property prefix, only in cabinet property panels. */
-.metadata-container:has(.metadata-property[data-property-key="cc-kind"]) {
+.metadata-container:has(.metadata-property[data-property-key='cc-kind']) {
 	--metadata-label-width: min(14em, 45%);
 }
 
@@ -209,9 +209,15 @@
 	column-gap: var(--size-4-3);
 	transition: opacity 120ms ease;
 }
-.cocktail-cabinet-purchase-fields > .is-amount { grid-column: 1; }
-.cocktail-cabinet-purchase-fields > .is-price { grid-column: 2; }
-.cocktail-cabinet-purchase-fields > .is-size { grid-column: 3; }
+.cocktail-cabinet-purchase-fields > .is-amount {
+	grid-column: 1;
+}
+.cocktail-cabinet-purchase-fields > .is-price {
+	grid-column: 2;
+}
+.cocktail-cabinet-purchase-fields > .is-size {
+	grid-column: 3;
+}
 .cocktail-cabinet-purchase-fields > .cocktail-cabinet-error,
 .cocktail-cabinet-purchase-fields > .cocktail-cabinet-purchase-note:not(.is-amount) {
 	grid-column: 1 / -1;

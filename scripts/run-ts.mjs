@@ -9,9 +9,17 @@ const [script, ...args] = process.argv.slice(2);
 const directory = await mkdtemp(join(tmpdir(), 'cocktail-cabinet-script-'));
 try {
 	const entry = join(directory, 'script.mjs');
-	await build({ entryPoints: [script], outfile: entry, bundle: true, platform: 'node', format: 'esm', target: 'node20',
+	await build({
+		entryPoints: [script],
+		outfile: entry,
+		bundle: true,
+		platform: 'node',
+		format: 'esm',
+		target: 'node20',
 		banner: { js: 'import { createRequire } from "node:module"; const require = createRequire(import.meta.url);' },
 	});
 	const result = spawnSync(process.execPath, [entry, ...args], { stdio: 'inherit' });
 	process.exitCode = result.status ?? 1;
-} finally { await rm(directory, { recursive: true, force: true }); }
+} finally {
+	await rm(directory, { recursive: true, force: true });
+}

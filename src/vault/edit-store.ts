@@ -54,7 +54,7 @@ export class EditStore {
 		try {
 			const file = this.file(note);
 			if (Object.keys(changes.sections).length) {
-				await this.app.vault.process(file, current => {
+				await this.app.vault.process(file, (current) => {
 					if (normalize(current) !== normalize(snapshot.content)) throw new Error(stale);
 					return replaceRecipeSections(current, changes.sections);
 				});

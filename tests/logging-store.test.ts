@@ -9,20 +9,48 @@ import { PROP } from '../src/core/schema';
 import type { CabinetNote } from '../src/core/schema';
 
 function fixture() {
-	const recipe: CabinetNote = { path: 'Cocktails/Recipes/Test drink.md', name: 'Test drink', kind: 'recipe', parents: [] };
+	const recipe: CabinetNote = {
+		path: 'Cocktails/Recipes/Test drink.md',
+		name: 'Test drink',
+		kind: 'recipe',
+		parents: [],
+	};
 	const type: CabinetNote = { path: 'Cocktails/Types/Test type.md', name: 'Test type', kind: 'type', parents: [] };
-	const a: CabinetNote = { path: 'Cocktails/Bottles/Test A.md', name: 'Test A', kind: 'bottle', parents: [type.path] };
-	const b: CabinetNote = { path: 'Cocktails/Bottles/Test B.md', name: 'Test B', kind: 'bottle', parents: [type.path] };
+	const a: CabinetNote = {
+		path: 'Cocktails/Bottles/Test A.md',
+		name: 'Test A',
+		kind: 'bottle',
+		parents: [type.path],
+	};
+	const b: CabinetNote = {
+		path: 'Cocktails/Bottles/Test B.md',
+		name: 'Test B',
+		kind: 'bottle',
+		parents: [type.path],
+	};
 	const notes = [recipe, type, a, b];
-	const properties = new Map<string, Record<string, unknown>>([a, b].map(note => [note.path, {
-		[PROP.kind]: 'bottle', [PROP.stockTracking]: 'volume', [PROP.volume]: 100,
-		[PROP.open]: 80, [PROP.unopened]: 2, [PROP.shoppingList]: true, custom: { preserve: 'yes' },
-	}]));
-	const contents = new Map([[recipe.path, '### Ingredients\n- 20 ml [[Test A]]\n- 10 ml [[Test B]]\n### Method\nStir.']]);
+	const properties = new Map<string, Record<string, unknown>>(
+		[a, b].map((note) => [
+			note.path,
+			{
+				[PROP.kind]: 'bottle',
+				[PROP.stockTracking]: 'volume',
+				[PROP.volume]: 100,
+				[PROP.open]: 80,
+				[PROP.unopened]: 2,
+				[PROP.shoppingList]: true,
+				custom: { preserve: 'yes' },
+			},
+		]),
+	);
+	const contents = new Map([
+		[recipe.path, '### Ingredients\n- 20 ml [[Test A]]\n- 10 ml [[Test B]]\n### Method\nStir.'],
+	]);
 	const dailyPath = `Journal/${moment().format('YYYY/MM/YYYY-MM-DD')}.md`;
 	const events: string[] = [];
 	const folders = new Set(['', 'Journal']);
-	let failBottle = '', failDaily = false;
+	let failBottle = '',
+		failDaily = false;
 	// Recipe properties live apart from its body, which `read` returns.
 	const recipeProperties: Record<string, unknown> = { [PROP.timesMade]: 2, [PROP.lastMade]: '2000-01-01' };
 	const dailyInstance = {
@@ -31,7 +59,8 @@ function fixture() {
 		getDailyNote: () => {
 			events.push('daily-create');
 			if (failDaily) return Promise.reject(new Error('Daily disk failure'));
-			if (!contents.has(dailyPath)) contents.set(dailyPath, `# ${moment().format('YYYY/MM/YYYY-MM-DD')}\nTemplate content\n`);
+			if (!contents.has(dailyPath))
+				contents.set(dailyPath, `# ${moment().format('YYYY/MM/YYYY-MM-DD')}\nTemplate content\n`);
 			return Promise.resolve(new TFile(dailyPath));
 		},
 	};
@@ -40,14 +69,24 @@ function fixture() {
 		internalPlugins: { plugins: { 'daily-notes': { enabled: true, instance: dailyInstance } } },
 		metadataCache: {
 			getFirstLinkpathDest: (link: string) => {
-				const path = notes.find(note => note.name === link || note.path.replace(/\.md$/, '') === link)?.path;
+				const path = notes.find((note) => note.name === link || note.path.replace(/\.md$/, '') === link)?.path;
 				return path ? new TFile(path) : null;
 			},
 		},
 		vault: {
-			getAbstractFileByPath: (path: string) => properties.has(path) || contents.has(path) ? new TFile(path) : folders.has(path) ? new TFolder(path) : null,
-			getAllLoadedFiles: () => [...properties.keys(), ...contents.keys()].map(path => new TFile(path)),
-			read: (file: TFile) => Promise.resolve(properties.has(file.path) ? `---\n${JSON.stringify(properties.get(file.path))}\n---\nStock body` : contents.get(file.path)!),
+			getAbstractFileByPath: (path: string) =>
+				properties.has(path) || contents.has(path)
+					? new TFile(path)
+					: folders.has(path)
+						? new TFolder(path)
+						: null,
+			getAllLoadedFiles: () => [...properties.keys(), ...contents.keys()].map((path) => new TFile(path)),
+			read: (file: TFile) =>
+				Promise.resolve(
+					properties.has(file.path)
+						? `---\n${JSON.stringify(properties.get(file.path))}\n---\nStock body`
+						: contents.get(file.path)!,
+				),
 			process: (file: TFile, transform: (content: string) => string) => {
 				events.push('daily-append');
 				contents.set(file.path, transform(contents.get(file.path)!));
@@ -68,12 +107,28 @@ function fixture() {
 	cabinet.notes = () => notes;
 	cabinet.readNotes = () => Promise.resolve(notes);
 	const logger = new LoggingStore(app as unknown as App, cabinet);
-	return { app, logger, properties, recipeProperties, contents, events, dailyPath, recipe, a, b,
-		failBottle: (path: string) => { failBottle = path; }, failDaily: () => { failDaily = true; } };
+	return {
+		app,
+		logger,
+		properties,
+		recipeProperties,
+		contents,
+		events,
+		dailyPath,
+		recipe,
+		a,
+		b,
+		failBottle: (path: string) => {
+			failBottle = path;
+		},
+		failDaily: () => {
+			failDaily = true;
+		},
+	};
 }
 async function ready(f: ReturnType<typeof fixture>) {
 	const review = await f.logger.review(f.recipe);
-	const selections = new Map(review.lines.counted.map(line => [line.id, line.initialSelection!]));
+	const selections = new Map(review.lines.counted.map((line) => [line.id, line.initialSelection!]));
 	const plan = planLogging(review.lines, review.sources, selections, 1);
 	assert.deepEqual(plan.errors, []);
 	return { review, plan };
@@ -99,14 +154,20 @@ void test('a stale second bottle prevents every write and returns refreshed stoc
 	assert.equal(result.status, 'stale');
 	assert.deepEqual(f.events, []);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 80);
-	if (result.status === 'stale') assert.equal(result.review.sources.find(source => source.note.path === f.b.path)!.fields[PROP.open], 40);
+	if (result.status === 'stale')
+		assert.equal(result.review.sources.find((source) => source.note.path === f.b.path)!.fields[PROP.open], 40);
 });
 void test('shortfall prevents all writes even if another selected source can cover its pour', async () => {
 	const f = fixture();
 	f.properties.get(f.b.path)![PROP.open] = 0;
 	f.properties.get(f.b.path)![PROP.unopened] = 0;
 	const review = await f.logger.review(f.recipe);
-	const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map((line, index) => [line.id, index ? f.b.path : f.a.path])), 1);
+	const plan = planLogging(
+		review.lines,
+		review.sources,
+		new Map(review.lines.counted.map((line, index) => [line.id, index ? f.b.path : f.a.path])),
+		1,
+	);
 	await assert.rejects(f.logger.apply(review, plan, true), /Select what you used/);
 	assert.deepEqual(f.events, []);
 });
@@ -146,18 +207,27 @@ void test('daily note failure reports successful inventory and never repeats it'
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	f.failDaily();
-	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Stock updated, but the daily note wasn’t.*don’t log again/.test(error.message));
+	await assert.rejects(
+		f.logger.apply(review, plan, true),
+		(error) =>
+			error instanceof LoggingWriteError &&
+			/Stock updated, but the daily note wasn’t.*don’t log again/.test(error.message),
+	);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
 	assert.equal(f.contents.has(f.dailyPath), false);
-	assert.equal(f.events.filter(event => event === f.a.path).length, 1);
+	assert.equal(f.events.filter((event) => event === f.a.path).length, 1);
 	assert.equal((await f.logger.apply(review, plan, true)).status, 'stale');
-	assert.equal(f.events.filter(event => event === f.a.path).length, 1);
+	assert.equal(f.events.filter((event) => event === f.a.path).length, 1);
 });
 void test('partial bottle failure stops subsequent writes and leaves daily notes untouched', async () => {
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	f.failBottle(f.b.path);
-	await assert.rejects(f.logger.apply(review, plan, true), error => error instanceof LoggingWriteError && /Already updated: Test A\. Daily note unchanged/.test(error.message));
+	await assert.rejects(
+		f.logger.apply(review, plan, true),
+		(error) =>
+			error instanceof LoggingWriteError && /Already updated: Test A\. Daily note unchanged/.test(error.message),
+	);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
 	assert.equal(f.properties.get(f.b.path)![PROP.open], 80);
 	assert.deepEqual(f.events, [f.a.path, f.b.path]);
@@ -179,10 +249,12 @@ void test('recording last made is bookkeeping: a failure is reported without und
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	const original = f.app.fileManager.processFrontMatter;
-	f.app.fileManager.processFrontMatter = (file, transform) => file.path === f.recipe.path ? Promise.reject(new Error('disk')) : original(file, transform);
+	f.app.fileManager.processFrontMatter = (file, transform) =>
+		file.path === f.recipe.path ? Promise.reject(new Error('disk')) : original(file, transform);
 	const result = await f.logger.apply(review, plan, true);
 	assert.equal(result.status, 'applied');
-	if (result.status === 'applied') assert.match(result.notice, /Cocktail logged\. Couldn’t record last used or times made on Test drink\./);
+	if (result.status === 'applied')
+		assert.match(result.notice, /Cocktail logged\. Couldn’t record last used or times made on Test drink\./);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 60);
 	assert.match(f.contents.get(f.dailyPath)!, /Made a/);
 });
@@ -210,12 +282,11 @@ void test('a stock change during processFrontMatter is checked before assigning 
 	assert.equal(f.contents.has(f.dailyPath), false);
 });
 
-
 void test('stock changed during Daily notes preflight is caught before any inventory write', async () => {
 	const f = fixture();
 	const { review, plan } = await ready(f);
 	const original = f.logger.daily.preview.bind(f.logger.daily);
-	f.logger.daily.preview = async recipe => {
+	f.logger.daily.preview = async (recipe) => {
 		const preview = await original(recipe);
 		f.properties.get(f.b.path)![PROP.open] = 40;
 		return preview;
@@ -224,7 +295,6 @@ void test('stock changed during Daily notes preflight is caught before any inven
 	assert.deepEqual(f.events, []);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 80);
 });
-
 
 void test('logging treats blank unopened counts as zero and leaves the stored blank alone', async () => {
 	for (const blank of [undefined, null, '', '  ']) {
@@ -251,7 +321,10 @@ void test('a status-tracked source gets a last-used date though nothing is subtr
 	f.b.parents = []; // On its own, so its line isn't filled from Test A.
 	Object.assign(f.properties.get(f.b.path)!, { [PROP.stockTracking]: 'status', [PROP.availability]: 'Have' });
 	const { review, plan } = await ready(f);
-	assert.deepEqual(plan.changes.map(change => change.source.note.path), [f.a.path]);
+	assert.deepEqual(
+		plan.changes.map((change) => change.source.note.path),
+		[f.a.path],
+	);
 	assert.deepEqual(plan.alsoUsed, [f.b.path]);
 	await f.logger.apply(review, plan, false);
 	assert.deepEqual(f.events, [f.a.path, f.b.path, f.recipe.path]);
@@ -264,7 +337,12 @@ void test('logging on an earlier day records that day and never moves later date
 	f.recipeProperties[PROP.lastMade] = '2026-11-05';
 	const review = await f.logger.review(f.recipe, '2026-11-01');
 	assert.equal(review.daily.date, '2026-11-01');
-	const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+	const plan = planLogging(
+		review.lines,
+		review.sources,
+		new Map(review.lines.counted.map((line) => [line.id, line.initialSelection!])),
+		1,
+	);
 	assert.equal((await f.logger.apply(review, plan, false)).status, 'applied');
 	assert.equal(f.properties.get(f.a.path)![PROP.lastUsed], '2026-11-06');
 	assert.equal(f.properties.get(f.b.path)![PROP.lastUsed], '2026-11-01');
@@ -275,30 +353,51 @@ void test('a future or malformed log date is rejected before any write', async (
 	const f = fixture();
 	for (const day of ['2999-01-01', 'yesterday']) {
 		const review = await f.logger.review(f.recipe, day);
-		const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+		const plan = planLogging(
+			review.lines,
+			review.sources,
+			new Map(review.lines.counted.map((line) => [line.id, line.initialSelection!])),
+			1,
+		);
 		await assert.rejects(f.logger.apply(review, plan, false), /today or an earlier date/);
 	}
 	assert.deepEqual(f.events, []);
 });
 void test('a one-off subtracts stock and writes its lines to the daily note, with no recipe to count', async () => {
 	const f = fixture();
-	const review = await f.logger.reviewOneOff({ name: 'Scratch', lines: ['30 ml [[Test A]]', '15 ml lemon juice', 'Mint sprig'] });
+	const review = await f.logger.reviewOneOff({
+		name: 'Scratch',
+		lines: ['30 ml [[Test A]]', '15 ml lemon juice', 'Mint sprig'],
+	});
 	assert.equal(review.recipe, undefined);
-	assert.ok(review.lines.skipped.every(line => !line.link));
-	const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+	assert.ok(review.lines.skipped.every((line) => !line.link));
+	const plan = planLogging(
+		review.lines,
+		review.sources,
+		new Map(review.lines.counted.map((line) => [line.id, line.initialSelection!])),
+		1,
+	);
 	assert.deepEqual(plan.errors, []);
 	assert.equal((await f.logger.apply(review, plan, true)).status, 'applied');
 	assert.deepEqual(f.events, [f.a.path, 'daily-create', 'daily-append']);
 	assert.equal(f.properties.get(f.a.path)![PROP.open], 50);
 	assert.deepEqual(f.recipeProperties, { [PROP.timesMade]: 2, [PROP.lastMade]: '2000-01-01' });
-	assert.match(f.contents.get(f.dailyPath)!, /Made a one-off \(Scratch\):\n- 30 ml \[\[Test A\]\]\n- 15 ml lemon juice\n- Mint sprig\n$/);
+	assert.match(
+		f.contents.get(f.dailyPath)!,
+		/Made a one-off \(Scratch\):\n- 30 ml \[\[Test A\]\]\n- 15 ml lemon juice\n- Mint sprig\n$/,
+	);
 });
 void test('the same one-off can be logged twice on one day', async () => {
 	const f = fixture();
 	for (let round = 0; round < 2; round++) {
 		const review = await f.logger.reviewOneOff({ name: '', lines: ['10 ml [[Test B]]'] });
 		assert.equal(review.daily.duplicate, false);
-		const plan = planLogging(review.lines, review.sources, new Map(review.lines.counted.map(line => [line.id, line.initialSelection!])), 1);
+		const plan = planLogging(
+			review.lines,
+			review.sources,
+			new Map(review.lines.counted.map((line) => [line.id, line.initialSelection!])),
+			1,
+		);
 		assert.equal((await f.logger.apply(review, plan, true)).status, 'applied');
 	}
 	assert.equal(f.contents.get(f.dailyPath)!.match(/Made a one-off:/g)!.length, 2);

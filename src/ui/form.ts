@@ -8,7 +8,9 @@ export abstract class CabinetForm extends Modal {
 	protected submitButton!: ButtonComponent;
 	protected busy = false;
 
-	constructor(app: App) { super(app); }
+	constructor(app: App) {
+		super(app);
+	}
 
 	protected begin(title: string, description?: string) {
 		this.titleEl.setText(title);
@@ -18,55 +20,86 @@ export abstract class CabinetForm extends Modal {
 		this.errorEl = this.contentEl.createEl('p', { cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 	}
 
-	protected text(label: string, value: string, change: (value: string) => void, description = '', container = this.contentEl) {
-		return new Setting(container).setName(label).setDesc(description)
-			.addText(text => text.setValue(value).onChange(change));
+	protected text(
+		label: string,
+		value: string,
+		change: (value: string) => void,
+		description = '',
+		container = this.contentEl,
+	) {
+		return new Setting(container)
+			.setName(label)
+			.setDesc(description)
+			.addText((text) => text.setValue(value).onChange(change));
 	}
 
 	protected area(label: string, value: string, change: (value: string) => void, description = '', rows = 3) {
-		return new Setting(this.contentEl).setName(label).setDesc(description)
-			.addTextArea(text => {
+		return new Setting(this.contentEl)
+			.setName(label)
+			.setDesc(description)
+			.addTextArea((text) => {
 				text.setValue(value).onChange(change);
 				text.inputEl.rows = rows;
 			});
 	}
 
-	protected select(label: string, options: Record<string, string>, value: string, change: (value: string) => void, container = this.contentEl) {
-		return new Setting(container).setName(label)
-			.addDropdown(dropdown => dropdown.addOptions(options).setValue(value).onChange(change));
+	protected select(
+		label: string,
+		options: Record<string, string>,
+		value: string,
+		change: (value: string) => void,
+		container = this.contentEl,
+	) {
+		return new Setting(container)
+			.setName(label)
+			.addDropdown((dropdown) => dropdown.addOptions(options).setValue(value).onChange(change));
 	}
 
 	protected toggle(label: string, value: boolean, change: (value: boolean) => void, description?: string) {
 		const row = new Setting(this.contentEl).setName(label);
 		if (description) row.setDesc(description);
-		return row.addToggle(toggle => toggle.setValue(value).onChange(change));
+		return row.addToggle((toggle) => toggle.setValue(value).onChange(change));
 	}
 
-	protected choose(label: string, notes: () => CabinetNote[], change: (notes: CabinetNote[]) => void, multiple = false, initial: readonly CabinetNote[] = []) {
+	protected choose(
+		label: string,
+		notes: () => CabinetNote[],
+		change: (notes: CabinetNote[]) => void,
+		multiple = false,
+		initial: readonly CabinetNote[] = [],
+	) {
 		const selected: CabinetNote[] = multiple ? [...initial] : initial.slice(0, 1);
-		const row = new Setting(this.contentEl).setName(label)
-			.setDesc(selected.length ? selected.map(item => item.name).join(', ') : 'None selected');
-		row.addButton(button => button.setButtonText('Select').onClick(() => {
-			new NotePicker(this.app, notes(), note => {
-				if (!multiple) selected.length = 0;
-				if (!selected.some(item => item.path === note.path)) selected.push(note);
-				row.setDesc(selected.map(item => item.name).join(', '));
-				change([...selected]);
-			}).open();
-		}));
-		row.addButton(button => button.setButtonText('Clear').onClick(() => {
-			selected.length = 0;
-			row.setDesc('None selected');
-			change([]);
-		}));
+		const row = new Setting(this.contentEl)
+			.setName(label)
+			.setDesc(selected.length ? selected.map((item) => item.name).join(', ') : 'None selected');
+		row.addButton((button) =>
+			button.setButtonText('Select').onClick(() => {
+				new NotePicker(this.app, notes(), (note) => {
+					if (!multiple) selected.length = 0;
+					if (!selected.some((item) => item.path === note.path)) selected.push(note);
+					row.setDesc(selected.map((item) => item.name).join(', '));
+					change([...selected]);
+				}).open();
+			}),
+		);
+		row.addButton((button) =>
+			button.setButtonText('Clear').onClick(() => {
+				selected.length = 0;
+				row.setDesc('None selected');
+				change([]);
+			}),
+		);
 		return row;
 	}
 
 	protected submit(label: string, action: () => Promise<void>) {
 		new Setting(this.contentEl)
-			.addButton(button => button.setButtonText('Cancel').onClick(() => this.close()))
-			.addButton(button => {
-				this.submitButton = button.setButtonText(label).setCta().onClick(() => this.run(action));
+			.addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()))
+			.addButton((button) => {
+				this.submitButton = button
+					.setButtonText(label)
+					.setCta()
+					.onClick(() => this.run(action));
 			});
 	}
 
@@ -75,13 +108,17 @@ export abstract class CabinetForm extends Modal {
 		this.busy = true;
 		this.errorEl.empty();
 		this.submitButton?.setDisabled(true);
-		try { await action(); }
-		catch (error) { this.errorEl.setText(error instanceof Error ? error.message : 'The cabinet change could not be completed.'); }
-		finally {
+		try {
+			await action();
+		} catch (error) {
+			this.errorEl.setText(error instanceof Error ? error.message : 'The cabinet change could not be completed.');
+		} finally {
 			this.busy = false;
 			this.submitButton?.setDisabled(false);
 		}
 	}
 
-	onClose() { this.contentEl.empty(); }
+	onClose() {
+		this.contentEl.empty();
+	}
 }

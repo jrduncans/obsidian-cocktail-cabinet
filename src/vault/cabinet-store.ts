@@ -8,7 +8,10 @@ import type { RestockThresholds } from '../core/restock';
 import type { SetupPreview } from '../core/setup';
 import { enhancedRecipeContent } from './recipe-document';
 
-export interface RecipeSnapshot { path: string; content: string; }
+export interface RecipeSnapshot {
+	path: string;
+	content: string;
+}
 
 const PARENT_PROPERTIES: Partial<Record<NoteKind, string>> = {
 	family: PROP.category,
@@ -20,7 +23,11 @@ const PARENT_PROPERTIES: Partial<Record<NoteKind, string>> = {
 export class CabinetStore {
 	private writing = false;
 
-	constructor(readonly app: App, private folder: () => string, private restock: () => RestockThresholds = () => DEFAULT_RESTOCK) {}
+	constructor(
+		readonly app: App,
+		private folder: () => string,
+		private restock: () => RestockThresholds = () => DEFAULT_RESTOCK,
+	) {}
 
 	get root(): string {
 		return cabinetFolder(this.folder());
@@ -28,52 +35,66 @@ export class CabinetStore {
 
 	notes(): CabinetNote[] {
 		const files = this.cabinetFiles();
-		return this.notesFrom(files, new Map(files.map(file => [file.path, this.app.metadataCache.getFileCache(file)?.frontmatter])));
+		return this.notesFrom(
+			files,
+			new Map(files.map((file) => [file.path, this.app.metadataCache.getFileCache(file)?.frontmatter])),
+		);
 	}
 
 	/** Logging needs current properties even while a recent write invalidates the metadata cache. */
 	async readNotes(): Promise<CabinetNote[]> {
 		const files = this.cabinetFiles();
-		const properties = await Promise.all(files.map(async file => [file.path, await this.frontmatter(file)] as const));
+		const properties = await Promise.all(
+			files.map(async (file) => [file.path, await this.frontmatter(file)] as const),
+		);
 		return this.notesFrom(files, new Map(properties));
 	}
 
 	private cabinetFiles(): TFile[] {
-		return this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(`${this.root}/`));
+		return this.app.vault.getMarkdownFiles().filter((file) => file.path.startsWith(`${this.root}/`));
 	}
 
-	private notesFrom(files: TFile[], properties: ReadonlyMap<string, Record<string, unknown> | undefined>): CabinetNote[] {
-		const notes = files.flatMap(file => {
-			const frontmatter = properties.get(file.path);
-			const kind: unknown = frontmatter?.[PROP.kind];
-			if (!KINDS.some(value => value === kind)) return [];
-			const parentProperty = PARENT_PROPERTIES[kind as NoteKind];
-			const parents = (parentProperty ? [parentProperty] : []).flatMap(key => {
-				const value: unknown = frontmatter?.[key];
-				// Hierarchy parents are single links; only other stock provides several types.
-				const links = kind === 'ingredient' && Array.isArray(value) ? value : [value];
-				return links.flatMap((link: unknown) => {
-					if (typeof link !== 'string') return [];
-					const target = this.resolve(link, file.path);
-					return target ? [target.path] : [];
+	private notesFrom(
+		files: TFile[],
+		properties: ReadonlyMap<string, Record<string, unknown> | undefined>,
+	): CabinetNote[] {
+		const notes = files
+			.flatMap((file) => {
+				const frontmatter = properties.get(file.path);
+				const kind: unknown = frontmatter?.[PROP.kind];
+				if (!KINDS.some((value) => value === kind)) return [];
+				const parentProperty = PARENT_PROPERTIES[kind as NoteKind];
+				const parents = (parentProperty ? [parentProperty] : []).flatMap((key) => {
+					const value: unknown = frontmatter?.[key];
+					// Hierarchy parents are single links; only other stock provides several types.
+					const links = kind === 'ingredient' && Array.isArray(value) ? value : [value];
+					return links.flatMap((link: unknown) => {
+						if (typeof link !== 'string') return [];
+						const target = this.resolve(link, file.path);
+						return target ? [target.path] : [];
+					});
 				});
-			});
-			const properName: unknown = frontmatter?.[PROP.name];
-			const name = typeof properName === 'string' && properName.trim() && !/[|[\]\r\n]/.test(properName)
-				? properName.trim() : file.basename;
-			return [{
-				path: file.path,
-				name,
-				kind: kind as NoteKind,
-				parents,
-				aliases: parseFrontMatterAliases(frontmatter) || [],
-				...(kind === 'type' && frontmatter?.[PROP.catchAll] === true ? { catchAll: true } : {}),
-			}];
-		}).sort((left, right) => left.name.localeCompare(right.name));
-		const byPath = new Map(notes.map(note => [note.path, note]));
+				const properName: unknown = frontmatter?.[PROP.name];
+				const name =
+					typeof properName === 'string' && properName.trim() && !/[|[\]\r\n]/.test(properName)
+						? properName.trim()
+						: file.basename;
+				return [
+					{
+						path: file.path,
+						name,
+						kind: kind as NoteKind,
+						parents,
+						aliases: parseFrontMatterAliases(frontmatter) || [],
+						...(kind === 'type' && frontmatter?.[PROP.catchAll] === true ? { catchAll: true } : {}),
+					},
+				];
+			})
+			.sort((left, right) => left.name.localeCompare(right.name));
+		const byPath = new Map(notes.map((note) => [note.path, note]));
 		for (const note of notes) {
 			const expected = note.kind === 'family' ? 'category' : note.kind === 'type' ? 'family' : 'type';
-			note.parents = note.parents.filter(path => byPath.get(path)?.kind === expected);
+			note.parents = note.parents.filter((path) => byPath.get(path)?.kind === expected);
 		}
 		return notes;
 	}
@@ -93,12 +114,10 @@ export class CabinetStore {
 		const root = cabinetFolder(folder);
 		const result: SetupPreview = { root, create: [], update: [], keep: [], conflicts: [] };
 		const allFiles = this.app.vault.getFiles();
-		const byLowerPath = new Map(allFiles.map(file => [file.path.toLowerCase(), file]));
+		const byLowerPath = new Map(allFiles.map((file) => [file.path.toLowerCase(), file]));
 		const catalogPaths = new Map<string, string>();
 		// Read current content rather than relying on a cache immediately after a write or rename.
-		const markdownFiles = allFiles.filter(file =>
-			file.extension === 'md' && file.path.startsWith(`${root}/`),
-		);
+		const markdownFiles = allFiles.filter((file) => file.extension === 'md' && file.path.startsWith(`${root}/`));
 		for (const file of markdownFiles) {
 			const properties = await this.frontmatter(file);
 			const id = properties[PROP.catalogId];
@@ -113,20 +132,23 @@ export class CabinetStore {
 			const parts = planned.path.split('/');
 			for (let depth = 1; depth < parts.length; depth++) {
 				const parent = parts.slice(0, depth).join('/');
-				const existing = this.app.vault.getAbstractFileByPath(parent)
-					|| byLowerPath.get(parent.toLowerCase());
+				const existing = this.app.vault.getAbstractFileByPath(parent) || byLowerPath.get(parent.toLowerCase());
 				if (existing && !(existing instanceof TFolder)) result.conflicts.push(parent);
 			}
-			const existing = this.app.vault.getAbstractFileByPath(planned.path)
-				|| byLowerPath.get(planned.path.toLowerCase());
+			const existing =
+				this.app.vault.getAbstractFileByPath(planned.path) || byLowerPath.get(planned.path.toLowerCase());
 			if (!existing) {
 				result.create.push(planned);
 				continue;
 			}
-			if (existing instanceof TFile && existing.path === planned.path
-				&& planned.kind === 'base' && existing.extension === 'base') {
+			if (
+				existing instanceof TFile &&
+				existing.path === planned.path &&
+				planned.kind === 'base' &&
+				existing.extension === 'base'
+			) {
 				// Views belong to the plugin: any difference from the current version is replaced.
-				if (await this.app.vault.read(existing) === planned.content) result.keep.push(existing.path);
+				if ((await this.app.vault.read(existing)) === planned.content) result.keep.push(existing.path);
 				else result.update.push(planned);
 				continue;
 			}
@@ -138,8 +160,12 @@ export class CabinetStore {
 			if (existing instanceof TFile && existing.extension === 'md' && existing.path === planned.path) {
 				const properties = await this.frontmatter(existing);
 				// Someone may have added their own Salt before the starter offered one; it stays theirs.
-				if (properties[PROP.kind] === planned.kind &&
-					(!planned.catalogId || planned.kind === 'ingredient' || properties[PROP.catalogId] === planned.catalogId)) {
+				if (
+					properties[PROP.kind] === planned.kind &&
+					(!planned.catalogId ||
+						planned.kind === 'ingredient' ||
+						properties[PROP.catalogId] === planned.catalogId)
+				) {
 					result.keep.push(existing.path);
 					continue;
 				}
@@ -155,7 +181,9 @@ export class CabinetStore {
 			const preview = await this.previewSetup(folder);
 			if (preview.conflicts.length) {
 				const conflicts = preview.conflicts.slice(0, 3).join(', ');
-				throw new Error(`Setup conflicts with existing files: ${conflicts}. Choose a different cabinet folder.`);
+				throw new Error(
+					`Setup conflicts with existing files: ${conflicts}. Choose a different cabinet folder.`,
+				);
 			}
 			for (const file of preview.create) {
 				await this.ensureFolder(file.path.slice(0, file.path.lastIndexOf('/')));
@@ -165,7 +193,7 @@ export class CabinetStore {
 			for (const file of preview.update) {
 				const existing = this.app.vault.getAbstractFileByPath(file.path);
 				if (!(existing instanceof TFile)) continue;
-				await this.app.vault.process(existing, current => {
+				await this.app.vault.process(existing, (current) => {
 					if (current !== file.content) updated++;
 					return file.content;
 				});
@@ -182,9 +210,12 @@ export class CabinetStore {
 	 * and sorting, and a deleted view, stay until then. With `force`, every view that differs or is
 	 * missing is written. Returns the updated paths and the new record; nothing happens before setup.
 	 */
-	async syncViews(written: Readonly<Record<string, string>>, force = false): Promise<{ updated: string[]; written: Record<string, string> }> {
+	async syncViews(
+		written: Readonly<Record<string, string>>,
+		force = false,
+	): Promise<{ updated: string[]; written: Record<string, string> }> {
 		return this.write(async () => {
-			if (!await this.isSetUp()) return { updated: [], written: { ...written } };
+			if (!(await this.isSetUp())) return { updated: [], written: { ...written } };
 			const root = this.root;
 			const updated: string[] = [];
 			const next: Record<string, string> = {};
@@ -195,7 +226,7 @@ export class CabinetStore {
 				const existing = this.app.vault.getAbstractFileByPath(view.path);
 				if (existing instanceof TFile) {
 					let changed = false;
-					await this.app.vault.process(existing, current => {
+					await this.app.vault.process(existing, (current) => {
 						changed = current !== view.content;
 						return view.content;
 					});
@@ -212,13 +243,15 @@ export class CabinetStore {
 
 	async create(draft: NoteDraft): Promise<TFile> {
 		return this.write(async () => {
-			if (!await this.isSetUp()) throw new Error('Set up a cabinet before adding notes.');
+			if (!(await this.isSetUp())) throw new Error('Set up a cabinet before adding notes.');
 			const file = renderNote(this.root, draft, localDate());
-			const exists = this.app.vault.getAllLoadedFiles().some(existing =>
-				existing.path.toLowerCase() === file.path.toLowerCase(),
-			);
+			const exists = this.app.vault
+				.getAllLoadedFiles()
+				.some((existing) => existing.path.toLowerCase() === file.path.toLowerCase());
 			if (exists) {
-				throw new Error('A note with that name already exists in this part of the cabinet. Choose another name.');
+				throw new Error(
+					'A note with that name already exists in this part of the cabinet. Choose another name.',
+				);
 			}
 			await this.ensureFolder(file.path.slice(0, file.path.lastIndexOf('/')));
 			return this.app.vault.create(file.path, file.content);
@@ -231,16 +264,25 @@ export class CabinetStore {
 
 	async enhanceRecipe(snapshot: RecipeSnapshot, draft: NoteDraft): Promise<TFile> {
 		return this.write(async () => {
-			if (!await this.isSetUp()) throw new Error('Set up a cabinet before saving recipes.');
+			if (!(await this.isSetUp())) throw new Error('Set up a cabinet before saving recipes.');
 			const file = this.app.vault.getAbstractFileByPath(snapshot.path);
-			if (!(file instanceof TFile) || file.extension !== 'md') throw new Error('The original note was moved or removed. Reopen it to review again.');
+			if (!(file instanceof TFile) || file.extension !== 'md')
+				throw new Error('The original note was moved or removed. Reopen it to review again.');
 			const destination = this.recipeDestination(snapshot.path);
-			if (destination !== snapshot.path && this.app.vault.getAllLoadedFiles().some(item => item.path.toLowerCase() === destination.toLowerCase())) {
-				throw new Error('A note with this filename already exists in Recipes. Rename one of the notes and review again.');
+			if (
+				destination !== snapshot.path &&
+				this.app.vault.getAllLoadedFiles().some((item) => item.path.toLowerCase() === destination.toLowerCase())
+			) {
+				throw new Error(
+					'A note with this filename already exists in Recipes. Rename one of the notes and review again.',
+				);
 			}
 			const content = enhancedRecipeContent(snapshot.content, draft);
-			await this.app.vault.process(file, current => {
-				if (normalizeSource(current) !== normalizeSource(snapshot.content)) throw new Error('The note changed after review opened. Reopen the review to include those changes.');
+			await this.app.vault.process(file, (current) => {
+				if (normalizeSource(current) !== normalizeSource(snapshot.content))
+					throw new Error(
+						'The note changed after review opened. Reopen the review to include those changes.',
+					);
 				return content;
 			});
 			if (destination !== snapshot.path) {
@@ -250,14 +292,18 @@ export class CabinetStore {
 				} catch (error) {
 					let restored = false;
 					try {
-						await this.app.vault.process(file, current => {
+						await this.app.vault.process(file, (current) => {
 							if (current !== content) throw new Error('The note changed during the move.');
 							return snapshot.content;
 						});
 						restored = true;
-					} catch { /* Preserve any concurrent changes instead of rolling them back. */ }
+					} catch {
+						/* Preserve any concurrent changes instead of rolling them back. */
+					}
 					const reason = error instanceof Error ? error.message : 'The move failed.';
-					throw new Error(`Could not move the recipe: ${reason} ${restored ? 'The original note content was restored.' : `The enhanced note remains at ${file.path}; inspect it before retrying.`}`);
+					throw new Error(
+						`Could not move the recipe: ${reason} ${restored ? 'The original note content was restored.' : `The enhanced note remains at ${file.path}; inspect it before retrying.`}`,
+					);
 				}
 			}
 			return file;

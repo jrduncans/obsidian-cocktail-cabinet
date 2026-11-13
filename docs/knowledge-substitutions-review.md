@@ -12,14 +12,14 @@ The scan found 166 indexed frontmatter occurrences of `Substitutes For`: 156 emp
 
 ## Every declared relationship
 
-| Declared directions | Current types in knowledge | Shared-type assessment |
-| --- | --- | --- |
-| Üla Orange Liqueur ↔ Cointreau | Both Orange Liqueur | Keep the broad common type, including Pierre Ferrand Orange Curaçao. The additional candidate is accepted without ranking closeness. |
-| Yellow Chartreuse ↔ Liquore Strega | Both Other Herbal Liqueur | Good candidate for the starter's more specific Yellow Herbal Liqueur type. The current shared type is much broader than this pair. |
-| Green Chartreuse ↔ Flora Green; Green Chartreuse ↔ Luxardo Del Santo | All Other Herbal Liqueur | Candidate for Green Herbal Liqueur. A shared type would additionally make Flora Green and Luxardo Del Santo alternatives to each other; those two directions are not currently declared. |
-| Crimson Snap → Campari | Both Amaro | Red Bitter Liqueur is the agreed Campari-style role, separate from the Aperol group. No reverse link is recorded in the legacy data. |
-| Accompani Mari Gold → Aperol | Both Amaro | Orange Bitter Liqueur is the agreed Aperol-style role, separate from the Campari group. No reverse link is recorded in the legacy data; recorded strengths differ substantially. |
-| Luxardo Bitter Bianco → Salers | Other Herbal Liqueur → Gentian Liqueur | Gentian Liqueur is the agreed shared role, also covering Suze and Avèze. The initial recommendation to preserve this pair as an exception is superseded. |
+| Declared directions                                                  | Current types in knowledge             | Shared-type assessment                                                                                                                                                                   |
+| -------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Üla Orange Liqueur ↔ Cointreau                                       | Both Orange Liqueur                    | Keep the broad common type, including Pierre Ferrand Orange Curaçao. The additional candidate is accepted without ranking closeness.                                                     |
+| Yellow Chartreuse ↔ Liquore Strega                                   | Both Other Herbal Liqueur              | Good candidate for the starter's more specific Yellow Herbal Liqueur type. The current shared type is much broader than this pair.                                                       |
+| Green Chartreuse ↔ Flora Green; Green Chartreuse ↔ Luxardo Del Santo | All Other Herbal Liqueur               | Candidate for Green Herbal Liqueur. A shared type would additionally make Flora Green and Luxardo Del Santo alternatives to each other; those two directions are not currently declared. |
+| Crimson Snap → Campari                                               | Both Amaro                             | Red Bitter Liqueur is the agreed Campari-style role, separate from the Aperol group. No reverse link is recorded in the legacy data.                                                     |
+| Accompani Mari Gold → Aperol                                         | Both Amaro                             | Orange Bitter Liqueur is the agreed Aperol-style role, separate from the Campari group. No reverse link is recorded in the legacy data; recorded strengths differ substantially.         |
+| Luxardo Bitter Bianco → Salers                                       | Other Herbal Liqueur → Gentian Liqueur | Gentian Liqueur is the agreed shared role, also covering Suze and Avèze. The initial recommendation to preserve this pair as an exception is superseded.                                 |
 
 The table covers all 11 links: two orange, two yellow, four green, and the three single-direction links.
 
@@ -55,11 +55,11 @@ For an explicit substitution feature, the faithful default would be a direct, di
 
 Your notes record these ABVs:
 
-| Pair | Recorded ABVs | Modeling implication |
-| --- | --- | --- |
-| Luxardo Del Santo / Green Chartreuse | 40% / 55% | A shared green-herbal role does not establish equal alcohol contribution. |
-| Accompani Mari Gold / Aperol | 25% / 11% | Orange Bitter Liqueur cannot be defined solely as a low-ABV threshold. |
-| Luxardo Bitter Bianco / Salers | 30% / 16% | Gentian Liqueur membership does not establish a calibrated replacement. |
+| Pair                                 | Recorded ABVs | Modeling implication                                                      |
+| ------------------------------------ | ------------- | ------------------------------------------------------------------------- |
+| Luxardo Del Santo / Green Chartreuse | 40% / 55%     | A shared green-herbal role does not establish equal alcohol contribution. |
+| Accompani Mari Gold / Aperol         | 25% / 11%     | Orange Bitter Liqueur cannot be defined solely as a low-ABV threshold.    |
+| Luxardo Bitter Bianco / Salers       | 30% / 16%     | Gentian Liqueur membership does not establish a calibrated replacement.   |
 
 These are values recorded in the vault, not an independent product-specification audit. Cointreau, Yellow Chartreuse, Flora Green, and Campari have no ABV recorded in the inspected notes. All thirteen involved bottle pages have no explanatory body beyond their existing view code, so they do not document flavor caveats, recipe-specific conditions, or quantity adjustments.
 

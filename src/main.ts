@@ -10,8 +10,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 
 	async onload() {
 		this.settings = loadSettings(await this.loadData());
-		this.store = new CabinetStore(this.app, () => this.settings.cabinetFolder,
-			() => ({ percent: this.settings.lowStockPercent, ml: this.settings.lowStockMl }));
+		this.store = new CabinetStore(
+			this.app,
+			() => this.settings.cabinetFolder,
+			() => ({ percent: this.settings.lowStockPercent, ml: this.settings.lowStockMl }),
+		);
 		registerCommands(this);
 		this.addSettingTab(new CocktailCabinetSettingTab(this.app, this));
 		// Views a release changed are rewritten once the vault is indexed.
@@ -28,8 +31,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 			const { updated, written } = await this.store.syncViews(this.settings.viewVersions, force);
 			this.settings.viewVersions = written;
 			await this.saveSettings();
-			const names = updated.map(path => path.slice(path.lastIndexOf('/') + 1).replace(/\.base$/, ''));
-			if (names.length) new Notice(`Cocktail Cabinet ${force ? 'refreshed' : 'updated'} ${names.length === 1 ? 'a view' : `${names.length} views`}: ${names.join(', ')}.`);
+			const names = updated.map((path) => path.slice(path.lastIndexOf('/') + 1).replace(/\.base$/, ''));
+			if (names.length)
+				new Notice(
+					`Cocktail Cabinet ${force ? 'refreshed' : 'updated'} ${names.length === 1 ? 'a view' : `${names.length} views`}: ${names.join(', ')}.`,
+				);
 			else if (force) new Notice('Cabinet views are already current.');
 		} catch (error) {
 			new Notice(`Couldn’t update cabinet views: ${error instanceof Error ? error.message : String(error)}`);

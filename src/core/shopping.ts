@@ -30,16 +30,37 @@ const FORMULAS: Record<string, string> = {
 
 const VIEWS: readonly FormulaView[] = [
 	{
-		name: SHOPPING_VIEWS.bottles, type: 'table', filter: `(${kindIs('bottle')}) && ${flagged}`,
-		columns: [['formula.name', 'Name'], ['formula.type', 'Type'], ['formula.stock', 'Stock'], [`note.${PROP.lastPurchasePrice}`, 'Last price']],
+		name: SHOPPING_VIEWS.bottles,
+		type: 'table',
+		filter: `(${kindIs('bottle')}) && ${flagged}`,
+		columns: [
+			['formula.name', 'Name'],
+			['formula.type', 'Type'],
+			['formula.stock', 'Stock'],
+			[`note.${PROP.lastPurchasePrice}`, 'Last price'],
+		],
 	},
 	{
-		name: SHOPPING_VIEWS.types, type: 'table', filter: `(${kindIs('type')}) && ${flagged}`,
-		columns: [['formula.name', 'Name'], ['formula.have', 'Have'], ['formula.notInStock', 'Not in stock']],
+		name: SHOPPING_VIEWS.types,
+		type: 'table',
+		filter: `(${kindIs('type')}) && ${flagged}`,
+		columns: [
+			['formula.name', 'Name'],
+			['formula.have', 'Have'],
+			['formula.notInStock', 'Not in stock'],
+		],
 	},
 	{
-		name: SHOPPING_VIEWS.other, type: 'table', filter: `(${kindIs('ingredient')}) && ${flagged}`,
-		columns: [['formula.name', 'Name'], ['formula.provides', 'Provides'], [`note.${PROP.form}`, 'Form'], ['formula.stock', 'Stock'], [`note.${PROP.lastPurchasePrice}`, 'Last price']],
+		name: SHOPPING_VIEWS.other,
+		type: 'table',
+		filter: `(${kindIs('ingredient')}) && ${flagged}`,
+		columns: [
+			['formula.name', 'Name'],
+			['formula.provides', 'Provides'],
+			[`note.${PROP.form}`, 'Form'],
+			['formula.stock', 'Stock'],
+			[`note.${PROP.lastPurchasePrice}`, 'Last price'],
+		],
 	},
 ];
 
@@ -54,10 +75,15 @@ export function shoppingNotePath(root: string): string {
 
 export function shoppingNote(root: string): PlannedFile {
 	root = cabinetFolder(root);
-	const embeds = Object.values(SHOPPING_VIEWS).map(view => `![[${basePath(root, SHOPPING_BASE)}#${view}]]`).join('\n\n');
+	const embeds = Object.values(SHOPPING_VIEWS)
+		.map((view) => `![[${basePath(root, SHOPPING_BASE)}#${view}]]`)
+		.join('\n\n');
 	return {
 		path: shoppingNotePath(root),
 		kind: 'shopping',
-		content: markdown({ [PROP.kind]: 'shopping' }, `# ${SHOPPING_NOTE}\n\nTurn on **Add to shopping list** on a bottle, ingredient type, or other stock to list it here. A type means any bottle of that type will do. To find more to add, see ${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)}. After shopping, use the cart button in this note's header (**Record purchases**) to add what you bought to your stock.\n\n${embeds}`),
+		content: markdown(
+			{ [PROP.kind]: 'shopping' },
+			`# ${SHOPPING_NOTE}\n\nTurn on **Add to shopping list** on a bottle, ingredient type, or other stock to list it here. A type means any bottle of that type will do. To find more to add, see ${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)}. After shopping, use the cart button in this note's header (**Record purchases**) to add what you bought to your stock.\n\n${embeds}`,
+		),
 	};
 }

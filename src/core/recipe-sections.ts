@@ -43,9 +43,18 @@ function headings(content: string): { start: number; body: number; level: number
 			if (marker && marker[1]![0] === fence[0] && marker[1]!.length >= fence.length) fence = '';
 			continue;
 		}
-		if (marker) { fence = marker[1]!; continue; }
+		if (marker) {
+			fence = marker[1]!;
+			continue;
+		}
 		const heading = line.match(/^ {0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t\r]*$/);
-		if (heading) found.push({ start, body: Math.min(offset, content.length), level: heading[1]!.length, title: heading[2]!.trim() });
+		if (heading)
+			found.push({
+				start,
+				body: Math.min(offset, content.length),
+				level: heading[1]!.length,
+				title: heading[2]!.trim(),
+			});
 	}
 	return found;
 }
@@ -54,11 +63,16 @@ function locate(content: string): Partial<Record<RecipeSection, Located>> {
 	const all = headings(content);
 	const result: Partial<Record<RecipeSection, Located>> = {};
 	for (const key of ORDER) {
-		const index = all.findIndex(heading => heading.title.toLowerCase() === RECIPE_SECTIONS[key].toLowerCase());
+		const index = all.findIndex((heading) => heading.title.toLowerCase() === RECIPE_SECTIONS[key].toLowerCase());
 		if (index < 0) continue;
 		const heading = all[index]!;
-		const next = all.slice(index + 1).find(other => other.level <= heading.level);
-		result[key] = { start: heading.start, body: heading.body, end: next?.start ?? content.length, level: heading.level };
+		const next = all.slice(index + 1).find((other) => other.level <= heading.level);
+		result[key] = {
+			start: heading.start,
+			body: heading.body,
+			end: next?.start ?? content.length,
+			level: heading.level,
+		};
 	}
 	return result;
 }
@@ -77,12 +91,18 @@ export function readRecipeSections(content: string): RecipeSections {
 		if (item?.[1]) ingredients.push(item[1]);
 		else ingredientsEditable = false;
 	}
-	return { ingredients, ingredientsEditable, method: text('method'), description: text('description'), tastingNotes: text('tastingNotes') };
+	return {
+		ingredients,
+		ingredientsEditable,
+		method: text('method'),
+		description: text('description'),
+		tastingNotes: text('tastingNotes'),
+	};
 }
 
 /** Ingredient lines as the Ingredients section's list. */
 export function ingredientList(lines: readonly string[]): string {
-	return lines.map(line => `- ${line}`).join('\n');
+	return lines.map((line) => `- ${line}`).join('\n');
 }
 
 /**
@@ -101,15 +121,25 @@ export function replaceRecipeSections(content: string, changes: Partial<Record<R
 		if (section) {
 			const following = section.end < result.length;
 			const lead = result[section.body - 1] === '\n' ? '' : '\n';
-			result = result.slice(0, section.body) + lead + (text ? `\n${text}\n` : '') + (following ? '\n' : '') + result.slice(section.end);
+			result =
+				result.slice(0, section.body) +
+				lead +
+				(text ? `\n${text}\n` : '') +
+				(following ? '\n' : '') +
+				result.slice(section.end);
 			continue;
 		}
 		if (!text) continue;
-		const present = ORDER.map(other => sections[other]).filter((other): other is Located => other !== undefined);
+		const present = ORDER.map((other) => sections[other]).filter((other): other is Located => other !== undefined);
 		const level = present[0]?.level ?? 3;
 		const block = `${'#'.repeat(level)} ${RECIPE_SECTIONS[key]}\n\n${text}\n`;
-		const before = ORDER.slice(0, ORDER.indexOf(key)).map(other => sections[other]).filter((other): other is Located => other !== undefined).at(-1);
-		const after = ORDER.slice(ORDER.indexOf(key) + 1).map(other => sections[other]).find((other): other is Located => other !== undefined);
+		const before = ORDER.slice(0, ORDER.indexOf(key))
+			.map((other) => sections[other])
+			.filter((other): other is Located => other !== undefined)
+			.at(-1);
+		const after = ORDER.slice(ORDER.indexOf(key) + 1)
+			.map((other) => sections[other])
+			.find((other): other is Located => other !== undefined);
 		const at = before ? before.end : after ? after.start : result.length;
 		const head = result.slice(0, at).replace(/\n*$/, '');
 		const tail = result.slice(at).replace(/^\n*/, '');

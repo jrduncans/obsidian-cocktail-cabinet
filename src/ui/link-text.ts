@@ -38,13 +38,27 @@ export function renderLinkText(container: HTMLElement, controls: LinkTextControl
 		mark(source);
 		controls.onChange(text, source);
 	};
-	row.addText(text => {
+	row.addText((text) => {
 		input = text;
-		text.setValue(controls.text).onChange(value => set(value, value === controls.name ? 'name' : value === controls.original ? 'original' : 'typed'));
+		text.setValue(controls.text).onChange((value) =>
+			set(value, value === controls.name ? 'name' : value === controls.original ? 'original' : 'typed'),
+		);
 		text.inputEl.setAttribute('aria-label', 'Link text');
 	});
-	row.addButton(button => { buttons.push([button, 'name']); button.setButtonText('Cabinet name').setTooltip(controls.name).onClick(() => set(controls.name, 'name')); });
-	row.addButton(button => { buttons.push([button, 'original']); button.setButtonText(controls.originalLabel).setTooltip(controls.original).onClick(() => set(controls.original, 'original')); });
+	row.addButton((button) => {
+		buttons.push([button, 'name']);
+		button
+			.setButtonText('Cabinet name')
+			.setTooltip(controls.name)
+			.onClick(() => set(controls.name, 'name'));
+	});
+	row.addButton((button) => {
+		buttons.push([button, 'original']);
+		button
+			.setButtonText(controls.originalLabel)
+			.setTooltip(controls.original)
+			.onClick(() => set(controls.original, 'original'));
+	});
 	mark(controls.source);
 	return { input };
 }
@@ -70,7 +84,10 @@ export class LinkTextModal extends Modal {
 	private text: string;
 	private busy = false;
 
-	constructor(plugin: CocktailCabinetPlugin, private options: LinkTextOptions) {
+	constructor(
+		plugin: CocktailCabinetPlugin,
+		private options: LinkTextOptions,
+	) {
 		super(plugin.app);
 		this.text = options.original;
 	}
@@ -91,22 +108,40 @@ export class LinkTextModal extends Modal {
 			linkButton?.setDisabled(this.busy || !!error);
 		};
 		const { input } = renderLinkText(this.contentEl, {
-			name: note.name, original, originalLabel, text: this.text, source: 'original',
+			name: note.name,
+			original,
+			originalLabel,
+			text: this.text,
+			source: 'original',
 			desc: () => `Links to ${note.path.replace(/\.md$/, '')} (${note.kind}).`,
-			onChange: text => { this.text = text; update(); },
+			onChange: (text) => {
+				this.text = text;
+				update();
+			},
 		});
 		const reads = this.contentEl.createDiv({ cls: 'cocktail-cabinet-link-reads' });
 		reads.createDiv({ cls: 'setting-item-description', text: 'Reads as' });
 		previewEl = reads.createDiv({ cls: 'cocktail-cabinet-link-preview' });
 		errorEl = this.contentEl.createEl('p', { cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
-		input.inputEl.addEventListener('keydown', event => {
-			if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); void this.submit(); }
+		input.inputEl.addEventListener('keydown', (event) => {
+			if (event.key === 'Enter' && !event.isComposing) {
+				event.preventDefault();
+				void this.submit();
+			}
 		});
 		new Setting(this.contentEl)
-			.addButton(button => button.setButtonText('Cancel').onClick(() => this.close()))
-			.addButton(button => { linkButton = button.setButtonText('Link').setCta().onClick(() => void this.submit()); });
+			.addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()))
+			.addButton((button) => {
+				linkButton = button
+					.setButtonText('Link')
+					.setCta()
+					.onClick(() => void this.submit());
+			});
 		update();
-		window.setTimeout(() => { input.inputEl.focus(); input.inputEl.select(); }, 0);
+		window.setTimeout(() => {
+			input.inputEl.focus();
+			input.inputEl.select();
+		}, 0);
 	}
 
 	private async submit() {
@@ -122,5 +157,7 @@ export class LinkTextModal extends Modal {
 		}
 	}
 
-	onClose() { this.contentEl.empty(); }
+	onClose() {
+		this.contentEl.empty();
+	}
 }

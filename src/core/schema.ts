@@ -1,5 +1,5 @@
 export const KINDS = ['category', 'family', 'type', 'bottle', 'ingredient', 'recipe'] as const;
-export type NoteKind = typeof KINDS[number];
+export type NoteKind = (typeof KINDS)[number];
 export type PropertyValue = string | number | boolean | null | string[];
 export type Properties = Record<string, PropertyValue>;
 
@@ -85,7 +85,7 @@ export function contentFingerprint(content: string, root: string): string {
 
 export function cabinetFolder(value: string): string {
 	const path = value.trim().replace(/\\/g, '/').replace(/\/+$/, '');
-	if (!path || path.startsWith('/') || path.split('/').some(part => !part || part.startsWith('.'))) {
+	if (!path || path.startsWith('/') || path.split('/').some((part) => !part || part.startsWith('.'))) {
 		throw new Error('Choose a folder inside the vault, without hidden folders or special characters.');
 	}
 	for (const part of path.split('/')) safeSegment(noteName(part));
@@ -99,8 +99,11 @@ export function cabinetFolder(value: string): string {
  */
 export function noteName(value: string): string {
 	const name = value.trim();
-	if (!name || /[/\\*?"<>|[\]^]/.test(name)
-		|| Array.from(name).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) {
+	if (
+		!name ||
+		/[/\\*?"<>|[\]^]/.test(name) ||
+		Array.from(name).some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
+	) {
 		throw new Error('Enter a name without slashes, colons, brackets, or other special characters.');
 	}
 	return name;
@@ -118,16 +121,35 @@ export function notePath(root: string, kind: NoteKind, name: string): string {
  */
 export function fileName(value: string): string {
 	const replacements: Record<string, string> = {
-		Æ: 'AE', æ: 'ae', Œ: 'OE', œ: 'oe', Ø: 'Oe', ø: 'oe', Ð: 'D', ð: 'd',
-		Þ: 'Th', þ: 'th', Ł: 'L', ł: 'l', Đ: 'D', đ: 'd', ß: 'ss', ı: 'i',
-		'‘': "'", '’': "'", '–': '-', '—': '-',
+		Æ: 'AE',
+		æ: 'ae',
+		Œ: 'OE',
+		œ: 'oe',
+		Ø: 'Oe',
+		ø: 'oe',
+		Ð: 'D',
+		ð: 'd',
+		Þ: 'Th',
+		þ: 'th',
+		Ł: 'L',
+		ł: 'l',
+		Đ: 'D',
+		đ: 'd',
+		ß: 'ss',
+		ı: 'i',
+		'‘': "'",
+		'’': "'",
+		'–': '-',
+		'—': '-',
 	};
-	const name = noteName(value).normalize('NFKD').replace(/\p{M}/gu, '')
-		.replace(/[ÆæŒœØøÐðÞþŁłĐđßı‘’–—]/g, character => replacements[character] || character)
+	const name = noteName(value)
+		.normalize('NFKD')
+		.replace(/\p{M}/gu, '')
+		.replace(/[ÆæŒœØøÐðÞþŁłĐđßı‘’–—]/g, (character) => replacements[character] || character)
 		.replace(/#\s*(?=\d)/g, 'No ')
 		.replace(/(\d)\s*:\s*(\d)/g, '$1 to $2')
-		.replace(/(?:\b[A-Za-z]\.){2,}$/, initialism => initialism.replace(/\./g, ''));
-	if (Array.from(name).some(character => character.charCodeAt(0) > 126)) {
+		.replace(/(?:\b[A-Za-z]\.){2,}$/, (initialism) => initialism.replace(/\./g, ''));
+	if (Array.from(name).some((character) => character.charCodeAt(0) > 126)) {
 		throw new Error('Use a name that can be written with plain Latin characters for the filename.');
 	}
 	return safeSegment(name);
@@ -151,11 +173,19 @@ export function wikiLink(path: string, displayName?: string): string {
 	return `[[${path.replace(/\.md$/, '')}${displayName === undefined ? '' : `|${displayName.trim()}`}]]`;
 }
 
-export function optionalNumber(value: string, label: string, min: number, max = Infinity, integer = false): number | null {
+export function optionalNumber(
+	value: string,
+	label: string,
+	min: number,
+	max = Infinity,
+	integer = false,
+): number | null {
 	if (!value.trim()) return null;
 	const number = Number(value);
 	if (!Number.isFinite(number) || number < min || number > max || (integer && !Number.isInteger(number))) {
-		throw new Error(`${label} must be ${integer ? 'a whole number' : 'a number'} ${max === Infinity ? `of at least ${min}` : `between ${min} and ${max}`}.`);
+		throw new Error(
+			`${label} must be ${integer ? 'a whole number' : 'a number'} ${max === Infinity ? `of at least ${min}` : `between ${min} and ${max}`}.`,
+		);
 	}
 	return number;
 }

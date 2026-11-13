@@ -4,7 +4,9 @@ import { groupUnlinked, linkLines, StaleLineError } from '../core/unlinked-lines
 import type { LineEdit, UnlinkedGroup, UnlinkedReviewOptions } from '../core/unlinked-lines';
 import type { CabinetStore } from './cabinet-store';
 
-export interface RecipeLineEdit extends LineEdit { path: string; }
+export interface RecipeLineEdit extends LineEdit {
+	path: string;
+}
 export interface LinkResult {
 	linked: number;
 	/** Recipes left alone: `changed` when the line no longer read as reviewed. */
@@ -13,7 +15,10 @@ export interface LinkResult {
 
 /** Writes ingredient links into recipes, checking each line is still as reviewed. */
 export class RecipeLinkStore {
-	constructor(private app: App, private cabinet: CabinetStore) {}
+	constructor(
+		private app: App,
+		private cabinet: CabinetStore,
+	) {}
 
 	private file(path: string): TFile {
 		const file = this.app.vault.getAbstractFileByPath(path);
@@ -24,24 +29,28 @@ export class RecipeLinkStore {
 	/** Every recipe's reviewable unlinked lines, grouped by wording. */
 	async unlinked(options: UnlinkedReviewOptions = {}): Promise<UnlinkedGroup[]> {
 		const notes = this.cabinet.notes();
-		const recipes = notes.filter(note => note.kind === 'recipe');
-		const contents = await Promise.all(recipes.map(note => this.app.vault.cachedRead(this.file(note.path))));
-		return groupUnlinked(recipes.map((note, index) => ({ note, content: contents[index]! })), notes, options);
+		const recipes = notes.filter((note) => note.kind === 'recipe');
+		const contents = await Promise.all(recipes.map((note) => this.app.vault.cachedRead(this.file(note.path))));
+		return groupUnlinked(
+			recipes.map((note, index) => ({ note, content: contents[index]! })),
+			notes,
+			options,
+		);
 	}
 
 	/** Link one line; throws `StaleLineError` when the recipe changed since it was read. */
 	async linkLine(edit: RecipeLineEdit, target: string): Promise<void> {
-		await this.app.vault.process(this.file(edit.path), content => linkLines(content, [edit], target));
+		await this.app.vault.process(this.file(edit.path), (content) => linkLines(content, [edit], target));
 	}
 
 	/** Link lines across recipes, one write per recipe; a recipe that changed is left alone and reported. */
 	async linkMany(edits: readonly RecipeLineEdit[], target: string): Promise<LinkResult> {
 		const byPath = new Map<string, RecipeLineEdit[]>();
-		for (const edit of edits) byPath.set(edit.path, [...byPath.get(edit.path) ?? [], edit]);
+		for (const edit of edits) byPath.set(edit.path, [...(byPath.get(edit.path) ?? []), edit]);
 		const result: LinkResult = { linked: 0, failed: [] };
 		for (const [path, lines] of byPath) {
 			try {
-				await this.app.vault.process(this.file(path), content => linkLines(content, lines, target));
+				await this.app.vault.process(this.file(path), (content) => linkLines(content, lines, target));
 				result.linked++;
 			} catch (error) {
 				const name = path.split('/').at(-1)!.replace(/\.md$/, '');

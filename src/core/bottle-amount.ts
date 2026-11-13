@@ -44,7 +44,7 @@ export class BottleAmount {
 		if (ml === null) return '';
 		const volume = this.fullVolume;
 		if (this.unit === 'ml') return String(Number(ml.toFixed(3)));
-		return volume === null ? '' : String(Number((ml / volume * 100).toFixed(1)));
+		return volume === null ? '' : String(Number(((ml / volume) * 100).toFixed(1)));
 	}
 
 	setUnit(unit: string): void {
@@ -68,7 +68,7 @@ export class BottleAmount {
 				if (unit === 'ml') value = String(ml);
 				else if (ml === 0) value = '0';
 				else if (volume === null) throw new Error('Enter the bottle volume to use a percentage estimate.');
-				else value = String(ml / volume * 100);
+				else value = String((ml / volume) * 100);
 			}
 		}
 		this.unit = unit;

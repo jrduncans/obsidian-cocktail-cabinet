@@ -52,7 +52,9 @@ export function planPurchase(before: StockState, entry: PurchaseEntry): Properti
 			if (volume === 0) throw new Error('Bottle size must be more than 0 mL.');
 			// The open bottle can't hold more than the new size; logging would refuse it.
 			if (before.open !== null && before.open > volume) {
-				throw new Error(`The open bottle has ${formatMl(before.open)} mL, more than ${formatMl(volume)} mL. Finish it first, or add the new size as a separate bottle.`);
+				throw new Error(
+					`The open bottle has ${formatMl(before.open)} mL, more than ${formatMl(volume)} mL. Finish it first, or add the new size as a separate bottle.`,
+				);
 			}
 			updates[PROP.volume] = volume;
 		}

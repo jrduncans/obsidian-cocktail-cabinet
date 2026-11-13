@@ -4,7 +4,9 @@ import type { NoteDraft, PlannedFile, Properties } from './schema';
 
 // JSON scalar/array values are valid YAML and keep user text out of YAML syntax.
 export function markdown(properties: Properties, body: string): string {
-	return `---\n${Object.entries(properties).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n${body.trim()}\n`;
+	return `---\n${Object.entries(properties)
+		.map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+		.join('\n')}\n---\n${body.trim()}\n`;
 }
 
 export function renderNote(root: string, draft: NoteDraft, date: string): PlannedFile {
@@ -13,14 +15,19 @@ export function renderNote(root: string, draft: NoteDraft, date: string): Planne
 	if (draft.kind === 'bottle' && properties[PROP.type] !== undefined && typeof properties[PROP.type] !== 'string') {
 		throw new Error('Select one ingredient type for a bottle, or leave it unclassified.');
 	}
-	for (const [kind, key, label] of [['type', PROP.family, 'family'], ['family', PROP.category, 'category']] as const) {
+	for (const [kind, key, label] of [
+		['type', PROP.family, 'family'],
+		['family', PROP.category, 'category'],
+	] as const) {
 		if (draft.kind === kind && properties[key] !== undefined && typeof properties[key] !== 'string') {
 			throw new Error(`Select one ingredient ${label}, or leave it out.`);
 		}
 	}
 	if (fileName(name) !== name) {
 		const aliases = properties.aliases;
-		properties.aliases = [...new Set([...(Array.isArray(aliases) ? aliases : typeof aliases === 'string' ? [aliases] : []), name])];
+		properties.aliases = [
+			...new Set([...(Array.isArray(aliases) ? aliases : typeof aliases === 'string' ? [aliases] : []), name]),
+		];
 	}
 	let body = draft.description.trim();
 	if (draft.kind === 'recipe') {
@@ -33,14 +40,20 @@ export function renderNote(root: string, draft: NoteDraft, date: string): Planne
 	}
 	const embeds = navigationEmbeds(root, draft.kind);
 	if (embeds) body = `${body.trim()}\n\n${embeds}`;
-	return { path: notePath(root, draft.kind, name), content: markdown(properties, `# ${name}\n\n${body}`), kind: draft.kind };
+	return {
+		path: notePath(root, draft.kind, name),
+		content: markdown(properties, `# ${name}\n\n${body}`),
+		kind: draft.kind,
+	};
 }
 
 export function recipeBody(draft: NoteDraft): string {
-	return `### Ingredients\n\n${draft.ingredients?.map(line => `- ${line}`).join('\n') || '- '}`
-		+ `\n\n### Method\n\n${draft.method?.trim() || ''}`
-		+ `\n\n### Description\n\n${draft.description.trim()}`
-		+ `\n\n### Tasting Notes\n\n${draft.tastingNotes?.trim() || ''}`;
+	return (
+		`### Ingredients\n\n${draft.ingredients?.map((line) => `- ${line}`).join('\n') || '- '}` +
+		`\n\n### Method\n\n${draft.method?.trim() || ''}` +
+		`\n\n### Description\n\n${draft.description.trim()}` +
+		`\n\n### Tasting Notes\n\n${draft.tastingNotes?.trim() || ''}`
+	);
 }
 
 export function localDate(date = new Date()): string {

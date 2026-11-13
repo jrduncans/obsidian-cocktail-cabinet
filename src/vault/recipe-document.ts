@@ -15,14 +15,21 @@ export function readRecipeDocument(content: string): { body: string; metadata: R
 
 /** Keep existing metadata, including nested properties, aliases, and creation date. A readable rating becomes a number; anything else is kept as written. */
 export function enhancedRecipeContent(original: string, draft: NoteDraft): string {
-	if (draft.kind !== 'recipe' || !draft.ingredients?.length) throw new Error('Add at least one ingredient before saving the recipe.');
+	if (draft.kind !== 'recipe' || !draft.ingredients?.length)
+		throw new Error('Add at least one ingredient before saving the recipe.');
 	const { metadata } = readRecipeDocument(original);
-	if (metadata[PROP.kind] && metadata[PROP.kind] !== 'recipe') throw new Error('This note already represents another cabinet resource. Select a recipe or an unclassified note.');
+	if (metadata[PROP.kind] && metadata[PROP.kind] !== 'recipe')
+		throw new Error(
+			'This note already represents another cabinet resource. Select a recipe or an unclassified note.',
+		);
 	const name = noteName(draft.name).normalize('NFC');
 	const properties = {
-		...metadata, [PROP.kind]: 'recipe', [PROP.name]: name,
+		...metadata,
+		[PROP.kind]: 'recipe',
+		[PROP.name]: name,
 		source: draft.properties?.source ?? null,
-		created: metadata.created ?? localDate(), rating: parseRating(metadata.rating) ?? metadata.rating ?? null,
+		created: metadata.created ?? localDate(),
+		rating: parseRating(metadata.rating) ?? metadata.rating ?? null,
 	};
 	return `---\n${stringifyYaml(properties).trimEnd()}\n---\n# ${name}\n\n${recipeBody(draft)}\n`;
 }

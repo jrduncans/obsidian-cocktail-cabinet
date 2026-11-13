@@ -2,7 +2,7 @@ import type { CabinetNote } from './schema';
 
 /** Traverses only explicit parent links. No inference from names or sibling groups. */
 export function isWithin(notes: readonly CabinetNote[], child: string, ancestor: string): boolean {
-	const byPath = new Map(notes.map(note => [note.path, note]));
+	const byPath = new Map(notes.map((note) => [note.path, note]));
 	return hasAncestor(byPath, child, ancestor);
 }
 
@@ -22,15 +22,18 @@ function hasAncestor(byPath: ReadonlyMap<string, CabinetNote>, child: string, an
 export function relatedTargets(notes: readonly CabinetNote[], target: CabinetNote): Set<string> {
 	const targets = new Set<string>([target.path]);
 	if (target.kind === 'recipe') return targets;
-	const byPath = new Map(notes.map(note => [note.path, note]));
+	const byPath = new Map(notes.map((note) => [note.path, note]));
 	for (const note of notes) {
 		// A broadly specified recipe can also use a more specific ingredient.
 		if (hasAncestor(byPath, note.path, target.path) || hasAncestor(byPath, target.path, note.path)) {
 			targets.add(note.path);
 		}
 		// Preserve same-type bottle alternatives without widening to sibling types or within a catch-all type.
-		if (target.kind === 'bottle' && note.kind === 'bottle' &&
-			target.parents.some(parent => note.parents.includes(parent) && !byPath.get(parent)?.catchAll)) {
+		if (
+			target.kind === 'bottle' &&
+			note.kind === 'bottle' &&
+			target.parents.some((parent) => note.parents.includes(parent) && !byPath.get(parent)?.catchAll)
+		) {
 			targets.add(note.path);
 		}
 	}

@@ -23,13 +23,24 @@ export function customViewsPath(root: string): string {
  */
 export function cabinetViews(folder: string, restock: RestockThresholds = DEFAULT_RESTOCK): PlannedFile[] {
 	const root = cabinetFolder(folder);
-	return [...resourceBases(root), navigationBase(root), shoppingBase(root), restockBase(root, restock), inStockBase(root)];
+	return [
+		...resourceBases(root),
+		navigationBase(root),
+		shoppingBase(root),
+		restockBase(root, restock),
+		inStockBase(root),
+	];
 }
 
 /** Every file setup writes. `examples` adds the worked example, for a cabinet without a home yet. */
-export function starterPlan(folder: string, paths: ReadonlyMap<string, string> = new Map(), examples = false, restock: RestockThresholds = DEFAULT_RESTOCK): PlannedFile[] {
+export function starterPlan(
+	folder: string,
+	paths: ReadonlyMap<string, string> = new Map(),
+	examples = false,
+	restock: RestockThresholds = DEFAULT_RESTOCK,
+): PlannedFile[] {
 	const root = cabinetFolder(folder);
-	const files = STARTER_CATALOG.map(entry => ({
+	const files = STARTER_CATALOG.map((entry) => ({
 		...renderNote(root, catalogDraft(root, entry, paths), localDate()),
 		path: paths.get(entry.id) || notePath(root, entry.kind, entry.name),
 		catalogId: entry.id,
@@ -45,8 +56,8 @@ export function cabinetHomePath(root: string): string {
 function exampleSection(example: readonly PlannedFile[]): string {
 	if (!example.length) return '';
 	const links = (kind: string) => {
-		const items = STARTER_EXAMPLES.filter(item => item.kind === kind).flatMap(item => {
-			const file = example.find(file => file.catalogId === item.id);
+		const items = STARTER_EXAMPLES.filter((item) => item.kind === kind).flatMap((item) => {
+			const file = example.find((file) => file.catalogId === item.id);
 			return file ? [wikiLink(file.path, item.name)] : [];
 		});
 		return items.length < 3 ? items.join(' and ') : `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
@@ -66,7 +77,9 @@ function cabinetHome(root: string, example: readonly PlannedFile[] = []): Planne
 	return {
 		path: cabinetHomePath(root),
 		kind: 'cabinet',
-		content: markdown(properties, `# Cocktail Cabinet
+		content: markdown(
+			properties,
+			`# Cocktail Cabinet
 
 Your bottles, ingredients, and cocktail recipes in one place. Start with one bottle or a favorite recipe and build your cabinet gradually.
 
@@ -128,7 +141,8 @@ Open a linked view to browse your current notes and edit properties. Enable **Ba
 
 Edit this page and your notes to suit your cabinet; setup keeps existing notes when you run it again. The views in the **Views** folder belong to the plugin, which updates them in new releases; ${viewLink(NAVIGATION_BASE)} supplies the sections shown in each ingredient and bottle note. To change a view, copy it into the **${CUSTOM_VIEWS_FOLDER}** folder and edit the copy; the plugin never touches that folder. **Cocktail Cabinet: Refresh cabinet views** restores the originals.
 
-Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The views need only Obsidian’s core Bases plugin.`),
+Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The views need only Obsidian’s core Bases plugin.`,
+		),
 	};
 }
 

@@ -132,10 +132,10 @@ Agreed on 2026-11-03 while scoping [roadmap](roadmap.md) Phase 1.
 - **Plugin link style.** Migration rewrites every ingredient link to the generated style (vault-relative path with display text), replacing the vault's bare-link convention.
 - **Logging entry point.** **Log this cocktail** is an Obsidian command on the recipe note. It runs on desktop and mobile (mobile enabled 2026-11-05, before a mobile layout pass).
 - **No hard-coded substitution rules.** The vault skill's always-ask-for-Green-Chartreuse rule is not built in. Instead, every counted ingredient line in the review can be changed before apply:
-  - The picker first lists owned bottles that fit the line in the hierarchy: a type's bottles; any bottle of a type in a referenced family; or a referenced bottle plus the other bottles of its type.
-  - A final **Other bottle…** option searches every bottle in the cabinet for exceptional substitutions.
-  - A line with one candidate, or naming a specific owned bottle, is pre-selected. A line with several candidates starts unselected, and apply is disabled until each such line is chosen.
-  - The preview and shortfall check follow the current selections; apply writes exactly what is shown. Recording substitutions is out of scope for now.
+    - The picker first lists owned bottles that fit the line in the hierarchy: a type's bottles; any bottle of a type in a referenced family; or a referenced bottle plus the other bottles of its type.
+    - A final **Other bottle…** option searches every bottle in the cabinet for exceptional substitutions.
+    - A line with one candidate, or naming a specific owned bottle, is pre-selected. A line with several candidates starts unselected, and apply is disabled until each such line is chosen.
+    - The preview and shortfall check follow the current selections; apply writes exactly what is shown. Recording substitutions is out of scope for now.
 - **Stock editing deferred.** Bottle creation plus hand edits of stock fields are enough to start real use. Superseded by [editing stock](#editing-stock).
 
 ### Logging implementation
@@ -189,17 +189,17 @@ Agreed on 2026-11-08. Creation, the starter, views, and unmeasured-line review b
 - **View behavior.** The existing default tabs keep their filters, columns, and labels. Browse includes types and kitchen staples, with groups named by category and family using proper names (for example Spirit › Rum), by family alone when it has no category, or Standalone types and Kitchen staples. Have links the type's stocked sources, or the staple itself when Have or Low. The Kitchen staples tab keeps the shared Availability (status mode) label from Other stock. In stock combines bottles and other stock: Have or Low, positive open mL, unopened bottles, or remaining mL; Unknown and blank amounts do not count. Blank numbers are guarded before comparisons, including the shared shopping-list Have expression. Only Restock's Unknown excludes staples, with a kind-first test so bottles without `cc-form` remain included.
 - **Existing home hand edit.** Setup preserves `Cocktails/Cocktail Cabinet.md`. For `knowledge`, manually add the following before Your collection and before Other stock respectively (adjust to the home's heading levels), add `[[Cocktails/Views/In stock.base|In stock]]` to the collection links, and mention the Browse tab and its Have column in the Ingredient types description. This implementation does not edit `knowledge`.
 
-  ```md
-  ## Start here
+    ```md
+    ## Start here
 
-  1. Open Other stock → Kitchen staples, walk through your kitchen, and set availability on the staples you have.
-  2. Set the stock on your bottles and other ingredients. Ingredient types → Browse shows what you have under each type.
-  3. Open a favorite recipe and log a cocktail. Use In stock to see everything on hand.
+    1. Open Other stock → Kitchen staples, walk through your kitchen, and set availability on the staples you have.
+    2. Set the stock on your bottles and other ingredients. Ingredient types → Browse shows what you have under each type.
+    3. Open a favorite recipe and log a cocktail. Use In stock to see everything on hand.
 
-  ### Kitchen staples
+    ### Kitchen staples
 
-  Open [[Cocktails/Views/Other stock.base#Kitchen staples|Kitchen staples]] to mark everyday ingredients such as salt, mint, and saline solution Have, Low, or Out. Each is tracked as itself, with no ingredient type to select. Use **Cocktail Cabinet: Add kitchen staple** for one that is missing.
-  ```
+    Open [[Cocktails/Views/Other stock.base#Kitchen staples|Kitchen staples]] to mark everyday ingredients such as salt, mint, and saline solution Have, Low, or Out. Each is tracked as itself, with no ingredient type to select. Use **Cocktail Cabinet: Add kitchen staple** for one that is missing.
+    ```
 
 - **Views verification.** Desktop dev-vault CLI queries on 2026-11-09 checked Browse's Have links and all four grouping cases (using a temporary diagnostic Base to expose the group formula), Kitchen staples columns, combined In stock, blank amounts, sealed-only and open-only bottles, Unknown bottles without Form, and Low/Out staples remaining in Restock. Temporary fixtures were removed. Mobile layout and editing through the tables were not checked.
 - **Reviewing unmeasured lines.** Built 2026-11-09: **Review unlinked ingredients** includes unmeasured lines whose wording exactly matches an existing ingredient note's name or alias after normalization with `ingredientKey` (case, accents, spacing, and curly apostrophes). This applies to every ingredient note, independently of the staple form. Leading amounts such as "2 drops", "1 sprig", and "pinch of" are kept outside the link; "mint leaves" can match an alias. Unmatched unmeasured lines stay out. Lines marked as garnish ("Garnish:", "to garnish") stay out by default; **Show garnishes** includes those matching a name or alias, grouped with the same wording elsewhere; the marker stays outside the link. With no **Keep as text**, anything never linked would otherwise stay listed forever, and many home bartenders skip garnishes that don't affect flavor. Unmarked garnishes such as "1 sprig mint" are treated like other unmeasured lines. Measured lines keep their existing behavior, and linking an unmeasured line does not make logging subtract it.

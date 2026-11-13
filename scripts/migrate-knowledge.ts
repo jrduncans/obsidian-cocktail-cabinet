@@ -7,20 +7,30 @@ import { migrationPlan } from './knowledge/plan';
 import { migrationReport } from './knowledge/report';
 import { actualRemovals, restorePrepass } from './knowledge/renames';
 
-const { values } = parseArgs({ options: {
-	'source-vault': { type: 'string' }, 'target-vault': { type: 'string' }, root: { type: 'string' },
-	apply: { type: 'boolean', default: false }, 'in-place': { type: 'boolean', default: false },
-	report: { type: 'string' }, help: { type: 'boolean' },
-} });
+const { values } = parseArgs({
+	options: {
+		'source-vault': { type: 'string' },
+		'target-vault': { type: 'string' },
+		root: { type: 'string' },
+		apply: { type: 'boolean', default: false },
+		'in-place': { type: 'boolean', default: false },
+		report: { type: 'string' },
+		help: { type: 'boolean' },
+	},
+});
 if (values.help) {
-	process.stdout.write('npm run migrate:knowledge -- --source-vault PATH --root FOLDER [--target-vault PATH --apply] [--report PATH]\n'
-		+ 'npm run migrate:knowledge -- --source-vault PATH --in-place [--apply] [--report PATH]\n'
-		+ 'Dry run is the default. A rehearsal applies to a separate vault, in a new folder or unchanged copy.\n'
-		+ 'In place converts the source vault\'s Cocktails folder; it needs git with nothing uncommitted there.\n');
+	process.stdout.write(
+		'npm run migrate:knowledge -- --source-vault PATH --root FOLDER [--target-vault PATH --apply] [--report PATH]\n' +
+			'npm run migrate:knowledge -- --source-vault PATH --in-place [--apply] [--report PATH]\n' +
+			'Dry run is the default. A rehearsal applies to a separate vault, in a new folder or unchanged copy.\n' +
+			"In place converts the source vault's Cocktails folder; it needs git with nothing uncommitted there.\n",
+	);
 } else {
 	const inPlace = values['in-place'];
-	if (inPlace && values['target-vault']) throw new Error('--in-place writes to the source vault; omit --target-vault.');
-	if (inPlace && values.root && values.root !== 'Cocktails') throw new Error('--in-place converts the Cocktails folder; omit --root.');
+	if (inPlace && values['target-vault'])
+		throw new Error('--in-place writes to the source vault; omit --target-vault.');
+	if (inPlace && values.root && values.root !== 'Cocktails')
+		throw new Error('--in-place converts the Cocktails folder; omit --root.');
 	const root = inPlace ? 'Cocktails' : values.root;
 	const target = inPlace ? values['source-vault'] : values['target-vault'];
 	if (!values['source-vault'] || !root) throw new Error('--source-vault and --root (or --in-place) are required.');
@@ -37,9 +47,11 @@ if (values.help) {
 	else process.stdout.write(report);
 	if (values.apply) {
 		await applyPlan(values['source-vault'], target!, plan, source, inPlace);
-		process.stdout.write(inPlace
-			? 'Migrated Cocktails in place. Review with git diff; git checkout -- Cocktails && git clean -fd Cocktails undoes it.\n'
-			: 'Applied rehearsal migration. Daily notes were not changed.\n');
+		process.stdout.write(
+			inPlace
+				? 'Migrated Cocktails in place. Review with git diff; git checkout -- Cocktails && git clean -fd Cocktails undoes it.\n'
+				: 'Applied rehearsal migration. Daily notes were not changed.\n',
+		);
 	} else process.stdout.write('Dry run only. No cabinet files were written.\n');
-	if (plan.issues.some(issue => issue.category === 'Conversion errors')) process.exitCode = 1;
+	if (plan.issues.some((issue) => issue.category === 'Conversion errors')) process.exitCode = 1;
 }

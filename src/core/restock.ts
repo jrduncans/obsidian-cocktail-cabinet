@@ -39,14 +39,16 @@ const noUnopened = none(PROP.unopened);
 const unknown = `if(${tracking} == "status", !${note(PROP.availability)} || ${note(PROP.availability)} == "Unknown", ${tracking} != "volume")`;
 
 /** Out, or nothing left: blank amounts count as 0. */
-const out = `if(${tracking} == "status", ${note(PROP.availability)} == "Out", `
-	+ `${tracking} == "volume" && if(${isBottle}, ${none(PROP.open)} && ${noUnopened}, ${none(PROP.remaining)}))`;
+const out =
+	`if(${tracking} == "status", ${note(PROP.availability)} == "Out", ` +
+	`${tracking} == "volume" && if(${isBottle}, ${none(PROP.open)} && ${noUnopened}, ${none(PROP.remaining)}))`;
 
 /** Low, or the last bottle at or under `lowShare` full; without a bottle size, and for other stock, `lowMl`. */
-const low = `if(${tracking} == "status", ${note(PROP.availability)} == "Low", `
-	+ `${tracking} == "volume" && if(${isBottle}, `
-	+ `${note(PROP.open)} > 0 && ${noUnopened} && if(${note(PROP.volume)} > 0, ${note(PROP.open)} / ${note(PROP.volume)} <= formula.lowShare, ${note(PROP.open)} <= formula.lowMl), `
-	+ `${note(PROP.remaining)} > 0 && ${note(PROP.remaining)} <= formula.lowMl))`;
+const low =
+	`if(${tracking} == "status", ${note(PROP.availability)} == "Low", ` +
+	`${tracking} == "volume" && if(${isBottle}, ` +
+	`${note(PROP.open)} > 0 && ${noUnopened} && if(${note(PROP.volume)} > 0, ${note(PROP.open)} / ${note(PROP.volume)} <= formula.lowShare, ${note(PROP.open)} <= formula.lowMl), ` +
+	`${note(PROP.remaining)} > 0 && ${note(PROP.remaining)} <= formula.lowMl))`;
 
 const formulas = (thresholds: RestockThresholds): Record<string, string> => ({
 	name: COMMON_FORMULAS.name,
@@ -67,15 +69,39 @@ const type = ['formula.parentLinks', 'Type'] as [string, string];
 const price = [`note.${PROP.lastPurchasePrice}`, 'Last price'] as [string, string];
 const shopping = [`note.${PROP.shoppingList}`, 'Shopping list'] as [string, string];
 const used = [`note.${PROP.lastUsed}`, 'Last used'] as [string, string];
-const byUse: Sort[] = [[`note.${PROP.lastUsed}`, 'DESC'], ['file.name', 'ASC']];
+const byUse: Sort[] = [
+	[`note.${PROP.lastUsed}`, 'DESC'],
+	['file.name', 'ASC'],
+];
 
 const VIEWS: readonly FormulaView[] = [
-	{ name: RESTOCK_VIEWS.low, type: 'table', filter: `(${stocked}) && formula.low`, columns: [name, type, ['formula.stock', 'Stock'], used, price, shopping], sort: byUse },
-	{ name: RESTOCK_VIEWS.out, type: 'table', filter: `(${stocked}) && formula.out`, columns: [name, type, used, price, shopping], sort: byUse },
-	{ name: RESTOCK_VIEWS.unknown, type: 'table', filter: `(${stocked}) && formula.unknown && !(${kitchenStaple})`, columns: [name, type, ['formula.unknownStock', 'Stock'], shopping] },
+	{
+		name: RESTOCK_VIEWS.low,
+		type: 'table',
+		filter: `(${stocked}) && formula.low`,
+		columns: [name, type, ['formula.stock', 'Stock'], used, price, shopping],
+		sort: byUse,
+	},
+	{
+		name: RESTOCK_VIEWS.out,
+		type: 'table',
+		filter: `(${stocked}) && formula.out`,
+		columns: [name, type, used, price, shopping],
+		sort: byUse,
+	},
+	{
+		name: RESTOCK_VIEWS.unknown,
+		type: 'table',
+		filter: `(${stocked}) && formula.unknown && !(${kitchenStaple})`,
+		columns: [name, type, ['formula.unknownStock', 'Stock'], shopping],
+	},
 ];
 
 export function restockBase(root: string, thresholds: RestockThresholds = DEFAULT_RESTOCK): PlannedFile {
 	root = cabinetFolder(root);
-	return { path: basePath(root, RESTOCK_BASE), kind: 'base', content: renderFormulaBase(root, formulas(thresholds), VIEWS) };
+	return {
+		path: basePath(root, RESTOCK_BASE),
+		kind: 'base',
+		content: renderFormulaBase(root, formulas(thresholds), VIEWS),
+	};
 }
