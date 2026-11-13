@@ -18,7 +18,7 @@ import { isWithin, relatedTargets } from '../src/core/relationships';
 import { starterPlan } from '../src/core/setup';
 import { STARTER_EXAMPLES, examplePlan } from '../src/catalog/examples';
 import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
-import { basePath, RESOURCE_BASES } from '../src/core/bases';
+import { basePath, RESOURCE_BASES, resourceBases } from '../src/core/bases';
 import { ingredientLinkTargets, linkTarget, sameKeys } from '../src/core/ingredient-links';
 import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } from '../src/core/navigation';
 import { RESTOCK_BASE, RESTOCK_VIEWS, restockBase } from '../src/core/restock';
@@ -313,10 +313,30 @@ void test('Bases use the selected root and kind without requiring parents or cat
 	const recipes = parseBase(bases.find((base) => base.path.endsWith('/Recipes.base'))!.content);
 	assert.deepEqual(
 		recipes.views[0]!.order,
-		['formula.name', 'formula.rating', 'cc-last-made', 'cc-times-made', 'created', 'source'],
+		[
+			'formula.name',
+			'formula.rating',
+			'formula.drinks',
+			'cc-est-alcohol-ml',
+			'formula.abv',
+			'cc-est-basis',
+			'cc-last-made',
+			'cc-times-made',
+			'created',
+			'source',
+		],
 		'Source last, so it scrolls off first',
 	);
 	assert.equal(recipes.formulas.rating, COMMON_FORMULAS.rating, 'ratings as stars');
+	const lower = recipes.views.find((view: { name: string }) => view.name === 'Lower alcohol')!;
+	assert.deepEqual(
+		lower.sort.map((entry: { property: string }) => entry.property),
+		['cc-est-alcohol-ml'],
+	);
+	assert.match(lower.filters!.and[0]!, /!= "partial"/);
+	assert.match(recipes.formulas.drinks!, /\* 0\.789 \/ 14\)/);
+	const uk = parseBase(resourceBases('Cocktails', 8).find((base) => base.path.endsWith('/Recipes.base'))!.content);
+	assert.match(uk.formulas.drinks!, /\* 0\.789 \/ 8\)/);
 });
 
 void test('a family without a category still finds its types and their bottles', () => {

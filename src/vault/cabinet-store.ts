@@ -27,6 +27,8 @@ export class CabinetStore {
 		readonly app: App,
 		private folder: () => string,
 		private restock: () => RestockThresholds = () => DEFAULT_RESTOCK,
+		/** The standard drink, in grams of alcohol, that the Recipes Base shows. */
+		private drinkGrams: () => number = () => 14,
 	) {}
 
 	get root(): string {
@@ -148,7 +150,7 @@ export class CabinetStore {
 		// The worked example comes with a new cabinet only, so a deleted example stays deleted.
 		const home = cabinetHomePath(root);
 		const newCabinet = !this.app.vault.getAbstractFileByPath(home) && !byLowerPath.has(home.toLowerCase());
-		for (const planned of starterPlan(root, catalogPaths, newCabinet, this.restock())) {
+		for (const planned of starterPlan(root, catalogPaths, newCabinet, this.restock(), this.drinkGrams())) {
 			const parts = planned.path.split('/');
 			for (let depth = 1; depth < parts.length; depth++) {
 				const parent = parts.slice(0, depth).join('/');
@@ -239,7 +241,7 @@ export class CabinetStore {
 			const root = this.root;
 			const updated: string[] = [];
 			const next: Record<string, string> = {};
-			for (const view of cabinetViews(root, this.restock())) {
+			for (const view of cabinetViews(root, this.restock(), this.drinkGrams())) {
 				const fingerprint = contentFingerprint(view.content, root);
 				next[view.path] = fingerprint;
 				if (!force && written[view.path] === fingerprint) continue;

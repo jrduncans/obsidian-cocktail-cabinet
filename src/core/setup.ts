@@ -21,10 +21,15 @@ export function customViewsPath(root: string): string {
  * The Bases the plugin owns, in `<root>/Views/`. Setup and **Refresh cabinet views** write them,
  * and the plugin rewrites one when a release or a setting changes it. Copies in Custom views are the user's.
  */
-export function cabinetViews(folder: string, restock: RestockThresholds = DEFAULT_RESTOCK): PlannedFile[] {
+/** `drinkGrams`: the standard drink the Recipes Base shows, 14 g (US) by default. */
+export function cabinetViews(
+	folder: string,
+	restock: RestockThresholds = DEFAULT_RESTOCK,
+	drinkGrams = 14,
+): PlannedFile[] {
 	const root = cabinetFolder(folder);
 	return [
-		...resourceBases(root),
+		...resourceBases(root, drinkGrams),
 		navigationBase(root),
 		shoppingBase(root),
 		restockBase(root, restock),
@@ -38,6 +43,7 @@ export function starterPlan(
 	paths: ReadonlyMap<string, string> = new Map(),
 	examples = false,
 	restock: RestockThresholds = DEFAULT_RESTOCK,
+	drinkGrams = 14,
 ): PlannedFile[] {
 	const root = cabinetFolder(folder);
 	const files = STARTER_CATALOG.map((entry) => ({
@@ -46,7 +52,13 @@ export function starterPlan(
 		catalogId: entry.id,
 	}));
 	const example = examples ? examplePlan(root, localDate(), paths) : [];
-	return [...files, ...example, ...cabinetViews(root, restock), shoppingNote(root), cabinetHome(root, example)];
+	return [
+		...files,
+		...example,
+		...cabinetViews(root, restock, drinkGrams),
+		shoppingNote(root),
+		cabinetHome(root, example),
+	];
 }
 
 export function cabinetHomePath(root: string): string {

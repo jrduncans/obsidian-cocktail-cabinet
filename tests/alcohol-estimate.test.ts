@@ -4,6 +4,7 @@ import {
 	DASH_ML,
 	DEFAULT_TOP_ML,
 	estimateAlcohol,
+	estimateText,
 	factsOf,
 	methodPreparation,
 	noteAbv,
@@ -181,4 +182,18 @@ void test('stored estimates are rounded, and a recipe with nothing to pour store
 		'cc-est-basis': 'none',
 		'cc-contains': [],
 	});
+});
+
+void test('the logging line scales by servings and says how sure it is', () => {
+	const daiquiri = estimateAlcohol({
+		lines: ['2 oz (60 ml) [[Rum]]', '1 oz (30 ml) [[Lime]]', '¾ oz (22.5 ml) [[Syrup]]'],
+		method: 'Shake.',
+		link,
+	});
+	assert.equal(estimateText(daiquiri, 1), '≈ 1.4 drinks (24.0 mL alcohol), 17.1% ABV · exact');
+	assert.equal(estimateText(daiquiri, 2), '≈ 2.7 drinks (48.0 mL alcohol), 17.1% ABV · exact');
+	assert.equal(estimateText(daiquiri, 1, 'uk'), '≈ 2.4 units (24.0 mL alcohol), 17.1% ABV · exact');
+	const partial = estimateAlcohol({ lines: ['2 oz (60 ml) [[Rum]]', '1 oz [[Mystery]]'], method: 'Stir.', link });
+	assert.match(estimateText(partial, 1), /^≥ 1\.4 drinks .* ≥ \d+\.\d% ABV · some ABVs or amounts unknown$/);
+	assert.equal(estimateText(estimateAlcohol({ lines: ['Garnish: cherry'], method: '', link }), 1), '');
 });
