@@ -16,6 +16,7 @@ try {
 		'note-edit.test',
 		'recipe-import.test',
 		'logging.test',
+		'alcohol-estimate.test',
 		'one-off.test',
 		'unlinked-lines.test',
 		'logging-store.test',
