@@ -2,13 +2,20 @@ name: Node.js build
 
 on:
     push:
-        branches: ['**']
+        branches: [main]
     pull_request:
         branches: ['**']
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
 
 jobs:
     build:
         runs-on: ubuntu-latest
+        timeout-minutes: 15
+        permissions:
+            contents: read
 
         strategy:
             matrix:
@@ -16,9 +23,11 @@ jobs:
                 # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+              with:
+                  persist-credentials: false
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
               with:
                   node-version: ${{ matrix.node-version }}
                   cache: 'npm'

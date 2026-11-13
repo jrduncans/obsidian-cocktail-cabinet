@@ -5,21 +5,28 @@ on:
         tags:
             - '*'
 
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: false
+
 jobs:
     build:
         runs-on: ubuntu-latest
+        timeout-minutes: 15
         permissions:
             contents: write
             id-token: write
             attestations: write
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+              with:
+                  persist-credentials: false
 
             - name: Use Node.js
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
               with:
                   node-version: 24
-                  cache: 'npm'
+                  package-manager-cache: false
 
             - name: Build plugin
               run: |
@@ -32,7 +39,7 @@ jobs:
                   [ -f styles.css ] && echo "exists=true" >> "$GITHUB_OUTPUT" || echo "exists=false" >> "$GITHUB_OUTPUT"
 
             - name: Attest build provenance
-              uses: actions/attest@v4
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
               with:
                   subject-path: |
                       main.js
@@ -41,10 +48,14 @@ jobs:
             - name: Create release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  HAS_STYLES: ${{ steps.styles.outputs.exists }}
               run: |
                   tag="${GITHUB_REF#refs/tags/}"
+
+                  files=(main.js manifest.json)
+                  [ "$HAS_STYLES" = true ] && files+=(styles.css)
 
                   gh release create "$tag" \
                     --title="$tag" \
                     --draft \
-                    main.js manifest.json ${{ steps.styles.outputs.exists == 'true' && 'styles.css' || '' }}
+                    "${files[@]}"

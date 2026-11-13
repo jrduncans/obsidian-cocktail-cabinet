@@ -277,7 +277,7 @@ function vault(properties: Record<string, unknown>) {
 		kind: 'bottle' as const,
 		parents: [],
 	};
-	const saved = { ...properties, custom: 'keep' };
+	const saved: Record<string, unknown> = { ...properties, custom: 'keep' };
 	const app = {
 		vault: {
 			getAbstractFileByPath: (path: string) => (path === note.path ? new TFile(path) : null),

@@ -378,14 +378,14 @@ void test('a trailing garnish marker groups with the ingredient and stays outsid
 		link: 'Whole Nutmeg',
 		after: ' to garnish',
 	});
-	const note = {
+	const note: CabinetNote = {
 		path: 'Cocktails/Ingredients/Whole Nutmeg.md',
 		name: 'Whole Nutmeg',
 		kind: 'ingredient',
 		parents: [],
 		aliases: ['Nutmeg'],
-	} as const;
-	const recipe = { path: 'Cocktails/Recipes/A.md', name: 'A', kind: 'recipe', parents: [] } as const;
+	};
+	const recipe: CabinetNote = { path: 'Cocktails/Recipes/A.md', name: 'A', kind: 'recipe', parents: [] };
 	const groups = groupUnlinked(
 		[{ note: recipe, content: '### Ingredients\n- nutmeg\n- nutmeg to garnish' }],
 		[note],
