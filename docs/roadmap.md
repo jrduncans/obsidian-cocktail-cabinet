@@ -73,7 +73,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
     - Not built: Convert Salt, Mint, Heavy Cream, and Milk in `knowledge`, and add its Eggs note, once this release is installed there.
 - Not built: a `knowledge` session to decide the personal tag set and move each recipe's trailing inline tags into the `tags` property (Edit already moves them one recipe at a time). `#lowerabv` waits for the alcohol estimate.
 
-- New, raised 2026-11-13 (not yet designed): estimate each recipe's alcohol, so lower-alcohol drinks are found by a number rather than a `#lowerabv` tag.
+- New, raised 2026-11-13, [design drafted](alcohol-estimate.md) the same day with open decisions: estimate each recipe's alcohol, so lower-alcohol drinks are found by a number rather than a `#lowerabv` tag.
     - Two figures, since they answer different questions: total alcohol (mL of ethanol, or standard drinks), for how much a drink delivers, and final ABV after dilution, for how strong it tastes. A large spritz can be low in ABV yet high in total alcohol.
     - ABV comes from a named bottle's `cc-abv`, else from a typical ABV on the linked type (a new optional property), else a family default, else unknown. Dashes count as a small fixed volume or are ignored; unmeasured lines ("top with soda", ranges) are unknown.
     - Dilution is inferred, not stored: shaken-style for recipes with juice, dairy, or egg, stirred-style otherwise, more for blending or crushed ice. No method property; see [the decision](cabinet-design.md#recipe-tags-rating-and-duplicates). The same pass can store ingredient facts a Base can group on: citrus or juice, dairy or egg, sparkling, else spirit-forward.
