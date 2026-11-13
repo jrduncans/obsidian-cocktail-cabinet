@@ -45,6 +45,7 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 		name: 'Ingredient types',
 		columns: [
 			[PROP.family, 'Family'],
+			[PROP.abvTypical, 'Typical ABV (fraction)'],
 			[PROP.sugarWaterRatio, 'Sugar to water ratio'],
 			[PROP.shoppingList, 'Shopping list'],
 		],
@@ -52,7 +53,10 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 	{
 		kind: 'family',
 		name: 'Ingredient families',
-		columns: [[PROP.category, 'Category']],
+		columns: [
+			[PROP.category, 'Category'],
+			[PROP.abvTypical, 'Typical ABV (fraction)'],
+		],
 	},
 	{ kind: 'category', name: 'Ingredient categories', columns: [] },
 	{

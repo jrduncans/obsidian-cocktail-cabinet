@@ -87,6 +87,15 @@ export class EditNoteModal extends CabinetForm {
 				this.edit.abv = value;
 			});
 		}
+		if (kind === 'type' || kind === 'family') {
+			this.number('Typical ABV (%)', abvText(properties[PROP.abvTypical]), (value) => {
+				this.edit.typicalAbv = value;
+			}).setDesc(
+				kind === 'type'
+					? 'For recipes that name this type rather than a bottle. 0 for non-alcoholic ingredients; blank if it varies too much to say.'
+					: 'For recipes that name this family, such as “rum”. Blank if it varies too much to say.',
+			);
+		}
 		if (kind === 'ingredient') {
 			const saved = properties[PROP.form];
 			const form = typeof saved === 'string' ? saved : '';
@@ -134,7 +143,9 @@ export class EditNoteModal extends CabinetForm {
 	}
 
 	private number(label: string, value: string, change: (value: string) => void) {
-		this.text(label, value, change).controlEl.querySelector('input')?.setAttribute('inputmode', 'decimal');
+		const row = this.text(label, value, change);
+		row.controlEl.querySelector('input')?.setAttribute('inputmode', 'decimal');
+		return row;
 	}
 
 	private recipeFields() {

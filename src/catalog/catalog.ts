@@ -460,6 +460,35 @@ for (const [name, ratio, ingredient, aliases] of sugar) {
 	entry.method = `Combine ${ratio === '1:1' ? 'equal weights of' : 'two parts by weight of'} ${ingredient} and ${ratio === '1:1' ? '' : 'one part by weight of '}water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).`;
 }
 
+// Non-alcoholic types and families have a typical ABV of 0, so alcohol estimates count them as known.
+// Alcoholic types are left blank: a representative value is the user's call (see docs/alcohol-estimate.md).
+const NON_ALCOHOLIC_FAMILIES = [
+	'Citrus Juice',
+	'Other Fruit Juice',
+	'Vegetable Juice',
+	'Sugar Syrup',
+	'Flavored Syrup',
+	'Carbonated Mixer',
+];
+const NON_ALCOHOLIC_TYPES = [
+	'Cream of Coconut',
+	'Egg White',
+	'Whole Egg',
+	'Lime Peel',
+	'Lemon Peel',
+	'Orange Peel',
+	'Cocktail Cherry',
+];
+for (const entry of entries) {
+	const zero =
+		(entry.kind === 'family' && NON_ALCOHOLIC_FAMILIES.includes(entry.name)) ||
+		(entry.kind === 'type' &&
+			(NON_ALCOHOLIC_TYPES.includes(entry.name) || NON_ALCOHOLIC_FAMILIES.includes(entry.parent ?? '')));
+	if (zero) entry.properties = { ...entry.properties, [PROP.abvTypical]: 0 };
+}
+for (const name of [...NON_ALCOHOLIC_FAMILIES, ...NON_ALCOHOLIC_TYPES])
+	if (!entries.some((entry) => entry.name === name)) throw new Error(`Missing non-alcoholic entry: ${name}`);
+
 export const STARTER_CATALOG: readonly CatalogEntry[] = entries;
 
 export function catalogDraft(

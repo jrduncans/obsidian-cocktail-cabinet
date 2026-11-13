@@ -9,8 +9,8 @@ import { parseTags } from './recipe-tags';
  * bottle's or other stock's stock, price, and shopping flag to Edit stock.
  */
 export const EDIT_FIELDS = {
-	family: [PROP.category],
-	type: [PROP.family, PROP.catchAll, PROP.shoppingList],
+	family: [PROP.category, PROP.abvTypical],
+	type: [PROP.family, PROP.catchAll, PROP.shoppingList, PROP.abvTypical],
 	bottle: [PROP.type, PROP.volume, PROP.abv],
 	ingredient: [PROP.provides, PROP.form],
 	recipe: ['source', 'rating', 'tags'],
@@ -35,6 +35,8 @@ export interface FieldEdit {
 	volume?: string;
 	/** Percent, as typed. */
 	abv?: string;
+	/** A type's or family's typical ABV: percent, as typed. */
+	typicalAbv?: string;
 	form?: string;
 	shoppingList?: boolean;
 	catchAll?: boolean;
@@ -119,6 +121,14 @@ export function planFieldEdit(kind: EditableKind, before: Record<string, unknown
 			const abv = optionalNumber(edit.abv, 'Alcohol by volume', 0, 100);
 			set(PROP.abv, abv === null ? null : Number((abv / 100).toFixed(6)));
 		}
+	}
+	if (
+		(kind === 'type' || kind === 'family') &&
+		edit.typicalAbv !== undefined &&
+		edit.typicalAbv.trim() !== abvText(before[PROP.abvTypical])
+	) {
+		const abv = optionalNumber(edit.typicalAbv, 'Typical ABV', 0, 100);
+		set(PROP.abvTypical, abv === null ? null : Number((abv / 100).toFixed(6)));
 	}
 	if (kind === 'ingredient' && edit.form !== undefined && !same(before[PROP.form], edit.form)) {
 		if (!(edit.form in formOptions(before[PROP.form]))) throw new Error('Select an ingredient form.');

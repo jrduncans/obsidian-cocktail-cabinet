@@ -877,7 +877,13 @@ void test('Browse includes types and staples, grouped by hierarchy with stocked 
 		types.views.map((view) => view.name),
 		['Ingredient types', 'Browse'],
 	);
-	assert.deepEqual(types.views[0]!.order, ['formula.name', 'cc-family', 'cc-sugar-water-ratio', 'cc-shopping-list']);
+	assert.deepEqual(types.views[0]!.order, [
+		'formula.name',
+		'cc-family',
+		'cc-abv-typical',
+		'cc-sugar-water-ratio',
+		'cc-shopping-list',
+	]);
 	const browse = types.views[1]!;
 	assert.match(browse.filters!.and[0]!, /Kitchen staple/);
 	assert.match(browse.filters!.and[0]!, /cc-kind.*type/);
@@ -969,4 +975,20 @@ void test('the Recipes section reads cc-ingredients, falling back to every link 
 	const base = navigationBase('Cocktails').content;
 	assert.match(base, /note\["cc-ingredients"\]\.isType\("list"\)/);
 	assert.match(base, /file\.links/);
+});
+
+void test('the starter marks non-alcoholic types and families with a typical ABV of 0, and leaves alcoholic ones blank', () => {
+	const abv = (name: string) => STARTER_CATALOG.find((entry) => entry.name === name)?.properties?.[PROP.abvTypical];
+	for (const name of [
+		'Lime Juice',
+		'Citrus Juice',
+		'Simple Syrup (1:1)',
+		'Orgeat',
+		'Soda Water',
+		'Egg White',
+		'Cocktail Cherry',
+	])
+		assert.equal(abv(name), 0, name);
+	for (const name of ['London Dry Gin', 'Gin', 'Angostura Bitters', 'Dry Vermouth', 'Champagne'])
+		assert.equal(abv(name), undefined, name);
 });
