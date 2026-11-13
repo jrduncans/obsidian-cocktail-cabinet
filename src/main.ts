@@ -3,6 +3,7 @@ import { registerCommands } from './commands';
 import { loadSettings, CocktailCabinetSettingTab } from './settings';
 import type { CocktailCabinetSettings } from './settings';
 import { CabinetStore } from './vault/cabinet-store';
+import { IngredientLinkSync } from './vault/ingredient-link-sync';
 
 export default class CocktailCabinetPlugin extends Plugin {
 	settings!: CocktailCabinetSettings;
@@ -19,6 +20,23 @@ export default class CocktailCabinetPlugin extends Plugin {
 		this.addSettingTab(new CocktailCabinetSettingTab(this.app, this));
 		// Views a release changed are rewritten once the vault is indexed.
 		this.app.workspace.onLayoutReady(() => void this.syncViews());
+		this.syncIngredientLinks();
+	}
+
+	/**
+	 * Keep recipes' `cc-ingredients` in step with their Ingredients sections: after each change, and once
+	 * shortly after startup for edits made while Obsidian was closed or before this release.
+	 */
+	private syncIngredientLinks() {
+		const links = new IngredientLinkSync(this.app, () => this.settings.cabinetFolder);
+		this.register(() => links.cancel());
+		this.app.workspace.onLayoutReady(() => {
+			this.registerEvent(
+				this.app.metadataCache.on('changed', (file, _data, cache) => links.changed(file, cache)),
+			);
+			const timer = window.setTimeout(() => void links.syncAll(), 5000);
+			this.register(() => window.clearTimeout(timer));
+		});
 	}
 
 	/** Settings synced from another device, including its recent logs, replace the ones loaded here. */

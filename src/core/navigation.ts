@@ -43,8 +43,9 @@ const FORMULAS: Record<string, string> = {
 	thisParents: 'formula.thisUp1.map(value.path)',
 	// A catch-all type groups bottles that aren't assumed to replace each other (Amaro, Specialty Bitters).
 	thisSwapTypes: `formula.thisUp1.filter(value.properties[${q(PROP.catchAll)}] != true).map(value.path)`,
-	// Recipes: every link anywhere in the note, followed up the hierarchy.
-	linked: 'file.links.map(value.asFile()).filter(value)',
+	// Recipes: the notes their Ingredients section links (`cc-ingredients`, kept by the plugin), followed up the
+	// hierarchy. A recipe the plugin hasn't reached yet falls back to every link in the note.
+	linked: `if(note[${q(PROP.ingredients)}].isType("list"), list(note[${q(PROP.ingredients)}]).filter(value).map(link(value).asFile()).filter(value), file.links.map(value.asFile()).filter(value))`,
 	linkedUp1: parentsOf('formula.linked'),
 	linkedUp2: parentsOf('formula.linkedUp1'),
 	linkedUp3: parentsOf('formula.linkedUp2'),

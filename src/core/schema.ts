@@ -39,6 +39,8 @@ export const PROP = {
 	/** Recipes: date last logged, and how many times. */
 	lastMade: 'cc-last-made',
 	timesMade: 'cc-times-made',
+	/** Recipes: the notes linked from the Ingredients section, kept in step by the plugin for the Recipes sections. */
+	ingredients: 'cc-ingredients',
 	sugarWaterRatio: 'cc-sugar-water-ratio',
 	schemaVersion: 'cc-schema-version',
 } as const;
