@@ -22,6 +22,8 @@ export const PROP = {
 	catalogId: 'cc-catalog-id',
 	volume: 'cc-volume-ml',
 	abv: 'cc-abv',
+	/** Types and families: a representative ABV (a fraction) for recipes that name the type, not a bottle. */
+	abvTypical: 'cc-abv-typical',
 	stockTracking: 'cc-stock-tracking',
 	open: 'cc-open-ml',
 	unopened: 'cc-unopened',
