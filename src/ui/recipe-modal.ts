@@ -3,12 +3,15 @@ import type { TFile } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { parseRecipeText } from '../core/recipe-import';
 import type { RecipeImport } from '../core/recipe-import';
+import { RATING_OPTIONS, ratingText } from '../core/note-edit';
+import { duplicateRecipes, joinTags, splitTags } from '../core/recipe-tags';
 import { noteName, parseRating } from '../core/schema';
 import type { NoteDraft } from '../core/schema';
 import { readRecipeDocument } from '../vault/recipe-document';
 import type { RecipeSnapshot } from '../vault/cabinet-store';
 import { CabinetForm } from './form';
 import { RecipeIngredients } from './recipe-ingredients';
+import { RecipeTagsField } from './recipe-tags';
 
 const IMPORTED_FIELDS = ['cc-name', 'name', 'title', 'source', 'rating', 'created', 'cc-kind'];
 
@@ -73,6 +76,23 @@ export class RecipeModal extends CabinetForm {
 			);
 	}
 
+	/** Warn when the name matches a recipe already in the cabinet; each one opens in a new tab. */
+	private showDuplicates(el: HTMLElement, name: string) {
+		el.empty();
+		const found = duplicateRecipes(name, this.plugin.store.notes(), this.snapshot?.path);
+		if (!found.length) return;
+		el.appendText('Already in the cabinet: ');
+		found.forEach((note, index) => {
+			if (index) el.appendText(', ');
+			const link = el.createEl('a', { text: note.name, href: '#' });
+			link.addEventListener('click', (event) => {
+				event.preventDefault();
+				void this.app.workspace.openLinkText(note.path, '', 'tab');
+			});
+		});
+		el.appendText('.');
+	}
+
 	private showError(error: unknown) {
 		this.errorEl.setText(error instanceof Error ? error.message : 'The recipe text could not be read.');
 	}
@@ -119,22 +139,40 @@ export class RecipeModal extends CabinetForm {
 				.filter(Boolean)
 				.join('\n\n');
 		}
-		this.text('Recipe name', recipe.name, (value) => {
+		const nameRow = this.text('Recipe name', recipe.name, (value) => {
 			recipe.name = value;
+			this.showDuplicates(duplicatesEl, value);
 		}).setClass('cocktail-cabinet-name');
+		const duplicatesEl = nameRow.descEl.createDiv({ cls: 'cocktail-cabinet-warning' });
+		this.showDuplicates(duplicatesEl, recipe.name);
 		this.text('Source (optional)', recipe.source, (value) => {
 			recipe.source = value;
 		}).setClass('cocktail-cabinet-name');
+		let rating = ratingText(metadata.rating);
+		this.select(
+			'Rating',
+			rating === 'keep'
+				? { keep: `Keep as written: ${String(metadata.rating)}`, ...RATING_OPTIONS }
+				: RATING_OPTIONS,
+			rating,
+			(value) => {
+				rating = value;
+			},
+		);
 		const ingredients = new RecipeIngredients(this.plugin, this.contentEl, recipe.ingredients);
 		this.area('Method', recipe.method, (value) => {
 			recipe.method = value;
+			tags.methodChanged(value);
 		}).setClass('cocktail-cabinet-name');
 		this.area('Description', recipe.description, (value) => {
 			recipe.description = value;
 		}).setClass('cocktail-cabinet-name');
-		this.area('Tasting notes', recipe.tastingNotes, (value) => {
-			recipe.tastingNotes = value;
+		const notes = splitTags(recipe.tastingNotes);
+		this.area('Tasting notes', notes.text, (value) => {
+			notes.text = value;
 		}).setClass('cocktail-cabinet-name');
+		const tags = new RecipeTagsField(this.contentEl, notes.tags, this.plugin.store.recipeTagCounts(), true);
+		tags.methodChanged(recipe.method);
 		const moving = this.snapshot && this.plugin.store.recipeDestination(this.snapshot.path) !== this.snapshot.path;
 		this.submit(moving ? 'Move and save recipe' : this.snapshot ? 'Save recipe' : 'Create recipe', async () => {
 			const draft: NoteDraft = {
@@ -143,8 +181,12 @@ export class RecipeModal extends CabinetForm {
 				ingredients: ingredients.lines(),
 				method: recipe.method,
 				description: recipe.description,
-				tastingNotes: recipe.tastingNotes,
-				properties: { source: recipe.source.trim() || null, rating: parseRating(metadata.rating) ?? null },
+				tastingNotes: joinTags(notes.text, tags.tags()),
+				// Keep as written leaves the rating out, so Enhance keeps the saved value.
+				properties: {
+					source: recipe.source.trim() || null,
+					...(rating === 'keep' ? {} : { rating: rating ? (parseRating(rating) ?? null) : null }),
+				},
 			};
 			const file = this.snapshot
 				? await this.plugin.store.enhanceRecipe(this.snapshot, draft)

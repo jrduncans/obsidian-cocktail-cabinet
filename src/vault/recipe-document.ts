@@ -13,7 +13,10 @@ export function readRecipeDocument(content: string): { body: string; metadata: R
 	return { body: content.slice(frontmatter[0].length), metadata: (parsed || {}) as Record<string, unknown> };
 }
 
-/** Keep existing metadata, including nested properties, aliases, and creation date. A readable rating becomes a number; anything else is kept as written. */
+/**
+ * Keep existing metadata, including nested properties, aliases, and creation date. The draft's rating
+ * wins when it has one; otherwise a readable rating becomes a number, and anything else is kept as written.
+ */
 export function enhancedRecipeContent(original: string, draft: NoteDraft): string {
 	if (draft.kind !== 'recipe' || !draft.ingredients?.length)
 		throw new Error('Add at least one ingredient before saving the recipe.');
@@ -29,7 +32,10 @@ export function enhancedRecipeContent(original: string, draft: NoteDraft): strin
 		[PROP.name]: name,
 		source: draft.properties?.source ?? null,
 		created: metadata.created ?? localDate(),
-		rating: parseRating(metadata.rating) ?? metadata.rating ?? null,
+		rating:
+			draft.properties && 'rating' in draft.properties
+				? draft.properties.rating
+				: (parseRating(metadata.rating) ?? metadata.rating ?? null),
 	};
 	return `---\n${stringifyYaml(properties).trimEnd()}\n---\n# ${name}\n\n${recipeBody(draft)}\n`;
 }
