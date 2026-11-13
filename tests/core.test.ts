@@ -19,6 +19,7 @@ import { starterPlan } from '../src/core/setup';
 import { STARTER_EXAMPLES, examplePlan } from '../src/catalog/examples';
 import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
 import { basePath, RESOURCE_BASES } from '../src/core/bases';
+import { ingredientLinkTargets, linkTarget, sameKeys } from '../src/core/ingredient-links';
 import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } from '../src/core/navigation';
 import { RESTOCK_BASE, RESTOCK_VIEWS, restockBase } from '../src/core/restock';
 import { SHOPPING_BASE, SHOPPING_VIEWS, shoppingBase, shoppingNote, shoppingNotePath } from '../src/core/shopping';
@@ -933,4 +934,39 @@ void test('In stock combines sources with blank-safe amounts, and only Unknown e
 	assert.match(home, /## Start here/);
 	assert.match(home, /### Kitchen staples/);
 	assert.match(home, /Other stock.base#Kitchen staples/);
+});
+
+void test('ingredient links come only from the Ingredients section, each once, without heading or display text', () => {
+	const at = (offset: number) => ({ position: { start: { offset } } });
+	const cache = {
+		headings: [
+			{ heading: 'Bebbo', level: 1, ...at(0) },
+			{ heading: 'Ingredients', level: 3, ...at(10) },
+			{ heading: 'Garnish', level: 4, ...at(40) },
+			{ heading: 'Method', level: 3, ...at(60) },
+		],
+		links: [
+			{ link: 'Before', ...at(5) },
+			{ link: 'Cocktails/Types/Gin', ...at(20) },
+			{ link: 'Cocktails/Types/Gin#Notes', ...at(25) },
+			{ link: 'Lemon Juice|lemon', ...at(30) },
+			{ link: 'Orange Peel', ...at(45) },
+			{ link: 'Angostura Bitters', ...at(70) },
+		],
+	};
+	assert.deepEqual(ingredientLinkTargets(cache), ['Cocktails/Types/Gin', 'Lemon Juice', 'Orange Peel']);
+	assert.deepEqual(ingredientLinkTargets({ links: cache.links }), []);
+	assert.deepEqual(
+		ingredientLinkTargets({ headings: [{ heading: 'ingredients', level: 2, ...at(0) }], links: cache.links })
+			.length,
+		5,
+	);
+	assert.equal(linkTarget('[[Cocktails/Types/Gin|gin]]'), 'Cocktails/Types/Gin');
+	assert.ok(sameKeys(['a', 'b', 'a'], ['b', 'a']));
+	assert.ok(!sameKeys(['a'], ['a', 'b']));
+});
+void test('the Recipes section reads cc-ingredients, falling back to every link only when it is missing', () => {
+	const base = navigationBase('Cocktails').content;
+	assert.match(base, /note\["cc-ingredients"\]\.isType\("list"\)/);
+	assert.match(base, /file\.links/);
 });
