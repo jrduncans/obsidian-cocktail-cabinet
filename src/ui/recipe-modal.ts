@@ -3,7 +3,7 @@ import type { TFile } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { parseRecipeText } from '../core/recipe-import';
 import type { RecipeImport } from '../core/recipe-import';
-import { RATING_OPTIONS, ratingText } from '../core/note-edit';
+import { ratingOptions, ratingText } from '../core/note-edit';
 import { duplicateRecipes, parseTags, splitTags, uniqueTags } from '../core/recipe-tags';
 import { noteName, parseRating } from '../core/schema';
 import type { NoteDraft } from '../core/schema';
@@ -149,16 +149,9 @@ export class RecipeModal extends CabinetForm {
 			recipe.source = value;
 		}).setClass('cocktail-cabinet-name');
 		let rating = ratingText(metadata.rating);
-		this.select(
-			'Rating',
-			rating === 'keep'
-				? { keep: `Keep as written: ${String(metadata.rating)}`, ...RATING_OPTIONS }
-				: RATING_OPTIONS,
-			rating,
-			(value) => {
-				rating = value;
-			},
-		);
+		this.select('Rating', ratingOptions(metadata.rating), rating, (value) => {
+			rating = value;
+		});
 		const ingredients = new RecipeIngredients(this.plugin, this.contentEl, recipe.ingredients);
 		this.area('Method', recipe.method, (value) => {
 			recipe.method = value;

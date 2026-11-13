@@ -261,7 +261,7 @@ Built on 2026-11-05 as the last Phase 2 item, replacing hand edits of the fields
 - **Body text stays in the editor, except on recipes.** A bottle's, stock's, or hierarchy note's description and preparation are ordinary Markdown, so the form offers only fields that need a picker or validation.
 - **Recipe sections in place.** Only the four sections are rewritten, each only when changed; other headings, embeds, and extra sections stay where they are. A missing section with text is added after the one that precedes it, at the same heading level. This differs from **Enhance as cocktail recipe**, which re-parses the whole page and moves unrecognized text into Description; Enhance stays for turning a page into a recipe.
 - **Ingredients.** A line that is one link to a cabinet note opens as a linked row; other lines keep their text and get link suggestions, which covers relinking once a matching note exists. An untouched row is written back exactly as saved. An Ingredients section with nested lists or other text is left alone, and the form says so.
-- **Ratings.** A dropdown from Unrated to five stars. A saved value that can't be read stays unless another is chosen.
+- **Ratings.** A dropdown from Unrated to five stars, in that order (fixed 2026-11-13: an options object had listed Unrated last). A saved value that can't be read stays unless another is chosen.
 - **Stale protection.** When recipe sections change, the save refuses, changing nothing, if the note changed at all since the form opened; property changes are checked against the edited fields through `processFrontMatter`.
 
 ## Recipe tags, rating, and duplicates

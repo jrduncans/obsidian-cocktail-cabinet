@@ -6,7 +6,7 @@ import {
 	numberText,
 	PARENT_FIELD,
 	planFieldEdit,
-	RATING_OPTIONS,
+	ratingOptions,
 	ratingText,
 	sourceText,
 } from '../core/note-edit';
@@ -155,10 +155,7 @@ export class EditNoteModal extends CabinetForm {
 			this.edit.source = value;
 		}).setClass('cocktail-cabinet-name');
 		const rating = ratingText(properties.rating);
-		const options =
-			rating === 'keep'
-				? { keep: `Keep as written: ${String(properties.rating)}`, ...RATING_OPTIONS }
-				: RATING_OPTIONS;
+		const options = ratingOptions(properties.rating);
 		this.select('Rating', options, rating, (value) => {
 			this.edit.rating = value;
 		});

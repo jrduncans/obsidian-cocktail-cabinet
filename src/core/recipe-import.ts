@@ -22,6 +22,26 @@ const SECTIONS: Record<string, Section> = {
 	'tasting notes': 'tastingNotes',
 };
 
+/**
+ * A short first line that reads like a title: no amount, list marker, source, link, or sentence
+ * punctuation, and not a method step.
+ */
+function isNameLine(line: string): boolean {
+	const text = line.trim().replace(/^\*\*(.+)\*\*$/, '$1');
+	return (
+		text.length <= 60 &&
+		!/^\s{0,3}(?:[-*+]|\d+[.)])\s/.test(line) &&
+		!splitIngredient(text).amount &&
+		!/^\d/.test(text) &&
+		!/[.!?:;]$/.test(text) &&
+		!/^source:/i.test(text) &&
+		!/https?:\/\/|\[\[/.test(text) &&
+		!/^(?:stir|shake|add|combine|pour|strain|muddle|build|blend|fill|garnish|serve|top|rim|chill|whisk|mix)\b/i.test(
+			text,
+		)
+	);
+}
+
 /** Read copied text or Markdown; uncertain content stays in the description for review. */
 export function parseRecipeText(body: string, metadata: Record<string, unknown> = {}): RecipeImport {
 	const textProperty = (...keys: string[]) =>
@@ -77,6 +97,15 @@ export function parseRecipeText(body: string, metadata: Record<string, unknown> 
 			result.name ||= heading[2]!;
 			sawTitle = true;
 			continue;
+		}
+		// Copied text often starts with the drink's name on its own line, without a heading.
+		if (!result.name && !sawTitle && section === 'extra' && !heading && line.trim()) {
+			sawTitle = true;
+			if (isNameLine(line)) {
+				result.name = line.trim().replace(/^\*\*(.+)\*\*$/, '$1');
+				result.warnings.push('The first line was taken as the recipe name. Check it.');
+				continue;
+			}
 		}
 		if (heading && !(section === 'ingredients' && heading[1]!.length > ingredientDepth)) section = 'extra';
 		const source = section === 'extra' && line.match(/^Source:\s*(.+)$/i);
