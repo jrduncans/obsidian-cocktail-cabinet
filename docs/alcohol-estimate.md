@@ -123,7 +123,7 @@ Reviewed with the user on 2026-11-13:
 ## Suggested slices
 
 1. Built 2026-11-13: `cc-abv-typical` on type and family notes, in **Edit cabinet note** and the Ingredient types and families Bases, with the starter setting 0 on non-alcoholic types and families. Alcoholic values are left for the user to fill in from BevNap or Mixel. Existing cabinets don't get the zeros from setup; `knowledge` gets them in a one-time pass by catalog ID.
-2. The calculator as pure code, with tests for each line shape, the ABV sources, dilution, and basis.
+2. Built 2026-11-13: the calculator as pure code (`src/core/alcohol-estimate.ts`), with tests for each line shape, the ABV sources, dilution, and basis. It takes each link's ABV and facts from the vault layer, which slice 3 adds. Kitchen staples count as 0. A dash range (`1–2 dashes`) isn't read yet and counts as unmeasured.
 3. Stored properties and sync, including recalculation when an ABV changes.
 4. Recipes Base columns and the Lower alcohol view; the logging dialog line for selected bottles.
 5. `cc-contains`, if not folded into slice 2.

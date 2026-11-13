@@ -76,7 +76,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 - New, raised 2026-11-13, [design reviewed and agreed](alcohol-estimate.md) the same day: estimate each recipe's alcohol, so lower-alcohol drinks are found by a number rather than a `#lowerabv` tag.
     - Total alcohol (mL and standard drinks), ABV as served, and volume per recipe, stored as `cc-est-` properties with a basis label, plus `cc-contains` facts; the logging dialog shows figures for the bottles selected.
     - ABV from the bottle, else the type's `cc-abv-typical`, else the median of your bottles (labeled), else the family. Fixed dilution percentages by preparation (BevNap's), with a per-recipe override.
-    - Five build slices; see the design. Slice 1, `cc-abv-typical` on types and families with starter zeros for non-alcoholic ingredients, built 2026-11-13.
+    - Five build slices; see the design. Slice 1, `cc-abv-typical` on types and families with starter zeros for non-alcoholic ingredients, and slice 2, the calculator as pure code, built 2026-11-13.
     - Until then `#lowerabv` stays in `knowledge`; it retires once the Lower alcohol view exists.
 
 ### 5. Reach: retire the remaining skills
