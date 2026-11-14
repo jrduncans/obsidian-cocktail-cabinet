@@ -112,12 +112,7 @@ void test('catalog identities use current starter names without URL schemes', ()
 		assert.ok(!/^[a-z][a-z0-9+.-]*:/i.test(file.catalogId!), file.catalogId);
 		assert.ok(file.content.includes(`${PROP.catalogId}: ${JSON.stringify(file.catalogId)}`));
 	}
-	assert.ok(files.some((file) => file.catalogId === 'family/Apple Brandy Family'));
 	assert.ok(files.some((file) => file.catalogId === 'type/Apple Brandy'));
-	assert.equal(
-		files.find((file) => file.catalogId === 'family/Apple Brandy Family')?.path,
-		'Cocktails/Families/Apple Brandy Family.md',
-	);
 	assert.equal(
 		files.find((file) => file.catalogId === 'family/Amaro Family')?.path,
 		'Cocktails/Families/Amaro Family.md',
@@ -168,7 +163,7 @@ void test('renamed catalog pages remain the target of new parent links', () => {
 	const paths = new Map([
 		['family/Rum', 'Cocktails/Families/My Rum.md'],
 		['category/Spirit', 'Cocktails/Categories/Spirits.md'],
-		['family/Apple Brandy Family', 'Cocktails/Families/My Apple Brandies.md'],
+		['type/Apple Brandy', 'Cocktails/Types/My Apple Brandy.md'],
 		['family/Amaro Family', 'Cocktails/Families/My Amari.md'],
 		['type/Aromatic Bitters', 'Cocktails/Types/My Aromatic Bitters.md'],
 		['bottle/Angostura Bitters', 'Cocktails/Bottles/My Angostura.md'],
@@ -179,8 +174,8 @@ void test('renamed catalog pages remain the target of new parent links', () => {
 	assert.ok(jamaican?.content.includes('[[Cocktails/Families/My Rum|Rum]]'));
 	assert.ok(
 		files
-			.find((file) => file.catalogId === 'type/Apple Brandy')
-			?.content.includes('[[Cocktails/Families/My Apple Brandies|Apple Brandy Family]]'),
+			.find((file) => file.catalogId === 'type/Calvados')
+			?.content.includes('cc-type: "[[Cocktails/Types/My Apple Brandy|Apple Brandy]]"'),
 	);
 	assert.ok(
 		files
@@ -257,7 +252,8 @@ void test('starter groupings are optional at both parent levels', () => {
 	assert.ok(files.some((file) => file.content.includes('[[Cocktails/Families/Bitters|Bitters]]')));
 	for (const entry of STARTER_CATALOG) {
 		if (!entry.parent) continue;
-		const parentKind = entry.kind === 'bottle' ? 'type' : entry.kind === 'type' ? 'family' : 'category';
+		const parentKind =
+			entry.kind === 'bottle' || entry.parentIsType ? 'type' : entry.kind === 'type' ? 'family' : 'category';
 		assert.ok(
 			STARTER_CATALOG.some((parent) => parent.name === entry.parent && parent.kind === parentKind),
 			entry.name,
@@ -434,23 +430,43 @@ void test('accented starter names keep their catalog identity and plain parent f
 	assert.ok(files.every((file) => Array.from(file.path).every((character) => character.charCodeAt(0) < 128)));
 });
 
-void test('Apple Brandy Family groups regular apple brandy with the other recipe-facing types', () => {
-	const apple = STARTER_CATALOG.find((entry) => entry.kind === 'family' && entry.name === 'Apple Brandy Family');
-	assert.ok(apple);
+void test('Apple Brandy is a Brandy type whose styles are subtypes, with no family of its own', () => {
+	assert.ok(!STARTER_CATALOG.some((entry) => entry.kind === 'family' && entry.name === 'Apple Brandy Family'));
 	assert.deepEqual(
-		STARTER_CATALOG.filter((entry) => entry.kind === 'type' && entry.parent === apple.name)
-			.map((entry) => entry.name)
+		STARTER_CATALOG.filter((entry) => entry.kind === 'type' && entry.parent === 'Apple Brandy')
+			.map((entry) => [entry.name, entry.parentIsType])
 			.sort(),
-		['Apple Brandy', 'Applejack', 'Bonded Apple Brandy', 'Calvados'],
+		[
+			['Applejack', true],
+			['Bonded Apple Brandy', true],
+			['Calvados', true],
+		],
 	);
 	assert.deepEqual(
 		STARTER_CATALOG.filter((entry) => entry.kind === 'type' && entry.parent === 'Brandy')
 			.map((entry) => entry.name)
 			.sort(),
-		['Armagnac', 'Cognac'],
+		['Apple Brandy', 'Armagnac', 'Cognac'],
 	);
 	assert.ok(!STARTER_CATALOG.some((entry) => entry.name === 'Pisco' || entry.name === 'Grape Brandy'));
-	assert.notEqual(notePath('Cocktails', 'family', apple.name), notePath('Cocktails', 'type', 'Apple Brandy'));
+});
+
+void test('starter subtypes link their type, keep no family, and their types list them', () => {
+	const files = starterPlan('Cocktails');
+	const file = (name: string) => files.find((item) => item.catalogId === `type/${name}`)!;
+	for (const [name, parent] of [
+		['Bonded Bourbon', 'Bourbon'],
+		['Bonded Rye', 'Rye Whiskey'],
+		['Navy Strength Gin', 'London Dry Gin'],
+		['Aged Overproof Jamaican Rum', 'Aged Jamaican Rum'],
+		['Calvados', 'Apple Brandy'],
+	] as const) {
+		assert.ok(file(name).content.includes(`${PROP.type}: "[[Cocktails/Types/${parent}|${parent}]]"`), name);
+		assert.ok(!file(name).content.includes(`${PROP.family}:`), name);
+		assert.ok(!file(name).content.includes('#Subtypes]]'), name);
+		assert.ok(file(parent).content.includes('Related.base#Subtypes]]'), parent);
+	}
+	assert.ok(!file('Cognac').content.includes('#Subtypes]]'));
 });
 
 void test('reviewed liqueur groupings and the default Vodka type replace the initial catch-all entries', () => {
@@ -900,6 +916,7 @@ void test('Browse includes types and staples, grouped by hierarchy with stocked 
 	assert.deepEqual(types.views[0]!.order, [
 		'formula.name',
 		'cc-family',
+		'cc-type',
 		'cc-abv-typical',
 		'cc-sugar-water-ratio',
 		'cc-shopping-list',

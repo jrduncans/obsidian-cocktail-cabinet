@@ -303,7 +303,7 @@ void test('meaning-changing links use recipe overrides only in Ingredients and k
 	const plan = migrationPlan(source, 'Rehearsal', config);
 	const text = plan.files.get('Rehearsal/Recipes/Synthetic rich recipe.md')!;
 	for (const link of [
-		'Families/Apple Brandy Family|Apple Brandy',
+		'Types/Apple Brandy|Apple Brandy',
 		'Types/Simple Syrup (2 to 1)|rich syrup',
 		'Types/Falernum Syrup|Falernum',
 		'Types/Falernum|Falernum Liqueur',

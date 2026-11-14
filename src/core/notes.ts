@@ -40,7 +40,7 @@ export function renderNote(root: string, draft: NoteDraft, date: string): Planne
 	} else if (draft.method?.trim()) {
 		body += `\n\n### Preparation\n\n${draft.method.trim()}`;
 	}
-	const embeds = navigationEmbeds(root, draft.kind);
+	const embeds = navigationEmbeds(root, draft.kind, draft.hasSubtypes);
 	if (embeds) body = `${body.trim()}\n\n${embeds}`;
 	return {
 		path: notePath(root, draft.kind, name),

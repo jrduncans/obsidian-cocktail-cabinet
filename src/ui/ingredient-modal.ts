@@ -2,6 +2,7 @@ import type CocktailCabinetPlugin from '../main';
 import { PROP, noteName } from '../core/schema';
 import type { CabinetNote, NoteKind, Properties } from '../core/schema';
 import { CabinetForm } from './form';
+import { subtypeParents } from '../core/relationships';
 
 export class IngredientModal extends CabinetForm {
 	constructor(
@@ -18,7 +19,9 @@ export class IngredientModal extends CabinetForm {
 			`Add ingredient ${this.kind}`,
 			this.kind === 'category'
 				? undefined
-				: `An ingredient ${this.kind === 'type' ? 'family' : 'category'} is optional. Select one when it provides a useful grouping.`,
+				: this.kind === 'type'
+					? 'A family is optional. For a narrower kind of an existing type, such as Bonded Bourbon under Bourbon, choose that type under Subtype of instead: its bottles then fill recipes calling for the type.'
+					: 'An ingredient category is optional. Select one when it provides a useful grouping.',
 		);
 		let name = this.initialName,
 			description = '',
@@ -26,6 +29,7 @@ export class IngredientModal extends CabinetForm {
 		let shoppingList = false,
 			catchAll = false;
 		let parents: CabinetNote[] = [];
+		let parentType: CabinetNote[] = [];
 		this.text('Name', name, (value) => {
 			name = value;
 		});
@@ -43,6 +47,13 @@ export class IngredientModal extends CabinetForm {
 			);
 		}
 		if (this.kind === 'type') {
+			this.choose(
+				'Subtype of (optional)',
+				() => subtypeParents(this.plugin.store.notes()),
+				(notes) => {
+					parentType = notes;
+				},
+			);
 			this.area('Preparation (optional)', preparation, (value) => {
 				preparation = value;
 			});
@@ -63,6 +74,10 @@ export class IngredientModal extends CabinetForm {
 			if (this.kind !== 'category' && parents[0])
 				properties[this.kind === 'family' ? PROP.category : PROP.family] = this.plugin.store.link(parents[0]);
 			if (this.kind === 'type') {
+				// A subtype's family is its type's, so it keeps none of its own.
+				if (parentType[0] && parents[0])
+					throw new Error('A subtype takes its family from its type. Leave the family empty.');
+				if (parentType[0]) properties[PROP.type] = this.plugin.store.link(parentType[0]);
 				if (catchAll) properties[PROP.catchAll] = true;
 				properties[PROP.shoppingList] = shoppingList;
 			}
@@ -73,13 +88,15 @@ export class IngredientModal extends CabinetForm {
 				method: preparation,
 				properties,
 			});
+			if (parentType[0])
+				await this.plugin.store.addSubtypesSection(this.plugin.store.link(parentType[0]), file.path);
 			this.close();
 			if (this.created)
 				this.created({
 					path: file.path,
 					name: noteName(name).normalize('NFC'),
 					kind: this.kind,
-					parents: parents.map((note) => note.path),
+					parents: (parentType[0] ? parentType : parents).map((note) => note.path),
 				});
 			else await this.plugin.store.open(file.path);
 		});

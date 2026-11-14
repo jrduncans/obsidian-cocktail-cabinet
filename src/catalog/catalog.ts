@@ -5,6 +5,8 @@ import { stapleProperties } from '../core/stock';
 export interface CatalogEntry extends NoteDraft {
 	id: string;
 	parent?: string;
+	/** A subtype's parent is a type, linked through `cc-type`, in place of a family. */
+	parentIsType?: true;
 	/** For other stock: the catalog types it supplies. */
 	provides?: readonly string[];
 }
@@ -28,6 +30,20 @@ function staples(items: [name: string, description: string, aliases?: string[]][
 			name,
 			description,
 			properties: { ...stapleProperties('Unknown'), ...(aliases ? { aliases } : {}) },
+		});
+	}
+}
+/** Narrower kinds of a type: their bottles also fill recipes calling for the type. */
+function subtypes(parent: string, types: TypeDefinition[]) {
+	for (const [name, description, properties] of types) {
+		entries.push({
+			id: `type/${fileName(name)}`,
+			kind: 'type',
+			name,
+			parent,
+			parentIsType: true,
+			description,
+			properties,
 		});
 	}
 }
@@ -79,10 +95,6 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 	],
 	['Aged Jamaican Rum', 'Barrel-aged Jamaican rum, kept distinct from unaged and explicitly overproof styles.'],
 	[
-		'Aged Overproof Jamaican Rum',
-		'High-strength barrel-aged Jamaican rum for recipes specifying this role, distinct from Unaged Overproof Jamaican Rum and standard-strength Aged Jamaican Rum.',
-	],
-	[
 		'Unaged Overproof Jamaican Rum',
 		'High-strength unaged Jamaican rum for recipes specifying this role, distinct from Aged Overproof Jamaican Rum.',
 	],
@@ -131,7 +143,6 @@ family('Gin', 'Spirit', 'Gin and related styles; a broad Gin reference does not 
 		'Gin with prominent citrus, floral, herbal, or other botanical notes, in a recipe role distinct from London Dry Gin. Individual gins can differ substantially; preserve a recipe’s named bottle when specified.',
 	],
 	['Plymouth Gin', 'Plymouth gin for recipes that specify it.'],
-	['Navy Strength Gin', 'High-strength gin; strength affects the cocktail recipe.'],
 	['Genever', 'Genever for recipes that specify this style.'],
 ]);
 ingredientTypes(undefined, [
@@ -146,38 +157,14 @@ family('Agave Spirit', 'Spirit', 'Tequila, mezcal, and related agave spirits.', 
 	['Añejo Tequila', 'Aged tequila in the añejo style, kept distinct from blanco and reposado.'],
 	['Mezcal', 'Mezcal; agave variety and bottle can change the result.'],
 ]);
-family(
-	'Brandy',
-	'Spirit',
-	'French-style grape brandy in common cocktail usage, including Cognac and Armagnac. Apple brandy has a separate family.',
+family('Brandy', 'Spirit', 'Brandy in common cocktail usage: French grape brandy and apple brandy.', [
+	['Cognac', 'French grape brandy from the Cognac region, used in brandy cocktails.'],
+	['Armagnac', 'French grape brandy from the Armagnac region; keep distinct when a recipe specifies it.'],
 	[
-		['Cognac', 'French grape brandy from the Cognac region, used in brandy cocktails.'],
-		['Armagnac', 'French grape brandy from the Armagnac region; keep distinct when a recipe specifies it.'],
+		'Apple Brandy',
+		'Apple brandy for recipes calling for it without naming a style. Plain apple brandy bottles go here; Bonded Apple Brandy, Applejack, and Calvados are its subtypes, so their bottles fill these recipes too.',
 	],
-);
-family(
-	'Apple Brandy Family',
-	'Spirit',
-	'Apple brandy and applejack styles used in recipes. A family reference can use any of these types; the Apple Brandy type means regular apple brandy.',
-	[
-		[
-			'Apple Brandy',
-			'Regular apple brandy as a recipe ingredient, alongside the separate Bonded Apple Brandy, Applejack, and Calvados types. Use Apple Brandy Family when a recipe permits any of the included styles.',
-		],
-		[
-			'Bonded Apple Brandy',
-			'Apple brandy for recipes specifying bonded apple brandy, typically at 100 US proof (50% ABV). Assign bottles deliberately; proof alone does not establish bonded status.',
-		],
-		[
-			'Applejack',
-			'Applejack as named in recipes. Bottles vary; decide which bottles fit the recipe style you intend.',
-		],
-		[
-			'Calvados',
-			'Calvados for recipes specifying this apple brandy style. Decide which of your bottles fit the recipe requirement.',
-		],
-	],
-);
+]);
 family('Aquavit', 'Spirit', 'Aquavit styles.', [
 	['Unaged Aquavit', 'Caraway- or dill-led aquavit without an aged style designation.'],
 	['Aged Aquavit', 'Barrel-aged aquavit, kept distinct from unaged aquavit in recipes.'],
@@ -446,6 +433,48 @@ for (const [name, ratio, ingredient, aliases] of sugar) {
 	entry.method = `Combine ${ratio === '1:1' ? 'equal weights of' : 'two parts by weight of'} ${ingredient} and ${ratio === '1:1' ? '' : 'one part by weight of '}water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).`;
 }
 
+subtypes('Bourbon', [
+	[
+		'Bonded Bourbon',
+		'Bottled-in-bond bourbon, at 100 US proof (50% ABV), for recipes calling for bonded bourbon. Its bottles also fill recipes calling for Bourbon.',
+	],
+]);
+subtypes('Rye Whiskey', [
+	[
+		'Bonded Rye',
+		'Bottled-in-bond rye whiskey, at 100 US proof (50% ABV), for recipes calling for bonded rye. Its bottles also fill recipes calling for Rye Whiskey.',
+	],
+]);
+subtypes('Aged Jamaican Rum', [
+	[
+		'Aged Overproof Jamaican Rum',
+		'High-strength, lightly aged Jamaican rum in the recipe role represented by Smith & Cross. Distinct from Unaged Overproof Jamaican Rum; its bottles also fill recipes calling for Aged Jamaican Rum.',
+	],
+]);
+subtypes('London Dry Gin', [
+	[
+		'Navy Strength Gin',
+		'High-strength gin, around 57% ABV; strength affects the cocktail recipe. Its bottles also fill recipes calling for London Dry Gin.',
+	],
+]);
+subtypes('Apple Brandy', [
+	[
+		'Bonded Apple Brandy',
+		'Apple brandy for recipes specifying bonded apple brandy, at 100 US proof (50% ABV). Assign bottles deliberately; proof alone does not establish bonded status.',
+	],
+	['Applejack', 'Applejack as named in recipes. Bottles vary; decide which bottles fit the recipe style you intend.'],
+	[
+		'Calvados',
+		'Calvados for recipes specifying this apple brandy style. Decide which of your bottles fit the recipe requirement.',
+	],
+]);
+for (const entry of entries) {
+	if (!entry.parentIsType) continue;
+	const parent = entries.find((item) => item.kind === 'type' && item.name === entry.parent && !item.parentIsType);
+	if (!parent) throw new Error(`Missing parent type for subtype ${entry.name}: ${entry.parent ?? 'none'}`);
+	parent.hasSubtypes = true;
+}
+
 // Non-alcoholic types have a typical ABV of 0, so alcohol estimates count them as known; a family of
 // them counts as 0 through its types.
 const NON_ALCOHOLIC_FAMILIES = [
@@ -508,6 +537,8 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	Cognac: 40,
 	'Apple Brandy': 40,
 	'Bonded Apple Brandy': 50,
+	'Bonded Bourbon': 50,
+	'Bonded Rye': 50,
 	Applejack: 40,
 	Calvados: 40,
 	'Unaged Aquavit': 40,
@@ -586,7 +617,8 @@ export function catalogDraft(
 ): NoteDraft {
 	const properties: Properties = { ...entry.properties, [PROP.catalogId]: entry.id };
 	if (entry.parent) {
-		const kind = entry.kind === 'family' ? 'category' : entry.kind === 'bottle' ? 'type' : 'family';
+		const kind =
+			entry.kind === 'family' ? 'category' : entry.kind === 'bottle' || entry.parentIsType ? 'type' : 'family';
 		const property = kind === 'category' ? PROP.category : kind === 'type' ? PROP.type : PROP.family;
 		const link = wikiLink(
 			paths.get(`${kind}/${fileName(entry.parent)}`) || notePath(root, kind, entry.parent),

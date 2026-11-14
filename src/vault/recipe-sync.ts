@@ -142,21 +142,29 @@ export class RecipeSync {
 	}
 
 	/**
-	 * ABVs to fall back on, by path: each type's and each family's bottles (`cc-abv`); under
-	 * `stocked:<path>`, only those in stock; and under `types:<family path>`, each family's types'
-	 * typical ABVs (NaN when a type has none).
+	 * ABVs to fall back on, by path: each type's and each family's bottles (`cc-abv`), a type's
+	 * including its subtypes'; under `stocked:<path>`, only those in stock, a type's own; under
+	 * `substocked:<type path>`, its subtypes' in stock; and under `types:<family path>`, each family's
+	 * types' typical ABVs (NaN when a type has none).
 	 */
 	private bottleAbvs(): Map<string, number[]> {
 		const index = new Map<string, number[]>();
 		const add = (key: string, value: number) => index.set(key, [...(index.get(key) ?? []), value]);
-		const familyOf = (type: TFile) => {
-			const link = asLinks(this.frontmatter(type)[PROP.family])[0];
-			return link ? this.resolve(link, type.path) : null;
+		const linked = (file: TFile, key: string) => {
+			const link = asLinks(this.frontmatter(file)[key])[0];
+			return link ? this.resolve(link, file.path) : null;
 		};
+		// A subtype's parent is a type in `cc-type`; other types have a family.
+		const parentTypeOf = (type: TFile) => {
+			const parent = linked(type, PROP.type);
+			return parent && this.frontmatter(parent)[PROP.kind] === 'type' ? parent : null;
+		};
+		const familyOf = (type: TFile) => linked(parentTypeOf(type) ?? type, PROP.family);
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (!this.inCabinet(file)) continue;
 			const properties = this.frontmatter(file);
 			if (properties[PROP.kind] === 'type') {
+				if (parentTypeOf(file)) continue;
 				const family = familyOf(file);
 				const typical = properties[PROP.abvTypical];
 				if (family) add(`types:${family.path}`, typeof typical === 'number' ? typical : NaN);
@@ -168,10 +176,12 @@ export class RecipeSync {
 			const type = link ? this.resolve(link, file.path) : null;
 			if (!type) continue;
 			const stocked = hasStock(properties);
+			const parent = parentTypeOf(type);
 			const family = familyOf(type);
-			for (const path of family ? [type.path, family.path] : [type.path]) {
+			for (const path of [type.path, parent?.path, family?.path]) {
+				if (!path) continue;
 				add(path, abv);
-				if (stocked) add(`stocked:${path}`, abv);
+				if (stocked) add(`${path === parent?.path ? 'substocked' : 'stocked'}:${path}`, abv);
 			}
 		}
 		return index;
@@ -185,8 +195,15 @@ export class RecipeSync {
 		if (typeof kind !== 'string') return null;
 		const name = typeof properties[PROP.name] === 'string' ? (properties[PROP.name] as string) : file.basename;
 		factsOf(kind, properties[PROP.catalogId], name).forEach((fact) => facts.add(fact));
+		const subtype = kind === 'type' && asLinks(properties[PROP.type]).length > 0;
 		const parentKey =
-			kind === 'bottle' ? PROP.type : kind === 'type' ? PROP.family : kind === 'family' ? PROP.category : null;
+			kind === 'bottle' || subtype
+				? PROP.type
+				: kind === 'type'
+					? PROP.family
+					: kind === 'family'
+						? PROP.category
+						: null;
 		const parentLink = parentKey ? asLinks(properties[parentKey])[0] : undefined;
 		const parent = parentLink ? this.abvNote(this.resolve(parentLink, file.path), bottles, facts, depth + 1) : null;
 		if (kind === 'ingredient') {
@@ -205,6 +222,7 @@ export class RecipeSync {
 			abvTypical: properties[PROP.abvTypical],
 			bottleAbvs: kind === 'type' || kind === 'family' ? bottles.get(file.path) : undefined,
 			stockedAbvs: kind === 'type' || kind === 'family' ? bottles.get(`stocked:${file.path}`) : undefined,
+			subtypeStockedAbvs: kind === 'type' ? bottles.get(`substocked:${file.path}`) : undefined,
 			typeAbvs: kind === 'family' ? bottles.get(`types:${file.path}`) : undefined,
 			parent,
 		};

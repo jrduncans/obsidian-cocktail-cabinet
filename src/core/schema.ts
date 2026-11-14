@@ -65,6 +65,8 @@ export interface NoteDraft {
 	method?: string;
 	ingredients?: string[];
 	tastingNotes?: string;
+	/** A type with subtypes: its note lists them in a Subtypes section. */
+	hasSubtypes?: boolean;
 }
 
 export interface PlannedFile {

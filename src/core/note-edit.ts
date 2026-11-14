@@ -10,7 +10,7 @@ import { parseTags } from './recipe-tags';
  */
 export const EDIT_FIELDS = {
 	family: [PROP.category],
-	type: [PROP.family, PROP.catchAll, PROP.shoppingList, PROP.abvTypical],
+	type: [PROP.family, PROP.type, PROP.catchAll, PROP.shoppingList, PROP.abvTypical],
 	bottle: [PROP.type, PROP.volume, PROP.abv],
 	ingredient: [PROP.provides, PROP.form],
 	recipe: ['source', 'rating', 'tags'],
@@ -32,6 +32,8 @@ export function isEditable(kind: NoteKind): kind is EditableKind {
 export interface FieldEdit {
 	/** Parent links as they should be saved. */
 	parents?: string[];
+	/** A type's parent type, making it a subtype: one link or none. */
+	parentType?: string[];
 	volume?: string;
 	/** Percent, as typed. */
 	abv?: string;
@@ -111,6 +113,14 @@ export function planFieldEdit(kind: EditableKind, before: Record<string, unknown
 	if (parentKey && edit.parents) {
 		if (kind !== 'ingredient' && edit.parents.length > 1) throw new Error('Select one parent.');
 		set(parentKey, kind === 'ingredient' ? edit.parents : (edit.parents[0] ?? null));
+	}
+	if (kind === 'type' && edit.parentType) {
+		if (edit.parentType.length > 1) throw new Error('Select one parent type.');
+		const parentType = edit.parentType[0] ?? null;
+		const family = edit.parents ? (edit.parents[0] ?? null) : before[PROP.family];
+		// A subtype's family is its type's, so it keeps none of its own.
+		if (parentType && family) throw new Error('A subtype takes its family from its type. Clear the family first.');
+		set(PROP.type, parentType);
 	}
 	if (kind === 'bottle') {
 		if (edit.volume !== undefined && edit.volume.trim() !== numberText(before[PROP.volume])) {

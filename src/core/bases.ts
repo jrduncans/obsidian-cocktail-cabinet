@@ -56,6 +56,7 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 		name: 'Ingredient types',
 		columns: [
 			[PROP.family, 'Family'],
+			[PROP.type, 'Subtype of'],
 			[PROP.abvTypical, 'Typical ABV (fraction)'],
 			[PROP.sugarWaterRatio, 'Sugar to water ratio'],
 			[PROP.shoppingList, 'Shopping list'],
@@ -219,7 +220,8 @@ export function resourceBases(root: string, drinkGrams = 14): PlannedFile[] {
 const displayName = (file: string) =>
 	`if(${file}.properties[${q(PROP.name)}], ${file}.properties[${q(PROP.name)}], ${file}.name)`;
 const browseFormulas = {
-	family: `list(note[${q(PROP.family)}]).filter(value).map(link(value).asFile()).filter(value)`,
+	// A subtype is grouped under its type's family.
+	family: `[list(note[${q(PROP.family)}]), list(note[${q(PROP.type)}]).filter(value).map(link(value).asFile()).filter(value).map(list(value.properties[${q(PROP.family)}])).flat()].flat().filter(value).map(link(value).asFile()).filter(value)`,
 	category: `formula.family.map(list(value.properties[${q(PROP.category)}])).flat().filter(value).map(link(value).asFile()).filter(value)`,
 	group: `if(${kitchenStaple}, "Kitchen staples", if(formula.family.length > 0, if(formula.category.length > 0, formula.category.map(${displayName('value')}).join(", ") + " › ", "") + formula.family.map(${displayName('value')}).join(", "), "Standalone types"))`,
 	sources: typeSources,

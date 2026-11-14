@@ -1,5 +1,5 @@
 import { recipeVolumeMl, splitIngredient } from './recipe-amount';
-import { isWithin } from './relationships';
+import { isWithin, parentType, swapTypes } from './relationships';
 import { PROP } from './schema';
 import type { CabinetNote } from './schema';
 import { isStocked } from './logging-stock';
@@ -16,6 +16,8 @@ export interface CountedLine {
 	alternatives: string[];
 	/** Heading for `alternatives`, such as "Other Amaro". */
 	alternativesLabel?: string;
+	/** Candidates reached through a subtype of a linked type, listed after the type's own bottles under the subtype's name. */
+	candidateGroups?: { label: string; paths: string[] }[];
 	initialSelection: string | null;
 }
 export interface SkippedLine {
@@ -41,21 +43,37 @@ function sharedTypes(notes: readonly CabinetNote[], source: CabinetNote, target:
 		.flatMap((path) => notes.filter((note) => note.path === path));
 }
 
-/** A named bottle widens only to bottles with its explicitly assigned type, unless that type is a catch-all. */
+/**
+ * A named bottle widens only to bottles with its explicitly assigned type, unless that type is a catch-all,
+ * and to bottles of its type's subtypes: a bonded bourbon fits a line naming any bourbon bottle.
+ */
 export function fitsLine(notes: readonly CabinetNote[], source: CabinetNote, target: CabinetNote): boolean {
 	if (source.path === target.path) return true;
-	if (target.kind === 'bottle') return sharedTypes(notes, source, target).some((type) => !type.catchAll);
+	if (target.kind === 'bottle') {
+		if (source.kind !== 'bottle') return false;
+		const swaps = swapTypes(new Map(notes.map((note) => [note.path, note])), source);
+		return target.parents.some((parent) => swaps.includes(parent));
+	}
 	if (target.kind === 'ingredient') return false;
 	return isWithin(notes, source.path, target.path);
 }
 
-/** A bottle of a named bottle's catch-all type (Averna for Meletti): a likely substitute, but not assumed to be one. */
-export function catchAllType(
+/**
+ * The type making a source a likely substitute, not an assumed one: a named bottle's catch-all type
+ * (Averna for Meletti), or the parent of a subtype the line names (a plain bourbon for Bonded Bourbon).
+ */
+export function lesserType(
 	notes: readonly CabinetNote[],
 	source: CabinetNote,
 	target: CabinetNote,
 ): CabinetNote | undefined {
-	return sharedTypes(notes, source, target).find((type) => type.catchAll);
+	const catchAll = sharedTypes(notes, source, target).find((type) => type.catchAll);
+	if (catchAll) return catchAll;
+	const byPath = new Map(notes.map((note) => [note.path, note]));
+	const subtype =
+		target.kind === 'type' ? target : target.kind === 'bottle' ? byPath.get(target.parents[0] ?? '') : undefined;
+	const parent = parentType(byPath, subtype);
+	return parent && source.kind === 'bottle' && isWithin(notes, source.path, parent.path) ? parent : undefined;
 }
 
 export function classifyLoggingLines(
@@ -92,7 +110,7 @@ export function classifyLoggingLines(
 		const lesser = sources
 			.filter((source) => !matching.includes(source))
 			.flatMap((source) => {
-				const type = linked.map((target) => catchAllType(notes, source.note, target)).find(Boolean);
+				const type = linked.map((target) => lesserType(notes, source.note, target)).find(Boolean);
 				return type && isStocked(source) ? [{ path: source.note.path, type }] : [];
 			});
 		const alternatives = lesser.map((item) => item.path);
@@ -113,7 +131,20 @@ export function classifyLoggingLines(
 			skipped.push(withUse({ text, reason: 'Not tracked in mL' }));
 			continue;
 		}
-		const candidates = matching.filter(isStocked).map((source) => source.note.path);
+		// A type line lists its own bottles first, then each subtype's under the subtype's name.
+		const byPath = new Map(notes.map((note) => [note.path, note]));
+		const subtypeOf = (path: string) => {
+			const type = byPath.get(byPath.get(path)?.parents[0] ?? '');
+			const parent = parentType(byPath, type);
+			return parent && linked.some((target) => target.path === parent.path) ? type : undefined;
+		};
+		const stocked = matching.filter(isStocked).map((source) => source.note.path);
+		const groups = new Map<string, string[]>();
+		for (const path of stocked) {
+			const type = subtypeOf(path);
+			if (type) groups.set(type.name, [...(groups.get(type.name) ?? []), path]);
+		}
+		const candidates = [...stocked.filter((path) => !subtypeOf(path)), ...[...groups.values()].flat()];
 		const named = linked.filter(
 			(target) => (target.kind === 'bottle' || target.kind === 'ingredient') && candidates.includes(target.path),
 		);
@@ -125,6 +156,7 @@ export function classifyLoggingLines(
 			candidates,
 			alternatives,
 			...(lesser.length ? { alternativesLabel: `Other ${lesser[0]!.type.name}` } : {}),
+			...(groups.size ? { candidateGroups: [...groups].map(([label, paths]) => ({ label, paths })) } : {}),
 			// Nothing in the cabinet stocks this (e.g. fresh juice): default to not subtracting, still adjustable.
 			// Catch-all alternatives are never chosen for you, even when the named bottle is out.
 			initialSelection:
