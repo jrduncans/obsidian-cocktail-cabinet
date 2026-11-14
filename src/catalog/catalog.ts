@@ -224,7 +224,7 @@ family(
 		],
 		[
 			'Vanilla Liqueur',
-			'Vanilla-forward liqueurs such as Licor 43 and Galliano, often with citrus or other spice notes. Close enough to substitute in many recipes.',
+			'Vanilla liqueurs such as Giffard Vanille de Madagascar and Drillaud, as well as richer vanilla-led liqueurs such as Galliano and Licor 43 that add citrus, herbal, or spice notes. Close enough to substitute in many recipes.',
 		],
 		[
 			'Spice Liqueur',
