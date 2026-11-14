@@ -308,6 +308,30 @@ Decided 2026-11-06. Some types group products without close substitutes: Amaro, 
 - **Navigation.** A bottle's Recipes leave out recipes naming another bottle of a catch-all type; recipes calling for the type itself, or anything broader, stay under Can fill. Same type stays: it's where to look for a substitute. The type's own Stock and Recipes are unchanged.
 - **Not affected.** Shopping list and Record purchases type rows, and Stock sections.
 
+## Subtypes
+
+Proposed 2026-11-13, not yet approved. Bonded bourbon and rye showed the gap: cocktail apps such as BevNap keep them distinct, and recipes that call for bonded deserve a 50% estimate and a strict match. But a separate type would stop bonded bottles from filling the many recipes that just say bourbon, and [types are not used for substitution](#classification-principles). A subtype is the narrower kind of a type. It always fills its parent's lines, never the reverse.
+
+- **The model.** An optional level below type: category → family → type → subtype. A subtype is a type note (`cc-kind: type`) whose single parent is `cc-type`, linking its type, in place of `cc-family`. One level only: a subtype has no subtypes, so the Bases keep a fixed depth. Bottles and other stock link a type or a subtype through `cc-type` as now.
+- **Matching.** A line naming a type accepts the type's bottles and its subtypes' bottles, as a family link accepts every type in it. A line naming a subtype accepts only the subtype's bottles. The parent's other bottles are offered as likely substitutes, as with [catch-all types](#catch-all-types), and are not counted as available.
+- **Logging.** A type line's picker lists the type's bottles and its subtypes' bottles. A subtype line lists the subtype's bottles, then the parent's other bottles under an "Other Bourbon" heading, never selected for you.
+- **Navigation.** A type note gets a Subtypes section. Its Stock includes its subtypes' bottles, and its Recipes include recipes calling for a subtype, as a family's do for its types. A subtype bottle serves recipes naming any bottle of its parent type; a parent-type bottle doesn't serve recipes naming a subtype bottle.
+- **Estimates.** A subtype has its own typical ABV (Bonded Bourbon 50%); the parent keeps its standard value (Bourbon 43%). A subtype line uses the subtype's in-stock bottles, then its typical value.
+- **Proposed starter subtypes.** Bonded Bourbon and Bonded Rye; Navy Strength Gin under London Dry Gin; Aged Overproof Jamaican Rum under Aged Jamaican Rum, since Smith & Cross is only lightly aged and fits Mai Tais. Apple Brandy becomes the broad type in the Brandy family, with Bonded Apple Brandy, Applejack, and Calvados as its subtypes, replacing Apple Brandy Family; family links to it become type links with the same meaning.
+
+**Spike.** Tried in Cocktail Cabinet Dev on 2026-11-13 with synthetic notes, adding one level of depth to the Related Base's formulas (`up4`, `thisUp4`, `linkedUp4`). The formulas already follow every parent key, so a subtype linking its type through `cc-type` needed nothing else to roll up:
+
+- **Worked.** The type's and family's Stock list subtype bottles. The type's Recipes list subtype recipes under "Calls for Bourbon". The subtype's Recipes show its own recipes as "Calls for" and its parent's and family's recipes as "Can fill". A subtype bottle can fill plain bourbon and whiskey lines.
+- **To fix.** A plain bourbon bottle listed a bonded-only recipe under Can fill: the same-type rule reads the parent of every linked note, so a subtype link looked like a bottle of the parent type. It should read only linked bottles. A bonded bottle missed recipes naming a plain bourbon bottle: its swap types should include its parent type.
+- **To build.** A "Subtypes" view label: the spike reused Types. Existing type notes have no Subtypes embed, since setup doesn't edit notes; adding the embed to the parent when a subtype is created is one option. The Ingredient types and Browse Bases group by family, so subtypes would show up as standalone types there.
+- **Code.** The availability rule in `relatedTargets`, the logging picker, the estimate's bottle medians, recipe sync, the type creation and edit forms (choosing a parent type in place of a family), `catalogDraft`'s parent mapping, and the knowledge migration.
+
+Open questions:
+
+- When a line names the type and both kinds are in stock, does the estimate use the type's own bottles first, or the median of all of them (40% versus 45% with one bottle of each)?
+- Does the logging picker list the type's own bottles before its subtypes' bottles, or together?
+- Does a subtype bottle's Same type section include the parent's bottles as likely substitutes?
+
 ## Unlinked lines
 
 Decided 2026-11-06. About a fifth of the measured lines in `knowledge` had no link, so logging silently skipped them. Linking fixes the recipe, not just one log, so it writes to the recipe straight away.
