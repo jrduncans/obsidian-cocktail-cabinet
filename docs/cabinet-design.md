@@ -315,7 +315,7 @@ Proposed 2026-11-13, not yet approved. Bonded bourbon and rye showed the gap: co
 - **The model.** An optional level below type: category → family → type → subtype. A subtype is a type note (`cc-kind: type`) whose single parent is `cc-type`, linking its type, in place of `cc-family`. One level only: a subtype has no subtypes, so the Bases keep a fixed depth. Bottles and other stock link a type or a subtype through `cc-type` as now.
 - **Matching.** A line naming a type accepts the type's bottles and its subtypes' bottles, as a family link accepts every type in it. A line naming a subtype accepts only the subtype's bottles. The parent's other bottles are offered as likely substitutes, as with [catch-all types](#catch-all-types), and are not counted as available.
 - **Logging.** A type line's picker lists the type's bottles and its subtypes' bottles. A subtype line lists the subtype's bottles, then the parent's other bottles under an "Other Bourbon" heading, never selected for you.
-- **Navigation.** A type note gets a Subtypes section. Its Stock includes its subtypes' bottles, and its Recipes include recipes calling for a subtype, as a family's do for its types. A subtype bottle serves recipes naming any bottle of its parent type; a parent-type bottle doesn't serve recipes naming a subtype bottle.
+- **Navigation.** A type note gets a Subtypes section. Its Stock includes its subtypes' bottles, and its Recipes include recipes calling for a subtype, as a family's do for its types. A subtype bottle serves recipes naming any bottle of its parent type; a parent-type bottle doesn't serve recipes naming a subtype bottle. Same type reaches both ways, as answered below.
 - **Estimates.** A subtype has its own typical ABV (Bonded Bourbon 50%); the parent keeps its standard value (Bourbon 43%). A subtype line uses the subtype's in-stock bottles, then its typical value.
 - **Proposed starter subtypes.** Bonded Bourbon and Bonded Rye; Navy Strength Gin under London Dry Gin; Aged Overproof Jamaican Rum under Aged Jamaican Rum, since Smith & Cross is only lightly aged and fits Mai Tais. Apple Brandy becomes the broad type in the Brandy family, with Bonded Apple Brandy, Applejack, and Calvados as its subtypes, replacing Apple Brandy Family; family links to it become type links with the same meaning.
 
@@ -326,11 +326,11 @@ Proposed 2026-11-13, not yet approved. Bonded bourbon and rye showed the gap: co
 - **To build.** A "Subtypes" view label: the spike reused Types. Existing type notes have no Subtypes embed, since setup doesn't edit notes; adding the embed to the parent when a subtype is created is one option. The Ingredient types and Browse Bases group by family, so subtypes would show up as standalone types there.
 - **Code.** The availability rule in `relatedTargets`, the logging picker, the estimate's bottle medians, recipe sync, the type creation and edit forms (choosing a parent type in place of a family), `catalogDraft`'s parent mapping, and the knowledge migration.
 
-Open questions:
+Answered 2026-11-13:
 
-- When a line names the type and both kinds are in stock, does the estimate use the type's own bottles first, or the median of all of them (40% versus 45% with one bottle of each)?
-- Does the logging picker list the type's own bottles before its subtypes' bottles, or together?
-- Does a subtype bottle's Same type section include the parent's bottles as likely substitutes?
+- **Estimate order.** A line naming the type uses the type's own in-stock bottles first, then its subtypes' in-stock bottles, then the type's typical value: a plain bourbon line reads 40%, not 45%, with one bottle of each. A plain line is taken to mean a plain bottle; picking the bottle when logging gives the exact figure.
+- **Picker order.** A type line lists the type's own bottles first, then each subtype's bottles under its own heading ("Bonded Bourbon").
+- **Same type, both ways.** A subtype bottle's Same type lists the parent's bottles, and a parent-type bottle's lists the subtypes' bottles; the Type column shows which is which.
 
 ## Unlinked lines
 
