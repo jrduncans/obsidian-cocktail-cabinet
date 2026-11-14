@@ -20,6 +20,7 @@ import type { CabinetNote, NoteKind } from '../core/schema';
 import { hasChanges } from '../vault/edit-store';
 import type { EditChanges, EditSnapshot, EditStore } from '../vault/edit-store';
 import { CabinetForm } from './form';
+import { subtypeParents } from '../core/relationships';
 import { RecipeIngredients } from './recipe-ingredients';
 import { RecipeTagsField } from './recipe-tags';
 import { parseTags, splitTags, uniqueTags } from '../core/recipe-tags';
@@ -79,6 +80,7 @@ export class EditNoteModal extends CabinetForm {
 				this.savedParents(properties[parentKey], parentKind),
 			);
 		}
+		if (kind === 'type') this.subtypeOf(properties[PROP.type]);
 		if (kind === 'bottle') {
 			this.number('Bottle volume (mL)', numberText(properties[PROP.volume]), (value) => {
 				this.edit.volume = value;
@@ -124,12 +126,29 @@ export class EditNoteModal extends CabinetForm {
 				return;
 			}
 			await this.edits.save(this.note, this.snapshot, changes);
+			const parentType = changes.properties[PROP.type];
+			if (typeof parentType === 'string') await this.plugin.store.addSubtypesSection(parentType, this.note.path);
 			this.close();
 			new Notice(`Saved ${this.note.name}.`);
 		});
 	}
 
 	/** The saved parents that resolve to cabinet notes of the right kind. */
+	/** A type's parent type, making it a subtype; not offered on a type that has subtypes of its own. */
+	private subtypeOf(saved: unknown) {
+		const notes = this.plugin.store.notes();
+		if (notes.some((note) => note.kind === 'type' && note.parents.includes(this.note.path))) return;
+		this.choose(
+			'Subtype of (optional)',
+			() => subtypeParents(this.plugin.store.notes(), this.note.path),
+			(chosen) => {
+				this.edit.parentType = chosen.map((note) => this.plugin.store.link(note));
+			},
+			false,
+			this.savedParents(saved, 'type'),
+		);
+	}
+
 	private savedParents(value: unknown, kind: NoteKind): CabinetNote[] {
 		const notes = this.plugin.store.notes();
 		return (Array.isArray(value) ? value : [value]).flatMap((link: unknown) => {

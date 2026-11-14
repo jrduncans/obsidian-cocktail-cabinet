@@ -32,8 +32,11 @@ try {
 	);
 	const bottleRows = bottles.map((entry) => `| ${entry.name} | ${entry.parent || '—'} | Unknown |`);
 	const rows = types.map((entry) => {
-		const family = families.find((family) => family.name === entry.parent);
-		return `| ${entry.name} | ${family?.name || '—'} | ${family?.parent || '—'} |`;
+		// A subtype sits under its type, and through it the type's family.
+		const type = entry.parentIsType ? types.find((item) => item.name === entry.parent) : undefined;
+		const family = families.find((family) => family.name === (type ? type.parent : entry.parent));
+		const name = type ? `${entry.name} (subtype of ${type.name})` : entry.name;
+		return `| ${name} | ${family?.name || '—'} | ${family?.parent || '—'} |`;
 	});
 	const content =
 		'# Starter hierarchy draft\n\n' +

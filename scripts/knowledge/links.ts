@@ -41,8 +41,6 @@ export function rewriteLinks(text: string, source: string, ingredients: boolean,
 		if (ingredients) {
 			const override = context.mapping.links.find((rule) => rule.recipe === recipe && rule.target === name);
 			if (override) destination = override.destination;
-			else if (name === 'Apple Brandy' && destination?.kind === 'type')
-				destination = { kind: 'family', name: 'Apple Brandy Family' };
 			else if (name === 'Aromatic Bitters' && destination?.kind === 'family')
 				destination = { kind: 'type', name: 'Aromatic Bitters' };
 		}

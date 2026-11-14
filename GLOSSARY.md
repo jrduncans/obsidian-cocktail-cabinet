@@ -21,6 +21,9 @@ A specific kind of ingredient, such as rye whiskey, lime juice, or 2:1 demerara 
 **Catch-all type**:
 An ingredient type grouping products without close substitutes, such as Amaro or Specialty Bitters. Its bottles are likely substitutes for each other, offered but not assumed.
 
+**Subtype**:
+A narrower kind of an ingredient type, such as Bonded Bourbon under Bourbon, linked to its type through `cc-type`. Its bottles fill recipes calling for the type; the type's other bottles are only likely substitutes for it. One level deep.
+
 **Kitchen staple**:
 An everyday ingredient, such as salt, mint, or saline solution, tracked as itself rather than as a source of an ingredient type, because which brand or batch it is doesn't matter.
 _Avoid_: Pantry item, Grocery
@@ -52,13 +55,10 @@ Stock described by a manually maintained Unknown, Have, Low, or Out status, with
 An ingredient type, bottle, or other ingredient source explicitly marked for purchase or replenishment, independently of its stock level.
 
 **Brandy**:
-French-style grape brandy in this cabinet's colloquial vocabulary, including Cognac and Armagnac. Apple brandy has a separate family.
-
-**Apple Brandy Family**:
-The broader grouping of apple brandy and applejack styles, including Bonded Apple Brandy, Applejack, and Calvados.
+The family for brandy in common cocktail usage: French grape brandy (Cognac, Armagnac) and Apple Brandy.
 
 **Apple Brandy**:
-Regular apple brandy as an ingredient type, alongside Bonded Apple Brandy, Applejack, and Calvados in Apple Brandy Family.
+Apple brandy of any style as an ingredient type. Bonded Apple Brandy, Applejack, and Calvados are its subtypes, so their bottles fill recipes calling for apple brandy.
 
 **Amaro Family**:
 A grouping of bitter liqueur types, including the general Amaro type and specialized styles such as Fernet and Artichoke Amaro.

@@ -13,6 +13,7 @@ export const NAVIGATION_BASE = 'Related';
 export const NAVIGATION_VIEWS = {
 	families: 'Families',
 	types: 'Types',
+	subtypes: 'Subtypes',
 	stock: 'Stock',
 	sameType: 'Same type',
 	recipes: 'Recipes',
@@ -29,34 +30,43 @@ const SECTIONS: Partial<Record<NoteKind, readonly View[]>> = {
 
 const FORMULAS: Record<string, string> = {
 	name: COMMON_FORMULAS.name,
-	// The hierarchy is at most three levels above a bottle: type, family, category.
+	// The hierarchy is at most four levels above a bottle: subtype, type, family, category.
 	parents: COMMON_FORMULAS.parents,
 	up2: parentsOf('formula.parents'),
 	up3: parentsOf('formula.up2'),
-	ancestors: '[formula.parents, formula.up2, formula.up3].flat().map(value.path)',
+	up4: parentsOf('formula.up3'),
+	ancestors: '[formula.parents, formula.up2, formula.up3, formula.up4].flat().map(value.path)',
 	parentPaths: 'formula.parents.map(value.path)',
+	// A subtype bottle's parent type (Bourbon for a bonded bourbon).
+	up2Types: `formula.up2.filter(value.properties[${q(PROP.kind)}] == "type").map(value.path)`,
 	parentLinks: COMMON_FORMULAS.parentLinks,
 	thisUp1: thisParentsOf(),
 	thisUp2: thisParentsOf('formula.thisUp1'),
 	thisUp3: thisParentsOf('formula.thisUp2'),
-	thisLineage: '[formula.thisUp1, formula.thisUp2, formula.thisUp3].flat().map(value.path)',
+	thisUp4: thisParentsOf('formula.thisUp3'),
+	thisLineage: '[formula.thisUp1, formula.thisUp2, formula.thisUp3, formula.thisUp4].flat().map(value.path)',
 	thisParents: 'formula.thisUp1.map(value.path)',
+	thisUp2Types: `formula.thisUp2.filter(value.properties[${q(PROP.kind)}] == "type").map(value.path)`,
 	// A catch-all type groups bottles that aren't assumed to replace each other (Amaro, Specialty Bitters).
-	thisSwapTypes: `formula.thisUp1.filter(value.properties[${q(PROP.catchAll)}] != true).map(value.path)`,
+	// A subtype bottle also stands in for bottles of its parent type.
+	thisSwapTypes: `[formula.thisUp1, formula.thisUp2.filter(value.properties[${q(PROP.kind)}] == "type")].flat().filter(value.properties[${q(PROP.catchAll)}] != true).map(value.path)`,
 	// Recipes: the notes their Ingredients section links (`cc-ingredients`, kept by the plugin), followed up the
 	// hierarchy. A recipe the plugin hasn't reached yet falls back to every link in the note.
 	linked: `if(note[${q(PROP.ingredients)}].isType("list"), list(note[${q(PROP.ingredients)}]).filter(value).map(link(value).asFile()).filter(value), file.links.map(value.asFile()).filter(value))`,
 	linkedUp1: parentsOf('formula.linked'),
 	linkedUp2: parentsOf('formula.linkedUp1'),
 	linkedUp3: parentsOf('formula.linkedUp2'),
-	uses: '[formula.linked, formula.linkedUp1, formula.linkedUp2, formula.linkedUp3].flat().map(value.path)',
+	linkedUp4: parentsOf('formula.linkedUp3'),
+	uses: '[formula.linked, formula.linkedUp1, formula.linkedUp2, formula.linkedUp3, formula.linkedUp4].flat().map(value.path)',
+	// The types of the bottles a recipe names, for the same-type rule; a subtype link is not a bottle.
+	linkedBottleTypes: parentsOf(`formula.linked.filter(value.properties[${q(PROP.kind)}] == "bottle")`),
 	related: [
 		// The recipe calls for this note or something under it.
 		'formula.uses.contains(this.file.path)',
 		// The recipe calls for something broader than this note.
 		'formula.linked.filter(formula.thisLineage.contains(value.path)).length > 0',
 		// A bottle also serves recipes that name another bottle of its type, unless the type is a catch-all.
-		`(this.file.properties[${q(PROP.kind)}] == "bottle" && formula.linkedUp1.filter(formula.thisSwapTypes.contains(value.path)).length > 0)`,
+		`(this.file.properties[${q(PROP.kind)}] == "bottle" && formula.linkedBottleTypes.filter(formula.thisSwapTypes.contains(value.path)).length > 0)`,
 	].join(' || '),
 	// Recipes that call for this note (or, on a type or family, something under it) are grouped above
 	// the ones it can fill through a broader requirement; "Calls…" sorts before "Can…".
@@ -89,6 +99,12 @@ const VIEWS: readonly ViewDefinition[] = [
 		columns: [['formula.name', 'Name']],
 	},
 	{
+		name: NAVIGATION_VIEWS.subtypes,
+		type: 'list',
+		filter: `(${kindIs('type')}) && formula.parentPaths.contains(this.file.path)`,
+		columns: [['formula.name', 'Name']],
+	},
+	{
 		name: NAVIGATION_VIEWS.stock,
 		type: 'table',
 		filter: `(${kindIs('bottle', 'ingredient')}) && formula.ancestors.contains(this.file.path)`,
@@ -97,7 +113,8 @@ const VIEWS: readonly ViewDefinition[] = [
 	{
 		name: NAVIGATION_VIEWS.sameType,
 		type: 'table',
-		filter: `(${kindIs('bottle', 'ingredient')}) && file.path != this.file.path && formula.parents.filter(formula.thisParents.contains(value.path)).length > 0`,
+		// The same type, reaching between a type and its subtypes both ways.
+		filter: `(${kindIs('bottle', 'ingredient')}) && file.path != this.file.path && (formula.parents.filter(formula.thisParents.contains(value.path)).length > 0 || formula.up2Types.filter(formula.thisParents.contains(value)).length > 0 || formula.parents.filter(formula.thisUp2Types.contains(value.path)).length > 0)`,
 		columns: stockColumns,
 	},
 	{
@@ -124,8 +141,28 @@ export function navigationBase(root: string): PlannedFile {
 	return { path: basePath(root, NAVIGATION_BASE), kind: 'base', content: renderFormulaBase(root, FORMULAS, VIEWS) };
 }
 
-/** Embed lines for a resource note; empty for recipes and other kinds. */
-export function navigationEmbeds(root: string, kind: NoteKind): string {
-	const path = basePath(cabinetFolder(root), NAVIGATION_BASE);
-	return (SECTIONS[kind] ?? []).map((view) => `![[${path}#${view}]]`).join('\n\n');
+/** One section's embed line. */
+export function navigationEmbed(root: string, view: View): string {
+	return `![[${basePath(cabinetFolder(root), NAVIGATION_BASE)}#${view}]]`;
+}
+
+/**
+ * A type note's content with a Subtypes section, ahead of its other sections; unchanged when it has one.
+ * Notes are generated without it until a subtype appears, so most types don't show an empty list.
+ */
+export function withSubtypesSection(root: string, content: string): string {
+	const embed = navigationEmbed(root, NAVIGATION_VIEWS.subtypes);
+	if (content.includes(embed)) return content;
+	const prefix = `![[${basePath(cabinetFolder(root), NAVIGATION_BASE)}#`;
+	const lines = content.split('\n');
+	const first = lines.findIndex((line) => line.trim().startsWith(prefix));
+	if (first < 0) return `${content.trimEnd()}\n\n${embed}\n`;
+	lines.splice(first, 0, embed, '');
+	return lines.join('\n');
+}
+
+/** Embed lines for a resource note; empty for recipes and other kinds. A type with subtypes lists them first. */
+export function navigationEmbeds(root: string, kind: NoteKind, hasSubtypes = false): string {
+	const views = [...(kind === 'type' && hasSubtypes ? [NAVIGATION_VIEWS.subtypes] : []), ...(SECTIONS[kind] ?? [])];
+	return views.map((view) => navigationEmbed(root, view)).join('\n\n');
 }

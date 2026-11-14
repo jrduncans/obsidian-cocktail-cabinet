@@ -303,10 +303,17 @@ export class LoggingModal extends Modal {
 	private addSourceOptions(dropdown: DropdownComponent, line: CountedLine, selected: string | null) {
 		const review = this.review!;
 		dropdown.addOption('', 'Select…');
-		const paths = [...line.candidates];
-		if (selected && !paths.includes(selected) && !line.alternatives.includes(selected)) paths.push(selected);
+		const grouped = (line.candidateGroups ?? []).flatMap((group) => group.paths);
+		const paths = line.candidates.filter((path) => !grouped.includes(path));
+		if (selected && !line.candidates.includes(selected) && !line.alternatives.includes(selected))
+			paths.push(selected);
 		const nameOf = (path: string) => review.sources.find((source) => source.note.path === path)!.note.name;
 		for (const path of paths) dropdown.addOption(path, nameOf(path));
+		// A type line's subtype bottles fit too; they follow the type's own, under the subtype's name.
+		for (const { label, paths: subtypePaths } of line.candidateGroups ?? []) {
+			const group = dropdown.selectEl.createEl('optgroup', { attr: { label } });
+			for (const path of subtypePaths) group.createEl('option', { value: path, text: nameOf(path) });
+		}
 		if (line.alternatives.length) {
 			// Likely substitutes from a catch-all type, kept apart from what the recipe calls for.
 			const group = dropdown.selectEl.createEl('optgroup', {

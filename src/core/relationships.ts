@@ -19,6 +19,33 @@ function hasAncestor(byPath: ReadonlyMap<string, CabinetNote>, child: string, an
 	return false;
 }
 
+/** A subtype's parent type (Bourbon for Bonded Bourbon); undefined for a type under a family. */
+export function parentType(
+	notes: ReadonlyMap<string, CabinetNote>,
+	type: CabinetNote | undefined,
+): CabinetNote | undefined {
+	if (type?.kind !== 'type') return undefined;
+	return type.parents.map((path) => notes.get(path)).find((parent) => parent?.kind === 'type');
+}
+
+/** Types a type can be a subtype of: not itself, and not a subtype, since subtypes have no subtypes. */
+export function subtypeParents(notes: readonly CabinetNote[], self?: string): CabinetNote[] {
+	const byPath = new Map(notes.map((note) => [note.path, note]));
+	return notes.filter((note) => note.kind === 'type' && note.path !== self && !parentType(byPath, note));
+}
+
+/**
+ * The types whose bottles a bottle can stand in for: its own type unless a catch-all, and, for a
+ * subtype, the parent type too (a bonded bourbon serves a recipe naming any bourbon bottle).
+ */
+export function swapTypes(notes: ReadonlyMap<string, CabinetNote>, bottle: CabinetNote): string[] {
+	return bottle.parents.flatMap((path) => {
+		const type = notes.get(path);
+		const parent = parentType(notes, type);
+		return [type, parent].filter((note) => note && !note.catchAll).map((note) => note!.path);
+	});
+}
+
 export function relatedTargets(notes: readonly CabinetNote[], target: CabinetNote): Set<string> {
 	const targets = new Set<string>([target.path]);
 	if (target.kind === 'recipe') return targets;
@@ -29,12 +56,10 @@ export function relatedTargets(notes: readonly CabinetNote[], target: CabinetNot
 			targets.add(note.path);
 		}
 		// Preserve same-type bottle alternatives without widening to sibling types or within a catch-all type.
-		if (
-			target.kind === 'bottle' &&
-			note.kind === 'bottle' &&
-			target.parents.some((parent) => note.parents.includes(parent) && !byPath.get(parent)?.catchAll)
-		) {
-			targets.add(note.path);
+		// A subtype bottle also serves recipes naming a bottle of its parent type, not the reverse.
+		if (target.kind === 'bottle' && note.kind === 'bottle') {
+			const swaps = swapTypes(byPath, target);
+			if (note.parents.some((parent) => swaps.includes(parent))) targets.add(note.path);
 		}
 	}
 	return targets;

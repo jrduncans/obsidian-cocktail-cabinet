@@ -40,9 +40,11 @@ export interface AbvNote {
 	bottleAbvs?: readonly number[];
 	/** The same, for bottles in stock. */
 	stockedAbvs?: readonly number[];
+	/** A type's subtypes' bottles in stock, used after its own: a plain bourbon line reads a plain bottle first. */
+	subtypeStockedAbvs?: readonly number[];
 	/** A family: its types' typical ABVs, so a family of non-alcoholic types counts as 0. */
 	typeAbvs?: readonly unknown[];
-	/** A bottle's type, or a type's family. */
+	/** A bottle's type, a subtype's type, or a type's family. */
 	parent?: AbvNote | null;
 	/** Other stock: the types it provides, first first. */
 	provides?: readonly AbvNote[];
@@ -62,8 +64,9 @@ function median(values: readonly number[]): number | null {
 
 /**
  * A note's ABV, stopping at the first that applies: a bottle's own ABV; for a type, the median of
- * your in-stock bottles of it (what you'd pour), its typical ABV (a reference value), then the median
- * of every bottle of it you've had; then the family. A family has no ABV of its own, since most span
+ * your in-stock bottles of it (what you'd pour), then of its subtypes' in-stock bottles, its typical
+ * ABV (a reference value), then the median of every bottle of it or its subtypes you've had; then the
+ * subtype's type, or the family. A family has no ABV of its own, since most span
  * too wide a range: it uses the median of your in-stock bottles in it, then of every bottle in it, or
  * 0 when all its types are non-alcoholic. Other stock uses its first provided type, and a staple is 0.
  * A bottle without an ABV falls back to its type.
@@ -75,7 +78,7 @@ export function noteAbv(note: AbvNote | null | undefined): { abv: number | null;
 		return own !== null ? { abv: own, source: 'bottle' } : noteAbv(note.parent);
 	}
 	if (note.kind === 'type') {
-		const stocked = median(note.stockedAbvs ?? []);
+		const stocked = median(note.stockedAbvs ?? []) ?? median(note.subtypeStockedAbvs ?? []);
 		if (stocked !== null) return { abv: stocked, source: 'stocked' };
 		const typical = fraction(note.abvTypical);
 		if (typical !== null) return { abv: typical, source: 'typical' };

@@ -2,6 +2,7 @@ import { App, TFile, TFolder, getAllTags, parseFrontMatterAliases, parseYaml } f
 import { cabinetFolder, contentFingerprint, KINDS, PROP, wikiLink } from '../core/schema';
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { localDate, renderNote } from '../core/notes';
+import { withSubtypesSection } from '../core/navigation';
 import { cabinetHomePath, cabinetViews, customViewsPath, starterPlan } from '../core/setup';
 import { DEFAULT_RESTOCK } from '../core/restock';
 import type { RestockThresholds } from '../core/restock';
@@ -85,7 +86,11 @@ export class CabinetStore {
 				const frontmatter = properties.get(file.path);
 				const kind: unknown = frontmatter?.[PROP.kind];
 				if (!KINDS.some((value) => value === kind)) return [];
-				const parentProperty = PARENT_PROPERTIES[kind as NoteKind];
+				// A subtype is a type whose parent is another type (`cc-type`) in place of a family.
+				const parentProperty =
+					kind === 'type' && frontmatter?.[PROP.type] !== undefined && frontmatter?.[PROP.type] !== null
+						? PROP.type
+						: PARENT_PROPERTIES[kind as NoteKind];
 				const parents = (parentProperty ? [parentProperty] : []).flatMap((key) => {
 					const value: unknown = frontmatter?.[key];
 					// Hierarchy parents are single links; only other stock provides several types.
@@ -114,9 +119,17 @@ export class CabinetStore {
 			})
 			.sort((left, right) => left.name.localeCompare(right.name));
 		const byPath = new Map(notes.map((note) => [note.path, note]));
+		const isSubtype = (note: CabinetNote | undefined) =>
+			note?.kind === 'type' && note.parents.some((path) => byPath.get(path)?.kind === 'type');
 		for (const note of notes) {
-			const expected = note.kind === 'family' ? 'category' : note.kind === 'type' ? 'family' : 'type';
-			note.parents = note.parents.filter((path) => byPath.get(path)?.kind === expected);
+			note.parents = note.parents.filter((path) => {
+				const parent = byPath.get(path);
+				if (note.kind === 'family') return parent?.kind === 'category';
+				// One level of subtypes: a type's parent is a family, or a type that isn't itself a subtype.
+				if (note.kind === 'type')
+					return parent?.kind === 'family' || (parent?.kind === 'type' && !isSubtype(parent));
+				return parent?.kind === 'type';
+			});
 		}
 		return notes;
 	}
@@ -330,6 +343,13 @@ export class CabinetStore {
 			}
 			return file;
 		});
+	}
+
+	/** Give a subtype's type note its Subtypes section, if it lacks one. */
+	async addSubtypesSection(parentLink: string, sourcePath: string): Promise<void> {
+		const file = this.resolve(parentLink, sourcePath);
+		if (!file || !file.path.startsWith(`${this.root}/`)) return;
+		await this.app.vault.process(file, (content) => withSubtypesSection(this.root, content));
 	}
 
 	link(note: CabinetNote): string {
