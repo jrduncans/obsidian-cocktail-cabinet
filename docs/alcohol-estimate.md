@@ -44,7 +44,7 @@ Revised 2026-11-13 so bottles drive the estimate and reference values fill gaps.
 
 1. **The named bottle's `cc-abv`.** Exact. A bottle without one falls back to its type.
 2. **The median of your in-stock bottles of the type**: what you'd pour today. In stock is the In stock view's test: Have or Low, or a positive amount.
-3. **The type's typical ABV**, `cc-abv-typical`, a fraction like `cc-abv`, editable in **Edit cabinet note**: a reference value for types you don't have on hand, from BevNap, Mixel, or later the starter catalog. The starter supplies 0 for non-alcoholic types and leaves the rest blank for now.
+3. **The type's typical ABV**, `cc-abv-typical`, a fraction like `cc-abv`, editable in **Edit cabinet note**: a reference value for types you don't have on hand, from BevNap, Mixel, or later the starter catalog. The starter supplies 0 for non-alcoholic types and a representative value for most alcoholic types, leaving blank those whose bottles vary too much.
 4. **The median of every bottle of the type you've had**, out of stock included, labeled “from bottles you've had”: better than unknown, and only reached with no bottle in stock and no typical value.
 5. **The family**, for family links (`[[Rum|rum]]`) and types with nothing above: the median of your in-stock bottles in the family, then of every bottle in it, or 0 when every type in it is 0. Families have no typical ABV of their own: decided 2026-11-13, since most span too wide a range for one value (Sherry 15–20%, Apple Brandy 40–50%, Rum 37.5–75%) and a generic line is usually better linked to a type.
 6. **Other stock** uses its first provided type; kitchen staples are 0.

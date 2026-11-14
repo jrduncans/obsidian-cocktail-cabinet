@@ -106,20 +106,6 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 		{ aliases: ['Rhum Agricole Vieux'] },
 	],
 	[
-		'Unaged Haitian Rum',
-		'Traditional Barbancourt-style white rum without wood maturation; steel-tank resting is compatible with this type. Keep distinct from Aged Haitian Rum and Clairin. Preserve a recipe’s named bottle and strength.',
-		{ aliases: ['White Haitian Rum'] },
-	],
-	[
-		'Aged Haitian Rum',
-		'Barrel-aged Haitian rum in the Barbancourt-style recipe role, represented by Barbancourt 3 Star and 5 Star. Keep distinct from Unaged Haitian Rum and Clairin.',
-	],
-	[
-		'Unaged Mexican Rum',
-		'Unaged Mexican cane-juice rum in the recipe role represented by Paranubes Blanco, with pronounced fermentation and savory character. Choose other bottles for their fit with this profile; recipes may specify a particular bottle or strength.',
-		{ aliases: ['Oaxacan Rum'] },
-	],
-	[
 		'Black Jamaican Rum',
 		'Jamaican rum with pronounced caramel influence, distinct from the Aged Jamaican Rum recipe role. Color alone does not determine membership.',
 	],
@@ -462,7 +448,6 @@ for (const [name, ratio, ingredient, aliases] of sugar) {
 
 // Non-alcoholic types have a typical ABV of 0, so alcohol estimates count them as known; a family of
 // them counts as 0 through its types.
-// Alcoholic types are left blank: a representative value is the user's call (see docs/alcohol-estimate.md).
 const NON_ALCOHOLIC_FAMILIES = [
 	'Citrus Juice',
 	'Other Fruit Juice',
@@ -488,6 +473,109 @@ for (const entry of entries) {
 }
 for (const name of [...NON_ALCOHOLIC_FAMILIES, ...NON_ALCOHOLIC_TYPES])
 	if (!entries.some((entry) => entry.name === name)) throw new Error(`Missing non-alcoholic entry: ${name}`);
+
+// Alcoholic types get a representative ABV, in percent, so a new cabinet can estimate drinks before any
+// bottle is bought. Values follow the type's prototype bottle or BevNap's and Mixel's defaults; the
+// user's in-stock bottles still come first. Types whose bottles vary too much stay blank.
+const TYPICAL_ABV_PERCENT: Record<string, number> = {
+	Bourbon: 43,
+	'Rye Whiskey': 40,
+	'Blended Scotch': 40,
+	'Single Malt Scotch': 40,
+	'Irish Whiskey': 40,
+	'Light Rum': 40,
+	'White Blended Rum': 40,
+	'Aged Barbados Rum': 40,
+	'Aged Column Still Rum': 40,
+	'Aged Blended Rum': 40,
+	'Aged Jamaican Rum': 40,
+	'Aged Overproof Jamaican Rum': 57,
+	'Unaged Overproof Jamaican Rum': 63,
+	'Demerara 151 Rum': 75.5,
+	'Unaged Rhum Agricole': 50,
+	'Aged Rhum Agricole': 40,
+	'Black Jamaican Rum': 40,
+	'Pineapple Rum': 40,
+	'Unaged Cachaça': 40,
+	'Aged Cachaça': 40,
+	'London Dry Gin': 47,
+	'Old Tom Gin': 45,
+	Vodka: 40,
+	'Blanco Tequila': 40,
+	'Reposado Tequila': 40,
+	'Añejo Tequila': 40,
+	Mezcal: 40,
+	Cognac: 40,
+	'Apple Brandy': 40,
+	'Bonded Apple Brandy': 50,
+	Applejack: 40,
+	Calvados: 40,
+	'Unaged Aquavit': 40,
+	'Aged Aquavit': 40,
+	Absinthe: 68,
+	Pastis: 40,
+	'Orange Liqueur': 40,
+	'Maraschino Liqueur': 32,
+	'Cherry Liqueur': 24,
+	'Apricot Liqueur': 24,
+	'Peach Liqueur': 16,
+	'Blackcurrant Liqueur': 15,
+	'Crème de Menthe': 27,
+	'Green Herbal Liqueur': 55,
+	'Yellow Herbal Liqueur': 40,
+	'Herbal Liqueur': 40,
+	'Allspice Dram': 22.5,
+	Falernum: 11,
+	'Elderflower Liqueur': 20,
+	'Violet Liqueur': 16,
+	'Red Bitter Liqueur': 24,
+	'Orange Bitter Liqueur': 11,
+	Fernet: 39,
+	'Artichoke Amaro': 16.5,
+	Amaretto: 28,
+	'Coffee Liqueur': 20,
+	'Crème de Cacao': 27,
+	'Dry Sparkling Wine': 12,
+	Champagne: 12,
+	'Sweet Vermouth': 16,
+	'Dry Vermouth': 17.5,
+	'Blanc Vermouth': 16,
+	'Vermouth Amaro': 16,
+	'Amontillado Sherry': 18.5,
+	'Bitter Aperitif Wine': 17,
+	'Aromatic Bitters': 45,
+	'Orange Bitters': 45,
+	'Creole Bitters': 35,
+	'Chocolate Bitters': 48,
+	'Grapefruit Bitters': 40,
+	'Tiki Bitters': 44,
+	'Specialty Bitters': 44,
+	'Demerara Rum': 40,
+	'Blended Overproof Rum': 69,
+	'Contemporary Gin': 44,
+	'Plymouth Gin': 41.2,
+	'Navy Strength Gin': 57,
+	Genever: 42,
+	Armagnac: 40,
+	'Banana Liqueur': 25,
+	'Pineapple Liqueur': 20,
+	'Melon Liqueur': 20,
+	'Bergamot Liqueur': 20,
+	'Vanilla Liqueur': 20,
+	'Gentian Liqueur': 16,
+	Amaro: 30,
+	'Dry White Wine': 12,
+	'Red Wine': 13,
+	Prosecco: 11,
+	'Fino Sherry': 15,
+	'Oloroso Sherry': 19,
+	'Pedro Ximénez Sherry': 17,
+};
+for (const [name, percent] of Object.entries(TYPICAL_ABV_PERCENT)) {
+	const entry = entries.find((item) => item.kind === 'type' && item.name === name);
+	if (!entry) throw new Error(`Missing typical-ABV type: ${name}`);
+	entry.properties = { ...entry.properties, [PROP.abvTypical]: Math.round(percent * 10) / 1000 };
+}
 
 export const STARTER_CATALOG: readonly CatalogEntry[] = entries;
 

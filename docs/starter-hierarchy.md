@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-130 ingredient types, 26 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+127 ingredient types, 26 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -17,7 +17,6 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Aged Blended Rum | Rum | Spirit |
 | Aged Cachaça | Cachaça | Spirit |
 | Aged Column Still Rum | Rum | Spirit |
-| Aged Haitian Rum | Rum | Spirit |
 | Aged Jamaican Rum | Rum | Spirit |
 | Aged Overproof Jamaican Rum | Rum | Spirit |
 | Aged Rhum Agricole | Rum | Spirit |
@@ -128,8 +127,6 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Tonic Water | Carbonated Mixer | — |
 | Unaged Aquavit | Aquavit | Spirit |
 | Unaged Cachaça | Cachaça | Spirit |
-| Unaged Haitian Rum | Rum | Spirit |
-| Unaged Mexican Rum | Rum | Spirit |
 | Unaged Overproof Jamaican Rum | Rum | Spirit |
 | Unaged Rhum Agricole | Rum | Spirit |
 | Vanilla Liqueur | Herbal & Spice Liqueur | Liqueur |
