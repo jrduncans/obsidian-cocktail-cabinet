@@ -53,6 +53,7 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 
 ### 4. Everyday polish: less command-hunting
 
+- Built 2026-11-20: an **Edit cabinet note** header button on every editable note. The rule for header buttons is now frequent actions on the note itself, so a type's **Add a bottle of this type** (which adds to its Stock list) and buttons on the cabinet home stay out of the header. Controls inside the note, beside the Stock section, were considered for adding stock and left for later.
 - Built 2026-11-13: [recipe tags, rating, and duplicates](cabinet-design.md#recipe-tags-rating-and-duplicates) in the recipe review, and tags in **Edit cabinet note**. Revised the same day: no built-in prep tags or method category, tags in the `tags` property, and Tasting Notes no longer a form field. Tested on desktop in the dev vault.
 - Built 2026-11-13: [**Add tasting note**](cabinet-design.md#tasting-notes) on recipes, writing to that day's daily note under the drink's “Made …” line, so the recipe's backlinks collect a dated tasting history. Tested on desktop in the dev vault.
 - Built 2026-11-13: [only Ingredients links count](cabinet-design.md#navigation-in-notes) in each note's Recipes sections, through a plugin-maintained `cc-ingredients` property on recipes, kept in step after edits and checked at startup. Tested on desktop in the dev vault (507 recipes backfilled).
