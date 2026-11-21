@@ -151,7 +151,7 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		{
 			id: 'edit-cabinet-note',
 			name: 'Edit cabinet note',
-			icon: 'pencil',
+			icon: 'file-sliders',
 			kinds: 'any',
 			when: isEditable,
 			header: true,
