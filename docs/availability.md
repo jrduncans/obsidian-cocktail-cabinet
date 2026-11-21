@@ -1,6 +1,6 @@
 # Availability design
 
-Drafted on 2026-11-21 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the [workflow assessment's resolver proposal](workflow-assessment.md#ingredient-rules-have-diverged). Reviewed the same day: the [decisions](#decisions) record what was agreed. Slices 1 and 2, the resolver and the CLI handlers, built 2026-11-21 and installed in `knowledge`, whose `cocktail-inventory-query` skill now calls them.
+Drafted on 2026-11-21 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the [workflow assessment's resolver proposal](workflow-assessment.md#ingredient-rules-have-diverged). Reviewed the same day: the [decisions](#decisions) record what was agreed. Slices 1 and 2, the resolver and the CLI handlers, built 2026-11-21 and installed in `knowledge`, whose `cocktail-inventory-query` skill now calls them. Slice 3, **Can I make this?**, built the same day and tested on desktop in the dev vault.
 
 ## Goal
 
@@ -56,7 +56,7 @@ From the same pass: each missing requirement (a type, bottle, or staple as linke
 
 - **What can I make?** A command, and a button on the cabinet home's text. Opens a side pane, not a modal, so recipes open beside it: sections by recipe status, filters for rating, tag, and "uses" (a bottle, type, or family), and a **What to buy** tab. Refreshes when cabinet notes change, debounced like recipe sync.
 - **What can I make with this?** On bottle, other-stock, type, and family notes (file menu and More options, not the header): opens the pane filtered to recipes that use the note, by the [Recipes rule](cabinet-design.md#navigation-in-notes).
-- **Can I make this?** On recipe notes (file menu and More options): the line table above in a small modal, with **Log this cocktail** and **Edit stock** for a Low, Short, or Out source, and **Link…** for an unlinked line.
+- **Can I make this?** On recipe notes (file menu and More options): the line table above in a small modal, with **Log this cocktail**, **Edit stock** for a Low, Short, Unknown, or empty source, and **Link…** for an unlinked line. Either fix re-checks the recipe from the files. A named bottle that ran out reads “Out: Campari”, with other empty bottles that would fit after it.
 - **Agents**: CLI handlers (below).
 
 The Recipes sections embedded in notes are core Bases and can't call the resolver; see [decision 1](#decisions).

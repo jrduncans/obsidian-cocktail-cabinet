@@ -2,7 +2,15 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { resolveRecipe } from '../src/core/availability';
 import type { LineAvailability } from '../src/core/availability';
-import { compareRecipes, describeLine, filterRecipes, toBuy } from '../src/core/availability-lists';
+import {
+	compareRecipes,
+	describeLine,
+	filterRecipes,
+	lineStatus,
+	statusText,
+	stockToFix,
+	toBuy,
+} from '../src/core/availability-lists';
 import type { RecipeEntry, RecipeFilter } from '../src/core/availability-lists';
 import { canMakeReport, makeableReport, parseListFlags, toBuyReport } from '../src/core/availability-report';
 import { stockSnapshot } from '../src/core/logging-stock';
@@ -263,7 +271,8 @@ void test('lines are described briefly by name', () => {
 	assert.equal(said('2 oz [[Bourbon]]', [status(plain, 'Out')]), 'Missing: Bourbon (out: Plain Bourbon)');
 	assert.equal(said('Garnish: [[Orange Peel|orange peel]]', []), 'Missing: garnish Orange Peel');
 	assert.equal(said('2 oz [[Bourbon|bourbon]] or [[Rye Whiskey|rye]]', []), 'Missing: Bourbon, Rye Whiskey');
-	assert.equal(said('2 oz gin', []), 'Not linked: 2 oz gin');
+	assert.equal(said('2 oz gin', []), 'Not linked: gin');
+	assert.equal(said('Garnish: ground cinnamon', []), 'Not linked: garnish ground cinnamon');
 });
 
 void test('to buy: grouped by what a line links, most recipes unlocked first', () => {
@@ -319,4 +328,43 @@ void test('list flags: statuses checked, numbers positive', () => {
 	assert.deepEqual(parseListFlags({}), { filter: {} });
 	assert.throws(() => parseListFlags({ status: 'ready' }), /Unknown status: ready/);
 	assert.throws(() => parseListFlags({ limit: '0' }), /limit must be/);
+});
+
+void test('the check: headline, line wording, stock to fix, and where each line is', () => {
+	const name = (path: string) => notes.find((item) => item.path === path)?.name ?? path;
+	const sources = [
+		bottle(plain, 500),
+		bottle(campari, 10),
+		status(mint, 'Unknown'),
+		bottle(meletti, 0),
+		bottle(averna, 500),
+	];
+	assert.equal(statusText(recipe(['2 oz [[Bourbon]]'], sources)), 'You can make it.');
+	assert.equal(statusText(recipe(['1 oz [[Meletti]]'], sources)), 'You can make it with a substitute.');
+	assert.equal(statusText(recipe(['1 sprig [[Mint]]'], sources)), 'Check stock first.');
+	assert.equal(statusText(recipe(['1 oz [[Campari]]'], sources)), 'Missing one ingredient.');
+	assert.equal(statusText(recipe(['1 oz [[Campari]]', '2 oz gin'], sources)), 'Missing 2 ingredients.');
+	assert.equal(statusText(recipe(['Garnish: [[Mint]]'], sources)), 'No ingredients to check.');
+	assert.equal(lineStatus(only('2 oz [[Bourbon]]', sources), name), 'Have: Plain Bourbon');
+	assert.equal(lineStatus(only('1 oz [[Campari]]', sources), name), 'Short: Campari (10 of 29.6 mL)');
+	assert.deepEqual(stockToFix(only('1 oz [[Campari]]', sources)), [campari.path]);
+	assert.deepEqual(stockToFix(only('1 sprig [[Mint]]', sources)), [mint.path]);
+	assert.deepEqual(stockToFix(only('1 oz [[Meletti]]', sources)), [meletti.path]);
+	assert.deepEqual(stockToFix(only('2 oz [[Bourbon]]', sources)), []);
+	const lines = recipe(['2 oz gin', '2 oz [[Bourbon]]'], sources).lines;
+	assert.deepEqual(lines[0]!.at, { line: 3, raw: '- 2 oz gin' });
+	assert.deepEqual(lines[1]!.at, { line: 4, raw: '- 2 oz [[Bourbon]]' });
+});
+
+void test('a named bottle that ran out reads as Out, with other empty bottles after it', () => {
+	const name = (path: string) => notes.find((item) => item.path === path)?.name ?? path;
+	const another = note('Another Bourbon', 'bottle', [bourbon.path]);
+	notes.push(another);
+	try {
+		const line = only('2 oz [[Plain Bourbon]]', [bottle(plain, 0), bottle(another, 0)]);
+		assert.equal(describeLine(line, name), 'Out: Plain Bourbon (also out: Another Bourbon)');
+		assert.equal(describeLine(only('1 oz [[Campari]]', [bottle(campari, 0)]), name), 'Out: Campari');
+	} finally {
+		notes.pop();
+	}
 });

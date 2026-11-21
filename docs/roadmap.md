@@ -83,5 +83,5 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
 ### 5. Reach: retire the remaining skills
 
 - New: Bevnap CSV and web-page recipe import, following the source-fidelity rules of `cocktail-recipe-import`.
-- New: availability queries (what can I make, what am I missing). [Design](availability.md) agreed 2026-11-21; four slices, the resolver and CLI handlers first. Slices 1 and 2 (the resolver and the CLI handlers) built 2026-11-21; the `knowledge` query skill now calls the handlers. Next: **Can I make this?** on recipes, then the What can I make pane.
+- New: availability queries (what can I make, what am I missing). [Design](availability.md) agreed 2026-11-21; four slices, the resolver and CLI handlers first. Slices 1 and 2 (the resolver and the CLI handlers) built 2026-11-21; the `knowledge` query skill now calls the handlers. Slice 3, **Can I make this?** on recipes, built the same day. Next: the What can I make pane.
 - New: agent integration through a CLI handler; publication remains a separate decision.
