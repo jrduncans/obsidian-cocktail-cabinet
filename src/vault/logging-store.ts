@@ -2,7 +2,8 @@ import { parseYaml, TFile } from 'obsidian';
 import type { App } from 'obsidian';
 import { classifyLoggingLines } from '../core/logging-lines';
 import type { LoggingLines } from '../core/logging-lines';
-import { dailyLogLine, dailyLogText } from '../core/logging-daily';
+import { dailyAlcoholUpdates, dailyLogLine, dailyLogText } from '../core/logging-daily';
+import type { DailyAlcohol } from '../core/logging-daily';
 import type { LoggingPlan } from '../core/logging-plan';
 import { sameStock, stockSnapshot } from '../core/logging-stock';
 import type { StockSource } from '../core/logging-stock';
@@ -142,7 +143,16 @@ export class LoggingStore {
 		return review.oneOff ? this.reviewOneOff(review.oneOff, date) : this.review(review.recipe!, date);
 	}
 
-	async apply(review: LoggingReview, plan: LoggingPlan, addDaily: boolean): Promise<ApplyLogResult> {
+	/**
+	 * Log a reviewed drink. With `alcohol`, the daily note's alcohol total grows by its mL and the
+	 * “Made …” line (a one-off's header) shows its drinks text; both need the daily entry, so neither happens without it.
+	 */
+	async apply(
+		review: LoggingReview,
+		plan: LoggingPlan,
+		addDaily: boolean,
+		alcohol?: DailyAlcohol,
+	): Promise<ApplyLogResult> {
 		if (this.writing) throw new Error('Another cocktail is still being logged.');
 		if (plan.errors.length || plan.unselected) throw new Error('Select what you used and check the amounts.');
 		if (!plan.changes.length && !addDaily) throw new Error('Nothing to log.');
@@ -152,13 +162,18 @@ export class LoggingStore {
 			throw new Error('Pick today or an earlier date.');
 		this.writing = true;
 		try {
-			return await this.applyReviewed(review, plan, addDaily);
+			return await this.applyReviewed(review, plan, addDaily, alcohol);
 		} finally {
 			this.writing = false;
 		}
 	}
 
-	private async applyReviewed(review: LoggingReview, plan: LoggingPlan, addDaily: boolean): Promise<ApplyLogResult> {
+	private async applyReviewed(
+		review: LoggingReview,
+		plan: LoggingPlan,
+		addDaily: boolean,
+		alcohol?: DailyAlcohol,
+	): Promise<ApplyLogResult> {
 		if (review.recipe && (await this.app.vault.read(this.file(review.recipe.path))) !== review.content) {
 			return {
 				status: 'stale',
@@ -239,8 +254,14 @@ export class LoggingStore {
 		}
 		const missed = await this.recordUse(review.recipe, plan, date, record);
 		const [entry, text] = review.oneOff
-			? [oneOffDailyEntry(review.oneOff, plan.servings), oneOffDailyText(review.oneOff, plan.servings)]
-			: [dailyLogLine(review.recipe!, plan.servings), dailyLogText(review.recipe!, plan.servings)];
+			? [
+					oneOffDailyEntry(review.oneOff, plan.servings, alcohol?.text),
+					oneOffDailyText(review.oneOff, plan.servings, alcohol?.text),
+				]
+			: [
+					dailyLogLine(review.recipe!, plan.servings, alcohol?.text),
+					dailyLogText(review.recipe!, plan.servings, alcohol?.text),
+				];
 		const usage = missed.length ? ` Couldn’t record last used or times made on ${missed.join(', ')}.` : '';
 		let notice = 'Stock updated.';
 		if (addDaily) {
@@ -248,6 +269,8 @@ export class LoggingStore {
 				const appended = await this.daily.append(review.daily, review.recipe ?? null, entry);
 				if (appended) record.daily = { path: review.daily.path, entry };
 				notice = appended ? 'Cocktail logged.' : `Stock updated. Already in the note for ${date}.`;
+				if (appended && alcohol && !(await this.addAlcohol(review.daily.path, alcohol.ml, record)))
+					notice += ' Couldn’t add it to the daily alcohol total.';
 			} catch (error) {
 				const saved = await this.rememberQuietly(record);
 				throw new LoggingWriteError(
@@ -261,6 +284,21 @@ export class LoggingStore {
 			notice: notice + usage + (saved ? '' : ' Couldn’t save this log for undo.'),
 			undoable: saved,
 		};
+	}
+
+	/** Add to the daily note's alcohol total, recorded for undo. Bookkeeping: a failure is reported, never undoing the log. */
+	private async addAlcohol(path: string, ml: number, record: LogRecord): Promise<boolean> {
+		try {
+			const name = path.split('/').at(-1)!.replace(/\.md$/, '');
+			await this.app.fileManager.processFrontMatter(this.file(path), (properties: Record<string, unknown>) => {
+				const updates = dailyAlcoholUpdates(properties, ml);
+				recordFields(record, path, name, fieldChanges(properties, updates));
+				Object.assign(properties, updates);
+			});
+			return true;
+		} catch {
+			return false;
+		}
 	}
 
 	/** Drop a record: it was undone, or its log saved nothing. */

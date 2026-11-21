@@ -53,6 +53,7 @@ function fixture() {
 		failDaily = false;
 	// Recipe properties live apart from its body, which `read` returns.
 	const recipeProperties: Record<string, unknown> = { [PROP.timesMade]: 2, [PROP.lastMade]: '2000-01-01' };
+	const dailyProperties: Record<string, unknown> = {};
 	const dailyInstance = {
 		options: { folder: 'Journal', format: 'YYYY/MM/YYYY-MM-DD', template: 'Templates/Daily' },
 		getFormat: () => dailyInstance.options.format,
@@ -98,7 +99,7 @@ function fixture() {
 			processFrontMatter: (file: TFile, transform: (properties: Record<string, unknown>) => void) => {
 				events.push(file.path);
 				if (file.path === failBottle) return Promise.reject(new Error('Bottle disk failure'));
-				transform(properties.get(file.path) ?? recipeProperties);
+				transform(properties.get(file.path) ?? (file.path === dailyPath ? dailyProperties : recipeProperties));
 				return Promise.resolve();
 			},
 		},
@@ -112,6 +113,7 @@ function fixture() {
 		logger,
 		properties,
 		recipeProperties,
+		dailyProperties,
 		contents,
 		events,
 		dailyPath,
@@ -495,4 +497,63 @@ void test('only the latest logs are kept, and undoing them in turn walks back', 
 	for (let index = 0; index < 2; index++) await f.logger.undo.undo((await f.logger.undo.preview())!);
 	assert.equal(f.recipeProperties[PROP.timesMade], 12);
 	assert.equal(f.logger.journal.load().length, 8);
+});
+
+/** The daily note's properties read back from its file, as undo reads them. */
+function dailyFrontmatter(f: ReturnType<typeof fixture>) {
+	const read = f.app.vault.read;
+	f.app.vault.read = (file: TFile) =>
+		file.path === f.dailyPath && Object.keys(f.dailyProperties).length
+			? Promise.resolve(`---\n${JSON.stringify(f.dailyProperties)}\n---\n${f.contents.get(file.path)}`)
+			: read(file);
+	return f;
+}
+
+void test('alcohol goes on the daily line and adds to the daily total, and undo takes it back', async () => {
+	const f = dailyFrontmatter(undoable(fixture()));
+	f.contents.set(f.dailyPath, '# Day\n');
+	f.dailyProperties['cc-alcohol-ml'] = 10;
+	const { review, plan } = await ready(f);
+	const result = await f.logger.apply(review, plan, true, { ml: 24.04, text: '≈ 1.4 drinks' });
+	assert.ok(result.status === 'applied' && result.undoable);
+	assert.equal(result.notice, 'Cocktail logged.');
+	assert.match(
+		f.contents.get(f.dailyPath)!,
+		/Made a \[\[Cocktails\/Recipes\/Test drink\|Test drink\]\] \(≈ 1\.4 drinks\)\.\n$/,
+	);
+	assert.equal(f.dailyProperties['cc-alcohol-ml'], 34);
+	const undo = (await f.logger.undo.preview())!;
+	assert.ok(undo.restores.some((restore) => /: alcohol 34 mL → 10 mL$/.test(restore.text)));
+	assert.equal((await f.logger.undo.undo(undo)).status, 'done');
+	assert.equal(f.dailyProperties['cc-alcohol-ml'], 10);
+	assert.equal(f.contents.get(f.dailyPath), '# Day\n');
+});
+void test('a first drink starts the daily total, and undo removes it', async () => {
+	const f = dailyFrontmatter(undoable(fixture()));
+	f.contents.set(f.dailyPath, '# Day\n');
+	const { review, plan } = await ready(f);
+	await f.logger.apply(review, plan, true, { ml: 20, text: '≈ 1.1 drinks' });
+	assert.deepEqual(f.dailyProperties, { 'cc-alcohol-ml': 20 });
+	await f.logger.undo.undo((await f.logger.undo.preview())!);
+	assert.deepEqual(f.dailyProperties, {});
+});
+void test('without the daily entry, no alcohol is recorded', async () => {
+	const f = fixture();
+	const { review, plan } = await ready(f);
+	await f.logger.apply(review, plan, false, { ml: 20, text: '≈ 1.1 drinks' });
+	assert.deepEqual(f.dailyProperties, {});
+	assert.ok(!f.events.includes(f.dailyPath));
+});
+void test('a one-off header carries its drinks, and its alcohol adds to the daily total', async () => {
+	const f = fixture();
+	f.contents.set(f.dailyPath, '# Day\n');
+	const review = await f.logger.reviewOneOff({ name: 'Rye thing', lines: ['20 ml [[Test A]]'] });
+	const selections = new Map(review.lines.counted.map((line) => [line.id, line.initialSelection!]));
+	const plan = planLogging(review.lines, review.sources, selections, 1);
+	await f.logger.apply(review, plan, true, { ml: 8, text: '≈ 0.5 drinks' });
+	assert.equal(
+		f.contents.get(f.dailyPath),
+		'# Day\nMade a one-off (Rye thing) (≈ 0.5 drinks):\n- 20 ml [[Test A]]\n',
+	);
+	assert.deepEqual(f.dailyProperties, { 'cc-alcohol-ml': 8 });
 });

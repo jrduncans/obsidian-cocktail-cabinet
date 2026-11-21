@@ -326,11 +326,22 @@ export function estimateText(
 	servings: number,
 	unit: keyof typeof STANDARD_DRINK_GRAMS = 'us',
 ): string {
-	if (estimate.basis === 'none' || estimate.abv === null || !(servings > 0)) return '';
-	const lead = estimate.basis === 'partial' ? '≥ ' : '≈ ';
+	const drinks = drinksText(estimate, servings, unit);
+	if (!drinks || estimate.basis === 'none' || estimate.abv === null) return '';
 	const bound = estimate.basis === 'partial' ? '≥ ' : '';
 	const alcohol = estimate.alcoholMl * servings;
-	const drinks = standardDrinks(alcohol, unit).toFixed(1);
+	return `${drinks} (${alcohol.toFixed(1)} mL alcohol), ${bound}${(estimate.abv * 100).toFixed(1)}% ABV · ${BASIS_TEXT[estimate.basis]}`;
+}
+
+/** Standard drinks for the servings: “≈ 1.6 drinks”, or “≥ 1.6 drinks” for a lower bound; empty with no estimate. */
+export function drinksText(
+	estimate: Estimate,
+	servings: number,
+	unit: keyof typeof STANDARD_DRINK_GRAMS = 'us',
+): string {
+	if (estimate.basis === 'none' || estimate.abv === null || !(servings > 0)) return '';
+	const lead = estimate.basis === 'partial' ? '≥ ' : '≈ ';
+	const drinks = standardDrinks(estimate.alcoholMl * servings, unit).toFixed(1);
 	const noun = unit === 'uk' ? (drinks === '1.0' ? 'unit' : 'units') : drinks === '1.0' ? 'drink' : 'drinks';
-	return `${lead}${drinks} ${noun} (${alcohol.toFixed(1)} mL alcohol), ${bound}${(estimate.abv * 100).toFixed(1)}% ABV · ${BASIS_TEXT[estimate.basis]}`;
+	return `${lead}${drinks} ${noun}`;
 }

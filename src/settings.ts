@@ -25,6 +25,8 @@ export interface CocktailCabinetSettings {
 	topMl: number;
 	/** How alcohol is shown in standard drinks: US (14 g) or UK units (8 g). */
 	drinkUnit: 'us' | 'uk';
+	/** Logging adds each drink's alcohol estimate to the daily note: a running total and the drinks on its line. */
+	dailyAlcohol: boolean;
 }
 
 export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
@@ -36,6 +38,7 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	dilution: { ...DEFAULT_DILUTION },
 	topMl: DEFAULT_TOP_ML,
 	drinkUnit: 'us',
+	dailyAlcohol: false,
 };
 
 const positive = (value: unknown, max = Infinity): value is number =>
@@ -75,6 +78,7 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	}
 	if (positive(saved.topMl, 1000)) settings.topMl = saved.topMl;
 	if (saved.drinkUnit === 'uk') settings.drinkUnit = 'uk';
+	if (saved.dailyAlcohol === true) settings.dailyAlcohol = true;
 	if (Array.isArray(saved.recentLogs)) settings.recentLogs = saved.recentLogs.filter(isLogRecord).slice(-KEPT_LOGS);
 	return settings;
 }
@@ -180,6 +184,18 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 								await this.plugin.saveSettings();
 								await this.plugin.syncViews();
 							}),
+					);
+				},
+			},
+			{
+				name: 'Record alcohol in daily notes',
+				desc: 'When a log adds to the daily note, also add its alcohol estimate: the standard drinks on its “Made …” line and the mL of alcohol to the note’s cc-alcohol-ml total.',
+				render: (setting: Setting) => {
+					setting.addToggle((toggle) =>
+						toggle.setValue(this.plugin.settings.dailyAlcohol).onChange(async (value) => {
+							this.plugin.settings.dailyAlcohol = value;
+							await this.plugin.saveSettings();
+						}),
 					);
 				},
 			},

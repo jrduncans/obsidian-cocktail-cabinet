@@ -4,6 +4,7 @@ import {
 	DASH_ML,
 	DEFAULT_TOP_ML,
 	estimateAlcohol,
+	drinksText,
 	estimateText,
 	factsOf,
 	methodPreparation,
@@ -213,6 +214,8 @@ void test('the logging line scales by servings and says how sure it is', () => {
 	assert.equal(estimateText(daiquiri, 1), '≈ 1.4 drinks (24.0 mL alcohol), 17.1% ABV · exact');
 	assert.equal(estimateText(daiquiri, 2), '≈ 2.7 drinks (48.0 mL alcohol), 17.1% ABV · exact');
 	assert.equal(estimateText(daiquiri, 1, 'uk'), '≈ 2.4 units (24.0 mL alcohol), 17.1% ABV · exact');
+	assert.equal(drinksText(daiquiri, 2), '≈ 2.7 drinks');
+	assert.equal(drinksText(daiquiri, 1, 'uk'), '≈ 2.4 units');
 	const partial = estimateAlcohol({ lines: ['2 oz (60 ml) [[Rum]]', '1 oz [[Mystery]]'], method: 'Stir.', link });
 	assert.match(estimateText(partial, 1), /^≥ 1\.4 drinks .* ≥ \d+\.\d% ABV · some ABVs or amounts unknown$/);
 	assert.equal(estimateText(estimateAlcohol({ lines: ['Garnish: cherry'], method: '', link }), 1), '');

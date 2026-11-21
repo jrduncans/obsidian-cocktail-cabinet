@@ -71,10 +71,11 @@ Open a cabinet recipe and run **Cocktail Cabinet: Log this cocktail**.
 - **Add to daily note:** appends “Made an Old Fashioned.” (or “Made 2 servings of …”) to the note for the chosen date, using the Daily notes core plugin’s folder, format, and template. Off by default if that day’s note already has this cocktail.
 
 - **Alcohol:** above the stock table, an estimate for the bottles you've selected, such as “≈ 1.6 drinks (28.4 mL alcohol), 18.0% ABV · typical ABVs”, scaled by servings. Change a bottle to see what it does; cancel to log nothing.
+- **Alcohol in the daily note** (off by default; turn on **Record alcohol in daily notes** in settings): when the log adds to the daily note, the “Made …” line ends with the estimate, as in “Made an Old Fashioned (≈ 1.6 drinks).”, and the estimate's mL of alcohol is added to the note's `cc-alcohol-ml` property, a running total for the day that a Base over your daily notes can sum by week. A one-off's header ends the same way, as in “Made a one-off (Rye thing) (≈ 1.6 drinks):”, and **Save one-off as recipe** keeps the drinks on the line. When some ABVs or amounts are unknown, the line says “≥” and the total grows by that lower bound.
 
 ### Undoing a log
 
-Logged the wrong servings or the wrong bottle? Select **Undo** in the notice after logging, or run **Cocktail Cabinet: Undo last log**. It lists what it will put back: each bottle's stock and **Last used**, the recipe's **Last made** and **Times made**, and the daily-note entry. Run it again to undo the log before that; the last 10 logs are kept. If a log stopped partway, undo puts back what it saved.
+Logged the wrong servings or the wrong bottle? Select **Undo** in the notice after logging, or run **Cocktail Cabinet: Undo last log**. It lists what it will put back: each bottle's stock and **Last used**, the recipe's **Last made** and **Times made**, the daily-note entry, and the daily alcohol total. Run it again to undo the log before that; the last 10 logs are kept. If a log stopped partway, undo puts back what it saved.
 
 Undo won't touch stock that changed after the log, from another log or **Edit stock**: it refuses, and you fix that stock by hand. A date or count that changed since is left as it is. A daily note the log created stays, minus its entry.
 

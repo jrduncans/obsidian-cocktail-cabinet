@@ -1,4 +1,5 @@
 import { formatMl } from './logging-stock';
+import { DAILY_ALCOHOL_PROP } from './logging-daily';
 import { PROP } from './schema';
 
 /** One property a log changed. A missing `before` means the property wasn't there. */
@@ -40,6 +41,7 @@ const LABELS: Record<string, string> = {
 	[PROP.lastUsed]: 'last used',
 	[PROP.lastMade]: 'last made',
 	[PROP.timesMade]: 'times made',
+	[DAILY_ALCOHOL_PROP]: 'alcohol',
 };
 
 /** Values compare as JSON, so a number, string, or null read back from the saved record matches the note. */
@@ -65,7 +67,8 @@ export function recordFields(record: LogRecord, path: string, name: string, fiel
 
 function display(key: string, value: unknown): string {
 	if (value === undefined || value === null || value === '') return 'none';
-	if (typeof value === 'number' && (key === PROP.open || key === PROP.remaining)) return `${formatMl(value)} mL`;
+	if (typeof value === 'number' && (key === PROP.open || key === PROP.remaining || key === DAILY_ALCOHOL_PROP))
+		return `${formatMl(value)} mL`;
 	return typeof value === 'string' || typeof value === 'number' ? String(value) : JSON.stringify(value);
 }
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { classifyLoggingLines, SKIP_LINE } from '../src/core/logging-lines';
 import {
+	dailyAlcoholUpdates,
 	dailyLogLine,
 	dailyLogText,
 	hasDailyLog,
@@ -315,6 +316,18 @@ void test('daily lines use proper names and path links, with the approved multip
 	assert.equal(dailyLogText(recipe, 2), 'Made 2 servings of Old Fashioned.');
 	assert.equal(dailyLogLine(recipe, 2), `Made 2 servings of [[Cocktails/recipe/Old Fashioned|Old Fashioned]].`);
 	assert.equal(dailyLogLine(recipe, 0.5), `Made 0.5 servings of [[Cocktails/recipe/Old Fashioned|Old Fashioned]].`);
+	assert.equal(
+		dailyLogLine(recipe, 1, '≈ 1.6 drinks'),
+		`Made an [[Cocktails/recipe/Old Fashioned|Old Fashioned]] (≈ 1.6 drinks).`,
+	);
+	assert.equal(
+		dailyLogLine(recipe, 2, '≥ 3.0 drinks'),
+		`Made 2 servings of [[Cocktails/recipe/Old Fashioned|Old Fashioned]] (≥ 3.0 drinks).`,
+	);
+	assert.deepEqual(dailyAlcoholUpdates({}, 24.04), { 'cc-alcohol-ml': 24 });
+	assert.deepEqual(dailyAlcoholUpdates({ 'cc-alcohol-ml': 10.05 }, 5), { 'cc-alcohol-ml': 15.1 });
+	assert.deepEqual(dailyAlcoholUpdates({ 'cc-alcohol-ml': 'lots' }, 5), { 'cc-alcohol-ml': 5 });
+	assert.deepEqual(dailyAlcoholUpdates({}, 0), {});
 });
 void test('duplicate detection recognizes bare and path links, aliases, multiple servings, and mixed case', () => {
 	const recipe = note('Old Fashioned', 'recipe');
