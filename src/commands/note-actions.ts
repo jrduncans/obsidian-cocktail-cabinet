@@ -15,7 +15,7 @@ export interface NoteAction {
 	kinds: readonly ActionKind[] | 'any';
 	/** Register no command of its own: one exists elsewhere that works from any note. */
 	command?: false;
-	/** Also show a button in the note's header, the main action for that kind of note. */
+	/** Also show a button in the note's header: for frequent actions on the note itself, not on what it links to. */
 	header?: boolean;
 	/** Further checks beyond the note's kind, such as Edit cabinet note's editable kinds. */
 	when?: (kind: NoteKind) => boolean;

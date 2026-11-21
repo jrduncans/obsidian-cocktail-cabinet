@@ -154,6 +154,7 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 			icon: 'pencil',
 			kinds: 'any',
 			when: isEditable,
+			header: true,
 			run: (file) =>
 				void handle(async () => {
 					const note = noteFor(file);
