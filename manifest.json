@@ -2,7 +2,7 @@
 	"id": "cocktail-cabinet",
 	"name": "Cocktail Cabinet",
 	"version": "0.1.0",
-	"minAppVersion": "1.9.10",
+	"minAppVersion": "1.12.2",
 	"description": "Cocktail recipes and bottle inventory tools for your vault.",
 	"author": "Stephen Duncan",
 	"authorUrl": "https://github.com/jrduncans",

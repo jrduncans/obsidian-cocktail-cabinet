@@ -1,4 +1,5 @@
 import { Notice, Plugin } from 'obsidian';
+import { registerCli } from './cli';
 import { registerCommands } from './commands';
 import { loadSettings, CocktailCabinetSettingTab } from './settings';
 import type { CocktailCabinetSettings } from './settings';
@@ -20,6 +21,7 @@ export default class CocktailCabinetPlugin extends Plugin {
 			() => STANDARD_DRINK_GRAMS[this.settings.drinkUnit],
 		);
 		registerCommands(this);
+		registerCli(this);
 		this.addSettingTab(new CocktailCabinetSettingTab(this.app, this));
 		// Views a release changed are rewritten once the vault is indexed.
 		this.app.workspace.onLayoutReady(() => void this.syncViews());

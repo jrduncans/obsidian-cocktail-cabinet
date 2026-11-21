@@ -63,7 +63,7 @@ The Recipes sections embedded in notes are core Bases and can't call the resolve
 
 ## Agents: CLI handlers
 
-Registered with `registerCliHandler` (Obsidian 1.12.2) when the method exists, so `minAppVersion` stays 1.9.10 and older apps simply lack the commands. Mobile has no CLI, so nothing is hidden there. Read-only, JSON by default:
+Registered with `registerCliHandler`, which raised `minAppVersion` from 1.9.10 to 1.12.2 (decided while building: the Obsidian lint rule forbids feature-detecting it, and every vault in use runs 1.14.5). Mobile has no CLI, so the commands simply never run there. Read-only, JSON by default:
 
 - `cocktail-cabinet:can-make path=<recipe>`: the recipe status and each line's state, sources, and reason.
 - `cocktail-cabinet:makeable [uses=<note>] [status=…] [min-rating=…] [tag=…]`: recipes with status and caveats.

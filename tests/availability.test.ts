@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { resolveRecipe } from '../src/core/availability';
 import type { LineAvailability } from '../src/core/availability';
+import { compareRecipes, describeLine, filterRecipes, toBuy } from '../src/core/availability-lists';
+import type { RecipeEntry, RecipeFilter } from '../src/core/availability-lists';
+import { canMakeReport, makeableReport, parseListFlags, toBuyReport } from '../src/core/availability-report';
 import { stockSnapshot } from '../src/core/logging-stock';
 import type { StockSource } from '../src/core/logging-stock';
 import { DEFAULT_RESTOCK } from '../src/core/restock';
@@ -201,4 +204,119 @@ void test('a recipe with no Ingredients lines is Check stock, not Can make', () 
 		resolveRecipe('# R\n', { notes, sources: [], resolve, thresholds: DEFAULT_RESTOCK }).status,
 		'check-stock',
 	);
+});
+
+const entry = (
+	name: string,
+	lines: string[],
+	sources: StockSource[],
+	extra: Partial<RecipeEntry> = {},
+): RecipeEntry => ({
+	path: `Cocktails/recipe/${name}.md`,
+	name,
+	rating: null,
+	lastMade: null,
+	tags: [],
+	availability: recipe(lines, sources),
+	...extra,
+});
+const stock = [bottle(plain, 500), bottle(campari, 60), status(mint, 'Unknown')];
+
+void test('recipes sort by status, then rating, then least recently made', () => {
+	const entries = [
+		entry('Missing', ['1 oz [[Rye Whiskey]]'], stock, { rating: 5 }),
+		entry('Recent', ['2 oz [[Bourbon]]'], stock, { rating: 4, lastMade: '2026-11-20' }),
+		entry('Unknown', ['1 sprig [[Mint]]'], stock, { rating: 5 }),
+		entry('Older', ['2 oz [[Bourbon]]'], stock, { rating: 4, lastMade: '2026-10-01' }),
+		entry('Never', ['2 oz [[Bourbon]]'], stock, { rating: 4 }),
+		entry('Best', ['2 oz [[Bourbon]]'], stock, { rating: 5, lastMade: '2026-11-20' }),
+		entry('Unrated', ['2 oz [[Bourbon]]'], stock),
+	];
+	assert.deepEqual(
+		[...entries].sort(compareRecipes).map((item) => item.name),
+		['Best', 'Never', 'Older', 'Recent', 'Unrated', 'Unknown', 'Missing'],
+	);
+});
+
+void test('filters: uses follows the Recipes rule; status, rating, and tag', () => {
+	const entries = [
+		entry('Bourbon drink', ['2 oz [[Bourbon]]'], stock, { rating: 4, tags: ['stirred'] }),
+		entry('Whiskey drink', ['2 oz [[Whiskey]]'], stock, { rating: 2 }),
+		entry('Rye drink', ['2 oz [[Rye Whiskey]]'], stock, { rating: 5, tags: ['stirred'] }),
+	];
+	const names = (filter: RecipeFilter) => filterRecipes(entries, notes, filter).map((item) => item.name);
+	assert.deepEqual(names({ uses: plain.path }), ['Bourbon drink', 'Whiskey drink']);
+	assert.deepEqual(names({ uses: rye.path }), ['Whiskey drink', 'Rye drink']);
+	assert.deepEqual(names({ statuses: ['missing-one'] }), ['Rye drink']);
+	assert.deepEqual(names({ minRating: 4 }), ['Bourbon drink', 'Rye drink']);
+	assert.deepEqual(names({ tag: '#Stirred' }), ['Bourbon drink', 'Rye drink']);
+});
+
+void test('lines are described briefly by name', () => {
+	const name = (path: string) => notes.find((item) => item.path === path)?.name ?? path;
+	const said = (text: string, sources: StockSource[]) => describeLine(only(text, sources), name);
+	assert.equal(said('2 oz [[Bourbon]]', [bottle(plain, 500)]), undefined);
+	assert.equal(said('1 oz [[Campari]]', [bottle(campari, 60)]), 'Low: Campari');
+	assert.equal(said('1 oz [[Campari]]', [bottle(campari, 10)]), 'Short: Campari (10 of 29.6 mL)');
+	assert.equal(said('1 oz [[Meletti]]', [bottle(averna, 500)]), 'Substitute: Averna for Meletti');
+	assert.equal(said('1 sprig [[Mint]]', [status(mint, null)]), 'Unknown: Mint');
+	assert.equal(said('2 oz [[Bourbon]]', [status(plain, 'Out')]), 'Missing: Bourbon (out: Plain Bourbon)');
+	assert.equal(said('Garnish: [[Orange Peel|orange peel]]', []), 'Missing: garnish Orange Peel');
+	assert.equal(said('2 oz [[Bourbon|bourbon]] or [[Rye Whiskey|rye]]', []), 'Missing: Bourbon, Rye Whiskey');
+	assert.equal(said('2 oz gin', []), 'Not linked: 2 oz gin');
+});
+
+void test('to buy: grouped by what a line links, most recipes unlocked first', () => {
+	const entries = [
+		entry('A', ['1 oz [[Rye Whiskey]]', '1 oz [[Bourbon]]'], stock),
+		entry('B', ['1 oz [[Rye Whiskey]]'], stock),
+		entry('C', ['1 oz [[Aromatic Bitters]]', '1 oz [[Rye Whiskey]]', '2 oz gin'], stock),
+		entry('D', ['1 oz [[Aromatic Bitters]]', 'Garnish: [[Orange Peel]]'], stock),
+		entry('E', ['1 oz [[Campari]]', '2 oz gin'], [bottle(campari, 5)]),
+	];
+	assert.deepEqual(
+		toBuy(entries).map((item) => [item.targets, item.unlocks, item.closer]),
+		[
+			[[rye.path], ['Cocktails/recipe/A.md', 'Cocktails/recipe/B.md'], ['Cocktails/recipe/C.md']],
+			[[aromatic.path], ['Cocktails/recipe/D.md'], ['Cocktails/recipe/C.md']],
+			[[campari.path], [], ['Cocktails/recipe/E.md']],
+		],
+	);
+	const report = toBuyReport(entries, notes, 1);
+	assert.deepEqual(report.items, [{ need: 'Rye Whiskey', targets: [rye.path], unlocks: ['A', 'B'], closer: 1 }]);
+});
+
+void test('reports: makeable counts every match and limits the list; can-make lists each line', () => {
+	const entries = [
+		entry('Bourbon drink', ['2 oz [[Bourbon]]', '1 oz [[Campari]]'], stock, { rating: 4 }),
+		entry('Rye drink', ['2 oz [[Rye Whiskey]]'], stock),
+	];
+	const report = makeableReport(entries, notes, {}, 1);
+	assert.equal(report.counts['can-make'], 1);
+	assert.equal(report.counts['missing-one'], 1);
+	assert.deepEqual(report.recipes, [
+		{
+			path: 'Cocktails/recipe/Bourbon drink.md',
+			name: 'Bourbon drink',
+			status: 'can-make',
+			rating: 4,
+			lastMade: null,
+			caveats: ['Low: Campari'],
+		},
+	]);
+	const one = canMakeReport(entries[1]!, notes);
+	assert.equal(one.status, 'missing-one');
+	assert.deepEqual(one.lines, [
+		{ text: '2 oz [[Rye Whiskey]]', state: 'missing', detail: 'Missing: Rye Whiskey', sources: [] },
+	]);
+});
+
+void test('list flags: statuses checked, numbers positive', () => {
+	assert.deepEqual(parseListFlags({ status: 'can-make, substitute', 'min-rating': '4', tag: 'tiki', limit: '5' }), {
+		filter: { statuses: ['can-make', 'substitute'], minRating: 4, tag: 'tiki' },
+		limit: 5,
+	});
+	assert.deepEqual(parseListFlags({}), { filter: {} });
+	assert.throws(() => parseListFlags({ status: 'ready' }), /Unknown status: ready/);
+	assert.throws(() => parseListFlags({ limit: '0' }), /limit must be/);
 });
