@@ -3,6 +3,8 @@ import { registerCli } from './cli';
 import { registerCommands } from './commands';
 import { loadSettings, CocktailCabinetSettingTab } from './settings';
 import type { CocktailCabinetSettings } from './settings';
+import { AvailabilityStore } from './vault/availability-store';
+import { AVAILABILITY_VIEW, AvailabilityView } from './ui/availability-view';
 import { CabinetStore } from './vault/cabinet-store';
 import { RecipeSync } from './vault/recipe-sync';
 import { STANDARD_DRINK_GRAMS } from './core/alcohol-estimate';
@@ -10,6 +12,7 @@ import { STANDARD_DRINK_GRAMS } from './core/alcohol-estimate';
 export default class CocktailCabinetPlugin extends Plugin {
 	settings!: CocktailCabinetSettings;
 	store!: CabinetStore;
+	availability!: AvailabilityStore;
 	recipes!: RecipeSync;
 
 	async onload() {
@@ -20,6 +23,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 			() => ({ percent: this.settings.lowStockPercent, ml: this.settings.lowStockMl }),
 			() => STANDARD_DRINK_GRAMS[this.settings.drinkUnit],
 		);
+		this.availability = new AvailabilityStore(this.app, this.store, () => ({
+			percent: this.settings.lowStockPercent,
+			ml: this.settings.lowStockMl,
+		}));
+		this.registerView(AVAILABILITY_VIEW, (leaf) => new AvailabilityView(leaf, this));
 		registerCommands(this);
 		registerCli(this);
 		this.addSettingTab(new CocktailCabinetSettingTab(this.app, this));

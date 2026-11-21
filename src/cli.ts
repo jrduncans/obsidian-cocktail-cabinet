@@ -3,7 +3,6 @@ import type { CliData } from 'obsidian';
 import type CocktailCabinetPlugin from './main';
 import { canMakeReport, makeableReport, parseListFlags, toBuyReport } from './core/availability-report';
 import { RECIPE_STATUSES } from './core/availability';
-import { AvailabilityStore } from './vault/availability-store';
 
 /**
  * Read-only availability commands for agents, through the official `obsidian` CLI (Obsidian 1.12.2).
@@ -11,10 +10,7 @@ import { AvailabilityStore } from './vault/availability-store';
  */
 export function registerCli(plugin: CocktailCabinetPlugin) {
 	const register = plugin.registerCliHandler.bind(plugin);
-	const store = new AvailabilityStore(plugin.app, plugin.store, () => ({
-		percent: plugin.settings.lowStockPercent,
-		ml: plugin.settings.lowStockMl,
-	}));
+	const store = plugin.availability;
 	/** A vault path, with or without `.md`, or a note name as a link would give it. */
 	const notePath = (value: string | undefined, flag: string): string => {
 		if (!value || value === 'true') throw new Error(`Give ${flag}=<path or name>.`);

@@ -7,6 +7,9 @@ import {
 	describeLine,
 	filterRecipes,
 	lineStatus,
+	recipeSections,
+	recipeTags,
+	STATUS_LABELS,
 	statusText,
 	stockToFix,
 	toBuy,
@@ -367,4 +370,25 @@ void test('a named bottle that ran out reads as Out, with other empty bottles af
 	} finally {
 		notes.pop();
 	}
+});
+
+void test('pane sections: every status, filtered and sorted; tags most used first', () => {
+	const entries = [
+		entry('B', ['2 oz [[Bourbon]]'], stock, { rating: 3, tags: ['stirred'] }),
+		entry('A', ['2 oz [[Bourbon]]'], stock, { rating: 5, tags: ['stirred', 'tiki'] }),
+		entry('R', ['2 oz [[Rye Whiskey]]'], stock, { tags: ['tiki', 'stirred'] }),
+	];
+	const sections = recipeSections(entries, notes, { minRating: 3 });
+	assert.deepEqual(
+		sections.map(({ status, recipes }) => [status, recipes.map((item) => item.name)]),
+		[
+			['can-make', ['A', 'B']],
+			['substitute', []],
+			['check-stock', []],
+			['missing-one', []],
+			['missing-more', []],
+		],
+	);
+	assert.deepEqual(recipeTags(entries), ['stirred', 'tiki']);
+	assert.equal(STATUS_LABELS['missing-one'], 'Missing one');
 });
