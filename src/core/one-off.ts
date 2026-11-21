@@ -19,6 +19,8 @@ export interface LoggedOneOff {
 	servings: number;
 	/** The riffed recipe's link target, as written. */
 	riffOn?: string;
+	/** The drinks text the header ended with, such as “≈ 1.6 drinks”. */
+	alcohol?: string;
 	ingredients: string[];
 }
 
@@ -33,22 +35,25 @@ export function oneOffContent(oneOff: OneOff): string {
 	return `### Ingredients\n${oneOff.lines.map((line) => `- ${line}`).join('\n')}\n`;
 }
 
-function header(oneOff: OneOff, servings: number, riff: string | undefined): string {
+function header(oneOff: OneOff, servings: number, riff: string | undefined, alcohol: string | undefined): string {
 	if (!Number.isFinite(servings) || servings <= 0) throw new Error('Enter more than 0 servings.');
 	const name = checkOneOffName(oneOff.name);
 	const made = servings === 1 ? 'Made a one-off' : `Made ${servings} servings of a one-off`;
-	return `${made}${name ? ` (${name})` : ''}${riff ? `, a riff on ${riff}` : ''}`;
+	return `${made}${name ? ` (${name})` : ''}${riff ? `, a riff on ${riff}` : ''}${alcohol ? ` (${alcohol})` : ''}`;
 }
 
-/** The daily entry: a header sentence and the ingredients per serving, as written in the log dialog. */
-export function oneOffDailyEntry(oneOff: OneOff, servings: number): string {
+/**
+ * The daily entry: a header sentence and the ingredients per serving, as written in the log dialog.
+ * `alcohol` (“≈ 1.6 drinks”) ends the header in parentheses when given.
+ */
+export function oneOffDailyEntry(oneOff: OneOff, servings: number, alcohol?: string): string {
 	const riff = oneOff.riffOn && wikiLink(oneOff.riffOn.path, oneOff.riffOn.name);
-	return `${header(oneOff, servings, riff)}:\n${oneOff.lines.map((line) => `- ${line}`).join('\n')}`;
+	return `${header(oneOff, servings, riff, alcohol)}:\n${oneOff.lines.map((line) => `- ${line}`).join('\n')}`;
 }
 
 /** The header as a reader sees it, for previews and failure guidance. */
-export function oneOffDailyText(oneOff: OneOff, servings: number): string {
-	return `${header(oneOff, servings, oneOff.riffOn?.name)}.`;
+export function oneOffDailyText(oneOff: OneOff, servings: number, alcohol?: string): string {
+	return `${header(oneOff, servings, oneOff.riffOn?.name, alcohol)}.`;
 }
 
 /** Every one-off entry in a note, with the list lines directly under each header. */
@@ -70,6 +75,7 @@ export function findOneOffs(content: string): LoggedOneOff[] {
 			name: match[2]?.trim() ?? '',
 			servings: match[1] ? Number(match[1]) : 1,
 			riffOn: match[3]?.split('|')[0],
+			...(match[4] ? { alcohol: match[4] } : {}),
 			ingredients,
 		});
 	});
@@ -82,9 +88,9 @@ export function oneOffLabel(oneOff: LoggedOneOff): string {
 	return oneOff.name ? `${oneOff.name}: ${ingredients}` : ingredients || 'One-off';
 }
 
-/** The header once the one-off is a recipe: an ordinary made line, still followed by what was poured. */
+/** The header once the one-off is a recipe: an ordinary made line, keeping its drinks, still followed by what was poured. */
 export function savedOneOffHeader(oneOff: LoggedOneOff, recipe: CabinetNote): string {
-	const link = wikiLink(recipe.path, recipe.name);
+	const link = wikiLink(recipe.path, recipe.name) + (oneOff.alcohol ? ` (${oneOff.alcohol})` : '');
 	return oneOff.servings === 1
 		? `Made ${indefiniteArticle(recipe.name)} ${link}:`
 		: `Made ${oneOff.servings} servings of ${link}:`;

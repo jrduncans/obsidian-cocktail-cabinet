@@ -15,25 +15,55 @@ export function indefiniteArticle(name: string): 'a' | 'an' {
 	return /^[aeiou]/i.test(plain) ? 'an' : 'a';
 }
 
-function dailySentence(recipe: CabinetNote, servings: number, display: string): string {
-	if (!Number.isFinite(servings) || servings <= 0) throw new Error('Enter more than 0 servings.');
-	return servings === 1
-		? `Made ${indefiniteArticle(recipe.name)} ${display}.`
-		: `Made ${servings} servings of ${display}.`;
+/**
+ * What a log adds to the daily note's alcohol total: mL of ethanol for all servings (a lower bound when
+ * some ABVs or amounts are unknown), and the drinks text shown on the “Made …” line.
+ */
+export interface DailyAlcohol {
+	ml: number;
+	text: string;
 }
 
-export function dailyLogLine(recipe: CabinetNote, servings: number): string {
-	return dailySentence(recipe, servings, wikiLink(recipe.path, recipe.name));
+/** The daily note's running total of logged alcohol, in mL of ethanol. */
+export const DAILY_ALCOHOL_PROP = 'cc-alcohol-ml';
+
+/** The daily total after adding `ml`; a missing or unreadable total starts from 0. Rounded to 0.1 mL. */
+export function dailyAlcoholUpdates(properties: Record<string, unknown>, ml: number): Record<string, unknown> {
+	if (!Number.isFinite(ml) || ml <= 0) return {};
+	const current = properties[DAILY_ALCOHOL_PROP];
+	const total = (typeof current === 'number' && Number.isFinite(current) ? current : 0) + ml;
+	return { [DAILY_ALCOHOL_PROP]: Math.round(total * 10) / 10 };
+}
+
+function dailySentence(recipe: CabinetNote, servings: number, display: string, alcohol?: string): string {
+	if (!Number.isFinite(servings) || servings <= 0) throw new Error('Enter more than 0 servings.');
+	const suffix = alcohol ? ` (${alcohol})` : '';
+	return servings === 1
+		? `Made ${indefiniteArticle(recipe.name)} ${display}${suffix}.`
+		: `Made ${servings} servings of ${display}${suffix}.`;
+}
+
+/** The daily “Made …” line; `alcohol` (“≈ 1.6 drinks”) is added in parentheses when given. */
+export function dailyLogLine(recipe: CabinetNote, servings: number, alcohol?: string): string {
+	return dailySentence(recipe, servings, wikiLink(recipe.path, recipe.name), alcohol);
 }
 
 /** Readable preview and failure guidance; stored daily entries retain their links. */
-export function dailyLogText(recipe: CabinetNote, servings: number): string {
-	return dailySentence(recipe, servings, recipe.name);
+export function dailyLogText(recipe: CabinetNote, servings: number, alcohol?: string): string {
+	return dailySentence(recipe, servings, recipe.name, alcohol);
 }
 
-/** A one-off's daily header: servings, name, and the riffed recipe's link target. */
-export const ONE_OFF_HEADER =
-	/^Made (?:a|(\d+(?:\.\d+)?) servings of a) one-off(?: \((.+?)\))?(?:, a riff on \[\[([^\]]+)\]\])?:\s*$/;
+/** The drinks text a daily entry ends with, in parentheses: “≈ 1.6 drinks”, “≥ 1.0 unit”. */
+const DRINKS = String.raw`[≈≥] \d+(?:\.\d+)? (?:drinks?|units?)`;
+
+/**
+ * A one-off's daily header: servings, name, the riffed recipe's link target, and the drinks text.
+ * A name can't be drinks text, so “Made a one-off (≈ 1.6 drinks):” has no name.
+ */
+export const ONE_OFF_HEADER = new RegExp(
+	String.raw`^Made (?:a|(\d+(?:\.\d+)?) servings of a) one-off(?: \((?!${DRINKS}\))(.+?)\))?(?:, a riff on \[\[([^\]]+)\]\])?(?: \((${DRINKS})\))?:\s*$`,
+	'u',
+);
 
 /** A tasting note's line in the daily note; it names the recipe, so the recipe's backlinks show it. */
 export const TASTING_NOTE = /^Tasting note on \[\[([^\]]+)\]\]:/;

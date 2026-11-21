@@ -1,12 +1,14 @@
 import { Modal, Notice, Setting, setIcon } from 'obsidian';
 import type { ButtonComponent, DropdownComponent, ToggleComponent } from 'obsidian';
 import { dailyLogText } from '../core/logging-daily';
+import type { DailyAlcohol } from '../core/logging-daily';
 import { oneOffDailyText } from '../core/one-off';
 import type { OneOff } from '../core/one-off';
 import { SKIP_LINE } from '../core/logging-lines';
 import type { SkippedLine } from '../core/logging-lines';
 import { ingredientLines, ingredientParts, linkedLinePreview } from '../core/unlinked-lines';
-import { estimateText } from '../core/alcohol-estimate';
+import { drinksText, estimateText } from '../core/alcohol-estimate';
+import type { Estimate } from '../core/alcohol-estimate';
 import { readRecipeSections } from '../core/recipe-sections';
 import { DILUTION_PROP } from '../vault/recipe-sync';
 import { localDate } from '../core/notes';
@@ -486,8 +488,8 @@ export class LoggingModal extends Modal {
 				[
 					valid
 						? review.oneOff
-							? oneOffDailyText(review.oneOff, this.servings)
-							: dailyLogText(review.recipe!, this.servings)
+							? oneOffDailyText(review.oneOff, this.servings, this.dailyAlcohol()?.text)
+							: dailyLogText(review.recipe!, this.servings, this.dailyAlcohol()?.text)
 						: '',
 					review.daily.duplicate ? `Already in the note for ${review.daily.date}.` : '',
 				]
@@ -516,7 +518,7 @@ export class LoggingModal extends Modal {
 		this.busy = true;
 		this.refreshPreview();
 		try {
-			const result = await this.logger.apply(review, plan, this.addDaily);
+			const result = await this.logger.apply(review, plan, this.addDaily, this.dailyAlcohol());
 			if (result.status === 'applied') {
 				this.terminal = true;
 				if (result.undoable) undoNotice(this.app, this.logger.undo, result.notice);
@@ -538,10 +540,25 @@ export class LoggingModal extends Modal {
 		}
 	}
 
-	/** The alcohol estimate for the bottles selected: each counted line's link becomes the chosen source. */
+	/** The alcohol estimate line for the bottles selected; empty without an estimate. */
 	private estimateLine(): string {
+		const estimate = this.estimate();
+		return estimate ? estimateText(estimate, this.servings, this.plugin.settings.drinkUnit) : '';
+	}
+
+	/** What the log adds to the daily note's alcohol, when that's turned on and there's an estimate. */
+	private dailyAlcohol(): DailyAlcohol | undefined {
+		if (!this.plugin.settings.dailyAlcohol) return undefined;
+		const estimate = this.estimate();
+		if (!estimate) return undefined;
+		const text = drinksText(estimate, this.servings, this.plugin.settings.drinkUnit);
+		return text ? { ml: estimate.alcoholMl * this.servings, text } : undefined;
+	}
+
+	/** The alcohol estimate for the bottles selected: each counted line's link becomes the chosen source. */
+	private estimate(): Estimate | null {
 		const review = this.review;
-		if (!review) return '';
+		if (!review) return null;
 		try {
 			const lines = ingredientLines(review.content).map(({ line, text }) => {
 				const choice = this.selections.get(line);
@@ -554,16 +571,14 @@ export class LoggingModal extends Modal {
 			const file = review.recipe ? this.app.vault.getFileByPath(review.recipe.path) : null;
 			const properties: Record<string, unknown> =
 				(file && this.app.metadataCache.getFileCache(file)?.frontmatter) || {};
-			const dilution = properties[DILUTION_PROP];
-			const estimate = this.plugin.recipes.estimateLines(
+			return this.plugin.recipes.estimateLines(
 				source,
 				lines,
 				readRecipeSections(review.content).method,
-				dilution,
+				properties[DILUTION_PROP],
 			);
-			return estimateText(estimate, this.servings, this.plugin.settings.drinkUnit);
 		} catch {
-			return '';
+			return null;
 		}
 	}
 

@@ -70,3 +70,46 @@ void test('a riff is not the recipe it riffs on, but a saved one-off is its reci
 		'Made 3 servings of [[Cocktails/Recipes/Old Pal-ish|Old Pal-ish]]:',
 	);
 });
+
+void test('a one-off header ends with its drinks, which read back and carry over when saved', () => {
+	const named = oneOffDailyEntry({ name: 'Rye thing (v2)', lines, riffOn: negroni }, 2, '≈ 3.1 drinks');
+	assert.equal(
+		named.split('\n')[0],
+		'Made 2 servings of a one-off (Rye thing (v2)), a riff on [[Cocktails/Recipes/Negroni|Negroni]] (≈ 3.1 drinks):',
+	);
+	assert.equal(oneOffDailyText({ name: '', lines }, 1, '≥ 1.0 unit'), 'Made a one-off (≥ 1.0 unit).');
+	const unnamed = oneOffDailyEntry({ name: '', lines }, 1, '≈ 1.6 drinks');
+	const plainName = oneOffDailyEntry({ name: 'Rye thing', lines }, 1, '≥ 1.6 drinks');
+	const found = findOneOffs(`${named}\n\n${unnamed}\n\n${plainName}\n`);
+	assert.deepEqual(
+		found.map(({ name, servings, riffOn, alcohol, ingredients }) => ({
+			name,
+			servings,
+			riffOn,
+			alcohol,
+			ingredients,
+		})),
+		[
+			{
+				name: 'Rye thing (v2)',
+				servings: 2,
+				riffOn: 'Cocktails/Recipes/Negroni',
+				alcohol: '≈ 3.1 drinks',
+				ingredients: lines,
+			},
+			{ name: '', servings: 1, riffOn: undefined, alcohol: '≈ 1.6 drinks', ingredients: lines },
+			{ name: 'Rye thing', servings: 1, riffOn: undefined, alcohol: '≥ 1.6 drinks', ingredients: lines },
+		],
+	);
+	const saved: CabinetNote = {
+		path: 'Cocktails/Recipes/Rye Thing.md',
+		name: 'Rye Thing',
+		kind: 'recipe',
+		parents: [],
+	};
+	assert.equal(
+		savedOneOffHeader(found[1]!, saved),
+		'Made a [[Cocktails/Recipes/Rye Thing|Rye Thing]] (≈ 1.6 drinks):',
+	);
+	assert.equal(hasDailyLog(savedOneOffHeader(found[1]!, saved), saved), true);
+});

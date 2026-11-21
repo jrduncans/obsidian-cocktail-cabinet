@@ -110,6 +110,7 @@ The [design decision](cabinet-design.md#recipe-tags-rating-and-duplicates) repla
 - **Recipe note**: the properties panel shows the stored values; no extra view.
 - **Logging dialog**: one line under the servings, for the bottles selected, scaled by servings: “≈ 1.6 drinks (28 mL alcohol), 18% ABV · typical ABVs”.
 - Not in each ingredient note's Recipes sections at first, to keep them short.
+- **Daily note** (the `dailyAlcohol` setting, off by default; added 2026-11-20): the logged estimate is otherwise lost once the dialog closes, though it's the most specific one, for the bottles actually poured. A recipe's “Made …” line ends with the standard drinks (“(≈ 1.6 drinks)”), and the mL goes into the daily note's `cc-alcohol-ml`, a running total a Base can sum. mL is stored rather than standard drinks, which depend on the unit setting. A one-off's header ends the same way, before its colon; **Save one-off as recipe** reads the drinks back and keeps them on the saved line. Off by default because a drink count in someone's journal shouldn't arrive unasked.
 
 ## Decisions
 

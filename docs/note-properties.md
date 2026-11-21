@@ -244,12 +244,21 @@ There is no ongoing synchronization between these representations. Editing `cc-n
 
 Settings are saved in the plugin's `data.json`, outside note frontmatter.
 
-| Property        | Type           | Required | Description and use                                                                                                                                                                                        |
-| --------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cabinetFolder` | `string`       | `false`  | Selects the cabinet root. Defaults to `Cocktails` if absent or invalid. Setup can select another folder; changing it does not move or convert resources.                                                   |
-| `dilution`      | `object`       | `false`  | Alcohol estimate: water added by chilling as a share of the pour, by preparation: `built` 0.1, `stirred` 0.18, `shaken` 0.25, `blended` 0.3 by default (BevNap's). Changing one recalculates every recipe. |
-| `topMl`         | `number`       | `false`  | Alcohol estimate: the pour assumed for a “top” or “fill” line with no amount, in mL; 60 by default.                                                                                                        |
-| `drinkUnit`     | `"us" \| "uk"` | `false`  | How estimated alcohol is shown in standard drinks: US (14 g of alcohol, the default) or UK units (8 g).                                                                                                    |
+| Property        | Type           | Required | Description and use                                                                                                                                                                                          |
+| --------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cabinetFolder` | `string`       | `false`  | Selects the cabinet root. Defaults to `Cocktails` if absent or invalid. Setup can select another folder; changing it does not move or convert resources.                                                     |
+| `dilution`      | `object`       | `false`  | Alcohol estimate: water added by chilling as a share of the pour, by preparation: `built` 0.1, `stirred` 0.18, `shaken` 0.25, `blended` 0.3 by default (BevNap's). Changing one recalculates every recipe.   |
+| `topMl`         | `number`       | `false`  | Alcohol estimate: the pour assumed for a “top” or “fill” line with no amount, in mL; 60 by default.                                                                                                          |
+| `drinkUnit`     | `"us" \| "uk"` | `false`  | How estimated alcohol is shown in standard drinks: US (14 g of alcohol, the default) or UK units (8 g).                                                                                                      |
+| `dailyAlcohol`  | `boolean`      | `false`  | Off by default. When on, a log that adds to the daily note also ends the “Made …” line (a one-off's header) with its standard drinks and adds its mL of alcohol to the daily note's `cc-alcohol-ml` (below). |
+
+## Daily note
+
+The plugin writes one property on daily notes, and only with the `dailyAlcohol` setting on.
+
+| Property        | Type     | Required | Description and use                                                                                                                                                                                        |
+| --------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cc-alcohol-ml` | `number` | `false`  | The day's logged alcohol, in mL of ethanol, rounded to 0.1. Each log adds its estimate for the bottles chosen and the servings (a lower bound when partial); **Undo last log** puts back the value before. |
 
 ## Implementation references
 
