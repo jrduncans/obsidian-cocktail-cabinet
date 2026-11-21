@@ -4,7 +4,7 @@ An Obsidian plugin for building and maintaining your own cocktail recipes and in
 
 ## Get started
 
-1. Use Obsidian 1.9.10 or later. Enable **Bases** in **Settings → Core plugins** and **Cocktail Cabinet** in **Settings → Community plugins**.
+1. Use Obsidian 1.12.2 or later. Enable **Bases** in **Settings → Core plugins** and **Cocktail Cabinet** in **Settings → Community plugins**.
 2. Select the glass ribbon icon or run **Cocktail Cabinet: Open cabinet**.
 3. Choose a folder and select **Preview** to inspect creation counts and conflicts, then **Create cabinet**.
 4. Follow the links in the cabinet note to the live views. Add ingredients, bottles, other stock, and cocktail recipes from the command palette.
@@ -104,7 +104,7 @@ Each recipe gets an estimate of one serving's alcohol, ABV as served, and volume
 - Preparation batches and measured juice yields are not modeled.
 - Earlier plugin notes using `cc-open-fraction` need [manual conversion](docs/note-properties.md#upgrading-early-stock-notes); setup preserves them and their existing home note and Bases. New notes use the mL schema.
 - Syrup filenames spell ratios as “1 to 1” and “2 to 1” for cross-platform filenames; their descriptions and ratio property use 1:1 and 2:1 by weight.
-- The runtime declares Obsidian 1.9.10 as its minimum for [core Bases support](https://obsidian.md/changelog/2025-08-18-desktop-v1.9.10/). Manual verification has been on desktop Obsidian 1.14.5; real iOS and Android testing remains outstanding.
+- The runtime declares Obsidian 1.12.2 as its minimum: [core Bases](https://obsidian.md/changelog/2025-08-18-desktop-v1.9.10/) need 1.9.10, and the CLI handlers need 1.12.2. Manual verification has been on desktop Obsidian 1.14.5; real iOS and Android testing remains outstanding.
 
 ## Storage and privacy
 

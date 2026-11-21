@@ -17,6 +17,7 @@ try {
 		'recipe-import.test',
 		'logging.test',
 		'subtypes.test',
+		'availability.test',
 		'alcohol-estimate.test',
 		'one-off.test',
 		'unlinked-lines.test',

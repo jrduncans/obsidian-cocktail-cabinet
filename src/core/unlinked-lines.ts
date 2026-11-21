@@ -26,6 +26,9 @@ export function ingredientLines(content: string): IngredientLine[] {
 	return result;
 }
 
+/** A line marked as garnish ("Garnish: …", "… to garnish"). */
+export const isGarnish = (text: string) => GARNISH_PREFIX.test(text) || GARNISH_SUFFIX.test(text);
+
 /** Links shown as their display text, as a reader sees them. */
 export const plainIngredient = (text: string) =>
 	text.replace(/\[\[([^\]]+)\]\]/g, (_link, target: string) =>
@@ -93,8 +96,7 @@ export function reviewUnlinkedLines(
 	return ingredientLines(content).filter((line) => {
 		if (/\[\[/.test(line.text)) return false;
 		if (isMeasured(line.text)) return true;
-		const garnish = GARNISH_PREFIX.test(line.text) || GARNISH_SUFFIX.test(line.text);
-		if (garnish && !options.includeGarnishes) return false;
+		if (isGarnish(line.text) && !options.includeGarnishes) return false;
 		const key = ingredientKey(ingredientParts(line.text).wording);
 		return !!key && names.has(key);
 	});
