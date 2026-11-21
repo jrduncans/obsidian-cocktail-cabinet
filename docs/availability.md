@@ -1,6 +1,6 @@
 # Availability design
 
-Drafted on 2026-11-21 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the [workflow assessment's resolver proposal](workflow-assessment.md#ingredient-rules-have-diverged). Reviewed the same day: the [decisions](#decisions) record what was agreed. Not yet built.
+Drafted on 2026-11-21 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the [workflow assessment's resolver proposal](workflow-assessment.md#ingredient-rules-have-diverged). Reviewed the same day: the [decisions](#decisions) record what was agreed. Slice 1, the resolver, built 2026-11-21.
 
 ## Goal
 
