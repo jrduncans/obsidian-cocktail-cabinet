@@ -362,7 +362,8 @@ export class CabinetStore {
 		await this.app.workspace.getLeaf(false).openFile(file);
 	}
 
-	private async frontmatter(file: TFile): Promise<Record<string, unknown>> {
+	/** A note's properties read from the file, not the metadata cache, which lags behind writes. */
+	async frontmatter(file: TFile): Promise<Record<string, unknown>> {
 		const content = await this.app.vault.read(file);
 		const source = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
 		if (!source) return {};

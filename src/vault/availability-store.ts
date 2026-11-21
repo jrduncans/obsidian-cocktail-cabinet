@@ -13,9 +13,12 @@ export interface CabinetAvailability {
 	recipes: RecipeEntry[];
 }
 
+type Properties = Record<string, unknown>;
+
 /**
- * Reads what availability needs from the metadata cache and cached recipe text. Read-only: availability is
- * computed when asked, never stored (docs/availability.md).
+ * Reads what availability needs: from the metadata cache for whole-cabinet lists, or, for one recipe
+ * just after an edit, from the files themselves. Read-only: availability is computed when asked, never
+ * stored (docs/availability.md).
  */
 export class AvailabilityStore {
 	constructor(
@@ -24,27 +27,50 @@ export class AvailabilityStore {
 		private thresholds: () => RestockThresholds,
 	) {}
 
-	private frontmatter(path: string): Record<string, unknown> {
+	private file(path: string): TFile {
 		const file = this.app.vault.getAbstractFileByPath(path);
-		return (file instanceof TFile && this.app.metadataCache.getFileCache(file)?.frontmatter) || {};
+		if (!(file instanceof TFile)) throw new Error(`Couldn’t find ${path}.`);
+		return file;
 	}
 
-	private context(notes: CabinetNote[]): Omit<AvailabilityContext, 'resolve'> {
+	private async read(fresh: boolean, paths: readonly string[]): Promise<Map<string, Properties>> {
+		const entries = await Promise.all(
+			paths.map(async (path): Promise<[string, Properties]> => {
+				const file = this.file(path);
+				return [
+					path,
+					fresh
+						? await this.cabinet.frontmatter(file)
+						: (this.app.metadataCache.getFileCache(file)?.frontmatter ?? {}),
+				];
+			}),
+		);
+		return new Map(entries);
+	}
+
+	private async context(notes: CabinetNote[], fresh: boolean): Promise<Omit<AvailabilityContext, 'resolve'>> {
+		const stock = notes.filter((note) => note.kind === 'bottle' || note.kind === 'ingredient');
+		const properties = await this.read(
+			fresh,
+			stock.map((note) => note.path),
+		);
 		return {
 			notes,
-			sources: notes
-				.filter((note) => note.kind === 'bottle' || note.kind === 'ingredient')
-				.map((note) => stockSnapshot(note, this.frontmatter(note.path))),
+			sources: stock.map((note) => stockSnapshot(note, properties.get(note.path)!)),
 			thresholds: this.thresholds(),
 		};
 	}
 
-	private async entry(note: CabinetNote, context: Omit<AvailabilityContext, 'resolve'>): Promise<RecipeEntry> {
-		const file = this.app.vault.getAbstractFileByPath(note.path);
-		if (!(file instanceof TFile)) throw new Error(`Couldn’t find ${note.name}.`);
-		const properties = this.frontmatter(note.path);
+	private async entry(
+		note: CabinetNote,
+		context: Omit<AvailabilityContext, 'resolve'>,
+		fresh: boolean,
+	): Promise<RecipeEntry> {
+		const file = this.file(note.path);
+		const properties = (await this.read(fresh, [note.path])).get(note.path)!;
 		const lastMade = properties[PROP.lastMade];
 		const cache = this.app.metadataCache.getFileCache(file);
+		const content = fresh ? await this.app.vault.read(file) : await this.app.vault.cachedRead(file);
 		return {
 			path: note.path,
 			name: note.name,
@@ -53,25 +79,26 @@ export class AvailabilityStore {
 			tags: [
 				...new Set((cache ? (getAllTags(cache) ?? []) : []).map((tag) => tag.replace(/^#/, '').toLowerCase())),
 			],
-			availability: resolveRecipe(await this.app.vault.cachedRead(file), {
+			availability: resolveRecipe(content, {
 				...context,
 				resolve: (link) => this.cabinet.resolve(link, note.path)?.path ?? null,
 			}),
 		};
 	}
 
-	async recipe(path: string): Promise<{ notes: CabinetNote[]; recipe: RecipeEntry }> {
-		const notes = this.cabinet.notes();
+	/** `fresh` reads files rather than the metadata cache, for a recipe re-checked right after an edit. */
+	async recipe(path: string, fresh = false): Promise<{ notes: CabinetNote[]; recipe: RecipeEntry }> {
+		const notes = fresh ? await this.cabinet.readNotes() : this.cabinet.notes();
 		const note = notes.find((item) => item.path === path && item.kind === 'recipe');
 		if (!note) throw new Error(`${path} isn’t a cabinet recipe.`);
-		return { notes, recipe: await this.entry(note, this.context(notes)) };
+		return { notes, recipe: await this.entry(note, await this.context(notes, fresh), fresh) };
 	}
 
 	async all(): Promise<CabinetAvailability> {
 		const notes = this.cabinet.notes();
-		const context = this.context(notes);
+		const context = await this.context(notes, false);
 		const recipes = await Promise.all(
-			notes.filter((note) => note.kind === 'recipe').map((note) => this.entry(note, context)),
+			notes.filter((note) => note.kind === 'recipe').map((note) => this.entry(note, context, false)),
 		);
 		return { notes, recipes };
 	}

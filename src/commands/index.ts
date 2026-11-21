@@ -1,3 +1,5 @@
+import { CanMakeModal } from '../ui/can-make-modal';
+import { AvailabilityStore } from '../vault/availability-store';
 import type CocktailCabinetPlugin from '../main';
 import { MarkdownView, Notice } from 'obsidian';
 import type { TFile } from 'obsidian';
@@ -46,6 +48,10 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const renamer = new RenameStore(plugin.app);
 	const edits = new EditStore(plugin.app);
 	const links = new RecipeLinkStore(plugin.app, plugin.store);
+	const availability = new AvailabilityStore(plugin.app, plugin.store, () => ({
+		percent: plugin.settings.lowStockPercent,
+		ml: plugin.settings.lowStockMl,
+	}));
 	const ready = async (action: () => void | Promise<void>) => {
 		if (!(await plugin.store.isSetUp())) {
 			new SetupModal(plugin).open();
@@ -112,6 +118,18 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 			header: true,
 			run: (file) =>
 				void handle(async () => new LoggingModal(plugin, logger, stocks, links, noteFor(file)).open()),
+		},
+		{
+			id: 'can-i-make-this',
+			name: 'Can I make this?',
+			icon: 'list-checks',
+			kinds: ['recipe'],
+			run: (file) =>
+				void handle(async () =>
+					new CanMakeModal(plugin, availability, stocks, links, noteFor(file), (recipe) =>
+						new LoggingModal(plugin, logger, stocks, links, recipe).open(),
+					).open(),
+				),
 		},
 		{
 			id: 'add-tasting-note',

@@ -37,6 +37,8 @@ export interface LineAvailability {
 	out: string[];
 	/** For `short`: the mL the fitting sources hold together. */
 	heldMl?: number;
+	/** Where the line is in the note, as written, so it can be linked in place. */
+	at?: { line: number; raw: string };
 }
 
 export interface RecipeAvailability {
@@ -115,7 +117,7 @@ function forTarget(target: CabinetNote, context: AvailabilityContext) {
 	return answer;
 }
 
-export function resolveLine(text: string, context: AvailabilityContext): LineAvailability {
+export function resolveLine(text: string, context: AvailabilityContext, at?: LineAvailability['at']): LineAvailability {
 	const { notes, sources, resolve, thresholds } = context;
 	const ml = recipeVolumeMl(splitIngredient(text).amount);
 	const targets = [
@@ -137,6 +139,7 @@ export function resolveLine(text: string, context: AvailabilityContext): LineAva
 		substitutes: [],
 		unknown: [],
 		out: [],
+		...(at ? { at } : {}),
 	};
 	if (!targets.length) return line;
 	const linked = targets.map((path) => notes.find((note) => note.path === path)!);
@@ -166,7 +169,7 @@ export function resolveLine(text: string, context: AvailabilityContext): LineAva
 const MISSING: readonly LineState[] = ['short', 'missing', 'unlinked'];
 
 export function resolveRecipe(content: string, context: AvailabilityContext): RecipeAvailability {
-	const lines = ingredientLines(content).map(({ text }) => resolveLine(text, context));
+	const lines = ingredientLines(content).map(({ line, raw, text }) => resolveLine(text, context, { line, raw }));
 	const counted = lines.filter((line) => !line.garnish);
 	const missing = counted.filter((line) => MISSING.includes(line.state)).length;
 	const has = (state: LineState) => counted.some((line) => line.state === state);

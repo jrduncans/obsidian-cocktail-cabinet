@@ -348,3 +348,18 @@
 .cocktail-cabinet-dilution {
 	width: 5em;
 }
+
+/* Can I make this? */
+.cocktail-cabinet-check-status {
+	font-weight: var(--font-semibold);
+}
+.cocktail-cabinet-check-short td:nth-child(2),
+.cocktail-cabinet-check-missing td:nth-child(2),
+.cocktail-cabinet-check-unlinked td:nth-child(2) {
+	color: var(--text-error);
+}
+.cocktail-cabinet-check-low td:nth-child(2),
+.cocktail-cabinet-check-substitute td:nth-child(2),
+.cocktail-cabinet-check-unknown td:nth-child(2) {
+	color: var(--text-warning);
+}
