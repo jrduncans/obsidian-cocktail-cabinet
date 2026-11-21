@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
 	DASH_ML,
+	DROP_ML,
 	DEFAULT_TOP_ML,
 	estimateAlcohol,
 	drinksText,
@@ -125,6 +126,19 @@ void test('dashes count, ranges use the midpoint, and garnishes and rinses don�
 	);
 	assert.equal(estimate.basis, 'rough');
 	close(estimate.alcoholMl, 24 + 2 * DASH_ML * 0.447 + 1.5 * 29.5735 * 0.16, 2);
+	const ranges = estimateAlcohol({
+		lines: ['2-4 dashes [[Bitters]]', '1–2 dashes [[Bitters]]', '2-4 drops [[Bitters]]', 'a-b dashes [[Bitters]]'],
+		method: 'Stir.',
+		link,
+	});
+	assert.deepEqual(
+		ranges.lines.map((line) => line.shape),
+		['dash', 'dash', 'dash', 'unmeasured'],
+	);
+	const rangeMl = ranges.lines.map((line) => line.ml ?? 0);
+	close(rangeMl[0]!, 3 * DASH_ML);
+	close(rangeMl[1]!, 1.5 * DASH_ML);
+	close(rangeMl[2]!, 3 * DROP_ML);
 });
 
 void test('a top without an amount assumes a pour, added after dilution; a stated amount is used', () => {
@@ -156,6 +170,8 @@ void test('the basis says how sure it is, and non-alcoholic lines never lower it
 	assert.equal(basis(['1 [[Egg White]]', '2 oz [[Rum]]']), 'exact');
 	assert.equal(basis(['Pinch of salt', '2 oz [[Rum]]']), 'exact');
 	assert.equal(basis(['2 dashes [[Mystery]]', '2 oz [[Rum]]']), 'exact');
+	assert.equal(basis(['2-4 dashes [[Bitters]]', '2 oz [[Rum]]']), 'exact');
+	assert.equal(basis(['1–2 dashes [[Mystery]]', '2 oz [[Rum]]']), 'exact');
 	assert.equal(basis(['Garnish: cherry']), 'none');
 	const mocktail = estimateAlcohol({ lines: ['2 oz [[Lime]]', '1 oz [[Syrup]]'], method: 'Shake.', link });
 	assert.equal(mocktail.basis, 'exact');

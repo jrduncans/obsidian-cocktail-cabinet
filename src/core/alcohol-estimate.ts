@@ -147,6 +147,20 @@ const IGNORED =
 const TOP = /\b(?:top|topped|fill|filled)\b/i;
 const VOLUME_IN_TEXT = /(\d+(?:\s+\d+\s*\/\s*\d+|\s*\/\s*\d+|[.,]\d+)?|\d*[¼½¾⅓⅔⅛⅜⅝⅞])\s*(ml|cl|oz|ounces?)\b/i;
 
+/**
+ * How many dashes or drops: a number, or the midpoint of a range (“2–4”). A range of dashes
+ * spans about a mL, too little to call the estimate rough.
+ */
+function dashCount(text: string): number | null {
+	const single = recipeVolumeMl(`${text} ml`);
+	if (single !== null) return single;
+	const range = text.match(/^(.+?)\s*[-–—]\s*(.+)$/i);
+	if (!range) return null;
+	const low = recipeVolumeMl(`${range[1]} ml`);
+	const high = recipeVolumeMl(`${range[2]} ml`);
+	return low !== null && high !== null ? (low + high) / 2 : null;
+}
+
 /** The volume a line pours, and its shape. */
 function lineVolume(line: string, settings: EstimateSettings): { shape: LineShape; ml: number | null } {
 	const { amount, text } = splitIngredient(line);
@@ -154,7 +168,7 @@ function lineVolume(line: string, settings: EstimateSettings): { shape: LineShap
 	if (measured !== null) return { shape: 'measured', ml: measured };
 	const dashes = amount.match(/^(.+?)\s*(dash(?:es)?|drops?)$/i);
 	if (dashes) {
-		const count = recipeVolumeMl(`${dashes[1]} ml`);
+		const count = dashCount(dashes[1]!);
 		if (count !== null) return { shape: 'dash', ml: count * (/^d(?:ash)/i.test(dashes[2]!) ? DASH_ML : DROP_ML) };
 	}
 	const range = amount.match(/^(.+?)\s*[-–—]\s*(.+?)\s*([a-z.]+)$/i);
