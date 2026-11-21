@@ -151,3 +151,32 @@ export function stockToFix(line: LineAvailability): string[] {
 			return [];
 	}
 }
+
+/** Section headings for recipe statuses. */
+export const STATUS_LABELS: Record<RecipeStatus, string> = {
+	'can-make': 'Can make',
+	substitute: 'With a substitute',
+	'check-stock': 'Check stock',
+	'missing-one': 'Missing one',
+	'missing-more': 'Missing more',
+};
+
+/** Recipes filtered and sorted, then grouped by status, every status present even when empty. */
+export function recipeSections(
+	entries: readonly RecipeEntry[],
+	notes: readonly CabinetNote[],
+	filter: RecipeFilter,
+): { status: RecipeStatus; recipes: RecipeEntry[] }[] {
+	const sorted = filterRecipes(entries, notes, filter).sort(compareRecipes);
+	return RECIPE_STATUSES.map((status) => ({
+		status,
+		recipes: sorted.filter((entry) => entry.availability.status === status),
+	}));
+}
+
+/** Tags used by recipes, most used first. */
+export function recipeTags(entries: readonly RecipeEntry[]): string[] {
+	const counts = new Map<string, number>();
+	for (const entry of entries) for (const tag of entry.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+	return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([tag]) => tag);
+}

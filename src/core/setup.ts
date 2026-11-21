@@ -131,7 +131,7 @@ ${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)} suggests what to add: st
 
 ${viewLink('Recipes')} holds the cocktails you want to keep; its **Latest** view lists the newest first. Use **Cocktail Cabinet: Create a cocktail recipe** to save amounts and a method. Ingredients can name a type, a broader family such as rum, or a specific bottle. Tags on a recipe are your own groupings, such as how you serve it or when you'd make it; the recipe form offers the tags you've already used.
 
-Each ingredient and bottle note lists the recipes that use it. On a recipe, the glass button in the note's header logs the cocktail; on a bottle or other stock, the gauge button edits its stock. Other actions for a note are in its **More options** menu.
+Use **Cocktail Cabinet: What can I make?** to see every recipe by what you have on hand, and what to buy next; on an ingredient or bottle, **What can I make with this?** narrows it to recipes using that note. Each ingredient and bottle note lists the recipes that use it. On a recipe, the glass button in the note's header logs the cocktail; on a bottle or other stock, the gauge button edits its stock. Other actions for a note are in its **More options** menu.
 
 ## Ingredient catalog
 

@@ -35,11 +35,12 @@ export default defineConfig(
 	},
 	...obsidianmd.configs.recommended,
 	{
-		// ABV (alcohol by volume) stays uppercase; the option replaces the defaults, so they're kept.
+		// ABV (alcohol by volume) and the pronoun I ("What can I make?") stay uppercase; the option replaces
+		// the defaults, so they're kept.
 		rules: {
 			'obsidianmd/ui/sentence-case': [
 				'warn',
-				{ enforceCamelCaseLower: true, acronyms: [...DEFAULT_ACRONYMS, 'ABV'] },
+				{ enforceCamelCaseLower: true, acronyms: [...DEFAULT_ACRONYMS, 'ABV', 'I'] },
 			],
 		},
 	},
