@@ -95,6 +95,26 @@ function heldMl(source: StockSource): number {
 	return amount(fields[PROP.open]) + unopened * volume;
 }
 
+/**
+ * Per-target answers for one pass over the cabinet, keyed by the sources list: a type is linked from many
+ * recipes, and `fitsLine` and `lesserType` each walk the whole hierarchy.
+ */
+type TargetAnswer = { fits: Set<StockSource>; lesser: Set<StockSource> };
+const passes = new WeakMap<readonly StockSource[], Map<string, TargetAnswer>>();
+
+function forTarget(target: CabinetNote, context: AvailabilityContext) {
+	let pass = passes.get(context.sources);
+	if (!pass) passes.set(context.sources, (pass = new Map<string, TargetAnswer>()));
+	let answer = pass.get(target.path);
+	if (!answer) {
+		const { notes, sources } = context;
+		const fits = new Set(sources.filter((source) => fitsLine(notes, source.note, target)));
+		const lesser = new Set(sources.filter((source) => !fits.has(source) && lesserType(notes, source.note, target)));
+		pass.set(target.path, (answer = { fits, lesser }));
+	}
+	return answer;
+}
+
 export function resolveLine(text: string, context: AvailabilityContext): LineAvailability {
 	const { notes, sources, resolve, thresholds } = context;
 	const ml = recipeVolumeMl(splitIngredient(text).amount);
@@ -120,7 +140,8 @@ export function resolveLine(text: string, context: AvailabilityContext): LineAva
 	};
 	if (!targets.length) return line;
 	const linked = targets.map((path) => notes.find((note) => note.path === path)!);
-	const fitting = sources.filter((source) => linked.some((target) => fitsLine(notes, source.note, target)));
+	const answers = linked.map((target) => forTarget(target, context));
+	const fitting = sources.filter((source) => answers.some((answer) => answer.fits.has(source)));
 	const levels = new Map(fitting.map((source) => [source, stockLevel(source, thresholds)]));
 	const stocked = fitting.filter((source) => ['stocked', 'low'].includes(levels.get(source)!));
 	line.sources = stocked.map((source) => source.note.path);
@@ -136,7 +157,7 @@ export function resolveLine(text: string, context: AvailabilityContext): LineAva
 			(source) =>
 				!fitting.includes(source) &&
 				['stocked', 'low'].includes(stockLevel(source, thresholds)) &&
-				linked.some((target) => lesserType(notes, source.note, target)),
+				answers.some((answer) => answer.lesser.has(source)),
 		)
 		.map((source) => source.note.path);
 	return { ...line, state: line.substitutes.length ? 'substitute' : line.unknown.length ? 'unknown' : 'missing' };
