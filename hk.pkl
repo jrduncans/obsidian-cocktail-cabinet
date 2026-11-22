@@ -8,6 +8,11 @@ local linters = new Mapping {
     ["prettier"] = Builtins.prettier
     ["tsc"] = Builtins.tsc
     ["zizmor"] = Builtins.zizmor
+    // Unit tests and the catalog checks; under a second. CI runs them too (.github/workflows/lint.yml).
+    ["test"] = new Step {
+        glob = List("src/**", "tests/**", "scripts/**", "package.json", "package-lock.json")
+        check = "npm test"
+    }
 }
 
 steps = linters
