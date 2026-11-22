@@ -226,7 +226,7 @@ The body starts with command-palette guidance for adding stock and recipes, then
 
 ## Managed notes
 
-Notes the plugin writes and keeps current: the Cocktail Cabinet note and `<root>/Shopping list.md` (see [ownership](ownership.md)).
+Notes the plugin writes and keeps current: the Cocktail Cabinet note, `<root>/Shopping list.md`, and the guide pages in `<root>/Guide/` (`cc-kind: guide`, with `cc-name`), including the Agent Reference (see [ownership](ownership.md)).
 
 | Property     | Type     | Required | Description and use                                                                                                                                                                                                           |
 | ------------ | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

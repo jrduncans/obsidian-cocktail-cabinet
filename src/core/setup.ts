@@ -10,6 +10,7 @@ import { DEFAULT_RESTOCK, RESTOCK_BASE, restockBase } from './restock';
 import type { RestockThresholds } from './restock';
 import type { PlannedFile } from './schema';
 import { asManaged } from './managed';
+import { AGENT_REFERENCE, GUIDE_PAGES, guideLink, guideNotes } from './guide';
 
 /** Where users keep their own Bases; the plugin never writes there. */
 export const CUSTOM_VIEWS_FOLDER = 'Custom views';
@@ -44,7 +45,7 @@ export function cabinetViews(
  */
 export function managedNotes(folder: string, examples: ReadonlyMap<string, string> = new Map()): PlannedFile[] {
 	const root = cabinetFolder(folder);
-	return [cabinetNote(root, examples), shoppingNote(root)].map((file) => asManaged(file, root));
+	return [cabinetNote(root, examples), shoppingNote(root), ...guideNotes(root)].map((file) => asManaged(file, root));
 }
 
 /** Every file setup writes. `examples` adds the worked example, for a cabinet without a Cocktail Cabinet note yet. */
@@ -108,7 +109,7 @@ function cabinetNote(root: string, examples: ReadonlyMap<string, string>): Plann
 
 Your bottles, ingredients, and cocktail recipes in one place. Start with one bottle or a favorite recipe and build your cabinet gradually.
 
-Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below.${exampleSection(examples)}
+Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below. The [guide](#Guide) explains each part in more depth, starting with ${guideLink(root, 'Getting Started')}.${exampleSection(examples)}
 
 ## Start here
 
@@ -160,11 +161,17 @@ ${viewLink('Ingredient families')} groups types when a shared recipe reference o
 
 ${viewLink('Ingredient categories')} groups families into broader classifications, such as Spirit. Families can stand alone too. Use **Cocktail Cabinet: Add ingredient category** when a broader grouping helps.
 
+## Guide
+
+${GUIDE_PAGES.map((page) => `- ${guideLink(root, page)}`).join('\n')}
+
+AI agents working in your vault can follow ${guideLink(root, AGENT_REFERENCE)}; link it from your vault’s \`AGENTS.md\`.
+
 ## Make it yours
 
 Open a linked view to browse your current notes and edit properties. Enable **Bases** in **Settings → Core plugins** to use these views.
 
-The plugin keeps this page and the ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} note current with each release; the \`${PROP.managed}\` property records the version it last wrote. If you edit one, the plugin leaves your version alone and offers the new one in **Cocktail Cabinet: Review cabinet updates**, where you can switch to it or keep yours. To make a page entirely yours, delete its \`${PROP.managed}\` property. Your other notes are always yours; setup keeps existing notes when you run it again.
+The plugin keeps this page, the ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} note, and the guide current with each release; the \`${PROP.managed}\` property records the version it last wrote. If you edit one of them, the plugin leaves your version alone and offers the new one in **Cocktail Cabinet: Review cabinet updates**, where you can switch to it or keep yours. To make a page entirely yours, delete its \`${PROP.managed}\` property. Your other notes are always yours; setup keeps existing notes when you run it again.
 
 The views in the **Views** folder belong to the plugin, which updates them in new releases; ${viewLink(NAVIGATION_BASE)} supplies the sections shown in each ingredient and bottle note, and the plugin adds any section a note is missing. To change a view, copy it into the **${CUSTOM_VIEWS_FOLDER}** folder and edit the copy; the plugin never touches that folder. **Cocktail Cabinet: Refresh cabinet notes** restores the original views and any of these pages you haven't edited.
 

@@ -506,7 +506,10 @@ void test('managed notes update when untouched, wait for review when edited, and
 		);
 	contents.set(shopping, contents.get(shopping)!.replace('Older line.', 'My own line.'));
 	const first = await store.syncManaged({});
-	assert.deepEqual(first.updated, [cabinet]);
+	assert.deepEqual(
+		first.updated,
+		planned.map((note) => note.path).filter((path) => path !== shopping),
+	);
 	assert.deepEqual(first.review, [shopping]);
 	assert.equal(contents.get(cabinet), planned[0]!.content);
 	assert.match(contents.get(shopping)!, /My own line/);
@@ -592,4 +595,29 @@ void test('resource notes get missing Related sections, once, without moving wha
 			.endsWith(`${embed('Stock')}\n\n![[Related.base#Recipes]]\n\nMy note.\n\n${embed('Types')}\n`),
 	);
 	assert.deepEqual(await store.syncSections(), []);
+});
+
+void test('the guide and Agent Reference are managed notes in Guide, linked from the Cocktail Cabinet note', () => {
+	const notes = managedNotes('Drinks/Bar');
+	const guide = notes.filter((note) => note.kind === 'guide');
+	assert.deepEqual(
+		guide.map((note) => note.path.replace('Drinks/Bar/Guide/', '')),
+		[
+			'Getting Started.md',
+			'Recipes.md',
+			'Stock.md',
+			'Making Drinks.md',
+			'Shopping.md',
+			'Hierarchy and Substitutes.md',
+			'Views and Customizing.md',
+			'Agent Reference.md',
+		],
+	);
+	for (const note of guide) assert.ok(managedMarker(note.content), note.path);
+	const cabinet = notes.find((note) => note.kind === 'cabinet')!.content;
+	for (const note of guide)
+		assert.ok(cabinet.includes(`[[${note.path.replace(/\.md$/, '')}|`), `${note.path} is linked`);
+	const agents = guide.at(-1)!.content;
+	assert.match(agents, /obsidian cocktail-cabinet:makeable/);
+	assert.match(agents, /`Drinks\/Bar\/Views\/`/);
 });

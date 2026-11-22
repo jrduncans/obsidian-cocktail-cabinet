@@ -124,7 +124,9 @@ void test('starter catalog supplies definitions without implying owned stock or 
 	assert.ok(files.filter((file) => file.kind === 'type').length >= 90);
 	assert.ok(
 		files.every((file) =>
-			['category', 'family', 'type', 'bottle', 'ingredient', 'cabinet', 'shopping', 'base'].includes(file.kind),
+			['category', 'family', 'type', 'bottle', 'ingredient', 'cabinet', 'shopping', 'guide', 'base'].includes(
+				file.kind,
+			),
 		),
 	);
 	assert.ok(

@@ -74,7 +74,7 @@ export interface NoteDraft {
 export interface PlannedFile {
 	path: string;
 	content: string;
-	kind: NoteKind | 'cabinet' | 'shopping' | 'base';
+	kind: NoteKind | 'cabinet' | 'shopping' | 'guide' | 'base';
 	catalogId?: string;
 	/** Starter example: created only with a new Cocktail Cabinet note, never restored once deleted. */
 	example?: boolean;
