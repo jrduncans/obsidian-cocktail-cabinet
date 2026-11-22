@@ -10,6 +10,7 @@ import { DEFAULT_RESTOCK } from '../core/restock';
 import type { RestockThresholds } from '../core/restock';
 import type { SetupPreview } from '../core/setup';
 import { enhancedRecipeContent } from './recipe-document';
+import { withWording, writtenAsProperty } from '../core/written-as';
 
 /** A managed note someone changed, beside the plugin's current version of it. */
 export interface ManagedUpdate {
@@ -122,6 +123,7 @@ export class CabinetStore {
 						kind: kind as NoteKind,
 						parents,
 						aliases: parseFrontMatterAliases(frontmatter) || [],
+						...writtenAsProperty(kind as NoteKind, frontmatter?.[PROP.writtenAs]),
 						...(kind === 'type' && frontmatter?.[PROP.catchAll] === true ? { catchAll: true } : {}),
 					},
 				];
@@ -147,6 +149,22 @@ export class CabinetStore {
 		const target = link.replace(/^\[\[/, '').replace(/\]\]$/, '').split('|')[0]?.split('#')[0];
 		if (!target) return null;
 		return this.app.metadataCache.getFirstLinkpathDest(target, sourcePath);
+	}
+
+	/** Add a recipe wording to an ingredient note's `cc-written-as`; false when it was already there. */
+	async rememberWording(path: string, wording: string): Promise<boolean> {
+		const file = this.app.vault.getAbstractFileByPath(path);
+		if (!(file instanceof TFile)) throw new Error(`Couldn’t find ${path}.`);
+		let added = false;
+		await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
+			if (properties[PROP.kind] === 'recipe' || !KINDS.some((kind) => kind === properties[PROP.kind]))
+				throw new Error(`${file.basename} isn’t an ingredient note.`);
+			const next = withWording(properties[PROP.writtenAs], wording);
+			if (!next) return;
+			properties[PROP.writtenAs] = next;
+			added = true;
+		});
+		return added;
 	}
 
 	async isSetUp(): Promise<boolean> {

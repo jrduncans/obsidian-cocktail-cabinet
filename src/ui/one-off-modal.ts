@@ -28,6 +28,7 @@ export class OneOffModal extends CabinetForm {
 			this.contentEl,
 			ingredientRows(this.plugin, this.initial.lines, riffOn?.path),
 			'Amounts per serving. Start typing to pick what you poured, so logging can subtract it; plain text is fine for anything else.',
+			{ linkRemembered: true },
 		);
 		// After the ingredients, so the name reads as the extra it is.
 		let name = this.initial.name;
@@ -37,6 +38,7 @@ export class OneOffModal extends CabinetForm {
 		this.submit('Review', () => {
 			const oneOff: OneOff = { name: checkOneOffName(name), lines: ingredients.lines(), riffOn };
 			this.close();
+			void ingredients.saveRemembered();
 			this.review(oneOff);
 			return Promise.resolve();
 		});

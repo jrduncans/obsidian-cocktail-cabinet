@@ -15,6 +15,7 @@ try {
 		'rename.test',
 		'note-edit.test',
 		'recipe-import.test',
+		'written-as.test',
 		'logging.test',
 		'subtypes.test',
 		'availability.test',

@@ -56,7 +56,7 @@ export function tagChoices(current: readonly string[], counts: ReadonlyMap<strin
 }
 
 /** A name compared loosely: accents, case, punctuation, “&”/“and”, and a leading “The” don't matter. */
-function nameKey(name: string): string {
+export function nameKey(name: string): string {
 	return name
 		.normalize('NFKD')
 		.replace(/\p{M}/gu, '')

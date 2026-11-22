@@ -44,6 +44,8 @@ export const PROP = {
 	/** Recipes: the notes linked from the Ingredients section, kept in step by the plugin for the Recipes sections. */
 	ingredients: 'cc-ingredients',
 	sugarWaterRatio: 'cc-sugar-water-ratio',
+	/** Ingredient notes: recipe wordings linked to this note before, linked again when they reappear (docs/import.md). */
+	writtenAs: 'cc-written-as',
 	schemaVersion: 'cc-schema-version',
 	/** Managed notes: a fingerprint of the content the plugin last wrote (docs/ownership.md). */
 	managed: 'cc-managed',
@@ -55,6 +57,8 @@ export interface CabinetNote {
 	kind: NoteKind;
 	parents: string[];
 	aliases?: string[];
+	/** Ingredient notes: remembered recipe wordings (`cc-written-as`). */
+	writtenAs?: string[];
 	/** Types only: `cc-catch-all` is true. */
 	catchAll?: boolean;
 }

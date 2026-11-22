@@ -113,7 +113,7 @@ export class RecipeModal extends CabinetForm {
 		this.contentEl.empty();
 		this.begin(
 			'Review cocktail recipe',
-			'Check the detected ingredients and preparation text, then accept any useful links. Nothing is linked automatically.',
+			'Check the detected ingredients and preparation text, then accept any useful links. Only wordings you’ve chosen to remember are linked for you.',
 		);
 		if (this.snapshot) {
 			const destination = this.plugin.store.recipeDestination(this.snapshot.path);
@@ -152,7 +152,9 @@ export class RecipeModal extends CabinetForm {
 		this.select('Rating', ratingOptions(metadata.rating), rating, (value) => {
 			rating = value;
 		});
-		const ingredients = new RecipeIngredients(this.plugin, this.contentEl, recipe.ingredients);
+		const ingredients = new RecipeIngredients(this.plugin, this.contentEl, recipe.ingredients, undefined, {
+			linkRemembered: true,
+		});
 		this.area('Method', recipe.method, (value) => {
 			recipe.method = value;
 		}).setClass('cocktail-cabinet-name');
@@ -192,6 +194,7 @@ export class RecipeModal extends CabinetForm {
 				? await this.plugin.store.enhanceRecipe(this.snapshot, draft)
 				: await this.plugin.store.create(draft);
 			this.close();
+			await ingredients.saveRemembered();
 			await this.prefill?.created(file, noteName(draft.name).normalize('NFC'));
 			await this.plugin.store.open(file.path);
 		});

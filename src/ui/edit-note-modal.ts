@@ -126,6 +126,7 @@ export class EditNoteModal extends CabinetForm {
 				return;
 			}
 			await this.edits.save(this.note, this.snapshot, changes);
+			await this.ingredients?.saveRemembered();
 			const parentType = changes.properties[PROP.type];
 			if (typeof parentType === 'string') await this.plugin.store.addSubtypesSection(parentType, this.note.path);
 			this.close();

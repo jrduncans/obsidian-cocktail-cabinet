@@ -91,6 +91,7 @@ export class LoggingModal extends Modal {
 				note,
 				original: wording,
 				originalLabel: 'Recipe wording',
+				remember: wording,
 				preview: (text) => linkedLinePreview(line.text, text),
 				submit: async (text) => {
 					if (this.closed || this.busy || this.terminal || !this.recipe) return;

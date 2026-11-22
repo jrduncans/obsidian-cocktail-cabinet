@@ -3,6 +3,7 @@ import type { ButtonComponent, TextComponent } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { linkTextError } from '../core/unlinked-lines';
+import { canRemember } from '../core/written-as';
 import type { LinkPreview } from '../core/unlinked-lines';
 
 /** Where the link text came from: the note's name, the text already there, or typed. */
@@ -77,15 +78,46 @@ export interface LinkTextOptions {
 	originalLabel: string;
 	preview: (text: string) => LinkPreview;
 	submit: (text: string) => Promise<void> | void;
+	/** A recipe line's wording: offers to remember it for the note (`cc-written-as`) once linked. */
+	remember?: string;
+}
+
+/** A checkbox offering to remember a recipe wording for a note, when that's worth offering. */
+export function renderRemember(
+	container: HTMLElement,
+	wording: string,
+	note: CabinetNote,
+	checked: boolean,
+	onChange: (value: boolean) => void,
+): boolean {
+	if (!canRemember(wording, note)) return false;
+	const label = container.createDiv({ cls: 'cocktail-cabinet-remember' }).createEl('label');
+	const box = label.createEl('input', { type: 'checkbox' });
+	box.checked = checked;
+	box.addEventListener('change', () => onChange(box.checked));
+	label.appendText(` Remember “${wording.trim()}” for ${note.name}`);
+	label.setAttribute('title', 'Recipes with this wording will come into review already linked.');
+	return true;
+}
+
+/** Remember a wording after a link was written; a failure is reported, never undoes the link. */
+export async function rememberAfterLink(plugin: CocktailCabinetPlugin, note: CabinetNote, wording: string) {
+	try {
+		if (await plugin.store.rememberWording(note.path, wording.trim()))
+			new Notice(`Remembered “${wording.trim()}” for ${note.name}.`);
+	} catch (error) {
+		new Notice(error instanceof Error ? error.message : `Couldn’t remember “${wording.trim()}”.`);
+	}
 }
 
 /** Choose a link's text before writing it: the cabinet name, the text already there, or your own. */
 export class LinkTextModal extends Modal {
 	private text: string;
 	private busy = false;
+	private remember = false;
 
 	constructor(
-		plugin: CocktailCabinetPlugin,
+		private plugin: CocktailCabinetPlugin,
 		private options: LinkTextOptions,
 	) {
 		super(plugin.app);
@@ -122,6 +154,10 @@ export class LinkTextModal extends Modal {
 		const reads = this.contentEl.createDiv({ cls: 'cocktail-cabinet-link-reads' });
 		reads.createDiv({ cls: 'setting-item-description', text: 'Reads as' });
 		previewEl = reads.createDiv({ cls: 'cocktail-cabinet-link-preview' });
+		if (this.options.remember)
+			renderRemember(this.contentEl, this.options.remember, note, this.remember, (value) => {
+				this.remember = value;
+			});
 		errorEl = this.contentEl.createEl('p', { cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 		input.inputEl.addEventListener('keydown', (event) => {
 			if (event.key === 'Enter' && !event.isComposing) {
@@ -149,6 +185,8 @@ export class LinkTextModal extends Modal {
 		this.busy = true;
 		try {
 			await this.options.submit(this.text.trim());
+			if (this.remember && this.options.remember)
+				await rememberAfterLink(this.plugin, this.options.note, this.options.remember);
 		} catch (error) {
 			new Notice(error instanceof Error ? error.message : 'Couldn’t link it.');
 		} finally {

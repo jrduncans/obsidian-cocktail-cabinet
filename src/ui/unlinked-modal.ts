@@ -6,7 +6,8 @@ import { ingredientParts, linkedLinePreview, linkTextError } from '../core/unlin
 import type { UnlinkedGroup } from '../core/unlinked-lines';
 import type { RecipeLinkStore } from '../vault/recipe-links';
 import { addCreateItems, pickIngredient } from './link-choice';
-import { renderLinkText, renderPreview } from './link-text';
+import { rememberAfterLink, renderLinkText, renderPreview, renderRemember } from './link-text';
+import { rememberedNote } from '../core/written-as';
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 const recipeCount = (group: UnlinkedGroup) => new Set(group.uses.map((use) => use.recipe.path)).size;
@@ -21,7 +22,10 @@ export class UnlinkedModal extends Modal {
 	private summaryEl!: HTMLElement;
 	private listEl!: HTMLElement;
 	/** The note chosen for a wording, the lines (by index into its uses) still ticked, and the link text (null: each line's own wording). */
-	private pending = new Map<string, { note: CabinetNote; ticked: Set<number>; text: string | null }>();
+	private pending = new Map<
+		string,
+		{ note: CabinetNote; ticked: Set<number>; text: string | null; remembered?: boolean; remember?: boolean }
+	>();
 
 	constructor(
 		private plugin: CocktailCabinetPlugin,
@@ -47,6 +51,18 @@ export class UnlinkedModal extends Modal {
 		try {
 			this.groups = await this.links.unlinked({ includeGarnishes: this.showGarnishes });
 			if (this.closed) return;
+			// A wording one note remembers starts chosen; nothing is written until Link.
+			const notes = this.plugin.store.notes();
+			for (const group of this.groups) {
+				const note = rememberedNote(group.wording, notes);
+				if (note && !this.pending.has(group.key))
+					this.pending.set(group.key, {
+						note,
+						ticked: new Set(group.uses.map((_use, index) => index)),
+						text: null,
+						remembered: true,
+					});
+			}
 			this.render();
 		} catch (error) {
 			if (!this.closed)
@@ -139,7 +155,9 @@ export class UnlinkedModal extends Modal {
 			);
 			return;
 		}
-		row.setDesc(`Link to ${pending.note.name} (${pending.note.kind}) in the ticked recipes.`);
+		row.setDesc(
+			`Link to ${pending.note.name} (${pending.note.kind}) in the ticked recipes${pending.remembered ? ', from a remembered wording' : ''}.`,
+		);
 		let linkButton!: ButtonComponent;
 		const textError = () => (pending.text === null ? '' : linkTextError(pending.text));
 		const update = () => {
@@ -163,6 +181,10 @@ export class UnlinkedModal extends Modal {
 				update();
 			},
 		});
+		if (!pending.remembered)
+			renderRemember(el, group.wording, pending.note, !!pending.remember, (value) => {
+				pending.remember = value;
+			});
 		const errorEl = el.createEl('p', { cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 		const list = el.createEl('ul', { cls: 'cocktail-cabinet-unlinked-uses' });
 		const renderUses = () => {
@@ -218,6 +240,7 @@ export class UnlinkedModal extends Modal {
 						: ''),
 				result.failed.length ? 0 : undefined,
 			);
+			if (pending.remember && result.linked) await rememberAfterLink(this.plugin, pending.note, group.wording);
 		} catch (error) {
 			new Notice(error instanceof Error ? error.message : 'Couldn’t link the recipes.');
 		} finally {
