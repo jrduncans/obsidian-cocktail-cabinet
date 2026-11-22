@@ -10,12 +10,14 @@ import { RecipeSync } from './vault/recipe-sync';
 import { STANDARD_DRINK_GRAMS } from './core/alcohol-estimate';
 import { ReviewUpdatesModal } from './ui/review-updates-modal';
 import { NAVIGATION_SECTIONS_VERSION } from './core/navigation';
+import { CATALOG_VERSION, CatalogSync } from './vault/catalog-sync';
 
 export default class CocktailCabinetPlugin extends Plugin {
 	settings!: CocktailCabinetSettings;
 	store!: CabinetStore;
 	availability!: AvailabilityStore;
 	recipes!: RecipeSync;
+	catalog!: CatalogSync;
 
 	async onload() {
 		this.settings = loadSettings(await this.loadData());
@@ -29,6 +31,12 @@ export default class CocktailCabinetPlugin extends Plugin {
 			percent: this.settings.lowStockPercent,
 			ml: this.settings.lowStockMl,
 		}));
+		this.catalog = new CatalogSync(
+			this.app,
+			this.store,
+			() => this.settings.catalogKept,
+			() => this.settings.catalogSkipped,
+		);
 		this.registerView(AVAILABILITY_VIEW, (leaf) => new AvailabilityView(leaf, this));
 		registerCommands(this);
 		registerCli(this);
@@ -77,25 +85,56 @@ export default class CocktailCabinetPlugin extends Plugin {
 	async syncCabinet(force = false): Promise<void> {
 		const views = await this.syncViews(force);
 		const sections = await this.syncSections(force);
+		const catalog = await this.syncCatalog(force);
+		let notes = 0;
+		let review: string[] = [];
 		try {
 			const result = await this.store.syncManaged(this.settings.managedVersions, force);
 			this.settings.managedVersions = result.written;
 			await this.saveSettings();
 			const changed = [...result.created, ...result.updated].map(noteName);
+			notes = changed.length;
 			if (changed.length)
 				new Notice(
 					`Cocktail Cabinet ${force ? 'restored' : 'updated'} ${changed.length === 1 ? 'a note' : `${changed.length} notes`}: ${changed.join(', ')}.`,
 				);
-			if (result.review.length && force) new ReviewUpdatesModal(this).open();
-			else if (result.review.length)
-				new Notice(
-					`Cocktail Cabinet has a new version of ${result.review.map(noteName).join(', ')}, which you’ve edited. Run Review cabinet updates to compare.`,
-					10000,
-				);
-			else if (force && !changed.length && !views && !sections)
-				new Notice('Cabinet notes and views are already current.');
+			review = result.review.map(noteName);
 		} catch (error) {
 			new Notice(`Couldn’t update cabinet notes: ${error instanceof Error ? error.message : String(error)}`);
+		}
+		if (catalog.review) review.push(catalog.review === 1 ? 'a starter note' : `${catalog.review} starter notes`);
+		if (review.length && force) new ReviewUpdatesModal(this).open();
+		else if (review.length)
+			new Notice(
+				`Cocktail Cabinet has updates waiting for review: ${review.join(', ')}. Run Review cabinet updates to compare.`,
+				10000,
+			);
+		else if (force && !notes && !views && !sections && !catalog.updated)
+			new Notice('Cabinet notes and views are already current.');
+	}
+
+	/**
+	 * Update starter notes from the catalog when it changed, or with `force`: untouched fields silently;
+	 * returns how many notes were updated and how many have changes waiting for review.
+	 */
+	private async syncCatalog(force: boolean): Promise<{ updated: number; review: number }> {
+		if (!force && this.settings.catalogVersion === CATALOG_VERSION) return { updated: 0, review: 0 };
+		try {
+			const plan = await this.catalog.plan();
+			const updated = await this.catalog.apply(plan.silent);
+			this.settings.catalogVersion = CATALOG_VERSION;
+			await this.saveSettings();
+			if (updated.length)
+				new Notice(
+					`Cocktail Cabinet updated ${updated.length === 1 ? noteName(updated[0]!) : `${updated.length} starter notes`} from the catalog.`,
+				);
+			return {
+				updated: updated.length,
+				review: new Set(plan.review.map((item) => item.path)).size + plan.additions.length,
+			};
+		} catch (error) {
+			new Notice(`Couldn’t update starter notes: ${error instanceof Error ? error.message : String(error)}`);
+			return { updated: 0, review: 0 };
 		}
 	}
 

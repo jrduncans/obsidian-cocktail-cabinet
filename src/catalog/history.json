@@ -1,0 +1,2089 @@
+{
+	"category/Spirit": {
+		"description": [
+			"Distilled spirits used as cocktail bases and modifiers."
+		]
+	},
+	"category/Liqueur": {
+		"description": [
+			"Sweetened spirits and liqueurs used for flavor and sweetness."
+		]
+	},
+	"category/Wine": {
+		"description": [
+			"Still and sparkling wines used in cocktails."
+		]
+	},
+	"category/Fortified Wine": {
+		"description": [
+			"Vermouth, sherry, and other fortified wine ingredients."
+		]
+	},
+	"category/Juice": {
+		"description": [
+			"Fruit and vegetable juices. Fruit juice means fresh juice unless the ingredient specifies another preparation."
+		]
+	},
+	"category/Syrup": {
+		"description": [
+			"Liquid sweeteners and flavored syrups. Concentration is part of an ingredient when it affects a recipe."
+		]
+	},
+	"family/Whiskey": {
+		"description": [
+			"Whiskey styles used in cocktail recipes."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Bourbon": {
+		"description": [
+			"Bourbon whiskey; choose the bottling and strength appropriate to your recipe.",
+			"Bourbon whiskey; choose the bottle and strength appropriate to your recipe."
+		],
+		"parent": [
+			"Whiskey"
+		],
+		"abvTypical": [
+			null,
+			0.43
+		]
+	},
+	"type/Rye Whiskey": {
+		"description": [
+			"Rye whiskey used when a recipe calls for rye."
+		],
+		"parent": [
+			"Whiskey"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Blended Scotch": {
+		"description": [
+			"Scotch whisky in a blended style; choose the smoke profile and strength to suit your recipe."
+		],
+		"parent": [
+			"Whiskey"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Single Malt Scotch": {
+		"description": [
+			"Single malt Scotch whisky; smoke and strength vary by bottling.",
+			"Single malt Scotch whisky; smoke and strength vary by bottle."
+		],
+		"parent": [
+			"Whiskey"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Irish Whiskey": {
+		"description": [
+			"Irish whiskey; select a bottling to suit the recipe.",
+			"Irish whiskey; select a bottle to suit the recipe."
+		],
+		"parent": [
+			"Whiskey"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"family/Rum": {
+		"description": [
+			"Rum styles. These are starting distinctions; refine them to fit your recipes."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Lightly Aged Blended Rum": {
+		"description": [
+			"Lightly aged blended rum for recipes calling for a light-bodied rum."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Aged Blended Rum": {
+		"description": [
+			"Aged blended rum; flavor and strength vary by bottling.",
+			"Aged blends of rum from multiple regions, in the recipe role represented by Planteray Original Dark. Keep distinct from Aged Barbados Rum and Aged Column Still Rum."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Unaged Jamaican Rum": {
+		"description": [
+			"Unaged Jamaican rum; check the bottle strength when using a recipe."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Aged Jamaican Rum": {
+		"description": [
+			"Barrel-aged Jamaican rum, kept distinct from unaged and explicitly overproof styles."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Overproof Jamaican Rum": {
+		"description": [
+			"High-strength Jamaican rum, distinct from standard-strength rum in a recipe."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Demerara Rum": {
+		"description": [
+			"Demerara rum; choose a bottling and strength to suit the recipe.",
+			"Demerara rum; choose a bottle and strength to suit the recipe."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Overproof Demerara Rum": {
+		"description": [
+			"High-strength Demerara rum for recipes that specify it."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Rhum Agricole Blanc": {
+		"description": [
+			"Unaged sugarcane-juice rhum in the agricole style."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Aged Rhum Agricole": {
+		"description": [
+			"Barrel-aged sugarcane-juice rhum in the agricole style.",
+			"Barrel-aged sugarcane-juice rhum in the agricole style, also called rhum agricole vieux in this cabinet. Kept distinct from Unaged Rhum Agricole."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Black Rum": {
+		"description": [
+			"Dark rum for recipes explicitly calling for black rum; bottlings differ substantially."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Coconut Rum": {
+		"description": [
+			"Coconut-flavored rum; sweetness and strength vary by bottling."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"family/Cachaca": {
+		"description": [
+			"Brazilian sugarcane spirits, kept separate from the Rum family."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Unaged Cachaca": {
+		"description": [
+			"Unaged Brazilian sugarcane spirit for recipes calling for cachaça."
+		],
+		"parent": [
+			"Cachaça"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Aged Cachaca": {
+		"description": [
+			"Barrel-aged cachaça, kept distinct when the recipe specifies an aged style."
+		],
+		"parent": [
+			"Cachaça"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"family/Gin": {
+		"description": [
+			"Gin and related styles; a broad Gin reference does not select a particular style."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/London Dry Gin": {
+		"description": [
+			"Juniper-led dry gin for recipes that specify London dry."
+		],
+		"parent": [
+			"Gin"
+		],
+		"abvTypical": [
+			null,
+			0.47
+		]
+	},
+	"type/Old Tom Gin": {
+		"description": [
+			"Gin in the Old Tom style, typically sweeter than dry gin; bottlings vary.",
+			"Gin in the Old Tom style, typically sweeter than dry gin; bottles vary."
+		],
+		"parent": [
+			"Gin"
+		],
+		"abvTypical": [
+			null,
+			0.45
+		]
+	},
+	"type/Plymouth Gin": {
+		"description": [
+			"Plymouth gin for recipes that specify it."
+		],
+		"parent": [
+			"Gin"
+		],
+		"abvTypical": [
+			null,
+			0.412
+		]
+	},
+	"type/Navy Strength Gin": {
+		"description": [
+			"High-strength gin; strength affects the cocktail recipe.",
+			"High-strength gin, around 57% ABV; strength affects the cocktail recipe. Its bottles also fill recipes calling for London Dry Gin."
+		],
+		"parent": [
+			"Gin",
+			"London Dry Gin"
+		],
+		"abvTypical": [
+			null,
+			0.57
+		]
+	},
+	"type/Genever": {
+		"description": [
+			"Genever for recipes that specify this style."
+		],
+		"parent": [
+			"Gin"
+		],
+		"abvTypical": [
+			null,
+			0.42
+		]
+	},
+	"type/Vodka": {
+		"description": [
+			"A neutral, unflavored spirit for recipes calling for vodka. Flavored vodkas can be added as distinct ingredients."
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"family/Agave Spirit": {
+		"description": [
+			"Tequila, mezcal, and related agave spirits."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Blanco Tequila": {
+		"description": [
+			"Tequila in the blanco style, distinct from barrel-aged tequila in recipes."
+		],
+		"parent": [
+			"Agave Spirit"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Reposado Tequila": {
+		"description": [
+			"Barrel-rested tequila in the reposado style."
+		],
+		"parent": [
+			"Agave Spirit"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Anejo Tequila": {
+		"description": [
+			"Aged tequila in the añejo style, kept distinct from blanco and reposado."
+		],
+		"parent": [
+			"Agave Spirit"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Mezcal": {
+		"description": [
+			"Mezcal; agave variety and bottling can change the result.",
+			"Mezcal; agave variety and bottle can change the result."
+		],
+		"parent": [
+			"Agave Spirit"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"family/Brandy": {
+		"description": [
+			"French-style grape brandy in common cocktail usage, including Cognac and Armagnac. Apple brandy has a separate family.",
+			"Brandy in common cocktail usage: French grape brandy and apple brandy."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Cognac": {
+		"description": [
+			"French grape brandy from the Cognac region, used in brandy cocktails."
+		],
+		"parent": [
+			"Brandy"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Armagnac": {
+		"description": [
+			"French grape brandy from the Armagnac region; keep distinct when a recipe specifies it."
+		],
+		"parent": [
+			"Brandy"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"family/Apple Brandy": {
+		"description": [
+			"Apple brandy and applejack styles used in recipes. Decide which types describe your bottles; a broad family reference can use any of these types."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Apple Brandy": {
+		"description": [
+			"Apple brandy for recipes specifying an apple-based spirit without a narrower style. Classify bottles to suit your recipes.",
+			"Regular apple brandy as a recipe ingredient, alongside the separate Bonded Apple Brandy, Applejack, and Calvados types. Use Apple Brandy Family when a recipe permits any of the included styles.",
+			"Apple brandy for recipes calling for it without naming a style. Plain apple brandy bottles go here; Bonded Apple Brandy, Applejack, and Calvados are its subtypes, so their bottles fill these recipes too."
+		],
+		"parent": [
+			"Apple Brandy",
+			"Apple Brandy Family",
+			"Brandy"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Bonded Apple Brandy": {
+		"description": [
+			"Apple brandy for recipes specifying bonded apple brandy, typically at 100 US proof (50% ABV). Assign bottles deliberately; proof alone does not establish bonded status.",
+			"Apple brandy for recipes specifying bonded apple brandy, at 100 US proof (50% ABV). Assign bottles deliberately; proof alone does not establish bonded status."
+		],
+		"parent": [
+			"Apple Brandy",
+			"Apple Brandy Family"
+		],
+		"abvTypical": [
+			null,
+			0.5
+		]
+	},
+	"type/Applejack": {
+		"description": [
+			"Applejack as named in recipes. Bottlings vary; decide which bottles fit the recipe style you intend.",
+			"Applejack as named in recipes. Bottles vary; decide which bottles fit the recipe style you intend."
+		],
+		"parent": [
+			"Apple Brandy",
+			"Apple Brandy Family"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Calvados": {
+		"description": [
+			"Calvados for recipes specifying this apple brandy style. Decide which of your bottles fit the recipe requirement."
+		],
+		"parent": [
+			"Apple Brandy",
+			"Apple Brandy Family"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"family/Aquavit": {
+		"description": [
+			"Aquavit styles."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Unaged Aquavit": {
+		"description": [
+			"Caraway- or dill-led aquavit without an aged style designation."
+		],
+		"parent": [
+			"Aquavit"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Aged Aquavit": {
+		"description": [
+			"Barrel-aged aquavit, kept distinct from unaged aquavit in recipes."
+		],
+		"parent": [
+			"Aquavit"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"family/Anise Spirit": {
+		"description": [
+			"Anise-flavored spirits used for pours and rinses."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Absinthe": {
+		"description": [
+			"Absinthe; follow the recipe amount, including when used as a rinse."
+		],
+		"parent": [
+			"Anise Spirit"
+		],
+		"abvTypical": [
+			null,
+			0.68
+		]
+	},
+	"type/Pastis": {
+		"description": [
+			"Pastis for recipes that specify it."
+		],
+		"parent": [
+			"Anise Spirit"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"family/Fruit Liqueur": {
+		"description": [
+			"Fruit-flavored liqueurs."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Orange Liqueur": {
+		"description": [
+			"Orange liqueur; refine to a specific style or bottle when the recipe needs it.",
+			"Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles. Bottles share this broad recipe role; link a specific bottle when needed."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Maraschino Liqueur": {
+		"description": [
+			"Maraschino liqueur, distinct from cherry brandy and cherry syrup."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.32
+		]
+	},
+	"type/Cherry Liqueur": {
+		"description": [
+			"Cherry liqueur for recipes that specify it."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.24
+		]
+	},
+	"type/Apricot Liqueur": {
+		"description": [
+			"Apricot liqueur, distinct from dry apricot brandy."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.24
+		]
+	},
+	"type/Peach Liqueur": {
+		"description": [
+			"Sweet peach-flavored liqueur; distinguish from unsweetened peach brandy."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.16
+		]
+	},
+	"type/Blackcurrant Liqueur": {
+		"description": [
+			"Blackcurrant liqueur, including creme de cassis."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.15
+		]
+	},
+	"type/Banana Liqueur": {
+		"description": [
+			"Sweet banana-flavored liqueur used as a cocktail modifier."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.25
+		]
+	},
+	"family/Herbal Liqueur": {
+		"description": [
+			"Herbal liqueurs; select a type or bottle when the recipe specifies a particular profile."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Green Herbal Liqueur": {
+		"description": [
+			"Green herbal liqueur; use a specific bottle reference when a particular bottling is intended.",
+			"Green herbal liqueur; link a specific bottle when the recipe names one."
+		],
+		"parent": [
+			"Herbal Liqueur",
+			"Herbal & Spice Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.55
+		]
+	},
+	"type/Yellow Herbal Liqueur": {
+		"description": [
+			"Yellow herbal liqueur; use a specific bottle reference when needed."
+		],
+		"parent": [
+			"Herbal Liqueur",
+			"Herbal & Spice Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Benedictine": {
+		"description": [
+			"A sweet herbal and spiced liqueur; link a bottle for the specific bottling you own.",
+			"A sweet herbal and spiced liqueur; add a bottle to record what you own."
+		],
+		"parent": [
+			"Herbal Liqueur"
+		]
+	},
+	"family/Floral Liqueur": {
+		"description": [
+			"Flower-flavored liqueurs used as cocktail modifiers."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Elderflower Liqueur": {
+		"description": [
+			"Sweet floral liqueur flavored with elderflower."
+		],
+		"parent": [
+			"Floral Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.2
+		]
+	},
+	"type/Violet Liqueur": {
+		"description": [
+			"Sweet violet-flavored floral liqueur, also called creme de violette."
+		],
+		"parent": [
+			"Floral Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.16
+		]
+	},
+	"family/Spice Liqueur": {
+		"description": [
+			"Spice-led liqueurs; each type retains its distinct recipe role."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Allspice Dram": {
+		"description": [
+			"Allspice liqueur, also called pimento dram."
+		],
+		"parent": [
+			"Spice Liqueur",
+			"Herbal & Spice Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.225
+		]
+	},
+	"type/Falernum": {
+		"description": [
+			"Falernum; sweetness and alcohol content vary between preparations and bottlings.",
+			"Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottling.",
+			"Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottle."
+		],
+		"parent": [
+			"Spice Liqueur",
+			"Herbal & Spice Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.11
+		]
+	},
+	"family/Amaro": {
+		"description": [
+			"Bitter liqueurs grouped as amaro for cocktail browsing. Styles vary in sweetness, strength, and bitterness; choose a type or bottle when it matters."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Red Bitter Liqueur": {
+		"description": [
+			"Red bitter liqueur; specify a bottle where bitterness and sweetness matter.",
+			"Campari-style bitter liqueur, distinct from the Aperol-style Orange Bitter Liqueur recipe role. Color alone does not determine membership."
+		],
+		"parent": [
+			"Amaro",
+			"Amaro Family"
+		],
+		"abvTypical": [
+			null,
+			0.24
+		]
+	},
+	"type/Gentian Liqueur": {
+		"description": [
+			"Bitter liqueur with gentian character; select a bottle to capture the specific formulation.",
+			"Bitter liqueurs in the gentian recipe role, including Salers, Suze, Avèze, and, in this cabinet, Bitter Bianco. Formulations and strengths vary; select a bottle when needed."
+		],
+		"parent": [
+			"Amaro",
+			"Amaro Family"
+		],
+		"abvTypical": [
+			null,
+			0.16
+		]
+	},
+	"type/Fernet": {
+		"description": [
+			"A strongly bitter herbal liqueur in the fernet style."
+		],
+		"parent": [
+			"Amaro",
+			"Amaro Family"
+		],
+		"abvTypical": [
+			null,
+			0.39
+		]
+	},
+	"type/Artichoke Amaro": {
+		"description": [
+			"A bitter herbal liqueur in an artichoke-based style."
+		],
+		"parent": [
+			"Amaro",
+			"Amaro Family"
+		],
+		"abvTypical": [
+			null,
+			0.165
+		]
+	},
+	"family/Nut Liqueur": {
+		"description": [
+			"Nut-flavored liqueurs. Add other nut styles when useful to your recipes."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Amaretto": {
+		"description": [
+			"Sweet almond-flavored liqueur in the amaretto style."
+		],
+		"parent": [
+			"Nut Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.28
+		]
+	},
+	"type/Coffee Liqueur": {
+		"description": [
+			"Sweet coffee-flavored liqueur; sugar content and strength vary by bottling.",
+			"Sweet coffee-flavored liqueur; sugar content and strength vary by bottle."
+		],
+		"abvTypical": [
+			null,
+			0.2
+		]
+	},
+	"type/Creme de Cacao": {
+		"description": [
+			"Chocolate liqueur; specify light or dark when the recipe needs that distinction."
+		],
+		"abvTypical": [
+			null,
+			0.27
+		]
+	},
+	"family/Still Wine": {
+		"description": [
+			"Non-sparkling wine ingredients."
+		],
+		"parent": [
+			"Wine"
+		]
+	},
+	"type/Dry White Wine": {
+		"description": [
+			"Still white wine in a dry style, used as a cocktail ingredient."
+		],
+		"parent": [
+			"Still Wine"
+		],
+		"abvTypical": [
+			null,
+			0.12
+		]
+	},
+	"type/Red Wine": {
+		"description": [
+			"Red wine, including when used as a float."
+		],
+		"parent": [
+			"Still Wine"
+		],
+		"abvTypical": [
+			null,
+			0.13
+		]
+	},
+	"family/Sparkling Wine": {
+		"description": [
+			"Sparkling wines used to lengthen cocktails."
+		],
+		"parent": [
+			"Wine"
+		]
+	},
+	"type/Dry Sparkling Wine": {
+		"description": [
+			"Dry sparkling wine when no narrower style is specified."
+		],
+		"parent": [
+			"Sparkling Wine"
+		],
+		"abvTypical": [
+			null,
+			0.12
+		]
+	},
+	"type/Champagne": {
+		"description": [
+			"Sparkling wine from Champagne; record the specific bottling when its style matters.",
+			"Sparkling wine from Champagne; record the specific bottle when its style matters."
+		],
+		"parent": [
+			"Sparkling Wine"
+		],
+		"abvTypical": [
+			null,
+			0.12
+		]
+	},
+	"type/Prosecco": {
+		"description": [
+			"Prosecco; sweetness varies by bottling.",
+			"Prosecco; sweetness varies by bottle."
+		],
+		"parent": [
+			"Sparkling Wine"
+		],
+		"abvTypical": [
+			null,
+			0.11
+		]
+	},
+	"family/Vermouth": {
+		"description": [
+			"Vermouth styles distinguished by their recipe roles."
+		],
+		"parent": [
+			"Fortified Wine"
+		]
+	},
+	"type/Sweet Vermouth": {
+		"description": [
+			"Sweet aromatized fortified wine for recipes calling for sweet vermouth."
+		],
+		"parent": [
+			"Vermouth"
+		],
+		"abvTypical": [
+			null,
+			0.16
+		]
+	},
+	"type/Dry Vermouth": {
+		"description": [
+			"Dry aromatized fortified wine for recipes calling for dry vermouth."
+		],
+		"parent": [
+			"Vermouth"
+		],
+		"abvTypical": [
+			null,
+			0.175
+		]
+	},
+	"type/Blanc Vermouth": {
+		"description": [
+			"Sweet white vermouth, also called bianco or blanc."
+		],
+		"parent": [
+			"Vermouth"
+		],
+		"abvTypical": [
+			null,
+			0.16
+		]
+	},
+	"family/Sherry": {
+		"description": [
+			"Sherry styles."
+		],
+		"parent": [
+			"Fortified Wine"
+		]
+	},
+	"type/Fino Sherry": {
+		"description": [
+			"Dry sherry in the fino style."
+		],
+		"parent": [
+			"Sherry"
+		],
+		"abvTypical": [
+			null,
+			0.15
+		]
+	},
+	"type/Amontillado Sherry": {
+		"description": [
+			"Dry sherry in the amontillado style."
+		],
+		"parent": [
+			"Sherry"
+		],
+		"abvTypical": [
+			null,
+			0.185
+		]
+	},
+	"type/Oloroso Sherry": {
+		"description": [
+			"Sherry in the oloroso style; use the sweetness specified by your recipe."
+		],
+		"parent": [
+			"Sherry"
+		],
+		"abvTypical": [
+			null,
+			0.19
+		]
+	},
+	"type/Pedro Ximenez Sherry": {
+		"description": [
+			"Sweet Pedro Ximénez sherry."
+		],
+		"parent": [
+			"Sherry"
+		],
+		"abvTypical": [
+			null,
+			0.17
+		]
+	},
+	"family/Other Fortified Wine": {
+		"description": [
+			"Other fortified wine ingredients."
+		],
+		"parent": [
+			"Fortified Wine"
+		]
+	},
+	"type/Ruby Port": {
+		"description": [
+			"Fortified wine in the ruby port style."
+		],
+		"parent": [
+			"Other Fortified Wine"
+		]
+	},
+	"type/Tawny Port": {
+		"description": [
+			"Fortified wine in the tawny port style."
+		],
+		"parent": [
+			"Other Fortified Wine"
+		]
+	},
+	"type/Quinquina": {
+		"description": [
+			"Quinine-flavored aperitif wine; use a bottle reference for a particular formulation."
+		],
+		"parent": [
+			"Other Fortified Wine"
+		]
+	},
+	"family/Bitters": {
+		"description": [
+			"Concentrated bitters used in small cocktail seasoning quantities."
+		]
+	},
+	"type/Aromatic Bitters": {
+		"description": [
+			"Concentrated aromatic bitters used in dashes or other small seasoning amounts."
+		],
+		"parent": [
+			"Bitters"
+		],
+		"abvTypical": [
+			null,
+			0.45
+		]
+	},
+	"type/Orange Bitters": {
+		"description": [
+			"Concentrated orange-flavored bitters used as cocktail seasoning."
+		],
+		"parent": [
+			"Bitters"
+		],
+		"abvTypical": [
+			null,
+			0.45
+		]
+	},
+	"type/Creole Bitters": {
+		"description": [
+			"Creole-style aromatic bitters for recipes that specify that profile."
+		],
+		"parent": [
+			"Bitters"
+		],
+		"abvTypical": [
+			null,
+			0.35
+		]
+	},
+	"type/Chocolate Bitters": {
+		"description": [
+			"Concentrated chocolate-flavored bitters used as cocktail seasoning."
+		],
+		"parent": [
+			"Bitters"
+		],
+		"abvTypical": [
+			null,
+			0.48
+		]
+	},
+	"family/Citrus Juice": {
+		"description": [
+			"Fresh citrus juices by default. Bottled juice can be recorded as a source of the same ingredient."
+		],
+		"parent": [
+			"Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Lime Juice": {
+		"description": [
+			"Fresh lime juice by default. A bottled source can be recorded without changing recipe links."
+		],
+		"parent": [
+			"Citrus Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Lemon Juice": {
+		"description": [
+			"Lemon juice, assumed freshly squeezed; purchased juice can supply the same ingredient."
+		],
+		"parent": [
+			"Citrus Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Orange Juice": {
+		"description": [
+			"Orange juice, assumed freshly squeezed unless a different preparation is specified."
+		],
+		"parent": [
+			"Citrus Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Grapefruit Juice": {
+		"description": [
+			"Grapefruit juice, assumed freshly squeezed; refine the fruit variety when your recipes need it."
+		],
+		"parent": [
+			"Citrus Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"family/Other Fruit Juice": {
+		"description": [
+			"Other fruit juices; track purchased juice as a source where appropriate."
+		],
+		"parent": [
+			"Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Pineapple Juice": {
+		"description": [
+			"Pineapple juice, fresh by default."
+		],
+		"parent": [
+			"Other Fruit Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Cranberry Juice": {
+		"description": [
+			"Cranberry juice; sweetened blends can require a different recipe amount."
+		],
+		"parent": [
+			"Other Fruit Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Apple Juice": {
+		"description": [
+			"Juice from apples; specify a preparation when it changes your recipe."
+		],
+		"parent": [
+			"Other Fruit Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Passion Fruit Juice": {
+		"description": [
+			"Passion fruit juice; distinguish sweetened preparations when they affect a recipe."
+		],
+		"parent": [
+			"Other Fruit Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"family/Vegetable Juice": {
+		"description": [
+			"Vegetable juices."
+		],
+		"parent": [
+			"Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Tomato Juice": {
+		"description": [
+			"Juice from tomatoes used in savory cocktails; seasoned mixes should be distinguished when needed."
+		],
+		"parent": [
+			"Vegetable Juice"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"family/Sugar Syrup": {
+		"description": [
+			"Sugar and water syrups with a defined ratio by weight.",
+			"Syrups made from sugar, honey, or agave without added flavorings. Record dilution and concentration on the ingredient page; flavor from the sweetener itself does not make a syrup flavored."
+		],
+		"parent": [
+			"Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Simple Syrup (1 to 1)": {
+		"description": [
+			"White sugar and water at 1:1 by weight. Nominal Brix: 50."
+		],
+		"preparation": [
+			"Combine equal weights of white sugar and water. This ratio is by weight. Stir until dissolved. The listed Brix is nominal, not a measurement of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).",
+			"Combine equal weights of white sugar and water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup)."
+		],
+		"parent": [
+			"Sugar Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		],
+		"sugarWaterRatio": [
+			null,
+			"1:1 by weight"
+		]
+	},
+	"type/Simple Syrup (2 to 1)": {
+		"description": [
+			"White sugar and water at 2:1 by weight. Nominal Brix: approximately 66.7."
+		],
+		"preparation": [
+			"Combine two parts by weight of white sugar and one part by weight of water. This ratio is by weight. Stir until dissolved. The listed Brix is nominal, not a measurement of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).",
+			"Combine two parts by weight of white sugar and one part by weight of water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup)."
+		],
+		"parent": [
+			"Sugar Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		],
+		"sugarWaterRatio": [
+			null,
+			"2:1 by weight"
+		]
+	},
+	"type/Demerara Syrup (2 to 1)": {
+		"description": [
+			"Demerara sugar and water at 2:1 by weight. Nominal sugar concentration: approximately 66.7 percent; actual Brix can vary."
+		],
+		"preparation": [
+			"Combine two parts by weight of demerara sugar and one part by weight of water. This ratio is by weight. Stir until dissolved. The listed Brix is nominal, not a measurement of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).",
+			"Combine two parts by weight of demerara sugar and one part by weight of water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup)."
+		],
+		"parent": [
+			"Sugar Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		],
+		"sugarWaterRatio": [
+			null,
+			"2:1 by weight"
+		]
+	},
+	"family/Flavored Syrup": {
+		"description": [
+			"Flavored syrups; recipe details and concentration belong on the ingredient page.",
+			"Syrups flavored with fruit, nuts, spices, or other added ingredients. Recipe details and concentration belong on the ingredient page."
+		],
+		"parent": [
+			"Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Orgeat": {
+		"description": [
+			"Almond syrup; concentration and flavor vary by preparation."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Grenadine": {
+		"description": [
+			"Pomegranate syrup; document the preparation or purchased source you use."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Honey Syrup": {
+		"description": [
+			"Honey diluted with water. Specify the ratio for your recipes."
+		],
+		"parent": [
+			"Flavored Syrup",
+			"Sugar Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Agave Syrup": {
+		"description": [
+			"Agave-based sweetener. Document whether it is diluted."
+		],
+		"parent": [
+			"Flavored Syrup",
+			"Sugar Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Ginger Syrup": {
+		"description": [
+			"A sweet ginger preparation; record the concentration and preparation you use."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Cinnamon Syrup": {
+		"description": [
+			"A sweet cinnamon preparation; record the concentration and preparation you use."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Passion Fruit Syrup": {
+		"description": [
+			"Sweetened passion fruit syrup, distinct from unsweetened juice."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"family/Carbonated Mixer": {
+		"description": [
+			"Carbonated cocktail mixers."
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Soda Water": {
+		"description": [
+			"Unflavored carbonated water."
+		],
+		"parent": [
+			"Carbonated Mixer"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Tonic Water": {
+		"description": [
+			"Carbonated bitter-sweet mixer; sweetness and flavor vary by brand."
+		],
+		"parent": [
+			"Carbonated Mixer"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Ginger Beer": {
+		"description": [
+			"Ginger-flavored mixer used for a more pronounced ginger profile; brands vary."
+		],
+		"parent": [
+			"Carbonated Mixer"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Ginger Ale": {
+		"description": [
+			"Ginger-flavored soft drink, kept distinct from ginger beer in recipes."
+		],
+		"parent": [
+			"Carbonated Mixer"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Cola": {
+		"description": [
+			"Cola-flavored soft drink used as a cocktail mixer."
+		],
+		"parent": [
+			"Carbonated Mixer"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Heavy Cream": {
+		"description": [
+			"High-fat dairy cream for recipes that specify cream."
+		]
+	},
+	"type/Milk": {
+		"description": [
+			"Dairy milk for recipes calling for milk; use a separate ingredient where a substitution changes the recipe."
+		]
+	},
+	"type/Egg White": {
+		"description": [
+			"The white of an egg, used for texture and foam in cocktails."
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Whole Egg": {
+		"description": [
+			"A whole egg, including yolk, for flips and other cocktails that specify it."
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Mint": {
+		"description": [
+			"Fresh mint leaves or sprigs for flavor and garnish."
+		]
+	},
+	"type/Lime Peel": {
+		"description": [
+			"Lime peel for garnish or expressed oils."
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Lemon Peel": {
+		"description": [
+			"Lemon peel for garnish or expressed oils."
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Orange Peel": {
+		"description": [
+			"Orange peel for garnish or expressed oils."
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Cocktail Cherry": {
+		"description": [
+			"A prepared cherry used as a cocktail garnish."
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Salt": {
+		"description": [
+			"Salt; keep a saline solution separate when a recipe specifies one."
+		]
+	},
+	"type/Orange Bitter Liqueur": {
+		"description": [
+			"Aperol-style bitter liqueur, distinct from the Campari-style Red Bitter Liqueur recipe role and from Orange Liqueur. Color alone does not determine membership."
+		],
+		"parent": [
+			"Amaro",
+			"Amaro Family"
+		],
+		"abvTypical": [
+			null,
+			0.11
+		]
+	},
+	"type/Falernum Syrup": {
+		"description": [
+			"Nonalcoholic spiced falernum syrup, distinct from Falernum liqueur. Record the preparation or purchased source you use."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Cream of Coconut": {
+		"description": [
+			"Sweetened coconut cream used for sweetness and texture in cocktails, distinct from unsweetened coconut cream or coconut milk."
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"type/Light Rum": {
+		"description": [
+			"Lightly aged rum filtered to remove color, with a relatively restrained flavor profile; Don Q Cristal is an example. Distinct from White Blended Rum."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/White Blended Rum": {
+		"description": [
+			"Clear multi-region rum blends, such as Probitas, combining different flavor profiles. Components may be aged or unaged; kept distinct from the more restrained Light Rum role."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Aged Barbados Rum": {
+		"description": [
+			"Moderately aged Barbados-style blends of pot- and column-still rum, represented by Real McCoy 5, Planteray Barbados 5 Year, and Mount Gay Eclipse. Older expressions such as Real McCoy 12 generally fit; lighter white styles such as Real McCoy 3 and Mount Gay Silver do not."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Aged Column Still Rum": {
+		"description": [
+			"Aged column-still rum in the recipe role represented by Ron Abuelo Añejo and Don Q Gold, kept distinct from Aged Barbados Rum. Moderately aged expressions are typical; older expressions can generally fill the same role."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Aged Overproof Jamaican Rum": {
+		"description": [
+			"High-strength barrel-aged Jamaican rum for recipes specifying this role, distinct from Unaged Overproof Jamaican Rum and standard-strength Aged Jamaican Rum.",
+			"High-strength, lightly aged Jamaican rum in the recipe role represented by Smith & Cross. Distinct from Unaged Overproof Jamaican Rum; its bottles also fill recipes calling for Aged Jamaican Rum."
+		],
+		"parent": [
+			"Rum",
+			"Aged Jamaican Rum"
+		],
+		"abvTypical": [
+			null,
+			0.57
+		]
+	},
+	"type/Unaged Overproof Jamaican Rum": {
+		"description": [
+			"High-strength unaged Jamaican rum for recipes specifying this role, distinct from Aged Overproof Jamaican Rum."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.63
+		]
+	},
+	"type/Demerara 151 Rum": {
+		"description": [
+			"Demerara rum bottled at 151 US proof (75.5% ABV), for recipes specifying this strength and style. Distinct from standard-strength Demerara Rum and multi-region overproof blends."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.755
+		]
+	},
+	"type/Blended Overproof Rum": {
+		"description": [
+			"High-strength rum blends, including O.F.T.D., Hamilton Zombie Blend, and Planteray Mister Fogg. Their strengths and flavor profiles differ; recipes often specify a particular bottle."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.69
+		]
+	},
+	"type/Unaged Rhum Agricole": {
+		"description": [
+			"Unaged sugarcane-juice rhum in the agricole style, also called rhum agricole blanc. Kept distinct from Aged Rhum Agricole."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.5
+		]
+	},
+	"type/Unaged Haitian Rum": {
+		"description": [
+			"Traditional Barbancourt-style white rum without wood maturation; steel-tank resting is compatible with this type. Keep distinct from Aged Haitian Rum and Clairin. Preserve a recipe’s named bottle and strength."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Aged Haitian Rum": {
+		"description": [
+			"Barrel-aged Haitian rum in the Barbancourt-style recipe role, represented by Barbancourt 3 Star and 5 Star. Keep distinct from Unaged Haitian Rum and Clairin."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Unaged Mexican Rum": {
+		"description": [
+			"Unaged Mexican cane-juice rum in the recipe role represented by Paranubes Blanco, with pronounced fermentation and savory character. Choose other bottles for their fit with this profile; recipes may specify a particular bottle or strength."
+		],
+		"parent": [
+			"Rum"
+		]
+	},
+	"type/Black Jamaican Rum": {
+		"description": [
+			"Jamaican rum with pronounced caramel influence, distinct from the Aged Jamaican Rum recipe role. Color alone does not determine membership."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Pineapple Rum": {
+		"description": [
+			"Pineapple-flavored rum, including Stiggins’ Fancy. Other pineapple rums can differ substantially in flavor; recipes often name the intended bottle."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Contemporary Gin": {
+		"description": [
+			"Gin with prominent citrus, floral, herbal, or other botanical notes, in a recipe role distinct from London Dry Gin. Individual gins can differ substantially; preserve a recipe’s named bottle when specified."
+		],
+		"parent": [
+			"Gin"
+		],
+		"abvTypical": [
+			null,
+			0.44
+		]
+	},
+	"family/Apple Brandy Family": {
+		"description": [
+			"Apple brandy and applejack styles used in recipes. A family reference can use any of these types; the Apple Brandy type means regular apple brandy."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"type/Creme de Menthe": {
+		"description": [
+			"Sweet mint liqueur, including clear expressions such as Menthe-Pastille. Kept distinct from the Green Herbal Liqueur recipe role; color alone does not determine membership."
+		],
+		"parent": [
+			"Herbal Liqueur",
+			"Herbal & Spice Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.27
+		]
+	},
+	"family/Amaro Family": {
+		"description": [
+			"Bitter liqueurs grouped as amaro for cocktail browsing. Includes the Amaro type and specialized styles; choose a type or bottle when the recipe requires one."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Amaro": {
+		"description": [
+			"A general amaro ingredient type for bottles such as Averna, Montenegro, Meletti, Lucano, and Nonino. Their flavor profiles, sweetness, and strengths differ; use a specific bottle reference when a recipe names one. Use the specialized types for red or orange bitter liqueurs, gentian liqueurs, fernet, and artichoke amaro.",
+			"Catch-all for amari without a more specific type, such as Averna, Montenegro, Meletti, Lucano, and Nonino. Their flavor, sweetness, and strength differ, so they are likely substitutes rather than interchangeable: recipes usually name the bottle. Use the specialized types for red or orange bitter liqueurs, gentian liqueurs, fernet, and artichoke amaro."
+		],
+		"parent": [
+			"Amaro Family"
+		],
+		"abvTypical": [
+			null,
+			0.3
+		],
+		"catchAll": [
+			null,
+			true
+		]
+	},
+	"type/Vermouth Amaro": {
+		"description": [
+			"Bitter vermouth in the recipe role represented by Punt e Mes and Cocchi Dopo Teatro, kept distinct from ordinary Sweet Vermouth. Preserve a recipe’s named bottle when specified."
+		],
+		"parent": [
+			"Vermouth"
+		],
+		"abvTypical": [
+			null,
+			0.16
+		]
+	},
+	"type/Vanilla Syrup": {
+		"description": [
+			"Vanilla-flavored sugar syrup. Record the preparation and sugar concentration you use; vanilla extracts and liqueurs are different ingredients."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			null,
+			0
+		]
+	},
+	"bottle/Angostura Bitters": {
+		"description": [
+			"Angostura aromatic bitters. Recipes can name this bottle specifically or call for its Aromatic Bitters type. Set availability or quantities to record your stock."
+		],
+		"parent": [
+			"Aromatic Bitters"
+		]
+	},
+	"type/Flavored Rum": {
+		"description": [
+			"Catch-all for flavored rums without close substitutes, such as coconut rums. Bottles in this type are rarely interchangeable, so recipes usually name the bottle. Pineapple Rum has its own type."
+		],
+		"parent": [
+			"Rum"
+		],
+		"catchAll": [
+			null,
+			true
+		]
+	},
+	"type/Pineapple Liqueur": {
+		"description": [
+			"Sweet pineapple liqueur, distinct from pineapple-flavored rum."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.2
+		]
+	},
+	"type/Melon Liqueur": {
+		"description": [
+			"Sweet melon liqueur, such as Midori."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.2
+		]
+	},
+	"type/Bergamot Liqueur": {
+		"description": [
+			"Bergamot-orange liqueur, such as Italicus, distinct from the broader Orange Liqueur role."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.2
+		]
+	},
+	"family/Herbal & Spice Liqueur": {
+		"description": [
+			"Herbal and spice-led liqueurs, in one family because many products sit on the boundary between the two. Select a type or bottle when the recipe specifies a particular profile."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Herbal Liqueur": {
+		"description": [
+			"Catch-all for herbal liqueurs without close substitutes, such as Bénédictine, Becherovka, and Chareau. Bottles in this type are rarely interchangeable, so recipes usually name the bottle."
+		],
+		"parent": [
+			"Herbal & Spice Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		],
+		"catchAll": [
+			null,
+			true
+		]
+	},
+	"type/Vanilla Liqueur": {
+		"description": [
+			"Vanilla-forward liqueurs such as Licor 43 and Galliano, often with citrus or other spice notes. Close enough to substitute in many recipes.",
+			"Vanilla liqueurs such as Giffard Vanille de Madagascar and Drillaud, as well as richer vanilla-led liqueurs such as Galliano and Licor 43 that add citrus, herbal, or spice notes. Close enough to substitute in many recipes."
+		],
+		"parent": [
+			"Herbal & Spice Liqueur"
+		],
+		"abvTypical": [
+			null,
+			0.2
+		]
+	},
+	"type/Spice Liqueur": {
+		"description": [
+			"Catch-all for spice-led liqueurs without close substitutes, such as chai spice liqueurs. Bottles in this type are rarely interchangeable, so recipes usually name the bottle."
+		],
+		"parent": [
+			"Herbal & Spice Liqueur"
+		],
+		"catchAll": [
+			null,
+			true
+		]
+	},
+	"family/Aperitif Wine": {
+		"description": [
+			"Aromatized wine aperitifs outside the vermouth styles."
+		],
+		"parent": [
+			"Fortified Wine"
+		]
+	},
+	"type/Bitter Aperitif Wine": {
+		"description": [
+			"Quinquina-style aromatized wine, such as Cocchi Americano and Lillet Blanc, with quinine or other bitter notes. Kept distinct from Blanc Vermouth."
+		],
+		"parent": [
+			"Aperitif Wine"
+		],
+		"abvTypical": [
+			null,
+			0.17
+		]
+	},
+	"type/Grapefruit Bitters": {
+		"description": [
+			"Concentrated grapefruit-flavored bitters used as cocktail seasoning."
+		],
+		"parent": [
+			"Bitters"
+		],
+		"abvTypical": [
+			null,
+			0.4
+		]
+	},
+	"type/Tiki Bitters": {
+		"description": [
+			"Spiced bitters in the tiki style, such as Bittermens ‘Elemakule; profiles vary by brand."
+		],
+		"parent": [
+			"Bitters"
+		],
+		"abvTypical": [
+			null,
+			0.44
+		]
+	},
+	"type/Specialty Bitters": {
+		"description": [
+			"Catch-all for one-of-a-kind bitters without close substitutes. Recipes usually name the bottle; use a flavor type such as Aromatic or Orange Bitters when one fits."
+		],
+		"parent": [
+			"Bitters"
+		],
+		"abvTypical": [
+			null,
+			0.44
+		],
+		"catchAll": [
+			null,
+			true
+		]
+	},
+	"ingredient/Salt": {
+		"description": [
+			"Salt for rims and seasoning. Saline Solution is its own note."
+		]
+	},
+	"ingredient/Saline Solution": {
+		"description": [
+			"20% saline: 20 g salt dissolved in 80 g water. Another strength is its own staple, such as Saline Solution (25%)."
+		]
+	},
+	"ingredient/Mint": {
+		"description": [
+			"Fresh mint leaves or sprigs for flavor and garnish."
+		]
+	},
+	"ingredient/Water": {
+		"description": [
+			"Still water, for recipes that call for it."
+		]
+	},
+	"ingredient/Heavy Cream": {
+		"description": [
+			"High-fat dairy cream for recipes that specify cream."
+		]
+	},
+	"ingredient/Milk": {
+		"description": [
+			"Dairy milk for recipes calling for milk. Add a separate staple where a substitution changes the recipe."
+		]
+	},
+	"ingredient/Cinnamon Sticks": {
+		"description": [
+			"Whole cinnamon sticks for garnish and infusions."
+		]
+	},
+	"ingredient/Whole Nutmeg": {
+		"description": [
+			"Whole nutmeg to grate over a drink."
+		]
+	},
+	"ingredient/Eggs": {
+		"description": [
+			"Eggs for whites and whole-egg drinks. Set availability when you buy them."
+		],
+		"provides": [
+			[
+				"Egg White",
+				"Whole Egg"
+			]
+		]
+	},
+	"type/Bonded Bourbon": {
+		"description": [
+			"Bottled-in-bond bourbon, at 100 US proof (50% ABV), for recipes calling for bonded bourbon. Its bottles also fill recipes calling for Bourbon."
+		],
+		"parent": [
+			"Bourbon"
+		],
+		"abvTypical": [
+			0.5
+		]
+	},
+	"type/Bonded Rye": {
+		"description": [
+			"Bottled-in-bond rye whiskey, at 100 US proof (50% ABV), for recipes calling for bonded rye. Its bottles also fill recipes calling for Rye Whiskey."
+		],
+		"parent": [
+			"Rye Whiskey"
+		],
+		"abvTypical": [
+			0.5
+		]
+	}
+}

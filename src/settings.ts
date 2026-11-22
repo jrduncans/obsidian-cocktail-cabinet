@@ -21,6 +21,12 @@ export interface CocktailCabinetSettings {
 	managedVersions: Record<string, string>;
 	/** The section rules last applied to resource notes (see `CabinetStore.syncSections`). */
 	sectionsVersion: string;
+	/** The catalog version starter notes were last checked against (see `CatalogSync`). */
+	catalogVersion: string;
+	/** Starter note fields kept in review: `<id>|<field>` → the catalog value kept against, as JSON. */
+	catalogKept: Record<string, string>;
+	/** Catalog entries the user chose not to add. */
+	catalogSkipped: string[];
 	/** The latest logs, oldest first, kept for **Undo last log**. */
 	recentLogs: LogRecord[];
 	/** Alcohol estimate: water added by chilling, as a share of the pour, by preparation. */
@@ -40,6 +46,9 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	viewVersions: {},
 	managedVersions: {},
 	sectionsVersion: '',
+	catalogVersion: '',
+	catalogKept: {},
+	catalogSkipped: [],
 	recentLogs: [],
 	dilution: { ...DEFAULT_DILUTION },
 	topMl: DEFAULT_TOP_ML,
@@ -55,6 +64,8 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 		...DEFAULT_SETTINGS,
 		viewVersions: {},
 		managedVersions: {},
+		catalogKept: {},
+		catalogSkipped: [],
 		recentLogs: [],
 		dilution: { ...DEFAULT_DILUTION },
 	};
@@ -78,6 +89,10 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	settings.viewVersions = record(saved.viewVersions);
 	settings.managedVersions = record(saved.managedVersions);
 	if (typeof saved.sectionsVersion === 'string') settings.sectionsVersion = saved.sectionsVersion;
+	if (typeof saved.catalogVersion === 'string') settings.catalogVersion = saved.catalogVersion;
+	settings.catalogKept = record(saved.catalogKept);
+	if (Array.isArray(saved.catalogSkipped))
+		settings.catalogSkipped = saved.catalogSkipped.filter((id): id is string => typeof id === 'string');
 	const dilution = saved.dilution;
 	if (dilution && typeof dilution === 'object') {
 		for (const key of Object.keys(DEFAULT_DILUTION) as Preparation[]) {

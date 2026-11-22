@@ -436,3 +436,16 @@
 	color: var(--text-faint);
 	font-style: italic;
 }
+
+.cocktail-cabinet-field-compare {
+	display: grid;
+	margin-bottom: var(--size-4-4);
+	grid-template-columns: max-content 1fr;
+	gap: var(--size-4-1) var(--size-4-3);
+	font-size: var(--font-smaller);
+	white-space: pre-wrap;
+}
+
+.cocktail-cabinet-field-label {
+	color: var(--text-muted);
+}

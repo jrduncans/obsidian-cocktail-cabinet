@@ -534,7 +534,7 @@ export class CabinetStore {
 		return parsed as Record<string, unknown>;
 	}
 
-	private async ensureFolder(path: string): Promise<void> {
+	async ensureFolder(path: string): Promise<void> {
 		const parts = path.split('/');
 		for (let depth = 1; depth <= parts.length; depth++) {
 			const folder = parts.slice(0, depth).join('/');

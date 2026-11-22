@@ -10,6 +10,7 @@ export default defineConfig(
 		'esbuild.config.mjs',
 		'scripts/test.mjs',
 		'scripts/catalog-docs.mjs',
+		'scripts/catalog-history.mjs',
 		'scripts/run-ts.mjs',
 		'tests/tsconfig.json',
 		'version-bump.mjs',

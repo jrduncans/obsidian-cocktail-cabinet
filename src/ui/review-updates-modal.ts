@@ -2,13 +2,19 @@ import { Modal, Notice, Setting } from 'obsidian';
 import { lineDiff } from '../core/managed';
 import type CocktailCabinetPlugin from '../main';
 import type { ManagedUpdate } from '../vault/cabinet-store';
+import { FIELD_LABELS } from '../catalog/fields';
+import type { FieldValue } from '../catalog/fields';
+import { keptKey, keptValue } from '../vault/catalog-sync';
+import type { CatalogAddition, CatalogFieldUpdate } from '../vault/catalog-sync';
 
 /** Unchanged lines shown around each difference; longer runs are folded. */
 const CONTEXT = 2;
 
 /**
- * **Review cabinet updates**: managed notes you've edited that have a newer version. For each, compare,
- * then **Use new version** (optionally saving yours as a copy), **Keep mine**, or leave it for later.
+ * **Review cabinet updates**: managed notes you've edited that have a newer version (compare, then **Use
+ * new version**, optionally saving yours as a copy, or **Keep mine**); starter note fields you've changed
+ * where the catalog has something new (**Use catalog’s** or **Keep mine**); and catalog entries the
+ * cabinet lacks (**Add** or **Skip**). Anything left is offered again next time.
  */
 export class ReviewUpdatesModal extends Modal {
 	private keepCopy = true;
@@ -34,8 +40,11 @@ export class ReviewUpdatesModal extends Modal {
 		this.contentEl.empty();
 		this.contentEl.createEl('p', { text: 'Checking…' });
 		let updates: ManagedUpdate[];
+		let fields: CatalogFieldUpdate[];
+		let additions: CatalogAddition[];
 		try {
 			updates = await this.plugin.store.managedUpdates();
+			({ review: fields, additions } = await this.plugin.catalog.plan());
 		} catch (error) {
 			this.contentEl.empty();
 			this.contentEl.createEl('p', { text: error instanceof Error ? error.message : String(error) });
@@ -44,18 +53,92 @@ export class ReviewUpdatesModal extends Modal {
 		if (this.closed) return;
 		this.contentEl.empty();
 		if (notice) this.contentEl.createEl('p', { text: notice, cls: 'cocktail-cabinet-review-notice' });
-		if (!updates.length) {
-			this.contentEl.createEl('p', { text: 'Every cabinet note you haven’t taken over is current.' });
+		if (!updates.length && !fields.length && !additions.length) {
+			this.contentEl.createEl('p', { text: 'Your cabinet notes are current.' });
 			return;
 		}
 		this.contentEl.createEl('p', {
-			text: 'You’ve edited these notes, and this release has a new version of each. Compare, then choose which to keep, or close this to decide later.',
+			text: 'This release changes things you’ve edited. Choose which to keep, or close this to decide later.',
 		});
+		if (updates.length) {
+			new Setting(this.contentEl).setName('Cabinet notes').setHeading();
+			new Setting(this.contentEl)
+				.setName('Save my version as a copy')
+				.setDesc('Before switching, save your version beside the note as “(your version)”.')
+				.addToggle((toggle) => toggle.setValue(this.keepCopy).onChange((value) => (this.keepCopy = value)));
+			for (const update of updates) this.renderUpdate(update);
+		}
+		if (fields.length) {
+			new Setting(this.contentEl)
+				.setName('Starter notes')
+				.setDesc('You changed these, and the catalog has a new version.')
+				.setHeading();
+			for (const field of fields) this.renderField(field);
+		}
+		if (additions.length) {
+			new Setting(this.contentEl)
+				.setName('New in the catalog')
+				.setDesc('Starter notes your cabinet doesn’t have yet.')
+				.setHeading();
+			for (const addition of additions) this.renderAddition(addition);
+		}
+	}
+
+	private renderField(update: CatalogFieldUpdate) {
+		const section = this.contentEl.createDiv({ cls: 'cocktail-cabinet-review' });
+		const setting = new Setting(section).setName(`${update.name}: ${FIELD_LABELS[update.field]}`);
+		setting.addButton((button) =>
+			button
+				.setButtonText('Use catalog’s')
+				.setCta()
+				.onClick(() =>
+					this.act(async () => {
+						const changed = await this.plugin.catalog.apply([update]);
+						if (!changed.length) throw new Error(`${update.name} changed after review opened.`);
+						return `${update.name}: ${FIELD_LABELS[update.field].toLowerCase()} updated.`;
+					}),
+				),
+		);
+		setting.addButton((button) =>
+			button.setButtonText('Keep mine').onClick(() =>
+				this.act(async () => {
+					this.plugin.settings.catalogKept[keptKey(update)] = keptValue(update);
+					await this.plugin.saveSettings();
+					return `${update.name}: keeping your ${FIELD_LABELS[update.field].toLowerCase()}.`;
+				}),
+			),
+		);
+		const compare = section.createDiv({ cls: 'cocktail-cabinet-field-compare' });
+		compare.createDiv({ text: 'Yours', cls: 'cocktail-cabinet-field-label' });
+		compare.createDiv({ text: show(update.yours), cls: 'cocktail-cabinet-diff-yours' });
+		compare.createDiv({ text: 'Catalog', cls: 'cocktail-cabinet-field-label' });
+		compare.createDiv({ text: show(update.next), cls: 'cocktail-cabinet-diff-new' });
+	}
+
+	private renderAddition(addition: CatalogAddition) {
 		new Setting(this.contentEl)
-			.setName('Save my version as a copy')
-			.setDesc('Before switching, save your version beside the note as “(your version)”.')
-			.addToggle((toggle) => toggle.setValue(this.keepCopy).onChange((value) => (this.keepCopy = value)));
-		for (const update of updates) this.renderUpdate(update);
+			.setName(addition.name)
+			.setDesc(addition.path)
+			.addButton((button) =>
+				button
+					.setButtonText('Add')
+					.setCta()
+					.onClick(() =>
+						this.act(async () => {
+							await this.plugin.catalog.add(addition);
+							return `Added ${addition.name}.`;
+						}),
+					),
+			)
+			.addButton((button) =>
+				button.setButtonText('Skip').onClick(() =>
+					this.act(async () => {
+						this.plugin.settings.catalogSkipped.push(addition.id);
+						await this.plugin.saveSettings();
+						return `Skipped ${addition.name}; it won’t be offered again.`;
+					}),
+				),
+			);
 	}
 
 	private renderUpdate(update: ManagedUpdate) {
@@ -124,4 +207,11 @@ export class ReviewUpdatesModal extends Modal {
 			}
 		})();
 	}
+}
+
+function show(value: FieldValue): string {
+	if (value === null) return '(none)';
+	if (Array.isArray(value)) return value.join(', ');
+	if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+	return String(value);
 }

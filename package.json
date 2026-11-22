@@ -9,8 +9,8 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint .",
-		"test": "node scripts/test.mjs && node scripts/catalog-docs.mjs --check",
-		"catalog:docs": "node scripts/catalog-docs.mjs",
+		"test": "node scripts/test.mjs && node scripts/catalog-docs.mjs --check && node scripts/catalog-history.mjs --check",
+		"catalog:docs": "node scripts/catalog-docs.mjs && node scripts/catalog-history.mjs",
 		"migrate:knowledge": "node scripts/run-ts.mjs scripts/migrate-knowledge.ts",
 		"prepass:knowledge": "node scripts/run-ts.mjs scripts/prepass-knowledge.ts",
 		"install:vault": "node scripts/run-ts.mjs scripts/install-vault.ts"

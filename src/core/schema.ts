@@ -82,7 +82,11 @@ export interface PlannedFile {
 
 /** Root-independent FNV-1a fingerprint of generated content, so versions match across cabinet folders. */
 export function contentFingerprint(content: string, root: string): string {
-	const text = content.replace(/\r\n/g, '\n').split(root).join('{root}');
+	return textFingerprint(content.replace(/\r\n/g, '\n').split(root).join('{root}'));
+}
+
+/** FNV-1a with the length: a short, stable fingerprint of some text. */
+export function textFingerprint(text: string): string {
 	let hash = 0x811c9dc5;
 	for (let index = 0; index < text.length; index++) {
 		hash ^= text.charCodeAt(index);

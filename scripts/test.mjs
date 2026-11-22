@@ -18,6 +18,7 @@ try {
 		'logging.test',
 		'subtypes.test',
 		'availability.test',
+		'catalog-sync.test',
 		'alcohol-estimate.test',
 		'one-off.test',
 		'unlinked-lines.test',
