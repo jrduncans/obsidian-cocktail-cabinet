@@ -7,6 +7,8 @@ import { isLogRecord, KEPT_LOGS } from './core/log-undo';
 import type { LogRecord } from './core/log-undo';
 import { DEFAULT_DILUTION, DEFAULT_TOP_ML } from './core/alcohol-estimate';
 import type { Preparation } from './core/alcohol-estimate';
+import { DEFAULT_VOLUME_UNIT } from './core/recipe-amount';
+import type { VolumeUnit } from './core/recipe-amount';
 import { SetupModal } from './ui/setup-modal';
 
 export interface CocktailCabinetSettings {
@@ -37,6 +39,8 @@ export interface CocktailCabinetSettings {
 	drinkUnit: 'us' | 'uk';
 	/** Logging adds each drink's alcohol estimate to the daily note: a running total and the drinks on its line. */
 	dailyAlcohol: boolean;
+	/** Which stated amount logging and estimates use when a recipe line gives both US fluid ounces and mL. */
+	volumeUnit: VolumeUnit;
 }
 
 export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
@@ -54,6 +58,7 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	topMl: DEFAULT_TOP_ML,
 	drinkUnit: 'us',
 	dailyAlcohol: false,
+	volumeUnit: DEFAULT_VOLUME_UNIT,
 };
 
 const positive = (value: unknown, max = Infinity): value is number =>
@@ -104,6 +109,7 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	if (positive(saved.topMl, 1000)) settings.topMl = saved.topMl;
 	if (saved.drinkUnit === 'uk') settings.drinkUnit = 'uk';
 	if (saved.dailyAlcohol === true) settings.dailyAlcohol = true;
+	if (saved.volumeUnit === 'oz' || saved.volumeUnit === 'ml') settings.volumeUnit = saved.volumeUnit;
 	if (Array.isArray(saved.recentLogs)) settings.recentLogs = saved.recentLogs.filter(isLogRecord).slice(-KEPT_LOGS);
 	return settings;
 }
@@ -195,6 +201,22 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 				name: 'Running low: mL',
 				desc: 'For bottles without a size, and other stock tracked in mL, running low means at or under this many mL.',
 				render: (setting: Setting) => this.threshold(setting, 'lowStockMl', Infinity),
+			},
+			{
+				name: 'Amounts given in oz and mL',
+				desc: 'When a recipe line gives both, as in “1 oz (30 ml)” or “1 oz / 30 ml”, logging, availability, and alcohol estimates use this one. Bottles stay in mL.',
+				render: (setting: Setting) => {
+					setting.addDropdown((dropdown) =>
+						dropdown
+							.addOptions({ oz: 'US fluid ounces', ml: 'mL' })
+							.setValue(this.plugin.settings.volumeUnit)
+							.onChange(async (value) => {
+								this.plugin.settings.volumeUnit = value === 'ml' ? 'ml' : 'oz';
+								await this.plugin.saveSettings();
+								this.plugin.recipes.refresh();
+							}),
+					);
+				},
 			},
 			{
 				name: 'Standard drink',

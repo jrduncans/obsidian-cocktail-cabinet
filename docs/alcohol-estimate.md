@@ -29,14 +29,14 @@ A **Lower alcohol** view sorts by alcohol first, with ABV beside it. Dilution ch
 
 The logging parser already turns a line into a volume. The estimate reuses it and adds:
 
-| Line                                     | Volume                                                      | Notes                                                                                 |
-| ---------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Measured (oz, mL, cL, barspoon, …)       | As parsed                                                   | The stated mL wins in `2 oz (60 ml)`, as in logging.                                  |
-| Dash or drop                             | A dash is assumed at about 0.9 mL (1/32 oz); a drop 0.05 mL | Negligible alcohol, but bitters are 35–45%, so they're counted rather than dropped.   |
-| Range (`1–2 oz`)                         | Midpoint                                                    | Marks the estimate Rough.                                                             |
-| Top or fill                              | An assumed pour, a setting (60 mL to start)                 | Marks the estimate Rough. Decided over bounds, which were harder to read.             |
-| Rinse, spritz, mist, peel oil, garnish   | 0                                                           | Too small to matter.                                                                  |
-| Several links on one line (alternatives) | First link's ABV                                            | Alternatives are usually close; flagged when their ABVs differ by more than 5 points. |
+| Line                                     | Volume                                                      | Notes                                                                                                              |
+| ---------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Measured (oz, mL, cL, barspoon, …)       | As parsed                                                   | In `2 oz (60 ml)` or `2 oz / 60 ml`, the `volumeUnit` setting picks the amount (ounces by default), as in logging. |
+| Dash or drop                             | A dash is assumed at about 0.9 mL (1/32 oz); a drop 0.05 mL | Negligible alcohol, but bitters are 35–45%, so they're counted rather than dropped.                                |
+| Range (`1–2 oz`)                         | Midpoint                                                    | Marks the estimate Rough.                                                                                          |
+| Top or fill                              | An assumed pour, a setting (60 mL to start)                 | Marks the estimate Rough. Decided over bounds, which were harder to read.                                          |
+| Rinse, spritz, mist, peel oil, garnish   | 0                                                           | Too small to matter.                                                                                               |
+| Several links on one line (alternatives) | First link's ABV                                            | Alternatives are usually close; flagged when their ABVs differ by more than 5 points.                              |
 
 ## Where each line's ABV comes from
 

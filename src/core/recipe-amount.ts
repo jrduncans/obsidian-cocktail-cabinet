@@ -16,14 +16,44 @@ const UNIT =
 	'(?:fl\\.?\\s*oz\\.?|oz\\.?|ounces?|ml|millilit(?:er|re)s?|cl|centilit(?:er|re)s?|dash(?:es)?|drops?|barspoons?|teaspoons?|tablespoons?|tsp\\.?|tbsp\\.?|parts?|sprigs?|leaf|leaves|slices?|wedges?|pieces?)';
 const PREFIX = new RegExp(`^(${NUMBER}(?:\\s*[-–—]\\s*${NUMBER})?\\s*${UNIT}(?:\\s*\\([^)]*\\))?)\\s+(.+)$`, 'i');
 
+/** An echoed volume some sources add after the amount, as in "1 oz. / 30 ml." or "1 oz · 30 ml". */
+const ECHO = /^([/·]\s*\d+(?:[.,]\d+)?\s*(?:ml|cl|oz)\.?)\s+(.+)$/i;
+
+/** Split an echoed volume off the start of an ingredient's text: `· 30 ml pineapple rum` → its lead and wording. */
+export function splitEcho(text: string): { lead: string; wording: string } {
+	const match = text.trim().match(ECHO);
+	return match ? { lead: match[1]!, wording: match[2]!.trim() } : { lead: '', wording: text.trim() };
+}
+
 /** Separate familiar leading amounts without rewriting the source text. */
 export function splitIngredient(line: string): { amount: string; text: string } {
 	const match = line.trim().match(PREFIX) ?? line.trim().match(/^(pinch of)\s+(.+)$/i);
 	return match ? { amount: match[1]!, text: match[2]! } : { amount: '', text: line.trim() };
 }
 
-/** Interpret a precise volume (barspoons and teaspoons count as 1 US teaspoon, tablespoons as 3); for parenthetical volume equivalents prefer the stated mL. */
-export function recipeVolumeMl(amount: string): number | null {
+/** Which stated amount wins when a recipe gives both US fluid ounces and mL. */
+export type VolumeUnit = 'oz' | 'ml';
+export const DEFAULT_VOLUME_UNIT: VolumeUnit = 'oz';
+
+/**
+ * The mL an ingredient line pours, from its amount and any echoed volume after it: `1 oz (30 ml) gin`,
+ * `30 ml (1 oz) gin`, `1 oz. / 30 ml. gin`, and `1 oz · 30 ml gin` all read the same, by `prefer`.
+ */
+export function lineVolumeMl(line: string, prefer: VolumeUnit = DEFAULT_VOLUME_UNIT): number | null {
+	const { amount, text } = splitIngredient(line);
+	if (!amount) return null;
+	const stated = recipeVolumeMl(amount, prefer);
+	const { lead } = splitEcho(text);
+	if (!lead || /[()]/.test(amount)) return stated;
+	const echoed = lead.replace(/^[/·]\s*/, '').replace(/\.$/, '');
+	return recipeVolumeMl(`${amount} (${echoed})`, prefer) ?? stated;
+}
+
+/**
+ * Interpret a precise volume (barspoons and teaspoons count as 1 US teaspoon, tablespoons as 3). For a
+ * parenthetical pair of US fluid ounces and mL, `prefer` picks which stated amount wins, in either order.
+ */
+export function recipeVolumeMl(amount: string, prefer: VolumeUnit = DEFAULT_VOLUME_UNIT): number | null {
 	const normalized = amount.replace(/[¼½¾⅓⅔⅛⅜⅝⅞]/g, (character) => ` ${FRACTIONS[character]}`).trim();
 	const explicit = normalized.match(
 		new RegExp(
@@ -37,8 +67,11 @@ export function recipeVolumeMl(amount: string): number | null {
 		const primary = recipeVolumeMl(equivalent[1]!.trim());
 		const secondary = recipeVolumeMl(equivalent[2]!.trim());
 		const isMl = (value: string) => /(?:ml|millilit(?:er|re)s?)$/i.test(value.trim());
-		if (primary !== null && secondary !== null && isMl(equivalent[1]!) !== isMl(equivalent[2]!)) {
-			return isMl(equivalent[1]!) ? primary : secondary;
+		const isOz = (value: string) => /(?:oz\.?|ounces?)$/i.test(value.trim());
+		const [first, second] = [equivalent[1]!, equivalent[2]!];
+		if (primary !== null && secondary !== null && isMl(first) !== isMl(second)) {
+			if (isOz(first) || isOz(second)) return isMl(first) === (prefer === 'ml') ? primary : secondary;
+			return isMl(first) ? primary : secondary;
 		}
 	}
 	const match = normalized.match(

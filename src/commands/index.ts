@@ -32,13 +32,18 @@ import { ingredientLines } from '../core/unlinked-lines';
 import { ReviewUpdatesModal } from '../ui/review-updates-modal';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
-	const logger = new LoggingStore(plugin.app, plugin.store, {
-		load: () => plugin.settings.recentLogs,
-		save: async (records) => {
-			plugin.settings.recentLogs = records;
-			await plugin.saveSettings();
+	const logger = new LoggingStore(
+		plugin.app,
+		plugin.store,
+		{
+			load: () => plugin.settings.recentLogs,
+			save: async (records) => {
+				plugin.settings.recentLogs = records;
+				await plugin.saveSettings();
+			},
 		},
-	});
+		() => plugin.settings.volumeUnit,
+	);
 	plugin.addCommand({
 		id: 'undo-last-log',
 		name: 'Undo last log',

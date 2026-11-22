@@ -1,4 +1,5 @@
-import { recipeVolumeMl } from './recipe-amount';
+import { DEFAULT_VOLUME_UNIT, recipeVolumeMl } from './recipe-amount';
+import type { VolumeUnit } from './recipe-amount';
 import { PROP } from './schema';
 import { SKIP_LINE } from './logging-lines';
 import type { LoggingLines, SkippedLine } from './logging-lines';
@@ -24,11 +25,14 @@ export interface LoggingPlan extends DrawdownPlan {
 }
 
 /** A part's amount per serving: mL or oz like a recipe, a bare number as mL, or “rest” to finish what's open. */
-export function partAmount(amount: string): { ml: number; rest?: boolean } | null {
+export function partAmount(
+	amount: string,
+	volumeUnit: VolumeUnit = DEFAULT_VOLUME_UNIT,
+): { ml: number; rest?: boolean } | null {
 	const text = amount.trim();
 	if (/^rest$/i.test(text)) return { ml: 0, rest: true };
 	const bare = /^\d+(?:[.,]\d+)?$|^[.,]\d+$/.test(text) ? Number(text.replace(',', '.')) : null;
-	const ml = bare ?? recipeVolumeMl(text);
+	const ml = bare ?? recipeVolumeMl(text, volumeUnit);
 	return ml !== null && Number.isFinite(ml) && ml > 0 ? { ml } : null;
 }
 
@@ -37,6 +41,7 @@ export function planLogging(
 	sources: readonly StockSource[],
 	selections: ReadonlyMap<number, LineSelection>,
 	servings: number,
+	volumeUnit: VolumeUnit = DEFAULT_VOLUME_UNIT,
 ): LoggingPlan {
 	const pours: SelectedPour[] = [];
 	const errors: string[] = [];
@@ -66,7 +71,7 @@ export function planLogging(
 				pours.push({ path: source.note.path, ml: line.ml });
 				continue;
 			}
-			const amount = partAmount(part.amount);
+			const amount = partAmount(part.amount, volumeUnit);
 			if (amount) pours.push({ path: source.note.path, ...amount });
 			else errors.push(`${source.note.name}: Enter mL, oz, or “rest”.`);
 		}
