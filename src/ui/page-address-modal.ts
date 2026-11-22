@@ -28,7 +28,9 @@ export class PageAddressModal extends Modal {
 				text.setPlaceholder('Such as punchdrink.com/recipes/…').onChange((value) => {
 					address = value;
 				});
-				input.type = 'url';
+				// A text field, which Obsidian styles like every other; inputmode still brings up a URL keyboard.
+				input.setAttribute('inputmode', 'url');
+				input.setAttribute('autocapitalize', 'off');
 				input.addEventListener('keydown', (event) => {
 					if (event.key === 'Enter') void submit();
 				});
