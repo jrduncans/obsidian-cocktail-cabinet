@@ -40,7 +40,7 @@ Sampled on 2026-11-22, what the top sites publish:
 ### Fetching
 
 - `requestUrl` (works on mobile and isn't subject to CORS), once, for the URL given. Nothing else is fetched: no images, no linked pages, no search, no second try at another URL.
-- Network use is new for the plugin. It happens only when you paste a URL and select **Read recipe**, sends nothing but that request, and is described in the README, as Obsidian's developer policies require. No setting gates it ([decision 1](#decisions)).
+- Network use is new for the plugin. It happens only when you paste a URL and select **Read recipe** or **Read page**, sends nothing but that request, and is described in the README, as Obsidian's developer policies require. No setting gates it ([decision 1](#decisions)).
 - On failure (an error status, a login page, nothing recipe-like found) the review says so and keeps the URL as the source: "Couldn't read a recipe from this page. Copy the recipe text from it and paste it below." Nothing is filled from elsewhere.
 
 ### Reading the page

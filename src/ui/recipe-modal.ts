@@ -66,6 +66,21 @@ export class RecipeModal extends CabinetForm {
 		});
 	}
 
+	/** Fill the form from the page in Source; if it can't be read, the paste dialog opens with the reason. */
+	private async readSource(source: string, button: ButtonComponent) {
+		const url = recipeUrl(source);
+		if (!url) return;
+		let text = '';
+		button.setDisabled(true).setButtonText('Reading page…');
+		try {
+			const error = await this.readPage(url, (value) => (text = value));
+			if (error)
+				new PasteRecipeModal(this.app, text, (value, setText) => this.read(value, setText), error).open();
+		} finally {
+			button.setDisabled(false).setButtonText('Read page');
+		}
+	}
+
 	/** Read pasted text or a page into the form; returns a reason when nothing could be read. */
 	private async read(text: string, setText: (value: string) => void): Promise<string | void> {
 		if (!text.trim()) return 'Paste recipe text or a recipe page’s address first.';
@@ -186,9 +201,21 @@ export class RecipeModal extends CabinetForm {
 		}).setClass('cocktail-cabinet-name');
 		const duplicatesEl = nameRow.descEl.createDiv({ cls: 'cocktail-cabinet-warning' });
 		this.showDuplicates(duplicatesEl, recipe.name);
-		this.text('Source (optional)', recipe.source, (value) => {
+		const sourceRow = this.text('Source (optional)', recipe.source, (value) => {
 			recipe.source = value;
+			showReadPage();
 		}).setClass('cocktail-cabinet-name');
+		// A new recipe's Source holding a web address can fill the form from that page.
+		const canReadPage = !this.snapshot && !this.prefill;
+		let readPageButton: ButtonComponent | undefined;
+		if (canReadPage)
+			sourceRow.addButton((button) => {
+				readPageButton = button
+					.setButtonText('Read page')
+					.onClick(() => void this.readSource(recipe.source, button));
+			});
+		const showReadPage = () => readPageButton?.buttonEl.toggle(!!recipeUrl(recipe.source));
+		showReadPage();
 		let rating = ratingText(metadata.rating);
 		this.select('Rating', ratingOptions(metadata.rating), rating, (value) => {
 			rating = value;

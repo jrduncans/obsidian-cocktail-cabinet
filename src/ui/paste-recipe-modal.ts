@@ -1,4 +1,5 @@
 import { Modal, Setting } from 'obsidian';
+import { recipeUrl } from '../core/web-recipe';
 import type { App, ButtonComponent } from 'obsidian';
 
 /**
@@ -12,6 +13,8 @@ export class PasteRecipeModal extends Modal {
 		app: App,
 		private text: string,
 		private read: (text: string, setText: (value: string) => void) => Promise<string | void>,
+		/** A reason to show on opening, such as a page from the Source field that couldn't be read. */
+		private error = '',
 	) {
 		super(app);
 	}
@@ -20,16 +23,34 @@ export class PasteRecipeModal extends Modal {
 		this.titleEl.setText('Paste a recipe');
 		this.modalEl.addClass('cocktail-cabinet-modal');
 		this.contentEl.addClass('cocktail-cabinet-form');
+		let address = '';
+		const addressRow = new Setting(this.contentEl)
+			.setName('Recipe page address')
+			.setDesc('The page is fetched and read, with nothing filled in from anywhere else.')
+			.addText((text) => {
+				text.setPlaceholder('Such as punchdrink.com/recipes/…').onChange((value) => {
+					address = value;
+				});
+				text.inputEl.type = 'url';
+				text.inputEl.addEventListener('keydown', (event) => {
+					if (event.key === 'Enter') void submit();
+				});
+			})
+			.setClass('cocktail-cabinet-name');
 		this.contentEl.createEl('p', {
 			cls: 'setting-item-description',
-			text: 'Paste ingredient lines and preparation text copied from a recipe; headings and bullets are optional. Or paste the address of a recipe page on its own: the page is fetched and read, with nothing filled in from anywhere else. Reading replaces what’s in the form.',
+			text: 'Or paste ingredient lines and preparation text copied from a recipe; headings and bullets are optional. Reading replaces what’s in the form.',
 		});
 		this.textArea = this.contentEl.createEl('textarea', {
 			cls: 'cocktail-cabinet-paste-text',
 			attr: { rows: 10, 'aria-label': 'Recipe text or address' },
 		});
 		this.textArea.value = this.text;
-		const errorEl = this.contentEl.createEl('p', { cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
+		const errorEl = this.contentEl.createEl('p', {
+			cls: 'cocktail-cabinet-error',
+			text: this.error,
+			attr: { role: 'alert' },
+		});
 		let readButton!: ButtonComponent;
 		const setText = (value: string) => {
 			this.textArea.value = value;
@@ -42,19 +63,28 @@ export class PasteRecipeModal extends Modal {
 				(readButton = button)
 					.setButtonText('Read recipe')
 					.setCta()
-					.onClick(async () => {
-						errorEl.empty();
-						readButton.setDisabled(true);
-						try {
-							const error = await this.read(this.textArea.value, setText);
-							if (error) errorEl.setText(error);
-							else this.close();
-						} finally {
-							readButton.setDisabled(false);
-						}
-					}),
+					.onClick(() => void submit()),
 			);
-		window.setTimeout(() => this.textArea.focus(), 0);
+		// An address, when given, wins over the text; one without its scheme gets https://.
+		const submit = async () => {
+			errorEl.empty();
+			const typed = address.trim();
+			const page = typed && (recipeUrl(typed) ?? recipeUrl(`https://${typed}`));
+			if (typed && !page) {
+				errorEl.setText('That isn’t a web page’s address.');
+				return;
+			}
+			readButton.setDisabled(true).setButtonText(page ? 'Reading page…' : 'Read recipe');
+			try {
+				const error = await this.read(page ? page.href : this.textArea.value, setText);
+				if (error) errorEl.setText(error);
+				else this.close();
+			} finally {
+				readButton.setDisabled(false).setButtonText('Read recipe');
+			}
+		};
+		const first = this.textArea.value ? this.textArea : addressRow.controlEl.querySelector('input');
+		window.setTimeout(() => first?.focus(), 0);
 	}
 
 	onClose() {

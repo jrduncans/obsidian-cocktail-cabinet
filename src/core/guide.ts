@@ -93,7 +93,7 @@ ${view('Recipes')} lists your recipes; its **Latest** tab shows the newest first
 
 ## Adding recipes
 
-- **Create a cocktail recipe**: paste a recipe copied from a website, or the page's address on its own, with **Paste a recipe…** and select **Read recipe**, or fill in the form by hand. A page is fetched and read; nothing is filled in from anywhere else, and **Original text** shows what was read. Pages behind a sign-in can't be read: copy the text instead. Check the name, source, ingredients, method, rating, and tags before saving. Amounts and wording are kept as written.
+- **Create a cocktail recipe**: paste a recipe copied from a website, or the page's address on its own, with **Paste a recipe…** (or a page's address in **Source**, then **Read page**), or fill in the form by hand. A page is fetched and read; nothing is filled in from anywhere else, and **Original text** shows what was read. Pages behind a sign-in can't be read: copy the text instead. Check the name, source, ingredients, method, rating, and tags before saving. Amounts and wording are kept as written.
 - **Enhance as cocktail recipe**: turn an existing note into a cabinet recipe, keeping its properties. A note outside the cabinet moves into **Recipes**.
 
 A recipe has **Ingredients**, **Method**, **Description**, and optionally **Tasting Notes** sections. Its rating is a whole number from 1 to 5.
