@@ -1,5 +1,4 @@
-import { ButtonComponent, Menu, Notice, Setting, setIcon } from 'obsidian';
-import type { TextComponent } from 'obsidian';
+import { ButtonComponent, ExtraButtonComponent, Menu, Notice, Setting, TextComponent, setIcon } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
@@ -32,13 +31,14 @@ export class RecipeIngredients {
 	/** Each saved row's values when the form opened. */
 	private loaded = new Map<IngredientRow, { amount: string; text: string; note?: string }>();
 	private rowsEl: HTMLElement;
+	private rowData = new Map<HTMLElement, IngredientRow>();
 	private notes: CabinetNote[];
 
 	constructor(
 		private plugin: CocktailCabinetPlugin,
 		container: HTMLElement,
 		initial: IngredientRow[],
-		description = 'Link to the specificity the recipe calls for; start typing an ingredient to find one. Plain text is fine for garnishes or ingredients you do not want to catalog. Links help you find related recipes and log the ingredients you use.',
+		description = 'Type to find an ingredient note to link, at the specificity the recipe calls for. Plain text is fine for garnishes. The ⋯ menu searches, creates, unlinks, and moves an ingredient.',
 		options: IngredientOptions = {},
 	) {
 		this.notes = recipeIngredientNotes(plugin.store.notes());
@@ -61,7 +61,7 @@ export class RecipeIngredients {
 		for (const data of initial.length ? initial : [{ amount: '', text: '' }]) this.add(data);
 		// Left-aligned and joined to the list, so it reads as part of the list rather than a form action.
 		new Setting(container).setClass('cocktail-cabinet-add-ingredient').addButton((button) => {
-			button.setButtonText('Add ingredient').onClick(() => this.add({ amount: '', text: '' }));
+			button.setButtonText('Add ingredient').onClick(() => this.add({ amount: '', text: '' }).focus());
 			// setButtonText replaces the content, so the icon goes in afterward.
 			setIcon(button.buttonEl.createSpan({ cls: 'cocktail-cabinet-button-icon', prepend: true }), 'plus');
 		});
@@ -107,31 +107,43 @@ export class RecipeIngredients {
 		if (remembered.length) new Notice(`Remembered ${remembered.join(', ')}.`);
 	}
 
-	private add(data: IngredientRow) {
-		this.rows.push(data);
+	/** Add a row, after `after` or at the end; returns its amount field. */
+	private add(data: IngredientRow, after?: HTMLElement): HTMLInputElement {
+		const index = after ? this.rows.indexOf(this.rowData.get(after)!) + 1 : this.rows.length;
+		this.rows.splice(index, 0, data);
 		if (data.original !== undefined)
 			this.loaded.set(data, { amount: data.amount, text: data.text, note: data.note?.path });
-		const wrapper = this.rowsEl.createDiv({ cls: 'cocktail-cabinet-ingredient' });
-		const fields = new Setting(wrapper).setName('Ingredient');
+		const wrapper = createDiv({ cls: 'cocktail-cabinet-ingredient' });
+		if (after) after.after(wrapper);
+		else this.rowsEl.appendChild(wrapper);
+		this.rowData.set(wrapper, data);
+		const line = wrapper.createDiv({ cls: 'cocktail-cabinet-ingredient-line' });
 		const status = wrapper.createEl('p', {
 			cls: 'cocktail-cabinet-ingredient-status',
 			attr: { 'aria-live': 'polite' },
 		});
 		const suggestions = wrapper.createDiv({ cls: 'cocktail-cabinet-suggestions' });
 		const rememberEl = wrapper.createDiv({ cls: 'cocktail-cabinet-remember' });
-		const actions = new Setting(wrapper).setClass('cocktail-cabinet-ingredient-actions');
 		let keepText = false;
-		let nameInput!: TextComponent;
+		const amountInput = new TextComponent(line);
+		const nameInput = new TextComponent(line);
 		const describe = () => {
 			const unit = this.plugin.settings.volumeUnit;
-			const ml = lineVolumeMl(`${data.amount} x`, unit);
-			const amount =
+			const ml = data.amount.trim() ? lineVolumeMl(`${data.amount} x`, unit) : null;
+			// A recognized volume goes in the amount's tooltip; only an amount logging can't read needs a line.
+			amountInput.inputEl.title =
 				ml === null
-					? 'Amount kept as written; review it when logging.'
-					: `Volume recognized: ${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) && (unit === 'oz' || !/ml|millilit(?:er|re)s?/i.test(data.amount)) ? ' (US fl oz)' : ''}.`;
-			status.setText(
-				`${data.note ? `Linked to ${data.note.kind}: ${data.note.name}${data.remembered ? ', from a remembered wording' : ''}.` : /\[\[/.test(data.text) ? 'Existing Markdown links kept as written.' : 'Plain text; no cabinet link.'} ${amount}`,
-			);
+					? ''
+					: `${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) && (unit === 'oz' || !/ml|millilit(?:er|re)s?/i.test(data.amount)) ? ' (US fl oz)' : ''}`;
+			const parts = [
+				data.note
+					? `Linked to ${data.note.kind}: ${data.note.name}${data.remembered ? ', from a remembered wording' : ''}.`
+					: /\[\[/.test(data.text)
+						? 'Existing Markdown links kept as written.'
+						: '',
+				data.amount.trim() && ml === null ? 'Amount kept as written; review it when logging.' : '',
+			];
+			status.setText(parts.filter(Boolean).join(' '));
 		};
 		/** Offer to remember the wording for a note linked in this form, unless it's already recognized. */
 		const offerRemember = () => {
@@ -160,14 +172,23 @@ export class RecipeIngredients {
 			keepText = false;
 			refresh();
 		};
+		const unlink = () => {
+			data.note = undefined;
+			data.remembered = false;
+			data.text = plainIngredient(data.text);
+			nameInput.setValue(data.text);
+			keepText = true;
+			refresh();
+		};
 		const refresh = () => {
 			describe();
 			offerRemember();
 			suggestions.empty();
+			wrapper.toggleClass('is-linked', !!data.note);
 			if (data.note || keepText) return;
 			const candidates = suggestIngredient(data.text, this.notes);
 			if (!candidates.length) return;
-			suggestions.createSpan({ text: 'Suggested links:' });
+			suggestions.createSpan({ text: 'Link to:' });
 			for (const note of candidates) {
 				new ButtonComponent(suggestions)
 					.setButtonText(`${note.name} · ${note.kind}`)
@@ -179,67 +200,90 @@ export class RecipeIngredients {
 				refresh();
 			});
 		};
-		fields.addText((text) => {
-			text.setValue(data.amount)
-				.setPlaceholder('Amount, such as 1½ oz')
-				.onChange((value) => {
-					data.amount = value;
-					describe();
-				});
-			text.inputEl.setAttribute('aria-label', 'Ingredient amount');
-			text.inputEl.addClass('cocktail-cabinet-amount-input');
-		});
-		fields.addText((text) => {
-			nameInput = text
-				.setValue(data.text)
-				.setPlaceholder('Ingredient or garnish')
-				.onChange((value) => {
-					data.text = value;
-					data.note = undefined;
-					data.remembered = false;
-					keepText = false;
-					refresh();
-				});
-			text.inputEl.setAttribute('aria-label', 'Ingredient name');
-			text.inputEl.addClass('cocktail-cabinet-ingredient-input');
-			// What was typed is only a search, so the link shows the note's name.
-			new IngredientSuggest(
-				this.plugin.app,
-				text.inputEl,
-				() => this.notes,
-				(note) => choose(note, note.name),
-			);
-		});
-		actions.addButton((button) =>
-			button.setButtonText('Select link').onClick(() => pickIngredient(this.plugin, choose)),
-		);
-		actions.addButton((button) =>
-			button.setButtonText('Create ingredient').onClick((event) => {
-				const menu = new Menu();
-				addCreateItems(menu, this.plugin, plainIngredient(data.text), choose);
-				menu.showAtMouseEvent(event);
-			}),
-		);
-		actions.addButton((button) =>
-			button.setButtonText('Unlink').onClick(() => {
+		amountInput
+			.setValue(data.amount)
+			.setPlaceholder('Amount, such as 1½ oz')
+			.onChange((value) => {
+				data.amount = value;
+				describe();
+			});
+		amountInput.inputEl.setAttribute('aria-label', 'Ingredient amount');
+		amountInput.inputEl.addClass('cocktail-cabinet-amount-input');
+		nameInput
+			.setValue(data.text)
+			.setPlaceholder('Ingredient or garnish')
+			.onChange((value) => {
+				data.text = value;
 				data.note = undefined;
 				data.remembered = false;
-				data.text = plainIngredient(data.text);
-				nameInput.setValue(data.text);
-				keepText = true;
+				keepText = false;
 				refresh();
-			}),
+			});
+		nameInput.inputEl.setAttribute('aria-label', 'Ingredient name');
+		nameInput.inputEl.addClass('cocktail-cabinet-ingredient-input');
+		// What was typed is only a search, so the link shows the note's name.
+		new IngredientSuggest(
+			this.plugin.app,
+			nameInput.inputEl,
+			() => this.notes,
+			(note) => choose(note, note.name),
 		);
-		actions.addExtraButton((button) =>
-			button
-				.setIcon('trash')
-				.setTooltip('Remove ingredient')
-				.onClick(() => {
-					this.rows.splice(this.rows.indexOf(data), 1);
-					wrapper.remove();
-				}),
-		);
+		const move = (step: -1 | 1) => {
+			const index = this.rows.indexOf(data);
+			const other = step < 0 ? wrapper.previousElementSibling : wrapper.nextElementSibling;
+			if (!other) return;
+			this.rows.splice(index, 1);
+			this.rows.splice(index + step, 0, data);
+			if (step < 0) other.before(wrapper);
+			else other.after(wrapper);
+		};
+		const more = new ExtraButtonComponent(line).setIcon('more-horizontal').setTooltip('Link, create, or move');
+		more.onClick(() => {
+			const menu = new Menu();
+			menu.addItem((item) =>
+				item
+					.setTitle('Select link…')
+					.setIcon('link')
+					.onClick(() => pickIngredient(this.plugin, choose, plainIngredient(data.text))),
+			);
+			addCreateItems(menu, this.plugin, plainIngredient(data.text), choose, 'Create ');
+			if (data.note || /\[\[/.test(data.text))
+				menu.addItem((item) => item.setTitle('Unlink').setIcon('unlink').onClick(unlink));
+			menu.addSeparator();
+			const index = this.rows.indexOf(data);
+			menu.addItem((item) =>
+				item
+					.setTitle('Move up')
+					.setIcon('arrow-up')
+					.setDisabled(index === 0)
+					.onClick(() => move(-1)),
+			);
+			menu.addItem((item) =>
+				item
+					.setTitle('Move down')
+					.setIcon('arrow-down')
+					.setDisabled(index === this.rows.length - 1)
+					.onClick(() => move(1)),
+			);
+			menu.addItem((item) =>
+				item
+					.setTitle('Add ingredient below')
+					.setIcon('plus')
+					.onClick(() => this.add({ amount: '', text: '' }, wrapper).focus()),
+			);
+			const rect = more.extraSettingsEl.getBoundingClientRect();
+			menu.showAtPosition({ x: rect.left, y: rect.bottom });
+		});
+		new ExtraButtonComponent(line)
+			.setIcon('trash')
+			.setTooltip('Remove ingredient')
+			.onClick(() => {
+				this.rows.splice(this.rows.indexOf(data), 1);
+				this.rowData.delete(wrapper);
+				wrapper.remove();
+			});
 		refresh();
+		return amountInput.inputEl;
 	}
 }
 

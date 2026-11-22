@@ -173,6 +173,10 @@ Agreed on 2026-11-10 and built the same day. Logging needed a recipe note, so a 
 
 Added 2026-11-10, from logging one-offs: linking each row meant scanning below the field for a suggestion or **Select link**. Opening the picker on focus was rejected: it gets in the way of plain text (garnishes, saline) and pops up on every tap on mobile. Instead every ingredient row's name field, in recipe forms and one-offs alike, drops down matching ingredient notes as you type, searched like the cabinet pickers. A pick links the row with the note's name as display text, since what was typed was only a search; the suggestions under the row still keep the recipe's wording, which matters for imports. Ignoring the dropdown leaves plain text.
 
+### Recipe form layout
+
+Decided 2026-11-22, from "too long to scan", "ingredient rows clunky", and "the paste step is extra". **Create a cocktail recipe** opens on the form, with **Paste a recipe** as an open fold at the top; reading fills the form, replacing what's there, and folds the box, which keeps the text for another try. **Enter manually** went away with the separate paste screen. Each ingredient row is one line (amount, wording, ⋯, remove): the always-visible **Select link**, **Create ingredient**, and **Unlink** buttons moved into the ⋯ menu with **Move up**, **Move down**, and **Add ingredient below**; suggestion buttons stay under the row, since they're the quickest way to link. A linked wording shows in the link color. A recognized volume moves to the amount's tooltip; a line under the row appears only for a link, existing Markdown links, or an amount logging can't read. The form's save row is sticky at the bottom of every cabinet form, and Description folds away when empty. Drag to reorder was left out: menu moves work the same on mobile.
+
 ## Homemade stock
 
 Agreed on 2026-11-04, after managing syrups in the dev vault meant an other-stock note named the same as its type (Simple Syrup (1 to 1) providing Simple Syrup (1 to 1), before the ratio names below).
