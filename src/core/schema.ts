@@ -45,6 +45,8 @@ export const PROP = {
 	ingredients: 'cc-ingredients',
 	sugarWaterRatio: 'cc-sugar-water-ratio',
 	schemaVersion: 'cc-schema-version',
+	/** Managed notes: a fingerprint of the content the plugin last wrote (docs/ownership.md). */
+	managed: 'cc-managed',
 } as const;
 
 export interface CabinetNote {
@@ -74,7 +76,7 @@ export interface PlannedFile {
 	content: string;
 	kind: NoteKind | 'cabinet' | 'shopping' | 'base';
 	catalogId?: string;
-	/** Starter example: created only with a new cabinet home, never restored once deleted. */
+	/** Starter example: created only with a new Cocktail Cabinet note, never restored once deleted. */
 	example?: boolean;
 }
 

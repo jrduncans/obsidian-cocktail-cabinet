@@ -5,7 +5,7 @@ import type { NoteKind, PlannedFile, Properties } from '../core/schema';
 /**
  * A worked example for new cabinets: stock and recipes that let a drink be logged on day one.
  * Unlike the catalog, these are the user's own notes, so setup adds them only with a new
- * cabinet home and never restores one the user deleted. Their catalog IDs identify them
+ * Cocktail Cabinet note and never restores one the user deleted. Their catalog IDs identify them
  * (for example, so a migration can skip an example the vault already has an equivalent of).
  */
 export interface StarterExample {

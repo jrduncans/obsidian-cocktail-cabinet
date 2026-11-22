@@ -138,7 +138,7 @@ Setup preserves existing notes and views. It does not convert the initial fracti
 1. For each old bottle, set `cc-stock-tracking` to `volume`. Convert a known `cc-open-fraction` using `cc-open-ml = cc-open-fraction × cc-volume-ml` (for example, `0.5 × 750 = 375`). Keep `cc-unopened`, full bottle volume, and ABV unchanged. Remove `cc-open-fraction` after conversion.
 2. A missing, null, or zero fraction means none open (`cc-open-ml: 0`). If the fraction is positive but full volume is unknown, find the full volume or enter a current mL estimate before replacing that quantity; do not invent a volume. Review invalid fractions or amounts exceeding full volume instead of converting them blindly.
 3. For each old other-stock source using qualitative availability, set `cc-stock-tracking` to `status` and retain its status; missing availability means Unknown. Do not infer mL from Have or Low.
-4. In existing Bases, replace the fraction column with `cc-open-ml` and add tracking mode, remaining mL, status, and purchasing columns as needed. Existing home notes are user-owned: remove obsolete stock-unit advice and link to the resource views. Rerunning setup only adds missing files.
+4. In existing Bases, replace the fraction column with `cc-open-ml` and add tracking mode, remaining mL, status, and purchasing columns as needed. Rerunning setup only adds missing files.
 
 Prices and shopping flags are optional; omitted prices stay unknown and omitted flags mean false.
 
@@ -212,23 +212,33 @@ Recipe review accepts copied plain text, bullet lists, or structured Markdown. A
 
 Amounts remain text in the ingredient list, with no duplicate structured quantity property. The form recognizes single positive volumes in mL, cL, and US fluid ounces (`29.5735295625 mL` per ounce), including decimal and mixed or Unicode fractions, to show an interpretation. Explicit non-volume equivalents such as `1 barspoon (1/8 oz)` use the stated volume; a bare barspoon or teaspoon counts as one US teaspoon (4.92892159375 mL) and a tablespoon as three; no volume is assumed for a bare dash. Parenthetical volume equivalents such as `2 oz (60 ml)` use the stated mL rather than converting the ounces, in either order. Both quantities must be precise and positive. Ranges, qualified amounts, and volume pairs without a single explicit mL amount remain uninterpreted. Recipe creation does not perform inventory arithmetic or choose an alternative. **Log this cocktail** treats each linked ingredient line as one pour, selects one bottle or measured source, and deducts the reviewed volume. Related-recipe discovery does not rewrite requirements or consider recorded stock quantities and availability.
 
-## Cabinet home
+## Cocktail Cabinet note
 
-The cabinet landing note, written at exactly `<root>/Cocktail Cabinet.md`. Setup detection requires both this path and the kind marker. It is not included in ingredient, stock, or recipe browsing.
+The cabinet's landing note, written at exactly `<root>/Cocktail Cabinet.md`. Setup detection requires both this path and the kind marker. It is not included in ingredient, stock, or recipe browsing.
 
 | Property            | Type        | Required | Description and use                                                                                                                                                   |
 | ------------------- | ----------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cc-kind`           | `"cabinet"` | `true`   | Identifies the home note when the plugin checks whether the selected cabinet is set up.                                                                               |
-| `cc-name`           | `string`    | `false`  | Written as `Cocktail Cabinet`. No current runtime behavior reads the home note's display name.                                                                        |
+| `cc-kind`           | `"cabinet"` | `true`   | Identifies the Cocktail Cabinet note when the plugin checks whether the selected cabinet is set up.                                                                   |
+| `cc-name`           | `string`    | `false`  | Written as `Cocktail Cabinet`. No current runtime behavior reads its display name.                                                                                    |
 | `cc-schema-version` | `integer`   | `false`  | Written as `1`. No runtime reader checks it; it does not select a parser, run migrations, or enable compatibility handling. It has no current behavioral requirement. |
 
-The body starts with command-palette guidance for adding stock and recipes, then introduces bottles, other stock, and recipes before the ingredient reference catalog. It links to all six resource Bases in `<root>/Views/` as it explains the concepts, with types, families, and categories in order. It explains that catalog membership does not imply owned stock, how to edit the tables, where each note lists related recipes, and the note header and More options actions. It contains no embedded tables or stock-unit instructions; the linked views query current notes rather than enumerate the starter catalog. Setup creates the home when missing and preserves it when present; older home notes need their new Base links added manually.
+The body starts with command-palette guidance for adding stock and recipes, then introduces bottles, other stock, and recipes before the ingredient reference catalog. It links to all six resource Bases in `<root>/Views/` as it explains the concepts, with types, families, and categories in order. It explains that catalog membership does not imply owned stock, how to edit the tables, where each note lists related recipes, and the note header and More options actions. It contains no embedded tables or stock-unit instructions; the linked views query current notes rather than enumerate the starter catalog. It is a managed note, as is the Shopping list: see [Managed notes](#managed-notes).
+
+## Managed notes
+
+Notes the plugin writes and keeps current: the Cocktail Cabinet note and `<root>/Shopping list.md` (see [ownership](ownership.md)).
+
+| Property     | Type     | Required | Description and use                                                                                                                                                                                                           |
+| ------------ | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cc-managed` | `string` | `false`  | A fingerprint of the content the plugin last wrote, ignoring this property, line endings, and the cabinet folder. Present: the plugin keeps the note current. Absent: the note is the user's and the plugin never changes it. |
+
+On startup, when a release changes a managed note, the plugin compares the note with its `cc-managed` fingerprint. A match means nobody has edited it, and it is replaced with the new version. A mismatch leaves it alone and lists it in **Review cabinet updates**. The plugin records in its data the version of each managed note it last handled, so it looks again only when that version changes, and a managed note deleted after it was written is not recreated until **Refresh cabinet notes**.
 
 ## Resource Bases
 
 Setup creates `Ingredient categories.base`, `Ingredient families.base`, `Ingredient types.base`, `Bottles.base`, `Other stock.base`, and `Recipes.base` in `<root>/Views/`. These files are core Obsidian Bases configuration, with no frontmatter resource marker and no plugin runtime dependency. Each filters Markdown files inside the cabinet root by the corresponding `cc-kind`; parent properties and catalog IDs are not required. The cabinet home is not a seventh resource Base. Setup also creates `Restock.base`, a formula Base with three tables of bottles and other stock: Running low (Low, or the last bottle at or under the **Running low: percent full** setting, default 10%; without a bottle size, and for other stock tracked in mL, at or under **Running low: mL**, default 70), Out (Out, or nothing above 0 open or sealed, blank counting as 0), and Unknown (Unknown or missing availability, or no tracking mode). Running low and Out list the most recently used first (`cc-last-used`), then the never-used by name. Each shows `cc-shopping-list` as an editable checkbox. The settings are written into the `lowShare` and `lowMl` formulas. `Recipes.base` also has **Latest**, sorted by `created` descending, and **Recently made**, sorted by `cc-last-made` descending.
 
-The `.base` files in `<root>/Views/` belong to the plugin. Setup replaces any that differ from the current version, and on startup the plugin rewrites a view when a release or a setting changes it (it records the version it last wrote in its data, so column widths or sorting saved by Obsidian stay until then). **Refresh cabinet views** rewrites every changed or missing view. To keep a changed view, copy it into `<root>/Custom views/`, which setup creates and the plugin never touches.
+The `.base` files in `<root>/Views/` belong to the plugin. Setup replaces any that differ from the current version, and on startup the plugin rewrites a view when a release or a setting changes it (it records the version it last wrote in its data, so column widths or sorting saved by Obsidian stay until then). **Refresh cabinet notes** rewrites every changed or missing view. To keep a changed view, copy it into `<root>/Custom views/`, which setup creates and the plugin never touches.
 
 Each table starts with **Name**: the proper name (`cc-name`, else the file name) as a link, so it opens and previews like a file link; there are no separate file-name and `cc-name` columns. The resource's current creation fields follow. Recipes show Rating (as stars; unrated is empty), Last made, Times made, Created, then Source, last so it scrolls off first on narrow screens. Missing optional values stay empty. Stock views show the selected mode, mL quantities, availability, price, and shopping flags. Ingredient types show their shopping flag too. ABV is labeled as a fraction; open stock is labeled in mL. New notes populate only the selected mode’s stock fields; Bases also display inactive fields if a user manually leaves them behind. Users can edit filters and columns in Obsidian; setup keeps existing `.base` files at these paths, even when their configuration has changed.
 
@@ -265,7 +275,8 @@ The plugin writes one property on daily notes, and only with the `dailyAlcohol` 
 - [Property constants and resource kinds](../src/core/schema.ts).
 - [Note rendering, naming, aliases, and recipe sections](../src/core/notes.ts).
 - [Core Bases definitions](../src/core/bases.ts).
-- [Starter setup and home-note metadata](../src/core/setup.ts).
+- [Starter setup and Cocktail Cabinet note metadata](../src/core/setup.ts).
+- [Managed notes](../src/core/managed.ts).
 - [Catalog IDs, relationships, syrup metadata, and authored aliases](../src/catalog/catalog.ts).
 - [Runtime property readers and setup recognition](../src/vault/cabinet-store.ts).
 - [Hierarchy traversal and same-type bottle discovery](../src/core/relationships.ts).

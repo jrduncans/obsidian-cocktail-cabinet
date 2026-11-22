@@ -8,6 +8,7 @@ import { AVAILABILITY_VIEW, AvailabilityView } from './ui/availability-view';
 import { CabinetStore } from './vault/cabinet-store';
 import { RecipeSync } from './vault/recipe-sync';
 import { STANDARD_DRINK_GRAMS } from './core/alcohol-estimate';
+import { ReviewUpdatesModal } from './ui/review-updates-modal';
 
 export default class CocktailCabinetPlugin extends Plugin {
 	settings!: CocktailCabinetSettings;
@@ -31,8 +32,8 @@ export default class CocktailCabinetPlugin extends Plugin {
 		registerCommands(this);
 		registerCli(this);
 		this.addSettingTab(new CocktailCabinetSettingTab(this.app, this));
-		// Views a release changed are rewritten once the vault is indexed.
-		this.app.workspace.onLayoutReady(() => void this.syncViews());
+		// Views and managed notes a release changed are updated once the vault is indexed.
+		this.app.workspace.onLayoutReady(() => void this.syncCabinet());
 		this.syncRecipes();
 	}
 
@@ -66,8 +67,36 @@ export default class CocktailCabinetPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	/**
+	 * Update the plugin's views and managed notes (docs/ownership.md). `force` is **Refresh cabinet
+	 * notes**: every view that differs or is missing is rewritten, deleted managed notes are restored, and
+	 * any changed managed note opens **Review cabinet updates**.
+	 */
+	async syncCabinet(force = false): Promise<void> {
+		const views = await this.syncViews(force);
+		try {
+			const result = await this.store.syncManaged(this.settings.managedVersions, force);
+			this.settings.managedVersions = result.written;
+			await this.saveSettings();
+			const changed = [...result.created, ...result.updated].map(noteName);
+			if (changed.length)
+				new Notice(
+					`Cocktail Cabinet ${force ? 'restored' : 'updated'} ${changed.length === 1 ? 'a note' : `${changed.length} notes`}: ${changed.join(', ')}.`,
+				);
+			if (result.review.length && force) new ReviewUpdatesModal(this).open();
+			else if (result.review.length)
+				new Notice(
+					`Cocktail Cabinet has a new version of ${result.review.map(noteName).join(', ')}, which you’ve edited. Run Review cabinet updates to compare.`,
+					10000,
+				);
+			else if (force && !changed.length && !views) new Notice('Cabinet notes and views are already current.');
+		} catch (error) {
+			new Notice(`Couldn’t update cabinet notes: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}
+
 	/** Update the plugin's views; `force` rewrites every view that differs or is missing. */
-	async syncViews(force = false): Promise<void> {
+	async syncViews(force = false): Promise<number> {
 		try {
 			const { updated, written } = await this.store.syncViews(this.settings.viewVersions, force);
 			this.settings.viewVersions = written;
@@ -77,9 +106,12 @@ export default class CocktailCabinetPlugin extends Plugin {
 				new Notice(
 					`Cocktail Cabinet ${force ? 'refreshed' : 'updated'} ${names.length === 1 ? 'a view' : `${names.length} views`}: ${names.join(', ')}.`,
 				);
-			else if (force) new Notice('Cabinet views are already current.');
+			return names.length;
 		} catch (error) {
 			new Notice(`Couldn’t update cabinet views: ${error instanceof Error ? error.message : String(error)}`);
+			return 0;
 		}
 	}
 }
+
+const noteName = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, '');

@@ -29,6 +29,7 @@ import { OneOffModal } from '../ui/one-off-modal';
 import { saveOneOff } from '../ui/save-one-off';
 import type { OneOff } from '../core/one-off';
 import { ingredientLines } from '../core/unlinked-lines';
+import { ReviewUpdatesModal } from '../ui/review-updates-modal';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(plugin.app, plugin.store, {
@@ -223,10 +224,16 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		callback: () => new SetupModal(plugin).open(),
 	});
 	plugin.addCommand({
-		id: 'refresh-cabinet-views',
-		name: 'Refresh cabinet views',
+		id: 'refresh-cabinet-notes',
+		name: 'Refresh cabinet notes',
 		icon: 'refresh-cw',
-		callback: () => handle(() => ready(() => plugin.syncViews(true))),
+		callback: () => handle(() => ready(() => plugin.syncCabinet(true))),
+	});
+	plugin.addCommand({
+		id: 'review-cabinet-updates',
+		name: 'Review cabinet updates',
+		icon: 'git-compare',
+		callback: () => handle(() => ready(() => new ReviewUpdatesModal(plugin).open())),
 	});
 	plugin.addCommand({
 		id: 'review-unlinked-ingredients',

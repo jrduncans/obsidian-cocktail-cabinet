@@ -17,6 +17,8 @@ export interface CocktailCabinetSettings {
 	lowStockMl: number;
 	/** Fingerprint of the version of each plugin view last written, by path (see `CabinetStore.syncViews`). */
 	viewVersions: Record<string, string>;
+	/** Fingerprint of the plugin's version of each managed note last handled, by path (see `CabinetStore.syncManaged`). */
+	managedVersions: Record<string, string>;
 	/** The latest logs, oldest first, kept for **Undo last log**. */
 	recentLogs: LogRecord[];
 	/** Alcohol estimate: water added by chilling, as a share of the pour, by preparation. */
@@ -34,6 +36,7 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	lowStockPercent: DEFAULT_RESTOCK.percent,
 	lowStockMl: DEFAULT_RESTOCK.ml,
 	viewVersions: {},
+	managedVersions: {},
 	recentLogs: [],
 	dilution: { ...DEFAULT_DILUTION },
 	topMl: DEFAULT_TOP_ML,
@@ -48,6 +51,7 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	const settings: CocktailCabinetSettings = {
 		...DEFAULT_SETTINGS,
 		viewVersions: {},
+		managedVersions: {},
 		recentLogs: [],
 		dilution: { ...DEFAULT_DILUTION },
 	};
@@ -62,12 +66,14 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	}
 	if (positive(saved.lowStockPercent, 100)) settings.lowStockPercent = saved.lowStockPercent;
 	if (positive(saved.lowStockMl)) settings.lowStockMl = saved.lowStockMl;
-	const versions = saved.viewVersions;
-	if (versions && typeof versions === 'object' && !Array.isArray(versions)) {
-		settings.viewVersions = Object.fromEntries(
-			Object.entries(versions).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
-		);
-	}
+	const record = (value: unknown): Record<string, string> =>
+		value && typeof value === 'object' && !Array.isArray(value)
+			? Object.fromEntries(
+					Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+				)
+			: {};
+	settings.viewVersions = record(saved.viewVersions);
+	settings.managedVersions = record(saved.managedVersions);
 	const dilution = saved.dilution;
 	if (dilution && typeof dilution === 'object') {
 		for (const key of Object.keys(DEFAULT_DILUTION) as Preparation[]) {
@@ -225,11 +231,11 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 				},
 			},
 			{
-				name: 'Cabinet views',
-				desc: `The Bases in the cabinet's Views folder belong to the plugin, which updates them in new releases. To change one, copy it into ${CUSTOM_VIEWS_FOLDER} and edit the copy. Refresh restores the originals.`,
+				name: 'Cabinet notes and views',
+				desc: `The plugin keeps the Cocktail Cabinet and Shopping list notes and the Bases in the Views folder current. An edited note is left alone and offered in Review cabinet updates. To change a view, copy it into ${CUSTOM_VIEWS_FOLDER} and edit the copy. Refresh restores the original views and any notes you haven't edited.`,
 				render: (setting: Setting) => {
 					setting.addButton((button) =>
-						button.setButtonText('Refresh views').onClick(() => void this.plugin.syncViews(true)),
+						button.setButtonText('Refresh').onClick(() => void this.plugin.syncCabinet(true)),
 					);
 				},
 			},

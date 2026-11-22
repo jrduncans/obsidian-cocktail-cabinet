@@ -9,6 +9,7 @@ import { SHOPPING_NOTE, shoppingBase, shoppingNote, shoppingNotePath } from './s
 import { DEFAULT_RESTOCK, RESTOCK_BASE, restockBase } from './restock';
 import type { RestockThresholds } from './restock';
 import type { PlannedFile } from './schema';
+import { asManaged } from './managed';
 
 /** Where users keep their own Bases; the plugin never writes there. */
 export const CUSTOM_VIEWS_FOLDER = 'Custom views';
@@ -18,7 +19,7 @@ export function customViewsPath(root: string): string {
 }
 
 /**
- * The Bases the plugin owns, in `<root>/Views/`. Setup and **Refresh cabinet views** write them,
+ * The Bases the plugin owns, in `<root>/Views/`. Setup and **Refresh cabinet notes** write them,
  * and the plugin rewrites one when a release or a setting changes it. Copies in Custom views are the user's.
  */
 /** `drinkGrams`: the standard drink the Recipes Base shows, 14 g (US) by default. */
@@ -37,7 +38,16 @@ export function cabinetViews(
 	];
 }
 
-/** Every file setup writes. `examples` adds the worked example, for a cabinet without a home yet. */
+/**
+ * The notes the plugin writes and keeps current (docs/ownership.md). `examples` maps each worked
+ * example still in the cabinet, by catalog ID, to its path, for the Cocktail Cabinet note's example section.
+ */
+export function managedNotes(folder: string, examples: ReadonlyMap<string, string> = new Map()): PlannedFile[] {
+	const root = cabinetFolder(folder);
+	return [cabinetNote(root, examples), shoppingNote(root)].map((file) => asManaged(file, root));
+}
+
+/** Every file setup writes. `examples` adds the worked example, for a cabinet without a Cocktail Cabinet note yet. */
 export function starterPlan(
 	folder: string,
 	paths: ReadonlyMap<string, string> = new Map(),
@@ -56,21 +66,24 @@ export function starterPlan(
 		...files,
 		...example,
 		...cabinetViews(root, restock, drinkGrams),
-		shoppingNote(root),
-		cabinetHome(root, example),
+		...managedNotes(
+			root,
+			new Map(example.flatMap((file) => (file.catalogId ? [[file.catalogId, file.path]] : []))),
+		),
 	];
 }
 
-export function cabinetHomePath(root: string): string {
+export function cabinetNotePath(root: string): string {
 	return `${root}/Cocktail Cabinet.md`;
 }
 
-function exampleSection(example: readonly PlannedFile[]): string {
-	if (!example.length) return '';
+function exampleSection(examples: ReadonlyMap<string, string>): string {
+	const present = (kind: string) => STARTER_EXAMPLES.some((item) => item.kind === kind && examples.has(item.id));
+	if (!present('ingredient') || !present('recipe')) return '';
 	const links = (kind: string) => {
 		const items = STARTER_EXAMPLES.filter((item) => item.kind === kind).flatMap((item) => {
-			const file = example.find((file) => file.catalogId === item.id);
-			return file ? [wikiLink(file.path, item.name)] : [];
+			const path = examples.get(item.id);
+			return path ? [wikiLink(path, item.name)] : [];
 		});
 		return items.length < 3 ? items.join(' and ') : `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
 	};
@@ -79,7 +92,7 @@ function exampleSection(example: readonly PlannedFile[]): string {
 Setup added example stock, ${links('ingredient')}, and two recipes it completes: ${links('recipe')}. The fruit starts as Unknown and the syrup as empty. Set the syrup’s amount, then open a recipe and run **Cocktail Cabinet: Log this cocktail**. Change or delete the examples as you like; setup won’t add them back.`;
 }
 
-function cabinetHome(root: string, example: readonly PlannedFile[] = []): PlannedFile {
+function cabinetNote(root: string, examples: ReadonlyMap<string, string>): PlannedFile {
 	const viewLink = (name: string) => wikiLink(basePath(root, name), name);
 	const properties = {
 		[PROP.kind]: 'cabinet',
@@ -87,7 +100,7 @@ function cabinetHome(root: string, example: readonly PlannedFile[] = []): Planne
 		[PROP.schemaVersion]: 1,
 	};
 	return {
-		path: cabinetHomePath(root),
+		path: cabinetNotePath(root),
 		kind: 'cabinet',
 		content: markdown(
 			properties,
@@ -95,7 +108,7 @@ function cabinetHome(root: string, example: readonly PlannedFile[] = []): Planne
 
 Your bottles, ingredients, and cocktail recipes in one place. Start with one bottle or a favorite recipe and build your cabinet gradually.
 
-Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below.${exampleSection(example)}
+Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below.${exampleSection(examples)}
 
 ## Start here
 
@@ -151,7 +164,9 @@ ${viewLink('Ingredient categories')} groups families into broader classification
 
 Open a linked view to browse your current notes and edit properties. Enable **Bases** in **Settings → Core plugins** to use these views.
 
-Edit this page and your notes to suit your cabinet; setup keeps existing notes when you run it again. The views in the **Views** folder belong to the plugin, which updates them in new releases; ${viewLink(NAVIGATION_BASE)} supplies the sections shown in each ingredient and bottle note. To change a view, copy it into the **${CUSTOM_VIEWS_FOLDER}** folder and edit the copy; the plugin never touches that folder. **Cocktail Cabinet: Refresh cabinet views** restores the originals.
+The plugin keeps this page and the ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} note current with each release; the \`${PROP.managed}\` property records the version it last wrote. If you edit one, the plugin leaves your version alone and offers the new one in **Cocktail Cabinet: Review cabinet updates**, where you can switch to it or keep yours. To make a page entirely yours, delete its \`${PROP.managed}\` property. Your other notes are always yours; setup keeps existing notes when you run it again.
+
+The views in the **Views** folder belong to the plugin, which updates them in new releases; ${viewLink(NAVIGATION_BASE)} supplies the sections shown in each ingredient and bottle note. To change a view, copy it into the **${CUSTOM_VIEWS_FOLDER}** folder and edit the copy; the plugin never touches that folder. **Cocktail Cabinet: Refresh cabinet notes** restores the original views and any of these pages you haven't edited.
 
 Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The views need only Obsidian’s core Bases plugin.`,
 		),

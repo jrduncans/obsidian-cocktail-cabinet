@@ -1,6 +1,6 @@
 # Plugin and user ownership
 
-Drafted on 2026-11-21, after the **What can I make?** release added a sentence to `Cocktail Cabinet.md` that existing cabinets never receive. Revised the same day with plans for guide, agent, and skill notes, and with the freedom of an unreleased plugin: the only real cabinet is `knowledge`, which the plugin can simply overwrite to fit whatever is chosen. A proposal for review; [open questions](#open-questions) records the decisions and what's left. Not yet built.
+Drafted on 2026-11-21, after the **What can I make?** release added a sentence to `Cocktail Cabinet.md` that existing cabinets never receive. Revised the same day with plans for guide, agent, and skill notes, and with the freedom of an unreleased plugin: the only real cabinet is `knowledge`, which the plugin can simply overwrite to fit whatever is chosen. [Open questions](#open-questions) records the decisions. Slice 1 built 2026-11-21.
 
 Earlier docs call `Cocktail Cabinet.md` "the cabinet home", a term never defined. Decided 2026-11-21: no separate name; it's the **Cocktail Cabinet** note, and docs and code drop "home".
 
@@ -75,7 +75,7 @@ Unreleased, so no migration machinery and nothing by hand (decided 2026-11-21): 
 
 ## Suggested slices
 
-1. Managed notes: `cc-managed`, the startup check, **Review cabinet updates**, **Refresh cabinet notes** (replacing **Refresh cabinet views**, and covering Bases). `Cocktail Cabinet.md` and `Shopping list.md` become managed; `knowledge`'s two notes are overwritten.
+1. Built 2026-11-21. Managed notes: `cc-managed`, the startup check, **Review cabinet updates**, **Refresh cabinet notes** (replacing **Refresh cabinet views**, and covering Bases). `Cocktail Cabinet.md` and `Shopping list.md` become managed; `knowledge`'s two notes are overwritten.
 2. Navigation embeds kept present.
 3. Catalog updates, with earlier values kept in the catalog.
 4. The guide pages, then the agent reference, rewriting `knowledge`'s `AGENTS.md` cocktail section as a link.

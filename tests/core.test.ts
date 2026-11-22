@@ -261,7 +261,7 @@ void test('starter groupings are optional at both parent levels', () => {
 	}
 });
 
-void test('home introduces all six resource Bases in context without embeds or stock-unit advice', () => {
+void test('the Cocktail Cabinet note introduces all six resource Bases in context without embeds or stock-unit advice', () => {
 	const files = starterPlan('Drinks/Cabinet');
 	const home = files.find((file) => file.kind === 'cabinet')!;
 	const bases = files.filter((file) => file.kind === 'base');
@@ -796,7 +796,7 @@ void test('the worked example links starter types, measures every pour, and star
 	}
 });
 
-void test('the home note introduces the example only in a new cabinet', () => {
+void test('the Cocktail Cabinet note introduces the example only in a new cabinet', () => {
 	const home = (examples: boolean) =>
 		starterPlan('Cocktails', new Map(), examples).find((file) => file.kind === 'cabinet')!.content;
 	assert.ok(!home(false).includes('Try an example'));

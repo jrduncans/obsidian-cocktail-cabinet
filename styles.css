@@ -409,3 +409,30 @@
 .cocktail-cabinet-pane-shop {
 	margin-inline-start: auto;
 }
+
+.cocktail-cabinet-review {
+	margin-top: var(--size-4-4);
+}
+
+.cocktail-cabinet-diff {
+	max-height: 50vh;
+	overflow: auto;
+	font-size: var(--font-smaller);
+	white-space: pre-wrap;
+	padding: var(--size-4-2);
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+}
+
+.cocktail-cabinet-diff-yours {
+	color: var(--text-error);
+}
+
+.cocktail-cabinet-diff-new {
+	color: var(--text-success);
+}
+
+.cocktail-cabinet-diff-fold {
+	color: var(--text-faint);
+	font-style: italic;
+}

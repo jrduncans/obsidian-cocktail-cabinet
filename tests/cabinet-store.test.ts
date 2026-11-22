@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { App } from 'obsidian';
 import { CabinetStore } from '../src/vault/cabinet-store';
-import { cabinetViews, starterPlan } from '../src/core/setup';
+import { cabinetViews, managedNotes, starterPlan } from '../src/core/setup';
+import { asManaged, lineDiff, managedMarker, managedState, withoutMarker } from '../src/core/managed';
 import { relatedTargets } from '../src/core/relationships';
 import { contentFingerprint } from '../src/core/schema';
 import { restockBase } from '../src/core/restock';
@@ -55,6 +56,7 @@ function fixture() {
 				return Promise.resolve(content);
 			},
 		},
+		metadataCache: { getFileCache: () => null },
 		fileManager: {
 			renameFile: (file: TFile, destination: string) => {
 				assert.ok(!contents.has(destination));
@@ -121,7 +123,7 @@ void test('setup rejects duplicate catalog identities', async () => {
 	assert.deepEqual([...contents], before);
 });
 
-void test('setup adds missing views, replaces changed ones, keeps the home, and creates Custom views', async () => {
+void test('setup adds missing views, replaces changed ones, keeps the Cocktail Cabinet note, and creates Custom views', async () => {
 	const { contents, folders, store } = fixture();
 	const edited = 'Cocktails/Views/Bottles.base';
 	const original = contents.get(edited)!;
@@ -441,4 +443,119 @@ void test('fresh cabinet reads retain a just-edited resource while metadata cach
 	Object.assign(app, { metadataCache: { getFileCache: () => undefined, getFirstLinkpathDest: () => null } });
 	assert.deepEqual(store.notes(), []);
 	assert.equal((await store.readNotes()).find((note) => note.path === original)?.name, 'Cache race');
+});
+
+void test('a managed note records its fingerprint, and edits other than the marker count as changes', () => {
+	const [note] = managedNotes('Cocktails');
+	const content = note!.content;
+	const marker = managedMarker(content);
+	assert.ok(marker);
+	assert.match(content, /^cc-managed: "[^"]+"$/m);
+	assert.equal(asManaged(note!, 'Cocktails').content, content, 'adding the marker twice changes nothing');
+	assert.equal(managedState(content, content, 'Cocktails'), 'current');
+	// Obsidian may rewrite the marker without quotes, or with CRLF line endings.
+	const unquoted = content.replace(`cc-managed: "${marker}"`, `cc-managed: ${marker}`).replace(/\n/g, '\r\n');
+	assert.equal(managedState(unquoted, content, 'Cocktails'), 'current');
+	const older = asManaged(
+		{ ...note!, content: withoutMarker(content).replace('in one place', 'together') },
+		'Cocktails',
+	);
+	assert.equal(managedState(older.content, content, 'Cocktails'), 'unchanged');
+	const edited = older.content.replace('# Cocktail Cabinet', '# My bar');
+	assert.equal(managedState(edited, content, 'Cocktails'), 'changed');
+	assert.equal(managedState(withoutMarker(edited), content, 'Cocktails'), 'unmanaged');
+	assert.equal(managedState(null, content, 'Cocktails'), 'missing');
+});
+
+void test('the review diff marks lines only in your version and only in the new one', () => {
+	const diff = lineDiff(
+		'---\ncc-managed: "a"\n---\none\nmine\nthree\n',
+		'---\ncc-managed: "b"\n---\none\nnew\nthree\n',
+	);
+	assert.deepEqual(
+		diff.filter((line) => line.side !== 'same'),
+		[
+			{ side: 'new', text: 'new' },
+			{ side: 'yours', text: 'mine' },
+		],
+	);
+	assert.equal(diff.filter((line) => line.side === 'same').length, 4);
+});
+
+void test('managed notes update when untouched, wait for review when edited, and stay deleted', async () => {
+	const { contents, store } = fixture();
+	const planned = managedNotes('Cocktails');
+	const [cabinet, shopping] = planned.map((note) => note.path) as [string, string];
+	// An earlier version of each, as a previous release wrote it.
+	for (const note of planned)
+		contents.set(
+			note.path,
+			asManaged({ ...note, content: `${withoutMarker(note.content)}\nOlder line.\n` }, 'Cocktails').content,
+		);
+	contents.set(shopping, contents.get(shopping)!.replace('Older line.', 'My own line.'));
+	const first = await store.syncManaged({});
+	assert.deepEqual(first.updated, [cabinet]);
+	assert.deepEqual(first.review, [shopping]);
+	assert.equal(contents.get(cabinet), planned[0]!.content);
+	assert.match(contents.get(shopping)!, /My own line/);
+	// Recorded: nothing is looked at again until the plugin's version changes.
+	assert.deepEqual(await store.syncManaged(first.written), {
+		created: [],
+		updated: [],
+		review: [],
+		written: first.written,
+	});
+	assert.deepEqual(
+		(await store.managedUpdates()).map((update) => update.path),
+		[shopping],
+	);
+	// Keep mine: the marker goes, and the note is the user's, even on Refresh.
+	const edited = contents.get(shopping)!;
+	await store.keepMine(shopping, edited);
+	assert.equal(managedMarker(contents.get(shopping)!), null);
+	assert.deepEqual((await store.syncManaged(first.written, true)).review, []);
+	assert.deepEqual(await store.managedUpdates(), []);
+	assert.match(contents.get(shopping)!, /My own line/);
+	// A managed note deleted after it was written stays deleted, until Refresh restores it.
+	contents.delete(shopping);
+	assert.deepEqual((await store.syncManaged({ ...first.written, [shopping]: 'older' })).created, []);
+	assert.ok(!contents.has(shopping));
+	assert.deepEqual((await store.syncManaged(first.written, true)).created, [shopping]);
+	assert.equal(contents.get(shopping), planned[1]!.content);
+	// A note new in this release is created.
+	contents.delete(shopping);
+	const { [shopping]: _, ...withoutShopping } = first.written;
+	assert.deepEqual((await store.syncManaged(withoutShopping)).created, [shopping]);
+});
+
+void test('Use new version replaces an edited note, optionally saving yours beside it', async () => {
+	const { contents, store } = fixture();
+	const planned = managedNotes('Cocktails');
+	const path = planned[1]!.path;
+	const mine = planned[1]!.content.replace('# Shopping list', '# Groceries');
+	contents.set(path, mine);
+	contents.set('Cocktails/Shopping list (your version).md', 'taken');
+	const copy = 'Cocktails/Shopping list (your version 2).md';
+	assert.equal(await store.useNewVersion(path, true, mine), copy);
+	assert.equal(contents.get(copy), withoutMarker(mine));
+	assert.equal(contents.get(path), planned[1]!.content);
+	contents.set(path, mine);
+	await assert.rejects(store.useNewVersion(path, false, 'something else'), /changed after review opened/);
+	assert.equal(await store.useNewVersion(path, false), null);
+	assert.equal(contents.get(path), planned[1]!.content);
+});
+
+void test('the Cocktail Cabinet note links the worked examples only while they remain', async () => {
+	const { contents, store } = fixture();
+	contents.delete('Cocktails/Cocktail Cabinet.md');
+	await store.setup('Cocktails');
+	const cabinet = 'Cocktails/Cocktail Cabinet.md';
+	assert.match(contents.get(cabinet)!, /## Try an example/);
+	assert.ok(managedMarker(contents.get(cabinet)!));
+	const { written } = await store.syncManaged({});
+	assert.equal(managedState(contents.get(cabinet)!, contents.get(cabinet)!, 'Cocktails'), 'current');
+	for (const path of [...contents.keys()].filter((path) => /Recipes\/(Daiquiri|Whiskey Sour)\.md$/.test(path)))
+		contents.delete(path);
+	assert.deepEqual((await store.syncManaged(written)).updated, [cabinet]);
+	assert.doesNotMatch(contents.get(cabinet)!, /Try an example/);
 });

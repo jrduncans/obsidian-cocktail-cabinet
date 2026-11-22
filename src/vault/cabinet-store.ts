@@ -3,11 +3,20 @@ import { cabinetFolder, contentFingerprint, KINDS, PROP, wikiLink } from '../cor
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { localDate, renderNote } from '../core/notes';
 import { withSubtypesSection } from '../core/navigation';
-import { cabinetHomePath, cabinetViews, customViewsPath, starterPlan } from '../core/setup';
+import { cabinetNotePath, cabinetViews, customViewsPath, managedNotes, starterPlan } from '../core/setup';
+import { managedFingerprint, managedState, withoutMarker, yourVersionPath } from '../core/managed';
+import { STARTER_EXAMPLES } from '../catalog/examples';
 import { DEFAULT_RESTOCK } from '../core/restock';
 import type { RestockThresholds } from '../core/restock';
 import type { SetupPreview } from '../core/setup';
 import { enhancedRecipeContent } from './recipe-document';
+
+/** A managed note someone changed, beside the plugin's current version of it. */
+export interface ManagedUpdate {
+	path: string;
+	current: string;
+	next: string;
+}
 
 export interface RecipeSnapshot {
 	path: string;
@@ -141,8 +150,8 @@ export class CabinetStore {
 	}
 
 	async isSetUp(): Promise<boolean> {
-		const home = this.app.vault.getAbstractFileByPath(cabinetHomePath(this.root));
-		return home instanceof TFile && (await this.frontmatter(home))[PROP.kind] === 'cabinet';
+		const note = this.app.vault.getAbstractFileByPath(cabinetNotePath(this.root));
+		return note instanceof TFile && (await this.frontmatter(note))[PROP.kind] === 'cabinet';
 	}
 
 	async previewSetup(folder: string): Promise<SetupPreview> {
@@ -161,8 +170,9 @@ export class CabinetStore {
 			else catalogPaths.set(id, file.path);
 		}
 		// The worked example comes with a new cabinet only, so a deleted example stays deleted.
-		const home = cabinetHomePath(root);
-		const newCabinet = !this.app.vault.getAbstractFileByPath(home) && !byLowerPath.has(home.toLowerCase());
+		const cabinetNote = cabinetNotePath(root);
+		const newCabinet =
+			!this.app.vault.getAbstractFileByPath(cabinetNote) && !byLowerPath.has(cabinetNote.toLowerCase());
 		for (const planned of starterPlan(root, catalogPaths, newCabinet, this.restock(), this.drinkGrams())) {
 			const parts = planned.path.split('/');
 			for (let depth = 1; depth < parts.length; depth++) {
@@ -273,6 +283,123 @@ export class CabinetStore {
 				}
 			}
 			return { updated, written: next };
+		});
+	}
+
+	/** The plugin's current version of each managed note, with links to whichever worked examples remain. */
+	private async plannedManaged() {
+		const root = this.root;
+		const ids = new Set(STARTER_EXAMPLES.map((example) => example.id));
+		const examples = new Map<string, string>();
+		for (const file of this.app.vault.getFiles()) {
+			if (file.extension !== 'md' || !file.path.startsWith(`${root}/`)) continue;
+			const properties: Record<string, unknown> =
+				this.app.metadataCache.getFileCache(file)?.frontmatter ?? (await this.frontmatter(file));
+			const id = properties[PROP.catalogId];
+			if (typeof id === 'string' && ids.has(id) && !examples.has(id)) examples.set(id, file.path);
+		}
+		return managedNotes(root, examples);
+	}
+
+	private async contentAt(path: string): Promise<string | null> {
+		const file = this.app.vault.getAbstractFileByPath(path);
+		return file instanceof TFile ? this.app.vault.read(file) : null;
+	}
+
+	/**
+	 * Bring managed notes up to date (docs/ownership.md). `written` maps each note's path to the
+	 * fingerprint of the plugin's version last handled. Without `force`, only notes whose version changed
+	 * since are looked at, and a managed note deleted since it was written stays deleted. Notes nobody
+	 * changed are replaced; changed ones are returned in `review`; notes without `cc-managed` are the
+	 * user's and never touched. With `force`, every note is looked at and deleted ones are restored.
+	 */
+	async syncManaged(
+		written: Readonly<Record<string, string>>,
+		force = false,
+	): Promise<{ created: string[]; updated: string[]; review: string[]; written: Record<string, string> }> {
+		return this.write(async () => {
+			const result = { created: [] as string[], updated: [] as string[], review: [] as string[] };
+			if (!(await this.isSetUp())) return { ...result, written: { ...written } };
+			const root = this.root;
+			const next: Record<string, string> = {};
+			for (const planned of await this.plannedManaged()) {
+				const version = managedFingerprint(planned.content, root);
+				next[planned.path] = version;
+				if (!force && written[planned.path] === version) continue;
+				const current = await this.contentAt(planned.path);
+				const state = managedState(current, planned.content, root);
+				if (state === 'missing') {
+					if (!force && planned.path in written) continue;
+					if (this.app.vault.getAbstractFileByPath(planned.path)) continue;
+					await this.ensureFolder(planned.path.slice(0, planned.path.lastIndexOf('/')));
+					await this.app.vault.create(planned.path, planned.content);
+					result.created.push(planned.path);
+				} else if (state === 'unchanged') {
+					await this.replace(planned.path, planned.content, current);
+					result.updated.push(planned.path);
+				} else if (state === 'changed') result.review.push(planned.path);
+			}
+			return { ...result, written: next };
+		});
+	}
+
+	/** Managed notes someone changed, each with the plugin's current version. */
+	async managedUpdates(): Promise<ManagedUpdate[]> {
+		const root = this.root;
+		if (!(await this.isSetUp())) return [];
+		const updates: ManagedUpdate[] = [];
+		for (const planned of await this.plannedManaged()) {
+			const current = await this.contentAt(planned.path);
+			if (current !== null && managedState(current, planned.content, root) === 'changed')
+				updates.push({ path: planned.path, current, next: planned.content });
+		}
+		return updates;
+	}
+
+	/**
+	 * Replace a managed note with the plugin's current version. With `keepCopy`, the note as it was is
+	 * first saved beside it as `<name> (your version).md`, without `cc-managed`, and its path returned.
+	 * `expected` guards against a note that changed after review opened.
+	 */
+	async useNewVersion(path: string, keepCopy: boolean, expected?: string): Promise<string | null> {
+		return this.write(async () => {
+			const planned = (await this.plannedManaged()).find((file) => file.path === path);
+			if (!planned) throw new Error(`${path} isn’t a managed note.`);
+			const current = await this.contentAt(path);
+			if (current === null) throw new Error(`${path} was moved or deleted.`);
+			if (expected !== undefined && current !== expected)
+				throw new Error(`${path} changed after review opened. Review it again.`);
+			let copy: string | null = null;
+			if (keepCopy) {
+				const lower = new Set(this.app.vault.getAllLoadedFiles().map((file) => file.path.toLowerCase()));
+				copy = yourVersionPath(path, (candidate) => lower.has(candidate.toLowerCase()));
+				await this.app.vault.create(copy, withoutMarker(current));
+			}
+			await this.replace(path, planned.content, current);
+			return copy;
+		});
+	}
+
+	/** Keep a changed managed note as it is: removing `cc-managed` makes it the user's. */
+	async keepMine(path: string, expected?: string): Promise<void> {
+		return this.write(async () => {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (!(file instanceof TFile)) throw new Error(`${path} was moved or deleted.`);
+			await this.app.vault.process(file, (current) => {
+				if (expected !== undefined && current !== expected)
+					throw new Error(`${path} changed after review opened. Review it again.`);
+				return withoutMarker(current);
+			});
+		});
+	}
+
+	private async replace(path: string, content: string, expected: string | null): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(path);
+		if (!(file instanceof TFile)) throw new Error(`${path} was moved or deleted.`);
+		await this.app.vault.process(file, (current) => {
+			if (expected !== null && current !== expected)
+				throw new Error(`${path} changed while it was being updated. Try again.`);
+			return content;
 		});
 	}
 

@@ -69,8 +69,8 @@ export class SetupModal extends CabinetForm {
 				throw error;
 			}
 			new Notice(`Cabinet ready: ${result.created} created, ${result.updated} updated, ${result.kept} kept.`);
-			// Record the views just written, so startup doesn't rewrite them.
-			await this.plugin.syncViews();
+			// Record the views and notes just written, so startup doesn't rewrite them.
+			await this.plugin.syncCabinet();
 			this.close();
 			await this.plugin.store.open(`${folder}/Cocktail Cabinet.md`);
 		});
