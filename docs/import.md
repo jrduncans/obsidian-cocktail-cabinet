@@ -1,6 +1,6 @@
 # Recipe import design
 
-Drafted on 2026-11-22 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the `knowledge` vault's `cocktail-recipe-import` skill. Reviewed the same day: the [decisions](#decisions) record what was agreed. Slice 1, remembered wordings, built 2026-11-22 and installed in `knowledge` with its starting entries (`Cocchi Americano`, not the skill's `Cocchi American`). Slice 2, web pages, built 2026-11-22; see [as built](#as-built).
+Drafted on 2026-11-22 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the `knowledge` vault's `cocktail-recipe-import` skill. Reviewed the same day: the [decisions](#decisions) record what was agreed. Slice 1, remembered wordings, built 2026-11-22 and installed in `knowledge` with its starting entries (`Cocchi Americano`, not the skill's `Cocchi American`). Slice 2, web pages, built 2026-11-22; see [as built](#as-built). Slice 3, the CLI handlers, built 2026-11-22; see [agents](#agents).
 
 ## Goal
 
@@ -109,6 +109,13 @@ A CLI handler that creates a recipe from text, so the skill fetches and reads (i
 - Returns JSON: the path, each line with its link or "not linked" and up to three suggestions, and any duplicates. The agent can then link lines through a second handler, `cocktail-cabinet:link-line path=<recipe> line=<n> target=<note> [text=<display>]`, which writes as **Link this ingredient line** does.
 - Writes, unlike the availability handlers. In `knowledge` both go in the "ask" group of `.claude/settings.json` and the Codex rules, so the native approval prompt is the check.
 - The skill shrinks to source fidelity (what may be taken from a page), retrieval, and calling these.
+
+As built on 2026-11-22:
+
+- **Line numbers.** `line` is the ingredient's position in the Ingredients list, from 1, not its line in the file: the plugin adds `cc-ingredients` and estimates to a new recipe's frontmatter moments after it's written, which shifted file line numbers between the two calls.
+- **Newlines.** The `obsidian` CLI passes `\n` through to plugin handlers literally, so `create-recipe` reads `\n` and `\t` as its own `content=` values do (`\\` for a backslash).
+- **`name=`** names a recipe whose text doesn't start with its name; `link-line` takes `remember` to add the wording to `cc-written-as`, refused silently (`remembered: false`) when the note already recognizes it.
+- **Tags** ending Tasting Notes move into `tags`, as in the recipe form.
 
 ## Suggested slices
 

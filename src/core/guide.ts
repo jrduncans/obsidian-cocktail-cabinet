@@ -311,6 +311,20 @@ When the user made a cocktail, point them to **Log this cocktail** on the recipe
 
 A one-off's daily-note entry is a \`Made a one-off (Name):\` line, optionally ending \`, a riff on\` and a link to the recipe, followed by its ingredients as a list. **Save one-off as recipe** reads that format, so keep it intact.
 
+## Adding recipes
+
+Create recipe notes through the plugin, not by writing files, so the filename, properties, and remembered wordings follow the cabinet's rules:
+
+\`\`\`bash
+obsidian cocktail-cabinet:create-recipe text="<recipe text>" [name=<name>] [source=<url or label>] [rating=<1-5>]
+obsidian cocktail-cabinet:link-line path="<recipe>" line=<n> target=<note> [text=<link text>] [remember]
+\`\`\`
+
+- \`text\` is the recipe as the source writes it: name, ingredient lines, then Method or Directions and Description headings. Write \`\\n\` for a newline. Put in only what the source says.
+- \`create-recipe\` refuses a filename that already exists and lists recipes with a similar name as \`duplicates\`. It links only wordings listed in exactly one note's \`${PROP.writtenAs}\`; every other line comes back with \`link: null\` and up to three \`suggestions\`.
+- \`link-line\` links one line of the Ingredients list, numbered from 1 as \`create-recipe\` reports it, keeping the recipe's wording as the link text unless \`text\` is given. It refuses a line that's already linked. \`remember\` adds the wording to the note's \`${PROP.writtenAs}\`: only when the user asks.
+- Both write to the vault, so expect the user to approve each call.
+
 ## Asking the cabinet
 
 With Obsidian running and its command line enabled, these commands print JSON computed by the plugin's own matching rules. Use them instead of reading Bases or scanning notes:
