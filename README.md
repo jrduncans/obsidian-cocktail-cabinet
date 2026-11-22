@@ -118,7 +118,7 @@ Each recipe gets an estimate of one serving's alcohol, ABV as served, and volume
 
 ## Storage and privacy
 
-All runtime operations stay in the selected vault, with one exception: when you paste a web address into **Create a cocktail recipe** and select **Read recipe**, the plugin fetches that one page to read its recipe. It sends nothing but that request, fetches nothing else (no images, linked pages, or searches), and never fetches on its own. It collects no telemetry. External reference links on ingredient pages open only when selected.
+All runtime operations stay in the selected vault, with one exception: when you paste a web address into **Create a cocktail recipe** and select **Read recipe** or **Read page**, the plugin fetches that one page to read its recipe. It sends nothing but that request, fetches nothing else (no images, linked pages, or searches), and never fetches on its own. It collects no telemetry. External reference links on ingredient pages open only when selected.
 
 Notes use `cc-kind` to identify their role and `cc-`-prefixed properties to avoid common vault property conflicts. Links include vault-relative folder paths. See the [resource schemas](docs/note-properties.md) for each property's purpose, stored values, and current use, the [cabinet design](docs/cabinet-design.md) for design decisions, and the [domain glossary](GLOSSARY.md) for terminology.
 
