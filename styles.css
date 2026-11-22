@@ -306,7 +306,8 @@
 	border-bottom: var(--border-width) solid var(--background-modifier-border);
 	padding: var(--size-4-2) 0;
 }
-.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-unlinked-group > .setting-item {
+.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-unlinked-group > .setting-item,
+.cocktail-cabinet-unlinked-pane .cocktail-cabinet-unlinked-group > .setting-item {
 	border: 0;
 }
 .cocktail-cabinet-unlinked-uses {
@@ -456,4 +457,21 @@
 
 .cocktail-cabinet-field-label {
 	color: var(--text-muted);
+}
+
+/* Unlinked ingredients pane: a narrow sidebar, so rows wrap their controls under the name. */
+.cocktail-cabinet-unlinked-pane > .cocktail-cabinet-pane-row > p {
+	flex: 1;
+	margin: 0;
+}
+.cocktail-cabinet-unlinked-pane .setting-item {
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+}
+.cocktail-cabinet-unlinked-pane .setting-item-control {
+	flex-wrap: wrap;
+	justify-content: flex-start;
+}
+.cocktail-cabinet-unlinked-pane .cocktail-cabinet-unlinked-uses li {
+	border-bottom: 0;
 }

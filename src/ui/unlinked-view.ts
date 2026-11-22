@@ -1,10 +1,11 @@
-import { ButtonComponent, Menu, Modal, Notice, Setting } from 'obsidian';
+import { ButtonComponent, ItemView, Keymap, Menu, Notice, Setting } from 'obsidian';
+import type { WorkspaceLeaf } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { suggestIngredient } from '../core/recipe-import';
 import { ingredientParts, linkedLinePreview, linkTextError } from '../core/unlinked-lines';
 import type { UnlinkedGroup } from '../core/unlinked-lines';
-import type { RecipeLinkStore } from '../vault/recipe-links';
+import { RecipeLinkStore } from '../vault/recipe-links';
 import { addCreateItems, pickIngredient } from './link-choice';
 import { rememberAfterLink, renderLinkText, renderPreview, renderRemember } from './link-text';
 import { rememberedNote } from '../core/written-as';
@@ -12,8 +13,15 @@ import { rememberedNote } from '../core/written-as';
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 const recipeCount = (group: UnlinkedGroup) => new Set(group.uses.map((use) => use.recipe.path)).size;
 
-/** Reviewable unlinked lines across recipes, linked in bulk by wording. */
-export class UnlinkedModal extends Modal {
+export const UNLINKED_VIEW = 'cocktail-cabinet-unlinked';
+
+/**
+ * Reviewable unlinked lines across recipes, linked in bulk by wording. A side pane, so each recipe opens
+ * in the main area beside it. It reads the recipes when opened and on Refresh, not on every change, so
+ * choices in progress aren't lost; linking checks each line against what was read.
+ */
+export class UnlinkedView extends ItemView {
+	private links: RecipeLinkStore;
 	private groups: UnlinkedGroup[] = [];
 	private filter = '';
 	private showGarnishes = false;
@@ -28,27 +36,52 @@ export class UnlinkedModal extends Modal {
 	>();
 
 	constructor(
+		leaf: WorkspaceLeaf,
 		private plugin: CocktailCabinetPlugin,
-		private links: RecipeLinkStore,
 	) {
-		super(plugin.app);
+		super(leaf);
+		this.links = new RecipeLinkStore(plugin.app, plugin.store);
 	}
 
-	onOpen() {
-		this.titleEl.setText('Unlinked ingredients');
-		this.modalEl.addClass('cocktail-cabinet-modal');
-		this.contentEl.addClass('cocktail-cabinet-form');
+	getViewType() {
+		return UNLINKED_VIEW;
+	}
+	getDisplayText() {
+		return 'Unlinked ingredients';
+	}
+	getIcon() {
+		return 'unlink';
+	}
+
+	async onOpen() {
+		this.contentEl.addClass('cocktail-cabinet-pane', 'cocktail-cabinet-form', 'cocktail-cabinet-unlinked-pane');
 		this.contentEl.createEl('p', { text: 'Loading…' });
-		void this.load();
+		// A pane restored with the workspace waits for the vault to be indexed.
+		this.app.workspace.onLayoutReady(() => void this.read());
+		return Promise.resolve();
 	}
 
-	onClose() {
+	async onClose() {
 		this.closed = true;
 		this.contentEl.empty();
+		return Promise.resolve();
 	}
 
-	private async load() {
+	/** Read the recipes again, dropping choices not yet linked. */
+	reload() {
+		if (this.busy) return;
+		this.pending.clear();
+		this.contentEl.empty();
+		this.contentEl.createEl('p', { text: 'Loading…' });
+		void this.read();
+	}
+
+	private async read() {
 		try {
+			if (!(await this.plugin.store.isSetUp())) {
+				if (!this.closed) this.contentEl.setText('The cabinet isn’t set up yet.');
+				return;
+			}
 			this.groups = await this.links.unlinked({ includeGarnishes: this.showGarnishes });
 			if (this.closed) return;
 			// A wording one note remembers starts chosen; nothing is written until Link.
@@ -72,7 +105,13 @@ export class UnlinkedModal extends Modal {
 
 	private render() {
 		this.contentEl.empty();
-		this.summaryEl = this.contentEl.createEl('p');
+		const header = this.contentEl.createDiv({ cls: 'cocktail-cabinet-pane-row' });
+		this.summaryEl = header.createEl('p');
+		new ButtonComponent(header)
+			.setIcon('refresh-cw')
+			.setTooltip('Read the recipes again')
+			.setClass('cocktail-cabinet-pane-shop')
+			.onClick(() => this.reload());
 		new Setting(this.contentEl).setName('Filter').addText((text) => {
 			text.setPlaceholder('Wording, such as gin')
 				.setValue(this.filter)
@@ -92,10 +131,7 @@ export class UnlinkedModal extends Modal {
 						return;
 					}
 					this.showGarnishes = value;
-					this.pending.clear();
-					this.contentEl.empty();
-					this.contentEl.createEl('p', { text: 'Loading…' });
-					void this.load();
+					this.reload();
 				});
 			});
 		this.listEl = this.contentEl.createDiv({ cls: 'cocktail-cabinet-unlinked' });
@@ -124,12 +160,13 @@ export class UnlinkedModal extends Modal {
 	private renderGroup(el: HTMLElement, group: UnlinkedGroup) {
 		el.empty();
 		const recipes = recipeCount(group);
-		const desc =
-			recipes === 1
-				? group.uses[0]!.recipe.name
-				: `${plural(recipes, 'recipe')}${group.uses.length > recipes ? `, ${group.uses.length} lines` : ''}`;
-		const row = new Setting(el).setName(group.wording).setDesc(desc);
+		const row = new Setting(el).setName(group.wording);
 		const pending = this.pending.get(group.key);
+		if (recipes === 1) this.recipeLink(row.descEl, group.uses[0]!.recipe);
+		else
+			row.setDesc(
+				`${plural(recipes, 'recipe')}${group.uses.length > recipes ? `, ${group.uses.length} lines` : ''}`,
+			);
 		const choose = (note: CabinetNote) => {
 			this.pending.set(group.key, { note, ticked: new Set(group.uses.map((_use, index) => index)), text: null });
 			this.renderGroup(el, group);
@@ -190,17 +227,22 @@ export class UnlinkedModal extends Modal {
 		const renderUses = () => {
 			list.empty();
 			group.uses.forEach((use, index) => {
-				const label = list.createEl('li').createEl('label');
-				const box = label.createEl('input', { type: 'checkbox' });
+				const item = list.createEl('li');
+				const box = item.createEl('input', {
+					type: 'checkbox',
+					attr: { 'aria-label': `Link in ${use.recipe.name}` },
+				});
 				box.checked = pending.ticked.has(index);
 				box.addEventListener('change', () => {
 					if (box.checked) pending.ticked.add(index);
 					else pending.ticked.delete(index);
 					update();
 				});
-				label.createSpan({ cls: 'cocktail-cabinet-unlinked-recipe', text: ` ${use.recipe.name}: ` });
+				item.appendText(' ');
+				this.recipeLink(item, use.recipe);
+				item.appendText(': ');
 				renderPreview(
-					label.createSpan(),
+					item.createSpan(),
 					linkedLinePreview(use.text, pending.text ?? ingredientParts(use.text).wording),
 				);
 			});
@@ -217,6 +259,19 @@ export class UnlinkedModal extends Modal {
 				linkButton = button.setCta().onClick(() => void this.link(el, group));
 			});
 		update();
+	}
+
+	/** A recipe's name that opens it in the main area, or a new tab with Ctrl or Cmd. */
+	private recipeLink(el: HTMLElement, recipe: { name: string; path: string }) {
+		const link = el.createEl('a', {
+			cls: 'internal-link cocktail-cabinet-unlinked-recipe',
+			text: recipe.name,
+			href: recipe.path,
+		});
+		link.addEventListener('click', (event) => {
+			event.preventDefault();
+			void this.app.workspace.openLinkText(recipe.path, '', Keymap.isModEvent(event));
+		});
 	}
 
 	private async link(el: HTMLElement, group: UnlinkedGroup) {
@@ -257,4 +312,15 @@ export class UnlinkedModal extends Modal {
 			this.renderGroup(el, group);
 		}
 	}
+}
+
+/** Open the pane in the right sidebar, reusing one already open. */
+export async function openUnlinked(plugin: CocktailCabinetPlugin): Promise<void> {
+	const { workspace } = plugin.app;
+	let leaf = workspace.getLeavesOfType(UNLINKED_VIEW)[0];
+	if (!leaf) {
+		leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf('tab');
+		await leaf.setViewState({ type: UNLINKED_VIEW, active: true });
+	}
+	await workspace.revealLeaf(leaf);
 }
