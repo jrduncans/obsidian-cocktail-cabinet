@@ -67,6 +67,7 @@ Types, bottles, and other stock can be marked **Add to shopping list** independe
 
 - **What can I make?** opens a pane beside your notes with every recipe by how close it is: Can make, With a substitute, Check stock, Missing one, and Missing more, each with caveats such as “Low: Campari”. Filter by an ingredient, rating, or tag; within a group, the highest-rated recipes you haven't made lately come first. Its **To buy** tab lists missing ingredients by the recipes each would unlock, with a button to add one to the shopping list.
 - **What can I make with this?** on a bottle, other stock, type, or family opens the pane narrowed to recipes using it. **Can I make this?** on a recipe checks each line, with **Edit stock**, **Link…**, and **Log this cocktail** at hand.
+- Agents can also add recipes through the command line: `cocktail-cabinet:create-recipe` creates a recipe note from recipe text, linking only remembered wordings, and `cocktail-cabinet:link-line` links one of its ingredient lines. Both write, so an agent's tool asks before each.
 - Agents ask the same questions through the `obsidian` command line: `cocktail-cabinet:can-make`, `cocktail-cabinet:makeable`, and `cocktail-cabinet:to-buy` print JSON. See [availability](docs/availability.md).
 
 ## Log a cocktail

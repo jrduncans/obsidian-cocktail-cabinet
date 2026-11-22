@@ -17,6 +17,7 @@ try {
 		'recipe-import.test',
 		'written-as.test',
 		'web-recipe.test',
+		'recipe-draft.test',
 		'logging.test',
 		'subtypes.test',
 		'availability.test',
