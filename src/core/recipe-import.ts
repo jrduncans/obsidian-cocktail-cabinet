@@ -12,6 +12,8 @@ export interface RecipeImport {
 	warnings: string[];
 }
 
+export const FIRST_LINE_WARNING = 'The first line was taken as the recipe name. Check it.';
+
 type Section = 'ingredients' | 'method' | 'description' | 'tastingNotes' | 'extra';
 const SECTIONS: Record<string, Section> = {
 	ingredients: 'ingredients',
@@ -104,7 +106,7 @@ export function parseRecipeText(body: string, metadata: Record<string, unknown> 
 			sawTitle = true;
 			if (isNameLine(line)) {
 				result.name = line.trim().replace(/^\*\*(.+)\*\*$/, '$1');
-				result.warnings.push('The first line was taken as the recipe name. Check it.');
+				result.warnings.push(FIRST_LINE_WARNING);
 				continue;
 			}
 		}

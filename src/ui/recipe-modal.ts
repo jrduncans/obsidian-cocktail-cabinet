@@ -1,8 +1,10 @@
-import { Setting } from 'obsidian';
+import { htmlToMarkdown, requestUrl, Setting } from 'obsidian';
+import type { ButtonComponent } from 'obsidian';
 import type { TFile } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { parseRecipeText } from '../core/recipe-import';
 import type { RecipeImport } from '../core/recipe-import';
+import { readRecipePage, recipeUrl, sourceUrl } from '../core/web-recipe';
 import { ratingOptions, ratingText } from '../core/note-edit';
 import { duplicateRecipes, parseTags, splitTags, uniqueTags } from '../core/recipe-tags';
 import { noteName, parseRating } from '../core/schema';
@@ -37,7 +39,7 @@ export class RecipeModal extends CabinetForm {
 		}
 		this.begin(
 			this.snapshot ? 'Enhance as cocktail recipe' : 'Create a cocktail recipe',
-			'Paste copied recipe text, or enter a recipe manually. To enhance an existing Obsidian page, open it and run Enhance as cocktail recipe.',
+			'Paste copied recipe text or a recipe page’s address, or enter a recipe manually. To enhance an existing Obsidian page, open it and run Enhance as cocktail recipe.',
 		);
 		if (this.snapshot) {
 			try {
@@ -48,32 +50,80 @@ export class RecipeModal extends CabinetForm {
 			return;
 		}
 		let text = '';
-		this.area(
+		const area = this.area(
 			'Recipe text',
 			text,
 			(value) => {
 				text = value;
 			},
-			'Paste ingredient lines and preparation text copied from a recipe. Headings and bullets are optional. URLs can be recorded as sources; pages are not fetched.',
+			'Paste ingredient lines and preparation text copied from a recipe; headings and bullets are optional. Or paste the address of a recipe page on its own: the page is fetched and read, with nothing filled in from anywhere else.',
 			12,
 		).setClass('cocktail-cabinet-name');
+		const textArea = area.controlEl.querySelector('textarea');
+		let reviewButton!: ButtonComponent;
 		new Setting(this.contentEl)
 			.addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()))
 			.addButton((button) => button.setButtonText('Enter manually').onClick(() => this.edit(parseRecipeText(''))))
 			.addButton((button) =>
-				button
+				(reviewButton = button)
 					.setButtonText('Review recipe')
 					.setCta()
 					.onClick(() => {
 						try {
 							if (!text.trim())
 								throw new Error('Paste recipe text before reviewing it, or select Enter manually.');
+							const url = recipeUrl(text);
+							if (url) {
+								void this.reviewPage(url, reviewButton, (value) => {
+									text = value;
+									if (textArea) {
+										textArea.value = value;
+										textArea.focus();
+										textArea.setSelectionRange(value.length, value.length);
+									}
+								});
+								return;
+							}
 							this.review(text);
 						} catch (error) {
 							this.showError(error);
 						}
 					}),
 			);
+	}
+
+	/**
+	 * Fetch one page and read its recipe (docs/import.md#web-pages). Nothing else is fetched. On failure, the
+	 * text field keeps the page as its source line, ready for the recipe text to be pasted below it.
+	 */
+	private async reviewPage(url: URL, button: ButtonComponent, setText: (value: string) => void) {
+		const fail = (reason: string) => {
+			this.errorEl.setText(`${reason} Copy the recipe text from the page and paste it below the source line.`);
+			setText(`Source: ${sourceUrl(url.href)}\n\n`);
+		};
+		this.errorEl.empty();
+		button.setDisabled(true).setButtonText('Reading page…');
+		try {
+			const response = await requestUrl({ url: url.href, throw: false });
+			if (response.status >= 400) return fail(`The page couldn’t be read (it answered ${response.status}).`);
+			const type = Object.entries(response.headers).find(([key]) => key.toLowerCase() === 'content-type')?.[1];
+			if (type && !/html/i.test(type)) return fail('That address isn’t a web page.');
+			const { recipe, original } = readRecipePage(response.text, url.href, {
+				parse: (html) => new DOMParser().parseFromString(html, 'text/html'),
+				toMarkdown: (el) => htmlToMarkdown(el as HTMLElement),
+			});
+			if (!recipe.ingredients.length)
+				return fail(
+					'No recipe could be read from this page. It may need a sign-in, or build itself with scripts.',
+				);
+			this.edit(recipe, original);
+		} catch (error) {
+			fail(
+				`The page couldn’t be fetched${error instanceof Error && error.message ? ` (${error.message})` : ''}.`,
+			);
+		} finally {
+			button.setDisabled(false).setButtonText('Review recipe');
+		}
 	}
 
 	/** Warn when the name matches a recipe already in the cabinet; each one opens in a new tab. */
