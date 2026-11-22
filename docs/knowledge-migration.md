@@ -1,5 +1,7 @@
 # Knowledge migration rehearsal
 
+Retired on 2026-11-22, after the cutover it was written for (2026-11-04). `migrate:knowledge`, `prepass:knowledge`, `scripts/knowledge/`, and their test were removed; the last commit with them is `3cd00bd` (for example, `git show 3cd00bd:scripts/migrate-knowledge.ts`). This page records how they worked.
+
 `npm run migrate:knowledge` runs the one-off Phase 1 migration. It reads the tables in [the approved mapping](knowledge-adoption-mapping.md) and reuses the plugin's catalog, rendering, links, stock units, ratings, and generated Bases. Transform code lives in `scripts/knowledge/`; filesystem access is isolated in `io.ts`.
 
 Run from the repository with Node.js 20 or later:
