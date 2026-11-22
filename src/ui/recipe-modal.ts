@@ -13,6 +13,7 @@ import type { RecipeSnapshot } from '../vault/cabinet-store';
 import { CabinetForm } from './form';
 import { RecipeIngredients } from './recipe-ingredients';
 import { RecipeTagsField } from './recipe-tags';
+import { PageAddressModal } from './page-address-modal';
 import { PasteRecipeModal } from './paste-recipe-modal';
 
 const IMPORTED_FIELDS = ['cc-name', 'name', 'title', 'source', 'rating', 'created', 'cc-kind', 'tags'];
@@ -58,24 +59,26 @@ export class RecipeModal extends CabinetForm {
 		});
 		// setButtonText replaces the content, so the icon goes in afterward.
 		setIcon(button.buttonEl.createSpan({ cls: 'cocktail-cabinet-button-icon', prepend: true }), 'clipboard-paste');
-		row.createSpan({
-			cls: 'setting-item-description',
-			text: pasted
-				? 'Read again, or paste something else.'
-				: 'Fill the form from copied text or a recipe page’s address.',
+		const page = new ButtonComponent(row).setButtonText('Read recipe page…').onClick(() => {
+			new PageAddressModal(this.app, (url) => this.readAddress(url)).open();
 		});
+		setIcon(page.buttonEl.createSpan({ cls: 'cocktail-cabinet-button-icon', prepend: true }), 'globe');
 	}
 
-	/** Fill the form from the page in Source; if it can't be read, the paste dialog opens with the reason. */
+	/** Fill the form from a page; if it can't be read, the paste dialog opens with the reason. */
+	private async readAddress(url: URL) {
+		let text = '';
+		const error = await this.readPage(url, (value) => (text = value));
+		if (error) new PasteRecipeModal(this.app, text, (value, setText) => this.read(value, setText), error).open();
+	}
+
+	/** Fill the form from the page in Source. */
 	private async readSource(source: string, button: ButtonComponent) {
 		const url = recipeUrl(source);
 		if (!url) return;
-		let text = '';
 		button.setDisabled(true).setButtonText('Reading page…');
 		try {
-			const error = await this.readPage(url, (value) => (text = value));
-			if (error)
-				new PasteRecipeModal(this.app, text, (value, setText) => this.read(value, setText), error).open();
+			await this.readAddress(url);
 		} finally {
 			button.setDisabled(false).setButtonText('Read page');
 		}
