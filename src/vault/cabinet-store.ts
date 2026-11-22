@@ -2,7 +2,7 @@ import { App, TFile, TFolder, getAllTags, parseFrontMatterAliases, parseYaml } f
 import { cabinetFolder, contentFingerprint, KINDS, PROP, wikiLink } from '../core/schema';
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { localDate, renderNote } from '../core/notes';
-import { withSubtypesSection } from '../core/navigation';
+import { withNavigationSections, withSubtypesSection } from '../core/navigation';
 import { cabinetNotePath, cabinetViews, customViewsPath, managedNotes, starterPlan } from '../core/setup';
 import { managedFingerprint, managedState, withoutMarker, yourVersionPath } from '../core/managed';
 import { STARTER_EXAMPLES } from '../catalog/examples';
@@ -469,6 +469,41 @@ export class CabinetStore {
 				}
 			}
 			return file;
+		});
+	}
+
+	/**
+	 * Add any Related section a resource note's kind shows and the note lacks, such as Subtypes on a type
+	 * that gained subtypes or a section a release added. Never removes or reorders embeds. Returns the
+	 * updated paths; nothing happens before setup.
+	 */
+	async syncSections(): Promise<string[]> {
+		return this.write(async () => {
+			if (!(await this.isSetUp())) return [];
+			const root = this.root;
+			const notes = this.notes();
+			const byPath = new Map(notes.map((note) => [note.path, note]));
+			const withSubtypes = new Set(
+				notes
+					.filter((note) => note.kind === 'type')
+					.flatMap((note) => note.parents.filter((path) => byPath.get(path)?.kind === 'type')),
+			);
+			const updated: string[] = [];
+			for (const note of notes) {
+				const file = this.app.vault.getAbstractFileByPath(note.path);
+				if (!(file instanceof TFile)) continue;
+				const hasSubtypes = withSubtypes.has(note.path);
+				const current = await this.app.vault.read(file);
+				if (withNavigationSections(root, note.kind, current, hasSubtypes) === current) continue;
+				let changed = false;
+				await this.app.vault.process(file, (content) => {
+					const next = withNavigationSections(root, note.kind, content, hasSubtypes);
+					changed = next !== content;
+					return next;
+				});
+				if (changed) updated.push(note.path);
+			}
+			return updated;
 		});
 	}
 

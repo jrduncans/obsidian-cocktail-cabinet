@@ -146,23 +146,82 @@ export function navigationEmbed(root: string, view: View): string {
 	return `![[${basePath(cabinetFolder(root), NAVIGATION_BASE)}#${view}]]`;
 }
 
+/** The sections a note of this kind shows, in order; a type with subtypes lists them first. */
+export function navigationSections(kind: NoteKind, hasSubtypes = false): View[] {
+	return [...(kind === 'type' && hasSubtypes ? [NAVIGATION_VIEWS.subtypes] : []), ...(SECTIONS[kind] ?? [])];
+}
+
+/** Fingerprint of the section rules, so the plugin rechecks notes only when a release changes them. */
+export const NAVIGATION_SECTIONS_VERSION = JSON.stringify([SECTIONS, NAVIGATION_VIEWS.subtypes]);
+
+const VIEW_NAMES = new Set<string>(Object.values(NAVIGATION_VIEWS));
+
+/**
+ * Which section a line embeds, if any. Accepts any link Obsidian resolves to the Related Base by name
+ * (`![[Related.base#Stock]]`, `![[Cocktails/Views/Related#Stock|…]]`), not only the form the plugin writes.
+ */
+function embeddedView(line: string): View | null {
+	const match = line.trim().match(/^!\[\[([^\]#|]*)#([^\]|]+)(?:\|[^\]]*)?\]\]$/);
+	if (!match) return null;
+	const target = match[1]!
+		.split('/')
+		.at(-1)!
+		.replace(/\.base$/, '');
+	const view = match[2]!.trim();
+	return target === NAVIGATION_BASE && VIEW_NAMES.has(view) ? (view as View) : null;
+}
+
+/**
+ * The content with each of `wanted` (in `order`) embedded, if missing. A missing section goes before the
+ * next present one in order, else after the previous one, else at the end. Nothing is removed or moved.
+ */
+function withSections(root: string, content: string, order: readonly View[], wanted: readonly View[]): string {
+	const lines = content.split('\n');
+	const at = () => {
+		const found = new Map<View, number>();
+		lines.forEach((line, index) => {
+			const view = embeddedView(line);
+			if (view && !found.has(view)) found.set(view, index);
+		});
+		return found;
+	};
+	for (const view of wanted) {
+		const present = at();
+		if (present.has(view)) continue;
+		const embed = navigationEmbed(root, view);
+		const position = order.indexOf(view);
+		const next = order.slice(position + 1).find((other) => present.has(other));
+		const previous = order
+			.slice(0, position)
+			.reverse()
+			.find((other) => present.has(other));
+		if (next) lines.splice(present.get(next)!, 0, embed, '');
+		else if (previous) lines.splice(present.get(previous)! + 1, 0, '', embed);
+		else {
+			while (lines.length && !lines.at(-1)!.trim()) lines.pop();
+			lines.push('', embed, '');
+		}
+	}
+	return lines.join('\n');
+}
+
 /**
  * A type note's content with a Subtypes section, ahead of its other sections; unchanged when it has one.
  * Notes are generated without it until a subtype appears, so most types don't show an empty list.
  */
 export function withSubtypesSection(root: string, content: string): string {
-	const embed = navigationEmbed(root, NAVIGATION_VIEWS.subtypes);
-	if (content.includes(embed)) return content;
-	const prefix = `![[${basePath(cabinetFolder(root), NAVIGATION_BASE)}#`;
-	const lines = content.split('\n');
-	const first = lines.findIndex((line) => line.trim().startsWith(prefix));
-	if (first < 0) return `${content.trimEnd()}\n\n${embed}\n`;
-	lines.splice(first, 0, embed, '');
-	return lines.join('\n');
+	return withSections(root, content, navigationSections('type', true), [NAVIGATION_VIEWS.subtypes]);
+}
+
+/** A resource note's content with every section its kind shows, adding only what's missing (docs/ownership.md). */
+export function withNavigationSections(root: string, kind: NoteKind, content: string, hasSubtypes = false): string {
+	const order = navigationSections(kind, hasSubtypes);
+	return withSections(root, content, order, order);
 }
 
 /** Embed lines for a resource note; empty for recipes and other kinds. A type with subtypes lists them first. */
 export function navigationEmbeds(root: string, kind: NoteKind, hasSubtypes = false): string {
-	const views = [...(kind === 'type' && hasSubtypes ? [NAVIGATION_VIEWS.subtypes] : []), ...(SECTIONS[kind] ?? [])];
-	return views.map((view) => navigationEmbed(root, view)).join('\n\n');
+	return navigationSections(kind, hasSubtypes)
+		.map((view) => navigationEmbed(root, view))
+		.join('\n\n');
 }

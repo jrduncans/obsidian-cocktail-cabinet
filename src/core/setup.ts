@@ -166,7 +166,7 @@ Open a linked view to browse your current notes and edit properties. Enable **Ba
 
 The plugin keeps this page and the ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} note current with each release; the \`${PROP.managed}\` property records the version it last wrote. If you edit one, the plugin leaves your version alone and offers the new one in **Cocktail Cabinet: Review cabinet updates**, where you can switch to it or keep yours. To make a page entirely yours, delete its \`${PROP.managed}\` property. Your other notes are always yours; setup keeps existing notes when you run it again.
 
-The views in the **Views** folder belong to the plugin, which updates them in new releases; ${viewLink(NAVIGATION_BASE)} supplies the sections shown in each ingredient and bottle note. To change a view, copy it into the **${CUSTOM_VIEWS_FOLDER}** folder and edit the copy; the plugin never touches that folder. **Cocktail Cabinet: Refresh cabinet notes** restores the original views and any of these pages you haven't edited.
+The views in the **Views** folder belong to the plugin, which updates them in new releases; ${viewLink(NAVIGATION_BASE)} supplies the sections shown in each ingredient and bottle note, and the plugin adds any section a note is missing. To change a view, copy it into the **${CUSTOM_VIEWS_FOLDER}** folder and edit the copy; the plugin never touches that folder. **Cocktail Cabinet: Refresh cabinet notes** restores the original views and any of these pages you haven't edited.
 
 Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The views need only Obsidian’s core Bases plugin.`,
 		),

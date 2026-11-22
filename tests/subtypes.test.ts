@@ -4,7 +4,7 @@ import type { App } from 'obsidian';
 import { noteAbv } from '../src/core/alcohol-estimate';
 import { classifyLoggingLines, fitsLine, lesserType } from '../src/core/logging-lines';
 import { stockSnapshot } from '../src/core/logging-stock';
-import { navigationBase, navigationEmbeds, withSubtypesSection } from '../src/core/navigation';
+import { navigationBase, navigationEmbeds, withNavigationSections, withSubtypesSection } from '../src/core/navigation';
 import { planFieldEdit } from '../src/core/note-edit';
 import { relatedTargets, subtypeParents } from '../src/core/relationships';
 import { PROP } from '../src/core/schema';
@@ -122,6 +122,29 @@ void test('a type gets a Subtypes section ahead of its others, once', () => {
 	assert.ok(
 		withSubtypesSection('Cocktails', '# Bare\n').endsWith('\n\n![[Cocktails/Views/Related.base#Subtypes]]\n'),
 	);
+});
+
+void test('missing sections go beside their neighbors in order, and present ones never move', () => {
+	const e = (view: string) => `![[Cocktails/Views/Related.base#${view}]]`;
+	const head = '---\ncc-kind: type\n---\n# Bourbon\n\nText.\n';
+	// Only Recipes: Subtypes and Stock go before it.
+	assert.equal(
+		withNavigationSections('Cocktails', 'type', `${head}\n${e('Recipes')}\n`, true),
+		`${head}\n${e('Subtypes')}\n\n${e('Stock')}\n\n${e('Recipes')}\n`,
+	);
+	// Only Stock: Recipes goes after it.
+	assert.equal(
+		withNavigationSections('Cocktails', 'type', `${head}\n${e('Stock')}\n\nAfter.\n`),
+		`${head}\n${e('Stock')}\n\n${e('Recipes')}\n\nAfter.\n`,
+	);
+	// None: all at the end. Reordered sections stay as they are.
+	assert.equal(withNavigationSections('Cocktails', 'type', head), `${head}\n${e('Stock')}\n\n${e('Recipes')}\n`);
+	const reordered = `${head}\n${e('Recipes')}\n\n${e('Stock')}\n`;
+	assert.equal(withNavigationSections('Cocktails', 'type', reordered), reordered);
+	// A short or aliased link counts as present; recipes have no sections.
+	const short = `${head}\n![[Related#Stock|Stock]]\n\n![[Related.base#Recipes]]\n`;
+	assert.equal(withNavigationSections('Cocktails', 'type', short), short);
+	assert.equal(withNavigationSections('Cocktails', 'recipe', head), head);
 });
 
 void test('the Related Base reaches four levels and applies the same-type rule to named bottles only', () => {

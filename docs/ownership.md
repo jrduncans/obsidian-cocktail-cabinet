@@ -76,7 +76,7 @@ Unreleased, so no migration machinery and nothing by hand (decided 2026-11-21): 
 ## Suggested slices
 
 1. Built 2026-11-21. Managed notes: `cc-managed`, the startup check, **Review cabinet updates**, **Refresh cabinet notes** (replacing **Refresh cabinet views**, and covering Bases). `Cocktail Cabinet.md` and `Shopping list.md` become managed; `knowledge`'s two notes are overwritten.
-2. Navigation embeds kept present.
+2. Built 2026-11-21. Navigation embeds kept present.
 3. Catalog updates, with earlier values kept in the catalog.
 4. The guide pages, then the agent reference, rewriting `knowledge`'s `AGENTS.md` cocktail section as a link.
 5. Skills, deferred.

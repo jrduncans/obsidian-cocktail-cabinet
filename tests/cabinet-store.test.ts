@@ -3,12 +3,13 @@ import test from 'node:test';
 import type { App } from 'obsidian';
 import { CabinetStore } from '../src/vault/cabinet-store';
 import { cabinetViews, managedNotes, starterPlan } from '../src/core/setup';
+import { navigationEmbed, NAVIGATION_VIEWS } from '../src/core/navigation';
 import { asManaged, lineDiff, managedMarker, managedState, withoutMarker } from '../src/core/managed';
 import { relatedTargets } from '../src/core/relationships';
 import { contentFingerprint } from '../src/core/schema';
 import { restockBase } from '../src/core/restock';
 import type { RestockThresholds } from '../src/core/restock';
-import { TFile, TFolder } from './obsidian-stub';
+import { parseYaml, TFile, TFolder } from './obsidian-stub';
 
 function fixture() {
 	const contents = new Map(
@@ -37,6 +38,8 @@ function fixture() {
 	const app = {
 		vault: {
 			getFiles: () => [...contents.keys()].map((path) => new TFile(path)),
+			getMarkdownFiles: () =>
+				[...contents.keys()].filter((path) => path.endsWith('.md')).map((path) => new TFile(path)),
 			getAllLoadedFiles: () => [...contents.keys()].map((path) => new TFile(path)),
 			getAbstractFileByPath: (path: string) =>
 				contents.has(path) ? new TFile(path) : folders.has(path) ? new TFolder() : null,
@@ -56,7 +59,16 @@ function fixture() {
 				return Promise.resolve(content);
 			},
 		},
-		metadataCache: { getFileCache: () => null },
+		metadataCache: {
+			getFileCache: (file: TFile) => {
+				const source = contents.get(file.path)?.match(/^---\n([\s\S]*?)\n---/)?.[1];
+				return source ? { frontmatter: parseYaml(source) as Record<string, unknown> } : null;
+			},
+			getFirstLinkpathDest: (link: string) => {
+				const path = contents.has(`${link}.md`) ? `${link}.md` : contents.has(link) ? link : null;
+				return path ? new TFile(path) : null;
+			},
+		},
 		fileManager: {
 			renameFile: (file: TFile, destination: string) => {
 				assert.ok(!contents.has(destination));
@@ -558,4 +570,26 @@ void test('the Cocktail Cabinet note links the worked examples only while they r
 		contents.delete(path);
 	assert.deepEqual((await store.syncManaged(written)).updated, [cabinet]);
 	assert.doesNotMatch(contents.get(cabinet)!, /Try an example/);
+});
+
+void test('resource notes get missing Related sections, once, without moving what is there', async () => {
+	const { contents, store } = fixture();
+	const embed = (view: (typeof NAVIGATION_VIEWS)[keyof typeof NAVIGATION_VIEWS]) =>
+		navigationEmbed('Cocktails', view);
+	const rum = 'Cocktails/Families/Rum.md';
+	// The fixture's notes have no sections; one keeps a custom order and a short link form.
+	contents.set(rum, `${contents.get(rum)!}\n![[Related.base#Recipes]]\n\nMy note.\n\n${embed('Types')}\n`);
+	const updated = await store.syncSections();
+	assert.ok(updated.includes(rum));
+	assert.ok(updated.includes('Cocktails/Types/Aged Jamaican Rum.md'));
+	assert.ok(!updated.some((path) => path.includes('/Views/') || path.endsWith('Cocktail Cabinet.md')));
+	// Stock goes before the next section in order, Recipes, wherever that is.
+	const [before] = contents.get(rum)!.split(embed('Stock'));
+	assert.ok(before!.endsWith('Personal content to preserve.\n\n'));
+	assert.ok(
+		contents
+			.get(rum)!
+			.endsWith(`${embed('Stock')}\n\n![[Related.base#Recipes]]\n\nMy note.\n\n${embed('Types')}\n`),
+	);
+	assert.deepEqual(await store.syncSections(), []);
 });

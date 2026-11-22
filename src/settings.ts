@@ -19,6 +19,8 @@ export interface CocktailCabinetSettings {
 	viewVersions: Record<string, string>;
 	/** Fingerprint of the plugin's version of each managed note last handled, by path (see `CabinetStore.syncManaged`). */
 	managedVersions: Record<string, string>;
+	/** The section rules last applied to resource notes (see `CabinetStore.syncSections`). */
+	sectionsVersion: string;
 	/** The latest logs, oldest first, kept for **Undo last log**. */
 	recentLogs: LogRecord[];
 	/** Alcohol estimate: water added by chilling, as a share of the pour, by preparation. */
@@ -37,6 +39,7 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	lowStockMl: DEFAULT_RESTOCK.ml,
 	viewVersions: {},
 	managedVersions: {},
+	sectionsVersion: '',
 	recentLogs: [],
 	dilution: { ...DEFAULT_DILUTION },
 	topMl: DEFAULT_TOP_ML,
@@ -74,6 +77,7 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 			: {};
 	settings.viewVersions = record(saved.viewVersions);
 	settings.managedVersions = record(saved.managedVersions);
+	if (typeof saved.sectionsVersion === 'string') settings.sectionsVersion = saved.sectionsVersion;
 	const dilution = saved.dilution;
 	if (dilution && typeof dilution === 'object') {
 		for (const key of Object.keys(DEFAULT_DILUTION) as Preparation[]) {
