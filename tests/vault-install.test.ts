@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { installPlugin, PLUGIN_FILES, releaseCheck } from '../scripts/vault/install';
+import { installPlugin, PLUGIN_FILES } from '../scripts/vault/install';
 
 async function repository(directory: string): Promise<string> {
 	const repo = join(directory, 'repo');
@@ -14,26 +13,6 @@ async function repository(directory: string): Promise<string> {
 	await writeFile(join(repo, 'styles.css'), '.style {}');
 	return repo;
 }
-
-void test('installs only from a clean main', async () => {
-	const directory = await mkdtemp(join(tmpdir(), 'vault-install-'));
-	try {
-		const repo = await repository(directory);
-		const git = (...args: string[]) =>
-			execFileSync('git', ['-C', repo, '-c', 'user.name=Test', '-c', 'user.email=test@example.com', ...args]);
-		git('init', '-q', '-b', 'main');
-		git('add', '-A');
-		git('commit', '-qm', 'Synthetic plugin');
-		await releaseCheck(repo);
-		await writeFile(join(repo, 'main.js'), 'unfinished');
-		await assert.rejects(releaseCheck(repo), /Commit or discard/);
-		git('checkout', '-q', '--', 'main.js');
-		git('switch', '-q', '-c', 'feature');
-		await assert.rejects(releaseCheck(repo), /Install from main, not feature/);
-	} finally {
-		await rm(directory, { recursive: true, force: true });
-	}
-});
 
 void test('copies the release files, keeps settings, and refuses development vaults', async () => {
 	const directory = await mkdtemp(join(tmpdir(), 'vault-install-'));

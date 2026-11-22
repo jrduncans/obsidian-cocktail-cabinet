@@ -38,8 +38,8 @@ try {
 		alias: { obsidian: resolve('tests/obsidian-stub.ts') },
 		banner: { js: 'import { createRequire } from "node:module"; const require = createRequire(import.meta.url);' },
 	});
-	// Under a git hook, GIT_DIR and friends point at this repository; tests that run git must only see their
-	// own temporary repositories. HK=0 skips the user's global hk hooks on their synthetic commits.
+	// Under a git hook, GIT_DIR and friends point at this repository. No test runs git now; clearing them
+	// keeps any future one on its own temporary repository, and HK=0 skips the user's global hk hooks there.
 	const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
 	const result = spawnSync(process.execPath, ['--test', ...suites.map((suite) => join(directory, `${suite}.mjs`))], {
 		stdio: 'inherit',
