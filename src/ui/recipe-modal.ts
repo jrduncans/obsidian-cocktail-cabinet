@@ -37,59 +37,61 @@ export class RecipeModal extends CabinetForm {
 			this.edit(this.prefill.recipe);
 			return;
 		}
-		this.begin(
-			this.snapshot ? 'Enhance as cocktail recipe' : 'Create a cocktail recipe',
-			'Paste copied recipe text or a recipe page’s address, or enter a recipe manually. To enhance an existing Obsidian page, open it and run Enhance as cocktail recipe.',
-		);
 		if (this.snapshot) {
 			try {
 				this.review(this.snapshot.content);
 			} catch (error) {
+				this.edit(parseRecipeText(''));
 				this.showError(error);
 			}
 			return;
 		}
-		let text = '';
-		const area = this.area(
-			'Recipe text',
-			text,
-			(value) => {
-				text = value;
-			},
-			'Paste ingredient lines and preparation text copied from a recipe; headings and bullets are optional. Or paste the address of a recipe page on its own: the page is fetched and read, with nothing filled in from anywhere else.',
-			12,
-		).setClass('cocktail-cabinet-name');
-		const textArea = area.controlEl.querySelector('textarea');
-		let reviewButton!: ButtonComponent;
-		new Setting(this.contentEl)
-			.addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()))
-			.addButton((button) => button.setButtonText('Enter manually').onClick(() => this.edit(parseRecipeText(''))))
-			.addButton((button) =>
-				(reviewButton = button)
-					.setButtonText('Review recipe')
-					.setCta()
-					.onClick(() => {
-						try {
-							if (!text.trim())
-								throw new Error('Paste recipe text before reviewing it, or select Enter manually.');
-							const url = recipeUrl(text);
-							if (url) {
-								void this.reviewPage(url, reviewButton, (value) => {
-									text = value;
-									if (textArea) {
-										textArea.value = value;
-										textArea.focus();
-										textArea.setSelectionRange(value.length, value.length);
-									}
-								});
-								return;
-							}
-							this.review(text);
-						} catch (error) {
-							this.showError(error);
+		// A new recipe opens on the form itself, with the paste box first.
+		this.edit(parseRecipeText(''));
+	}
+
+	/**
+	 * Paste recipe text or a page's address to fill the form. Open on an empty new recipe, folded once
+	 * something has been read, holding what was pasted.
+	 */
+	private renderPaste(pasted: string, open: boolean) {
+		const details = this.contentEl.createEl('details', { cls: 'cocktail-cabinet-paste' });
+		details.open = open;
+		details.createEl('summary', { text: 'Paste a recipe' });
+		details.createEl('p', {
+			cls: 'setting-item-description',
+			text: 'Paste ingredient lines and preparation text copied from a recipe; headings and bullets are optional. Or paste the address of a recipe page on its own: the page is fetched and read, with nothing filled in from anywhere else. Reading replaces what’s in the form.',
+		});
+		const textArea = details.createEl('textarea', {
+			cls: 'cocktail-cabinet-paste-text',
+			attr: { rows: 8, 'aria-label': 'Recipe text or address' },
+		});
+		textArea.value = pasted;
+		let readButton!: ButtonComponent;
+		new Setting(details).addButton((button) =>
+			(readButton = button)
+				.setButtonText('Read recipe')
+				.setCta()
+				.onClick(() => {
+					const text = textArea.value;
+					try {
+						if (!text.trim()) throw new Error('Paste recipe text or a recipe page’s address first.');
+						const url = recipeUrl(text);
+						if (url) {
+							void this.reviewPage(url, readButton, (value) => {
+								textArea.value = value;
+								textArea.focus();
+								textArea.setSelectionRange(value.length, value.length);
+							});
+							return;
 						}
-					}),
-			);
+						this.review(text);
+					} catch (error) {
+						this.showError(error);
+					}
+				}),
+		);
+		if (open) window.setTimeout(() => textArea.focus(), 0);
 	}
 
 	/**
@@ -116,13 +118,13 @@ export class RecipeModal extends CabinetForm {
 				return fail(
 					'No recipe could be read from this page. It may need a sign-in, or build itself with scripts.',
 				);
-			this.edit(recipe, original);
+			this.edit(recipe, original, {}, url.href);
 		} catch (error) {
 			fail(
 				`The page couldn’t be fetched${error instanceof Error && error.message ? ` (${error.message})` : ''}.`,
 			);
 		} finally {
-			button.setDisabled(false).setButtonText('Review recipe');
+			button.setDisabled(false).setButtonText('Read recipe');
 		}
 	}
 
@@ -156,15 +158,24 @@ export class RecipeModal extends CabinetForm {
 			);
 		}
 		if (this.snapshot) recipe.name ||= this.snapshot.path.split('/').at(-1)!.replace(/\.md$/, '');
-		this.edit(recipe, text, metadata);
+		this.edit(recipe, text, metadata, text);
 	}
 
-	private edit(recipe: RecipeImport, original = '', metadata: Record<string, unknown> = {}) {
+	/** The form; `pasted` is what the paste box read, kept there for another try. */
+	private edit(recipe: RecipeImport, original = '', metadata: Record<string, unknown> = {}, pasted = '') {
 		this.contentEl.empty();
 		this.begin(
-			'Review cocktail recipe',
-			'Check the detected ingredients and preparation text, then accept any useful links. Only wordings you’ve chosen to remember are linked for you.',
+			this.prefill
+				? 'Review cocktail recipe'
+				: this.snapshot
+					? 'Enhance as cocktail recipe'
+					: 'Create a cocktail recipe',
 		);
+		if (!this.snapshot && !this.prefill) this.renderPaste(pasted, !pasted);
+		this.contentEl.createEl('p', {
+			cls: 'setting-item-description',
+			text: 'Check the ingredients and their links before saving. Only wordings you’ve chosen to remember are linked for you.',
+		});
 		if (this.snapshot) {
 			const destination = this.plugin.store.recipeDestination(this.snapshot.path);
 			this.contentEl.createEl('p', {
@@ -208,9 +219,19 @@ export class RecipeModal extends CabinetForm {
 		this.area('Method', recipe.method, (value) => {
 			recipe.method = value;
 		}).setClass('cocktail-cabinet-name');
+		// Description is often empty, so it folds away unless there's something to check.
+		const descriptionEl = this.contentEl.createEl('details', { cls: 'cocktail-cabinet-fold' });
+		descriptionEl.open = !!recipe.description.trim();
+		descriptionEl.createEl('summary', { text: 'Description' });
 		this.area('Description', recipe.description, (value) => {
 			recipe.description = value;
-		}).setClass('cocktail-cabinet-name');
+		})
+			.setClass('cocktail-cabinet-name')
+			.then((row) => {
+				row.setName('');
+				row.controlEl.querySelector('textarea')?.setAttribute('aria-label', 'Description');
+				descriptionEl.appendChild(row.settingEl);
+			});
 		// Tags at the end of Tasting Notes move into the tags property; other tasting notes are kept as written.
 		const notes = splitTags(recipe.tastingNotes);
 		const tags = new RecipeTagsField(

@@ -31,27 +31,36 @@
 }
 .cocktail-cabinet-ingredient {
 	border-bottom: 1px solid var(--background-modifier-border);
-	padding: var(--size-4-4) 0;
+	padding: var(--size-4-2) 0;
 }
-.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-ingredient > .setting-item {
-	align-items: flex-start;
-	flex-direction: column;
+.cocktail-cabinet-ingredient-line {
+	display: flex;
+	align-items: center;
 	gap: var(--size-4-2);
-	padding: 0;
-	border: 0;
 }
-.cocktail-cabinet-ingredient .setting-item-info {
-	width: 100%;
+.cocktail-cabinet-ingredient.is-linked .cocktail-cabinet-ingredient-input {
+	color: var(--link-color);
 }
-.cocktail-cabinet-ingredient .setting-item-control {
-	justify-content: flex-start;
-	width: 100%;
-}
-.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-ingredient > .cocktail-cabinet-ingredient-actions {
-	padding: var(--size-4-2) 0 0;
-}
-.cocktail-cabinet-ingredient-actions .setting-item-info {
+.cocktail-cabinet-ingredient-status:empty {
 	display: none;
+}
+.cocktail-cabinet-ingredient .cocktail-cabinet-suggestions:not(:empty) {
+	margin-top: var(--size-4-2);
+}
+/* The form's main action stays in reach while a long recipe scrolls. */
+.modal.cocktail-cabinet-modal .modal-content.cocktail-cabinet-form .setting-item.cocktail-cabinet-submit {
+	position: sticky;
+	bottom: 0;
+	z-index: 1;
+	background-color: var(--modal-background);
+	border-top: var(--border-width) solid var(--background-modifier-border);
+	padding-block: var(--size-4-3);
+}
+.cocktail-cabinet-paste summary,
+.cocktail-cabinet-fold summary {
+	cursor: pointer;
+	font-weight: var(--font-semibold);
+	padding: var(--size-4-2) 0;
 }
 .cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-add-ingredient {
 	border-top: 0;
@@ -68,15 +77,15 @@
 	margin-inline-end: var(--size-4-1);
 }
 .cocktail-cabinet-amount-input {
-	flex: 1 1 9rem;
+	flex: 1 1 6rem;
 	min-width: 0;
 }
 .cocktail-cabinet-ingredient-input {
-	flex: 3 1 15rem;
+	flex: 3 1 10rem;
 	min-width: 0;
 }
 .cocktail-cabinet-ingredient-status {
-	margin: var(--size-4-2) 0;
+	margin: var(--size-4-1) 0 0;
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
@@ -306,7 +315,8 @@
 	border-bottom: var(--border-width) solid var(--background-modifier-border);
 	padding: var(--size-4-2) 0;
 }
-.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-unlinked-group > .setting-item {
+.cocktail-cabinet-modal .cocktail-cabinet-form .cocktail-cabinet-unlinked-group > .setting-item,
+.cocktail-cabinet-unlinked-pane .cocktail-cabinet-unlinked-group > .setting-item {
 	border: 0;
 }
 .cocktail-cabinet-unlinked-uses {
@@ -456,4 +466,21 @@
 
 .cocktail-cabinet-field-label {
 	color: var(--text-muted);
+}
+
+/* Unlinked ingredients pane: a narrow sidebar, so rows wrap their controls under the name. */
+.cocktail-cabinet-unlinked-pane > .cocktail-cabinet-pane-row > p {
+	flex: 1;
+	margin: 0;
+}
+.cocktail-cabinet-unlinked-pane .setting-item {
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+}
+.cocktail-cabinet-unlinked-pane .setting-item-control {
+	flex-wrap: wrap;
+	justify-content: flex-start;
+}
+.cocktail-cabinet-unlinked-pane .cocktail-cabinet-unlinked-uses li {
+	border-bottom: 0;
 }

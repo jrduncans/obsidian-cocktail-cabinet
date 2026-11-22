@@ -99,6 +99,7 @@ export abstract class CabinetForm extends Modal {
 
 	protected submit(label: string, action: () => Promise<void>) {
 		new Setting(this.contentEl)
+			.setClass('cocktail-cabinet-submit')
 			.addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()))
 			.addButton((button) => {
 				this.submitButton = button

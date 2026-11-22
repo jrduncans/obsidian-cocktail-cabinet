@@ -93,7 +93,7 @@ ${view('Recipes')} lists your recipes; its **Latest** tab shows the newest first
 
 ## Adding recipes
 
-- **Create a cocktail recipe**: paste a recipe copied from a website, or the page's address on its own, and select **Review recipe**, or **Enter manually**. A page is fetched and read; nothing is filled in from anywhere else, and **Original text** shows what was read. Pages behind a sign-in can't be read: copy the text instead. Check the name, source, ingredients, method, rating, and tags before saving. Amounts and wording are kept as written.
+- **Create a cocktail recipe**: paste a recipe copied from a website, or the page's address on its own, into **Paste a recipe** and select **Read recipe**, or fill in the form by hand. A page is fetched and read; nothing is filled in from anywhere else, and **Original text** shows what was read. Pages behind a sign-in can't be read: copy the text instead. Check the name, source, ingredients, method, rating, and tags before saving. Amounts and wording are kept as written.
 - **Enhance as cocktail recipe**: turn an existing note into a cabinet recipe, keeping its properties. A note outside the cabinet moves into **Recipes**.
 
 A recipe has **Ingredients**, **Method**, **Description**, and optionally **Tasting Notes** sections. Its rating is a whole number from 1 to 5.
@@ -106,7 +106,7 @@ Link what the recipe asks for, no narrower: a type such as London Dry Gin when a
 
 - **Review unlinked ingredients** gathers measured lines with no link, grouped by wording, and links a wording across every recipe at once.
 - **Link this ingredient line**, **Edit this ingredient link**, and **Insert ingredient link** work in the editor, from the command palette or the right-click menu.
-- **Create ingredient** in the recipe form adds a missing type, bottle, or other stock without losing your draft.
+- **Create** items in an ingredient row's ⋯ menu add a missing type, bottle, or other stock without losing your draft.
 - **Remember** a wording when you link it, such as “rum, such as Coruba” for Aged Jamaican Rum. The next recipe with the same wording comes into review already linked, marked as remembered, and you can unlink it. Remembered wordings are kept in the note's \`${PROP.writtenAs}\` property; edit or remove them there.
 
 ## Tags
