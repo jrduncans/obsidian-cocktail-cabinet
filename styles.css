@@ -50,13 +50,21 @@
 /* The form's main action stays in reach while a long recipe scrolls. */
 .modal.cocktail-cabinet-modal .modal-content.cocktail-cabinet-form .setting-item.cocktail-cabinet-submit {
 	position: sticky;
-	bottom: 0;
+	/* Down over the modal's bottom padding, so nothing scrolls by beneath it. */
+	bottom: calc(-1 * var(--size-4-4));
+	margin-bottom: calc(-1 * var(--size-4-4));
 	z-index: 1;
 	background-color: var(--modal-background);
 	border-top: var(--border-width) solid var(--background-modifier-border);
-	padding-block: var(--size-4-3);
+	padding-block: var(--size-4-3) calc(var(--size-4-3) + var(--size-4-4));
 }
-.cocktail-cabinet-paste summary,
+.cocktail-cabinet-paste {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2) var(--size-4-3);
+	margin-bottom: var(--size-4-2);
+}
 .cocktail-cabinet-fold summary {
 	cursor: pointer;
 	font-weight: var(--font-semibold);

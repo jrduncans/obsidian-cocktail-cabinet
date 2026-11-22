@@ -1,5 +1,4 @@
-import { htmlToMarkdown, requestUrl, Setting } from 'obsidian';
-import type { ButtonComponent } from 'obsidian';
+import { ButtonComponent, htmlToMarkdown, requestUrl, setIcon } from 'obsidian';
 import type { TFile } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { parseRecipeText } from '../core/recipe-import';
@@ -14,6 +13,7 @@ import type { RecipeSnapshot } from '../vault/cabinet-store';
 import { CabinetForm } from './form';
 import { RecipeIngredients } from './recipe-ingredients';
 import { RecipeTagsField } from './recipe-tags';
+import { PasteRecipeModal } from './paste-recipe-modal';
 
 const IMPORTED_FIELDS = ['cc-name', 'name', 'title', 'source', 'rating', 'created', 'cc-kind', 'tags'];
 
@@ -46,65 +46,47 @@ export class RecipeModal extends CabinetForm {
 			}
 			return;
 		}
-		// A new recipe opens on the form itself, with the paste box first.
+		// A new recipe opens on the form itself; Paste a recipe… fills it from copied text or a page.
 		this.edit(parseRecipeText(''));
 	}
 
-	/**
-	 * Paste recipe text or a page's address to fill the form. Open on an empty new recipe, folded once
-	 * something has been read, holding what was pasted.
-	 */
-	private renderPaste(pasted: string, open: boolean) {
-		const details = this.contentEl.createEl('details', { cls: 'cocktail-cabinet-paste' });
-		details.open = open;
-		details.createEl('summary', { text: 'Paste a recipe' });
-		details.createEl('p', {
+	/** A button opening the paste dialog, which fills the form from copied text or a page's address. */
+	private renderPaste(pasted: string) {
+		const row = this.contentEl.createDiv({ cls: 'cocktail-cabinet-paste' });
+		const button = new ButtonComponent(row).setButtonText('Paste a recipe…').onClick(() => {
+			new PasteRecipeModal(this.app, pasted, (text, setText) => this.read(text, setText)).open();
+		});
+		// setButtonText replaces the content, so the icon goes in afterward.
+		setIcon(button.buttonEl.createSpan({ cls: 'cocktail-cabinet-button-icon', prepend: true }), 'clipboard-paste');
+		row.createSpan({
 			cls: 'setting-item-description',
-			text: 'Paste ingredient lines and preparation text copied from a recipe; headings and bullets are optional. Or paste the address of a recipe page on its own: the page is fetched and read, with nothing filled in from anywhere else. Reading replaces what’s in the form.',
+			text: pasted
+				? 'Read again, or paste something else.'
+				: 'Fill the form from copied text or a recipe page’s address.',
 		});
-		const textArea = details.createEl('textarea', {
-			cls: 'cocktail-cabinet-paste-text',
-			attr: { rows: 8, 'aria-label': 'Recipe text or address' },
-		});
-		textArea.value = pasted;
-		let readButton!: ButtonComponent;
-		new Setting(details).addButton((button) =>
-			(readButton = button)
-				.setButtonText('Read recipe')
-				.setCta()
-				.onClick(() => {
-					const text = textArea.value;
-					try {
-						if (!text.trim()) throw new Error('Paste recipe text or a recipe page’s address first.');
-						const url = recipeUrl(text);
-						if (url) {
-							void this.reviewPage(url, readButton, (value) => {
-								textArea.value = value;
-								textArea.focus();
-								textArea.setSelectionRange(value.length, value.length);
-							});
-							return;
-						}
-						this.review(text);
-					} catch (error) {
-						this.showError(error);
-					}
-				}),
-		);
-		if (open) window.setTimeout(() => textArea.focus(), 0);
+	}
+
+	/** Read pasted text or a page into the form; returns a reason when nothing could be read. */
+	private async read(text: string, setText: (value: string) => void): Promise<string | void> {
+		if (!text.trim()) return 'Paste recipe text or a recipe page’s address first.';
+		const url = recipeUrl(text);
+		if (url) return this.readPage(url, setText);
+		try {
+			this.review(text);
+		} catch (error) {
+			return error instanceof Error ? error.message : 'The recipe text could not be read.';
+		}
 	}
 
 	/**
 	 * Fetch one page and read its recipe (docs/import.md#web-pages). Nothing else is fetched. On failure, the
-	 * text field keeps the page as its source line, ready for the recipe text to be pasted below it.
+	 * text keeps the page as its source line, ready for the recipe text to be pasted below it.
 	 */
-	private async reviewPage(url: URL, button: ButtonComponent, setText: (value: string) => void) {
+	private async readPage(url: URL, setText: (value: string) => void): Promise<string | void> {
 		const fail = (reason: string) => {
-			this.errorEl.setText(`${reason} Copy the recipe text from the page and paste it below the source line.`);
 			setText(`Source: ${sourceUrl(url.href)}\n\n`);
+			return `${reason} Copy the recipe text from the page and paste it below the source line.`;
 		};
-		this.errorEl.empty();
-		button.setDisabled(true).setButtonText('Reading page…');
 		try {
 			const response = await requestUrl({ url: url.href, throw: false });
 			if (response.status >= 400) return fail(`The page couldn’t be read (it answered ${response.status}).`);
@@ -120,11 +102,9 @@ export class RecipeModal extends CabinetForm {
 				);
 			this.edit(recipe, original, {}, url.href);
 		} catch (error) {
-			fail(
+			return fail(
 				`The page couldn’t be fetched${error instanceof Error && error.message ? ` (${error.message})` : ''}.`,
 			);
-		} finally {
-			button.setDisabled(false).setButtonText('Read recipe');
 		}
 	}
 
@@ -171,7 +151,7 @@ export class RecipeModal extends CabinetForm {
 					? 'Enhance as cocktail recipe'
 					: 'Create a cocktail recipe',
 		);
-		if (!this.snapshot && !this.prefill) this.renderPaste(pasted, !pasted);
+		if (!this.snapshot && !this.prefill) this.renderPaste(pasted);
 		this.contentEl.createEl('p', {
 			cls: 'setting-item-description',
 			text: 'Check the ingredients and their links before saving. Only wordings you’ve chosen to remember are linked for you.',
