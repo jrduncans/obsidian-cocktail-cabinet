@@ -428,7 +428,13 @@ export class LoggingModal extends Modal {
 	private refreshPreview() {
 		if (!this.previewEl || !this.review) return;
 		const review = this.review;
-		const plan = planLogging(review.lines, review.sources, this.selections, this.servings);
+		const plan = planLogging(
+			review.lines,
+			review.sources,
+			this.selections,
+			this.servings,
+			this.plugin.settings.volumeUnit,
+		);
 		this.previewEl.empty();
 		const estimate = this.estimateLine();
 		if (estimate) this.previewEl.createEl('p', { text: estimate, cls: 'setting-item-description' });
@@ -513,7 +519,13 @@ export class LoggingModal extends Modal {
 	private async apply() {
 		if (this.busy || this.terminal || !this.review) return;
 		const review = this.review;
-		const plan = planLogging(review.lines, review.sources, this.selections, this.servings);
+		const plan = planLogging(
+			review.lines,
+			review.sources,
+			this.selections,
+			this.servings,
+			this.plugin.settings.volumeUnit,
+		);
 		if (plan.errors.length || plan.unselected || this.dateInvalid() || (this.addDaily && review.daily.error))
 			return;
 		this.busy = true;

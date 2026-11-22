@@ -27,10 +27,12 @@ export default class CocktailCabinetPlugin extends Plugin {
 			() => ({ percent: this.settings.lowStockPercent, ml: this.settings.lowStockMl }),
 			() => STANDARD_DRINK_GRAMS[this.settings.drinkUnit],
 		);
-		this.availability = new AvailabilityStore(this.app, this.store, () => ({
-			percent: this.settings.lowStockPercent,
-			ml: this.settings.lowStockMl,
-		}));
+		this.availability = new AvailabilityStore(
+			this.app,
+			this.store,
+			() => ({ percent: this.settings.lowStockPercent, ml: this.settings.lowStockMl }),
+			() => this.settings.volumeUnit,
+		);
 		this.catalog = new CatalogSync(
 			this.app,
 			this.store,
@@ -55,7 +57,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 		this.recipes = new RecipeSync(
 			this.app,
 			() => this.settings.cabinetFolder,
-			() => ({ dilution: this.settings.dilution, topMl: this.settings.topMl }),
+			() => ({
+				dilution: this.settings.dilution,
+				topMl: this.settings.topMl,
+				volumeUnit: this.settings.volumeUnit,
+			}),
 		);
 		this.register(() => this.recipes.cancel());
 		this.app.workspace.onLayoutReady(() => {

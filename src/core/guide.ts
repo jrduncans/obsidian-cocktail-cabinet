@@ -172,6 +172,7 @@ On a bottle, other stock, type, or family, **What can I make with this?** narrow
 On a recipe, **Log this cocktail** (the glass in the note's header) records that you made it:
 
 - For each measured, linked line, pick the bottle or other stock you poured; a single match is picked for you. **Don't subtract** skips a line.
+- A line giving both ounces and mL, such as “1 oz (30 ml)” or “1 oz / 30 ml”, pours the ounces. The **Amounts given in oz and mL** setting can choose mL instead.
 - The stock table shows what each bottle loses and keeps. The open bottle is used first, then a sealed one. If a bottle's stock is out of date, fix it from the table without leaving.
 - Choose the date (today by default) and servings. Logging adds “Made a Daiquiri.” to that day's daily note, using the Daily notes core plugin's settings.
 - It records **Last used** on what you poured and **Last made** and **Times made** on the recipe.
@@ -302,6 +303,7 @@ Everything is under \`${root}/\`. A note takes part only when it has a \`${PROP.
 - Link each ingredient at the level the recipe asks for: a bottle only when it names one, otherwise the type, or the family for a broad call such as “rum”. Keep the recipe's wording as the display text. Leave a line unlinked when nothing fits.
 - \`${PROP.writtenAs}\` on an ingredient note lists recipe wordings the user linked to it before. A wording listed on exactly one note links to that note; one listed on several is the user's choice. Add to it only when asked.
 - Keep recipe names and ingredient wording unless correcting a clear error.
+- When a line gives both oz and mL (\`1 oz (30 ml)\`, \`1 oz / 30 ml\`), keep both. Logging, availability, and estimates use one of them, chosen in the plugin's settings (US fluid ounces by default).
 
 ## Making drinks
 

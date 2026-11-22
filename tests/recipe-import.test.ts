@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { parseRecipeText, recipeIngredientNotes, suggestIngredient } from '../src/core/recipe-import';
-import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
+import { lineVolumeMl, recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
 import { renderNote } from '../src/core/notes';
 import { wikiLink } from '../src/core/schema';
 import type { CabinetNote } from '../src/core/schema';
 import { duplicateRecipes, normalizeTag, parseTags, splitTags, tagChoices } from '../src/core/recipe-tags';
 import { enhancedRecipeContent } from '../src/vault/recipe-document';
+
+const OZ = 29.5735295625;
 
 void test('Markdown review extracts source sections without inventing missing recipe details', () => {
 	const result = parseRecipeText(
@@ -45,7 +47,8 @@ void test('plain ingredient lists, existing links, alternatives, and unsupported
 	for (const ingredient of ingredients) assert.ok(note.content.includes(`- ${ingredient}`));
 	assert.ok(result.warnings[0]?.includes('No Ingredients heading'));
 	assert.equal(recipeVolumeMl(result.ingredients[0]!.amount), null);
-	assert.equal(recipeVolumeMl(result.ingredients[2]!.amount), 30);
+	assert.equal(recipeVolumeMl(result.ingredients[2]!.amount), OZ);
+	assert.equal(recipeVolumeMl(result.ingredients[2]!.amount, 'ml'), 30);
 });
 
 void test('unrecognized headings and indented continuations are retained for review', () => {
@@ -248,17 +251,19 @@ void test('a method without a heading stays in order before explicitly headed st
 	assert.equal(result.method, 'Stir with ice.\nStrain.');
 });
 
-void test('parenthetical ounce and mL equivalents prefer the printed mL while preserving source text', () => {
-	for (const [amount, expected] of [
-		['2 oz (60 ml)', 60],
-		['2oz (60ml)', 60],
-		['¼ oz (7.5 ml)', 7.5],
-		['60 ml (2 oz)', 60],
-		['1 1/2 ounces (45 milliliters)', 45],
-		['1½ fl. oz. (45 mL)', 45],
-		['¼ oz (7,5 ml)', 7.5],
+void test('parenthetical ounce and mL equivalents use the preferred unit, ounces by default, preserving source text', () => {
+	for (const [amount, ml, oz] of [
+		['2 oz (60 ml)', 60, 2],
+		['2oz (60ml)', 60, 2],
+		['¼ oz (7.5 ml)', 7.5, 0.25],
+		['60 ml (2 oz)', 60, 2],
+		['1 1/2 ounces (45 milliliters)', 45, 1.5],
+		['1½ fl. oz. (45 mL)', 45, 1.5],
+		['¼ oz (7,5 ml)', 7.5, 0.25],
 	] as const) {
-		assert.equal(recipeVolumeMl(amount), expected, amount);
+		assert.equal(recipeVolumeMl(amount, 'ml'), ml, amount);
+		assert.ok(Math.abs(recipeVolumeMl(amount)! - oz * OZ) < 1e-9, amount);
+		assert.equal(recipeVolumeMl(amount, 'oz'), recipeVolumeMl(amount), amount);
 		assert.deepEqual(splitIngredient(`${amount} Bourbon`), { amount, text: 'Bourbon' });
 	}
 	for (const amount of [
@@ -273,7 +278,35 @@ void test('parenthetical ounce and mL equivalents prefer the printed mL while pr
 		'30 ml (45 ml)',
 	]) {
 		assert.equal(recipeVolumeMl(amount), null, amount);
+		assert.equal(recipeVolumeMl(amount, 'ml'), null, amount);
 	}
+	// Pairs without US fluid ounces keep the stated mL, whichever unit is preferred.
+	assert.equal(recipeVolumeMl('1 tbsp (15 ml)'), 15);
+	assert.equal(recipeVolumeMl('3 cl (30 ml)'), 30);
+});
+
+void test('a line gives the same volume however it writes both units: parenthetical, slash, or middle dot', () => {
+	const forms = [
+		'1 oz (30 ml) Campari',
+		'30 ml (1 oz) Campari',
+		'1 oz. / 30 ml. Campari',
+		'1 oz / 30 ml Campari',
+		'30 ml / 1 oz Campari',
+		'1 oz · 30 ml Campari',
+		'30 ml · 1 oz Campari',
+	];
+	for (const line of forms) {
+		assert.equal(lineVolumeMl(line), OZ, line);
+		assert.equal(lineVolumeMl(line, 'oz'), OZ, line);
+		assert.equal(lineVolumeMl(line, 'ml'), 30, line);
+	}
+	// One unit alone, or an echo that isn't oz against mL, reads the amount as before.
+	assert.equal(lineVolumeMl('1 oz Campari', 'ml'), OZ);
+	assert.equal(lineVolumeMl('30 ml Campari'), 30);
+	assert.equal(lineVolumeMl('1 oz / 3 cl Campari', 'ml'), OZ);
+	assert.equal(lineVolumeMl('1 oz (30 ml) / 30 ml Campari', 'oz'), OZ);
+	assert.equal(lineVolumeMl('2 dashes Angostura'), null);
+	assert.equal(lineVolumeMl('Campari'), null);
 });
 
 void test('inline tags split off the end of tasting notes, and the tags property reads either shape', () => {

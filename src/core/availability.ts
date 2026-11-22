@@ -1,6 +1,7 @@
 import { fitsLine, lesserType } from './logging-lines';
 import type { StockSource } from './logging-stock';
-import { recipeVolumeMl, splitIngredient } from './recipe-amount';
+import { lineVolumeMl } from './recipe-amount';
+import type { VolumeUnit } from './recipe-amount';
 import type { RestockThresholds } from './restock';
 import { PROP } from './schema';
 import type { CabinetNote } from './schema';
@@ -54,6 +55,8 @@ export interface AvailabilityContext {
 	sources: readonly StockSource[];
 	resolve: (link: string) => string | null;
 	thresholds: RestockThresholds;
+	/** Which stated amount wins when a line gives both oz and mL; fluid ounces by default. */
+	volumeUnit?: VolumeUnit;
 }
 
 const amount = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0);
@@ -119,7 +122,7 @@ function forTarget(target: CabinetNote, context: AvailabilityContext) {
 
 export function resolveLine(text: string, context: AvailabilityContext, at?: LineAvailability['at']): LineAvailability {
 	const { notes, sources, resolve, thresholds } = context;
-	const ml = recipeVolumeMl(splitIngredient(text).amount);
+	const ml = lineVolumeMl(text, context.volumeUnit);
 	const targets = [
 		...new Set(
 			[...text.matchAll(/\[\[([^\]]+)\]\]/g)].flatMap((match) => {

@@ -55,7 +55,7 @@ function status(target = fruit) {
 		[PROP.availability]: 'Have',
 	});
 }
-function classify(text: string, sources = [bottle(a), bottle(b), bottle(c)]) {
+function classify(text: string, sources = [bottle(a), bottle(b), bottle(c)], volumeUnit: 'oz' | 'ml' = 'oz') {
 	return classifyLoggingLines(
 		`### Ingredients\n${text}\n### Method\n- 30 ml [[First Gin]]`,
 		notes,
@@ -64,6 +64,7 @@ function classify(text: string, sources = [bottle(a), bottle(b), bottle(c)]) {
 			notes.find(
 				(item) => item.path.replace(/\.md$/, '') === link.split('|')[0] || item.name === link.split('|')[0],
 			)?.path ?? null,
+		volumeUnit,
 	);
 }
 
@@ -369,6 +370,7 @@ void test('rounded ounce/mL recipe amounts produce counted lines, pickers, and m
 	const lines = classify(
 		'- 2 oz (60 ml) [[First Gin]]\n- ¼ oz (7.5 ml) [[Lime Juice]]\n- 3 dashes [[First Gin]]',
 		sources,
+		'ml',
 	);
 	assert.deepEqual(
 		lines.counted.map((line) => line.ml),
@@ -389,6 +391,32 @@ void test('rounded ounce/mL recipe amounts produce counted lines, pickers, and m
 	assert.deepEqual(
 		plan.changes.map((change) => change.updates),
 		[{ [PROP.open]: 40 }, { [PROP.remaining]: 192.5 }],
+	);
+});
+
+void test('a line giving oz and mL logs the ounces by default and the mL when preferred, in any written form', () => {
+	const oz = 29.5735295625;
+	const text = '- 1 oz (30 ml) [[First Gin]]\n- 1 oz. / 30 ml. [[First Gin]]\n- 30 ml · 1 oz [[First Gin]]';
+	assert.deepEqual(
+		classify(text).counted.map((line) => line.ml),
+		[oz, oz, oz],
+	);
+	assert.deepEqual(
+		classify(text, undefined, 'ml').counted.map((line) => line.ml),
+		[30, 30, 30],
+	);
+	const lines = classify('- 1 oz [[First Gin]]', [bottle(a), bottle(b)]);
+	const parts = new Map([[lines.counted[0]!.id, [{ path: a.path, amount: '1 oz (30 ml)' }]]]);
+	const pour = (unit: 'oz' | 'ml') => planLogging(lines, [bottle(a), bottle(b)], parts, 1, unit).changes[0]!.updates;
+	assert.notDeepEqual(pour('oz'), pour('ml'));
+	assert.deepEqual(
+		pour('ml'),
+		planLogging(
+			lines,
+			[bottle(a), bottle(b)],
+			new Map([[lines.counted[0]!.id, [{ path: a.path, amount: '30' }]]]),
+			1,
+		).changes[0]!.updates,
 	);
 });
 
