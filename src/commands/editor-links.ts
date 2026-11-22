@@ -35,6 +35,8 @@ function chooseAndLink(
 		from: { line: number; ch: number };
 		to: { line: number; ch: number };
 		replacement: (note: CabinetNote, text: string) => string;
+		/** Offer to remember the wording: on an unlinked Ingredients line. */
+		remember?: boolean;
 	},
 ) {
 	const path = ctx.file?.path;
@@ -47,6 +49,7 @@ function chooseAndLink(
 				original: options.wording,
 				originalLabel: options.originalLabel,
 				preview: options.preview,
+				...(options.remember ? { remember: options.wording } : {}),
 				submit: (text) => {
 					if (!path || ctx.file?.path !== path || editor.getRange(options.from, options.to) !== before)
 						throw new Error(STALE);
@@ -131,6 +134,7 @@ function linkTarget(
 			preview: (text) => linkedLinePreview(line.text, text),
 			...range,
 			replacement: (note, text) => linkedLine(raw, note.path, text),
+			remember: true,
 		});
 	}
 }

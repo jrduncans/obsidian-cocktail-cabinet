@@ -1,0 +1,117 @@
+# Recipe import design
+
+Drafted on 2026-11-22 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the `knowledge` vault's `cocktail-recipe-import` skill. Reviewed the same day: the [decisions](#decisions) record what was agreed. Slice 1, remembered wordings, built 2026-11-22; the `knowledge` starting entries wait for the release to be installed there.
+
+## Goal
+
+Get a recipe from where it was found into the cabinet with its links right, keeping only what the source says. It retires the `cocktail-recipe-import` skill, which today writes the note shape, filename, and links by hand from prose rules.
+
+**Create a cocktail recipe** already reads pasted text into the recipe review, with suggestions, tags, rating, and the duplicate warning. Import builds on that review rather than beside it. What's missing:
+
+1. **Fetching a page.** Today the review says "pages are not fetched"; you copy the text yourself, and on most recipe sites that copy is messy.
+2. **Remembering wordings.** Each "rum, such as Coruba" or "Vermouth (Sweet)" is linked again by hand every time. The skill keeps a few of these as prose defaults.
+3. **Agents.** The skill writes files directly. It should hand the text to the plugin, which knows the schema.
+4. **Batches.** A Bevnap export holds dozens of recipes; one review each is too slow.
+
+## Where recipes come from
+
+From `knowledge` (517 recipes, about 25 a month lately):
+
+| Source                            | Recipes   | Notes                                                                                                               |
+| --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
+| Web pages                         | about 340 | Punch 108, cocktailvirgin 37, Anatomy of a Drink 28, Daniel Zajic 19, Liber & Co 17, liquor.com 16, Difford's 13, … |
+| Social posts (Threads, Instagram) | about 25  | Behind a login; can't be fetched                                                                                    |
+| Bevnap                            | 91        | 83 in one batch on 2026-07-03; 8 since                                                                              |
+| Books, LLM chats, own drinks      | about 60  | Typed or pasted                                                                                                     |
+
+So web pages matter most, and Bevnap is mostly a one-time migration: for this vault it's done, but it's the path a new user coming from Bevnap would take.
+
+Sampled on 2026-11-22, what the top sites publish:
+
+- **Structured recipe data** (schema.org `Recipe` as JSON-LD): Difford's and Daniel Zajic, with clean ingredient lines and steps.
+- **Microdata**: Punch marks each ingredient (`itemprop="recipeIngredient"`), but not the directions, and repeats each line in a hidden element (`display:none`), so a plain text copy has every ingredient twice.
+- **Nothing structured**: cocktailvirgin (a blog post with the recipe in prose), Liber & Co, Shaker of Spirits.
+- **Refused**: liquor.com answered 403 to a plain request.
+
+## Web pages
+
+**Create a cocktail recipe** takes a URL as well as text: a URL alone in the field fetches that page instead of reading it as text.
+
+### Fetching
+
+- `requestUrl` (works on mobile and isn't subject to CORS), once, for the URL given. Nothing else is fetched: no images, no linked pages, no search, no second try at another URL.
+- Network use is new for the plugin. It happens only when you paste a URL and select **Review recipe**, sends nothing but that request, and is described in the README, as Obsidian's developer policies require. No setting gates it ([decision 1](#decisions)).
+- On failure (an error status, a login page, nothing recipe-like found) the review says so and keeps the URL as the source: "Couldn't read a recipe from this page. Copy the recipe text from it and paste it below." Nothing is filled from elsewhere.
+
+### Reading the page
+
+The page is parsed with `DOMParser`, never run. In order:
+
+1. **Structured data.** A schema.org `Recipe`, from JSON-LD or microdata: name, ingredient lines, instructions, description. Author-written data on the page itself, so it counts as the source ([decision 2](#decisions)). Keywords, categories, yield, nutrition, and ratings are left out: they're the site's tagging, not the recipe.
+2. **Visible text.** Scripts, styles, navigation, forms, and elements hidden inline (`hidden`, `aria-hidden="true"`, `display:none`) are removed; the page's `article` or `main` (else `body`) goes through Obsidian's `htmlToMarkdown`, then the existing `parseRecipeText`.
+3. **Combined.** Structured lines win where present; any part they lack comes from the text. Punch gives ingredients from microdata and Method from its Directions heading.
+
+The review opens as for pasted text, with the warnings it gives today, and **Original text** shows what was read from the page, so a fidelity check needs no second window. Glass, ice, and garnish have no fields; they stay where the source put them, in Method or Description.
+
+### Source
+
+`source` is the page's canonical URL (`<link rel="canonical">`, else the URL as given), with tracking parameters (`utm_*`, `fbclid`, and similar) removed. Today's `knowledge` has several with Instagram campaign strings attached.
+
+### Not supported
+
+- Social posts and anything behind a login: paste the text.
+- Video: never played or transcribed, as in the skill.
+- Site-specific adapters. Added only for a site the generic reading gets wrong and that is used often ([decision 3](#decisions)).
+
+## Remembered wordings
+
+When a line is linked in the review, in **Review unlinked ingredients**, or with **Link this ingredient line**, the plugin offers to remember the wording for that note. The next recipe with the same wording, compared as the duplicate check compares names (case, accents, punctuation), comes into the review already linked, marked "Remembered", with one control to unlink it.
+
+- Stored on the ingredient note as `cc-written-as` (a list of strings), not `aliases` ([decision 4](#decisions)). "rum, such as Coruba" isn't a name for anything, and aliases feed Obsidian's link autocomplete.
+- Only an exact wording is remembered and applied; partial matches stay suggestions, as now.
+- A wording remembered for two notes is a suggestion, not a link, with both offered.
+- The skill's approved defaults become starting entries in `knowledge`: `Gin` and `Gin (London Dry)` on London Dry Gin, `Cocchi American` on Cocchi Americano Bianco, `Vermouth (Sweet)` on Sweet Vermouth, `Rye (Bonded)` on Rye Whiskey. Simple syrup "2:1 or rich" stays a suggestion: it's a rule about wordings, not one wording.
+- The review's line "Nothing is linked automatically" changes to say which lines were linked from remembered wordings.
+
+This also helps pasted recipes and one-offs, and it's what makes batches workable.
+
+## Batches: Bevnap exports
+
+**Import recipes from a file**, a command:
+
+1. Pick a file. Bevnap's block format: a recipe name, metadata rows, then `INGREDIENTS`, `DIRECTIONS`, `NOTES`, and `ABV` blocks. A real export is needed before building ([decision 5](#decisions)).
+2. A list of the recipes found, each ticked, with the duplicate check beside it. A recipe whose name is taken offers **Skip** (the default) or **Import as "<name> (Bevnap)"**, the skill's convention.
+3. **Import** writes the ticked recipes, linking only remembered wordings, with `source: Bevnap` and the skill's layout: notes or history in Description, numbered directions in Method, the category, method, glass, ice, garnish, and ABV metadata as `Key: value` lines after the description, and ingredient amounts as exported (`¾ oz (22.5 ml)`).
+4. Then **Review unlinked ingredients** opens on just the imported recipes: wordings grouped across the batch, most-used first, each linked once for all of them, and remembered if you choose.
+
+Writing first and linking after reuses the review built for exactly this, instead of a second grouped-linking screen inside the import. An imported recipe with unlinked lines is valid and shows as Not linked in availability until linked.
+
+## Agents
+
+A CLI handler that creates a recipe from text, so the skill fetches and reads (it already handles Threads, rate limits, and the in-app browser) and the plugin writes:
+
+`cocktail-cabinet:create-recipe text=<recipe text> [source=<url or label>] [rating=<1-5>]`
+
+- Reads the text with `parseRecipeText`, links remembered wordings only, applies the filename and duplicate rules, and writes the note as **Create a cocktail recipe** would. Refuses a filename clash; a name match with a different filename is created and reported, as the review warns.
+- Returns JSON: the path, each line with its link or "not linked" and up to three suggestions, and any duplicates. The agent can then link lines through a second handler, `cocktail-cabinet:link-line path=<recipe> line=<n> target=<note> [text=<display>]`, which writes as **Link this ingredient line** does.
+- Writes, unlike the availability handlers. In `knowledge` both go in the "ask" group of `.claude/settings.json` and the Codex rules, so the native approval prompt is the check.
+- The skill shrinks to source fidelity (what may be taken from a page), retrieval, and calling these.
+
+## Suggested slices
+
+1. **Remembered wordings.** `cc-written-as`, the offer to remember in the three linking places, pre-linking in the review, and the `knowledge` starting entries. Useful at once for pasted recipes.
+2. **Web pages.** URL in **Create a cocktail recipe**: fetch, structured data, visible text, canonical source, README note. Tests use small synthetic pages shaped like each sampled site (JSON-LD, microdata with hidden duplicates, prose blog), not saved copies.
+3. **CLI handlers**, `create-recipe` and `link-line`, then rewrite the `knowledge` skill around them.
+4. **Bevnap files**, once a sample export is in hand.
+
+Slices 1–3 are independent; 1 makes 3 and 4 much better, so it goes first.
+
+## Decisions
+
+Agreed on 2026-11-22, taking the recommendation on each.
+
+1. **Network use.** No setting: fetching happens only on an explicit paste-and-review of a URL, and the README discloses it. A setting off by default was rejected; most users would never find it.
+2. **Structured data as source.** Accepted, though JSON-LD isn't visible on the page: the site's author wrote it, it's usually cleaner than the visible text, and **Original text** shows it. Visible text only was rejected: it repeats each Punch line twice and loses Difford's numbered steps.
+3. **Site adapters.** None in the first build; one is added only when a frequently used site reads wrong. cocktailvirgin is the likely first (its recipes are prose with an ingredient list at the end), but its pages may read well enough as text for review.
+4. **`cc-written-as`, not aliases.** A new property, for the reasons under [remembered wordings](#remembered-wordings). Aliases only would need no new schema but would put odd entries in link autocomplete.
+5. **Bevnap last.** Built only with a real export to test against: it's low use for `knowledge` now, and the format is known only from the skill's description. Without one it waits until publication makes it matter.

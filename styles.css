@@ -93,6 +93,14 @@
 	padding: var(--size-4-1) var(--size-4-2);
 	overflow-wrap: anywhere;
 }
+.cocktail-cabinet-remember {
+	margin: var(--size-4-2) 0;
+	font-size: var(--font-ui-small);
+	overflow-wrap: anywhere;
+}
+.cocktail-cabinet-remember:empty {
+	display: none;
+}
 .cocktail-cabinet-original {
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;

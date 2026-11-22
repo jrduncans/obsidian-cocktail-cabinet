@@ -1,5 +1,6 @@
 import type { CabinetNote } from './schema';
 import { splitIngredient } from './recipe-amount';
+import { rememberingNotes } from './written-as';
 
 export interface RecipeImport {
 	name: string;
@@ -194,7 +195,10 @@ const words = (value: string) => ` ${value.replace(/[^\p{L}\p{N}]+/gu, ' ').trim
 
 /** Suggest identities by names/aliases, never by owned stock or inferred substitutions. */
 export function suggestIngredient(text: string, notes: readonly CabinetNote[]): CabinetNote[] {
-	if (/\[\[|\b(?:or|and)\b|\//i.test(text)) return [];
+	if (/\[\[/.test(text)) return [];
+	// Notes remembering this exact wording come first; a wording remembered for several offers each.
+	const remembered = rememberingNotes(text, notes);
+	if (/\b(?:or|and)\b|\//i.test(text)) return remembered.slice(0, 3);
 	const query = normalize(text);
 	if (!query) return [];
 	const parenthetical = [...query.matchAll(/\(([^)]+)\)/g)].map((match) => match[1]!);
@@ -223,5 +227,5 @@ export function suggestIngredient(text: string, notes: readonly CabinetNote[]): 
 		})
 		.filter((item) => item.score > 0)
 		.sort((a, b) => b.score - a.score || a.note.name.localeCompare(b.note.name));
-	return ranked.slice(0, 3).map((item) => item.note);
+	return [...remembered, ...ranked.map((item) => item.note).filter((note) => !remembered.includes(note))].slice(0, 3);
 }

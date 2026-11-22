@@ -1,10 +1,11 @@
-import { ButtonComponent, Menu, Setting, setIcon } from 'obsidian';
+import { ButtonComponent, Menu, Notice, Setting, setIcon } from 'obsidian';
 import type { TextComponent } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
 import { recipeVolumeMl, splitIngredient } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
+import { canRemember, rememberedNote } from '../core/written-as';
 import { addCreateItems, pickIngredient } from './link-choice';
 import { IngredientSuggest } from './ingredient-suggest';
 
@@ -14,6 +15,15 @@ export interface IngredientRow {
 	note?: CabinetNote;
 	/** The line as saved, written back unchanged unless the row is edited. */
 	original?: string;
+	/** Linked from a remembered wording when the form opened. */
+	remembered?: boolean;
+	/** Remember the row's wording for its note once the form saves. */
+	remember?: boolean;
+}
+
+export interface IngredientOptions {
+	/** Link rows whose wording one note remembers (`cc-written-as`); for new recipes, not saved ones. */
+	linkRemembered?: boolean;
 }
 
 /** Shared review controls for pasted and manually entered ingredients. */
@@ -29,8 +39,16 @@ export class RecipeIngredients {
 		container: HTMLElement,
 		initial: IngredientRow[],
 		description = 'Link to the specificity the recipe calls for; start typing an ingredient to find one. Plain text is fine for garnishes or ingredients you do not want to catalog. Links help you find related recipes and log the ingredients you use.',
+		options: IngredientOptions = {},
 	) {
 		this.notes = recipeIngredientNotes(plugin.store.notes());
+		if (options.linkRemembered) {
+			for (const row of initial) {
+				if (row.note || /\[\[/.test(row.text)) continue;
+				const note = rememberedNote(row.text, this.notes);
+				if (note) Object.assign(row, { note, remembered: true });
+			}
+		}
 		new Setting(container).setName('Ingredients').setHeading();
 		container.createEl('p', { text: description });
 		this.rowsEl = container.createDiv({ cls: 'cocktail-cabinet-ingredients' });
@@ -66,6 +84,23 @@ export class RecipeIngredients {
 		return lines;
 	}
 
+	/** Remember the ticked rows' wordings for their notes; call once the form has saved. Failures are reported, not thrown. */
+	async saveRemembered(): Promise<void> {
+		const rows = this.rows.filter(
+			(row) => row.remember && row.note && row.text.trim() && canRemember(row.text, row.note),
+		);
+		const remembered: string[] = [];
+		for (const row of rows) {
+			try {
+				if (await this.plugin.store.rememberWording(row.note!.path, row.text.trim()))
+					remembered.push(`“${row.text.trim()}” for ${row.note!.name}`);
+			} catch (error) {
+				new Notice(error instanceof Error ? error.message : `Couldn’t remember “${row.text.trim()}”.`);
+			}
+		}
+		if (remembered.length) new Notice(`Remembered ${remembered.join(', ')}.`);
+	}
+
 	private add(data: IngredientRow) {
 		this.rows.push(data);
 		if (data.original !== undefined)
@@ -77,6 +112,7 @@ export class RecipeIngredients {
 			attr: { 'aria-live': 'polite' },
 		});
 		const suggestions = wrapper.createDiv({ cls: 'cocktail-cabinet-suggestions' });
+		const rememberEl = wrapper.createDiv({ cls: 'cocktail-cabinet-remember' });
 		const actions = new Setting(wrapper).setClass('cocktail-cabinet-ingredient-actions');
 		let keepText = false;
 		let nameInput!: TextComponent;
@@ -87,20 +123,39 @@ export class RecipeIngredients {
 					? 'Amount kept as written; review it when logging.'
 					: `Volume recognized: ${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) && !/ml|millilit(?:er|re)s?/i.test(data.amount) ? ' (US fl oz)' : ''}.`;
 			status.setText(
-				`${data.note ? `Linked to ${data.note.kind}: ${data.note.name}.` : /\[\[/.test(data.text) ? 'Existing Markdown links kept as written.' : 'Plain text; no cabinet link.'} ${amount}`,
+				`${data.note ? `Linked to ${data.note.kind}: ${data.note.name}${data.remembered ? ', from a remembered wording' : ''}.` : /\[\[/.test(data.text) ? 'Existing Markdown links kept as written.' : 'Plain text; no cabinet link.'} ${amount}`,
 			);
+		};
+		/** Offer to remember the wording for a note linked in this form, unless it's already recognized. */
+		const offerRemember = () => {
+			rememberEl.empty();
+			const loaded = this.loaded.get(data);
+			const linkedHere = data.note && !data.remembered && (!loaded || loaded.note !== data.note.path);
+			if (!linkedHere || !canRemember(data.text, data.note!)) {
+				data.remember = false;
+				return;
+			}
+			const label = rememberEl.createEl('label');
+			const box = label.createEl('input', { type: 'checkbox' });
+			box.checked = !!data.remember;
+			box.addEventListener('change', () => {
+				data.remember = box.checked;
+			});
+			label.appendText(` Remember “${data.text.trim()}” for ${data.note!.name}`);
 		};
 		/** Link the row; suggestions and pickers keep the wording as display text, the type-ahead uses the note's name. */
 		const choose = (note: CabinetNote, label = plainIngredient(data.text) || note.name) => {
 			if (!this.notes.some((item) => item.path === note.path)) this.notes.push(note);
 			data.note = note;
 			data.text = label;
+			data.remembered = false;
 			nameInput.setValue(data.text);
 			keepText = false;
 			refresh();
 		};
 		const refresh = () => {
 			describe();
+			offerRemember();
 			suggestions.empty();
 			if (data.note || keepText) return;
 			const candidates = suggestIngredient(data.text, this.notes);
@@ -134,6 +189,7 @@ export class RecipeIngredients {
 				.onChange((value) => {
 					data.text = value;
 					data.note = undefined;
+					data.remembered = false;
 					keepText = false;
 					refresh();
 				});
@@ -160,6 +216,7 @@ export class RecipeIngredients {
 		actions.addButton((button) =>
 			button.setButtonText('Unlink').onClick(() => {
 				data.note = undefined;
+				data.remembered = false;
 				data.text = plainIngredient(data.text);
 				nameInput.setValue(data.text);
 				keepText = true;

@@ -107,6 +107,7 @@ Link what the recipe asks for, no narrower: a type such as London Dry Gin when a
 - **Review unlinked ingredients** gathers measured lines with no link, grouped by wording, and links a wording across every recipe at once.
 - **Link this ingredient line**, **Edit this ingredient link**, and **Insert ingredient link** work in the editor, from the command palette or the right-click menu.
 - **Create ingredient** in the recipe form adds a missing type, bottle, or other stock without losing your draft.
+- **Remember** a wording when you link it, such as “rum, such as Coruba” for Aged Jamaican Rum. The next recipe with the same wording comes into review already linked, marked as remembered, and you can unlink it. Remembered wordings are kept in the note's \`${PROP.writtenAs}\` property; edit or remove them there.
 
 ## Tags
 
@@ -299,6 +300,7 @@ Everything is under \`${root}/\`. A note takes part only when it has a \`${PROP.
 - Properties: \`${PROP.kind}: recipe\`, \`${PROP.name}\`, \`created\`, \`rating\` (a whole number 1–5, or empty), \`source\`, and \`tags\`. The plugin maintains \`${PROP.ingredients}\`, the \`cc-est-\` estimates, \`${PROP.lastMade}\`, and \`${PROP.timesMade}\`; don't write them.
 - Sections, as applicable: \`### Ingredients\`, \`### Method\`, \`### Description\`, \`### Tasting Notes\`.
 - Link each ingredient at the level the recipe asks for: a bottle only when it names one, otherwise the type, or the family for a broad call such as “rum”. Keep the recipe's wording as the display text. Leave a line unlinked when nothing fits.
+- \`${PROP.writtenAs}\` on an ingredient note lists recipe wordings the user linked to it before. A wording listed on exactly one note links to that note; one listed on several is the user's choice. Add to it only when asked.
 - Keep recipe names and ingredient wording unless correcting a clear error.
 
 ## Making drinks

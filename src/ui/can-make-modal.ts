@@ -131,6 +131,7 @@ export class CanMakeModal extends Modal {
 				note,
 				original: wording,
 				originalLabel: 'Recipe wording',
+				remember: wording,
 				preview: (text) => linkedLinePreview(line.text, text),
 				submit: async (text) => {
 					if (this.closed) return;
