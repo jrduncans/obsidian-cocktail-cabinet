@@ -33,7 +33,7 @@ This project spans three workspace folders:
 ## Development conventions
 
 - Use Node.js 20+, npm, TypeScript, and esbuild. Run development commands from this repository; see `package.json` for scripts.
-- Before finishing code changes, run `npm test`, `npm run build`, and `npm run lint`. After changing the starter catalog, run `npm run catalog:docs`; tests check the generated hierarchy for drift.
+- Before finishing code changes, run `npm test`, `npm run build`, and `npm run lint`. The hk pre-commit hook (`hk.pkl`) runs eslint, prettier, `tsc`, and `npm test` on commits touching code, and CI (`.github/workflows/lint.yml`) runs build, tests, and lint on pushes to `main`. After changing the starter catalog, run `npm run catalog:docs`; tests check the generated hierarchy for drift.
 - Keep `src/main.ts` focused on plugin lifecycle and registration. Put feature logic in focused modules; consider splitting files beyond 200–300 lines. Keep pure cocktail logic separate from Obsidian I/O.
 - Use browser-compatible APIs and small dependencies. The plugin supports mobile; keep `minAppVersion` accurate for APIs in use.
 - Don't hide or disable features by platform. "Desktop first" in the docs sets testing and layout priority; it doesn't mean gating with `Platform.isMobile`. A rough mobile layout is acceptable, because the feature has to appear on mobile for its issues to be found.
