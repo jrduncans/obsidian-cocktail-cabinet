@@ -16,6 +16,7 @@ try {
 		'note-edit.test',
 		'recipe-import.test',
 		'written-as.test',
+		'web-recipe.test',
 		'logging.test',
 		'subtypes.test',
 		'availability.test',

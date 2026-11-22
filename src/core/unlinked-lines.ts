@@ -1,4 +1,4 @@
-import { recipeVolumeMl, splitIngredient } from './recipe-amount';
+import { recipeVolumeMl, splitEcho, splitIngredient } from './recipe-amount';
 import { wikiLink } from './schema';
 import type { CabinetNote } from './schema';
 
@@ -50,10 +50,7 @@ export function ingredientParts(text: string): {
 	const plain = plainIngredient(text).trim();
 	const prefix = plain.match(GARNISH_PREFIX)?.[0];
 	const { amount, text: rest } = splitIngredient(prefix ? plain.slice(prefix.length) : plain);
-	const echoed = amount ? rest.match(/^(\/\s*\d+(?:[.,]\d+)?\s*(?:ml|cl|oz)\.?)\s+(.+)$/i) : null;
-	const parts = echoed
-		? { amount, lead: echoed[1]!, wording: echoed[2]!.trim() }
-		: { amount, lead: '', wording: rest.trim() };
+	const parts = amount ? { amount, ...splitEcho(rest) } : { amount, lead: '', wording: rest.trim() };
 	const suffix = recipeVolumeMl(amount) === null ? parts.wording.match(GARNISH_SUFFIX)?.[0] : undefined;
 	if (suffix) parts.wording = parts.wording.slice(0, -suffix.length).trim();
 	return { ...(prefix ? { prefix: prefix.trimEnd() } : {}), ...parts, ...(suffix ? { suffix } : {}) };

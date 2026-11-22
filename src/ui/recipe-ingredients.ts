@@ -3,7 +3,7 @@ import type { TextComponent } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
-import { recipeVolumeMl, splitIngredient } from '../core/recipe-amount';
+import { recipeVolumeMl, splitEcho, splitIngredient } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
 import { canRemember, rememberedNote } from '../core/written-as';
 import { addCreateItems, pickIngredient } from './link-choice';
@@ -42,6 +42,12 @@ export class RecipeIngredients {
 		options: IngredientOptions = {},
 	) {
 		this.notes = recipeIngredientNotes(plugin.store.notes());
+		// An echoed volume ("· 30 ml") belongs with the amount, so the wording is what gets linked.
+		for (const row of initial) {
+			if (row.original !== undefined || !row.amount) continue;
+			const { lead, wording } = splitEcho(row.text);
+			if (lead) Object.assign(row, { amount: `${row.amount} ${lead}`, text: wording });
+		}
 		if (options.linkRemembered) {
 			for (const row of initial) {
 				if (row.note || /\[\[/.test(row.text)) continue;
@@ -117,7 +123,8 @@ export class RecipeIngredients {
 		let keepText = false;
 		let nameInput!: TextComponent;
 		const describe = () => {
-			const ml = recipeVolumeMl(data.amount);
+			// The amount before any echoed volume, as logging reads the saved line.
+			const ml = recipeVolumeMl(splitIngredient(`${data.amount} x`).amount || data.amount);
 			const amount =
 				ml === null
 					? 'Amount kept as written; review it when logging.'

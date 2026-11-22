@@ -16,6 +16,15 @@ const UNIT =
 	'(?:fl\\.?\\s*oz\\.?|oz\\.?|ounces?|ml|millilit(?:er|re)s?|cl|centilit(?:er|re)s?|dash(?:es)?|drops?|barspoons?|teaspoons?|tablespoons?|tsp\\.?|tbsp\\.?|parts?|sprigs?|leaf|leaves|slices?|wedges?|pieces?)';
 const PREFIX = new RegExp(`^(${NUMBER}(?:\\s*[-–—]\\s*${NUMBER})?\\s*${UNIT}(?:\\s*\\([^)]*\\))?)\\s+(.+)$`, 'i');
 
+/** An echoed volume some sources add after the amount, as in "1 oz. / 30 ml." or "1 oz · 30 ml". */
+const ECHO = /^([/·]\s*\d+(?:[.,]\d+)?\s*(?:ml|cl|oz)\.?)\s+(.+)$/i;
+
+/** Split an echoed volume off the start of an ingredient's text: `· 30 ml pineapple rum` → its lead and wording. */
+export function splitEcho(text: string): { lead: string; wording: string } {
+	const match = text.trim().match(ECHO);
+	return match ? { lead: match[1]!, wording: match[2]!.trim() } : { lead: '', wording: text.trim() };
+}
+
 /** Separate familiar leading amounts without rewriting the source text. */
 export function splitIngredient(line: string): { amount: string; text: string } {
 	const match = line.trim().match(PREFIX) ?? line.trim().match(/^(pinch of)\s+(.+)$/i);
