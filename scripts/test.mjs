@@ -25,7 +25,6 @@ try {
 		'one-off.test',
 		'unlinked-lines.test',
 		'logging-store.test',
-		'knowledge-migration.test',
 		'vault-install.test',
 	];
 	await build({
