@@ -1,5 +1,6 @@
 import { linkTarget } from './ingredient-links';
-import { recipeVolumeMl, splitIngredient } from './recipe-amount';
+import { DEFAULT_VOLUME_UNIT, lineVolumeMl, recipeVolumeMl, splitIngredient } from './recipe-amount';
+import type { VolumeUnit } from './recipe-amount';
 
 /**
  * The alcohol estimate for one serving of a recipe, from its ingredient lines. Pure: the vault
@@ -139,8 +140,14 @@ export interface Estimate {
 export interface EstimateSettings {
 	dilution: Readonly<Record<Preparation, number>>;
 	topMl: number;
+	/** Which stated amount wins when a line gives both oz and mL. */
+	volumeUnit?: VolumeUnit;
 }
-export const DEFAULT_ESTIMATE_SETTINGS: EstimateSettings = { dilution: DEFAULT_DILUTION, topMl: DEFAULT_TOP_ML };
+export const DEFAULT_ESTIMATE_SETTINGS: EstimateSettings = {
+	dilution: DEFAULT_DILUTION,
+	topMl: DEFAULT_TOP_ML,
+	volumeUnit: DEFAULT_VOLUME_UNIT,
+};
 
 const IGNORED =
 	/\b(?:rinse|rinsed|spritz|mist|garnish|garnished|peel|twist|wheel|wedge|sprig|leaf|leaves|oils?|zest|swath)\b/i;
@@ -164,7 +171,7 @@ function dashCount(text: string): number | null {
 /** The volume a line pours, and its shape. */
 function lineVolume(line: string, settings: EstimateSettings): { shape: LineShape; ml: number | null } {
 	const { amount, text } = splitIngredient(line);
-	const measured = amount ? recipeVolumeMl(amount) : null;
+	const measured = amount ? lineVolumeMl(line, settings.volumeUnit) : null;
 	if (measured !== null) return { shape: 'measured', ml: measured };
 	const dashes = amount.match(/^(.+?)\s*(dash(?:es)?|drops?)$/i);
 	if (dashes) {

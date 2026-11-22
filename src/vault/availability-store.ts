@@ -4,6 +4,8 @@ import type { AvailabilityContext } from '../core/availability';
 import type { RecipeEntry } from '../core/availability-lists';
 import { stockSnapshot } from '../core/logging-stock';
 import type { RestockThresholds } from '../core/restock';
+import { DEFAULT_VOLUME_UNIT } from '../core/recipe-amount';
+import type { VolumeUnit } from '../core/recipe-amount';
 import { parseRating, PROP } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
 import type { CabinetStore } from './cabinet-store';
@@ -25,6 +27,7 @@ export class AvailabilityStore {
 		private app: App,
 		private cabinet: CabinetStore,
 		private thresholds: () => RestockThresholds,
+		private volumeUnit: () => VolumeUnit = () => DEFAULT_VOLUME_UNIT,
 	) {}
 
 	private file(path: string): TFile {
@@ -58,6 +61,7 @@ export class AvailabilityStore {
 			notes,
 			sources: stock.map((note) => stockSnapshot(note, properties.get(note.path)!)),
 			thresholds: this.thresholds(),
+			volumeUnit: this.volumeUnit(),
 		};
 	}
 

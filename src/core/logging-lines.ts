@@ -1,4 +1,5 @@
-import { recipeVolumeMl, splitIngredient } from './recipe-amount';
+import { DEFAULT_VOLUME_UNIT, lineVolumeMl } from './recipe-amount';
+import type { VolumeUnit } from './recipe-amount';
 import { isWithin, parentType, swapTypes } from './relationships';
 import { PROP } from './schema';
 import type { CabinetNote } from './schema';
@@ -81,6 +82,7 @@ export function classifyLoggingLines(
 	notes: readonly CabinetNote[],
 	sources: readonly StockSource[],
 	resolve: (link: string) => string | null,
+	volumeUnit: VolumeUnit = DEFAULT_VOLUME_UNIT,
 ): LoggingLines {
 	const counted: CountedLine[] = [],
 		skipped: SkippedLine[] = [];
@@ -95,7 +97,7 @@ export function classifyLoggingLines(
 				}),
 			),
 		];
-		const ml = recipeVolumeMl(splitIngredient(text).amount);
+		const ml = lineVolumeMl(text, volumeUnit);
 		const link = { line: id, raw };
 		if (!links.length) {
 			skipped.push({ text, reason: 'Not linked', ...(ml === null ? {} : { link }) });

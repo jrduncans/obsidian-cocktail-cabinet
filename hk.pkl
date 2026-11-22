@@ -11,7 +11,11 @@ local linters = new Mapping {
     // Unit tests and the catalog checks; under a second. CI runs them too (.github/workflows/lint.yml).
     ["test"] = new Step {
         glob = List("src/**", "tests/**", "scripts/**", "package.json", "package-lock.json")
-        check = "npm test"
+        // Read-only for the repository: tests write only to temporary folders and repositories.
+        check = new CommandSpec {
+            command = "npm test"
+            effect = "read"
+        }
     }
 }
 

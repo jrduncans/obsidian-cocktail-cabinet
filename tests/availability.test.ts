@@ -85,12 +85,13 @@ const status = (target: CabinetNote, availability: string | null) =>
 const untracked = (target: CabinetNote) => stockSnapshot(target, { [PROP.kind]: target.kind });
 
 const resolve = (link: string) => notes.find((item) => item.name === link.split('|')[0])?.path ?? null;
-function recipe(lines: string[], sources: StockSource[]) {
+function recipe(lines: string[], sources: StockSource[], volumeUnit?: 'oz' | 'ml') {
 	return resolveRecipe(`# R\n\n### Ingredients\n${lines.map((line) => `- ${line}`).join('\n')}\n\n### Method\n`, {
 		notes,
 		sources,
 		resolve,
 		thresholds: DEFAULT_RESTOCK,
+		...(volumeUnit ? { volumeUnit } : {}),
 	});
 }
 const only = (text: string, sources: StockSource[]): LineAvailability => recipe([text], sources).lines[0]!;
@@ -138,6 +139,14 @@ void test('Short: volume-tracked sources together hold less than the pour', () =
 	assert.equal(only('1 oz [[Bourbon]]', [bottle(plain, 10), status(bib, 'Have')]).state, 'have');
 	assert.equal(only('1 dash [[Campari]]', [bottle(campari, 1)]).state, 'low');
 	assert.equal(recipe(['1 oz [[Campari]]'], [bottle(campari, 10)]).status, 'missing-one');
+});
+
+void test('Short reads a line giving oz and mL by the preferred unit, ounces by default', () => {
+	// 29.7 mL holds 30 ml's worth of ounces (29.57) but not 30 mL.
+	for (const text of ['1 oz (30 ml) [[Campari]]', '1 oz / 30 ml [[Campari]]', '30 ml · 1 oz [[Campari]]']) {
+		assert.notEqual(recipe([text], [bottle(campari, 29.7)]).lines[0]!.state, 'short', text);
+		assert.equal(recipe([text], [bottle(campari, 29.7)], 'ml').lines[0]!.state, 'short', text);
+	}
 });
 
 void test('alternatives on one line: any stocked link fills it', () => {

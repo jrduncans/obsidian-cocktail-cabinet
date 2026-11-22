@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
 	DASH_ML,
 	DROP_ML,
+	DEFAULT_ESTIMATE_SETTINGS,
 	DEFAULT_TOP_ML,
 	estimateAlcohol,
 	drinksText,
@@ -72,12 +73,15 @@ const LINKS: Record<string, LinkInfo> = {
 	Overproof: { abv: 0.63, source: 'bottle', facts: [] },
 };
 const link = (target: string) => LINKS[target] ?? null;
+/** These fixtures round their mL, so they read the mL a line states beside the ounces. */
+const ML = { ...DEFAULT_ESTIMATE_SETTINGS, volumeUnit: 'ml' as const };
 
 void test('a Daiquiri: measured lines, shaken because it has juice, exact with bottles', () => {
 	const estimate = estimateAlcohol({
 		lines: ['2 oz (60 ml) [[Rum]]', '1 oz (30 ml) [[Lime]]', '¾ oz (22.5 ml) [[Syrup]]'],
 		method: 'Combine and strain.',
 		link,
+		settings: ML,
 	});
 	assert.equal(estimate.preparation, 'shaken');
 	assert.equal(estimate.preparationFrom, 'ingredients');
@@ -86,6 +90,14 @@ void test('a Daiquiri: measured lines, shaken because it has juice, exact with b
 	close(estimate.abv, 24 / 140.625);
 	assert.equal(estimate.basis, 'exact');
 	assert.deepEqual(estimate.facts.sort(), ['citrus', 'juice']);
+});
+
+void test('a line giving oz and mL estimates from the preferred unit in any written form', () => {
+	const forms = ['2 oz (60 ml) [[Rum]]', '60 ml (2 oz) [[Rum]]', '2 oz. / 60 ml. [[Rum]]', '2 oz · 60 ml [[Rum]]'];
+	for (const line of forms) {
+		close(estimateAlcohol({ lines: [line], method: 'Stir.', link }).lines[0]!.ml, 2 * 29.5735295625);
+		close(estimateAlcohol({ lines: [line], method: 'Stir.', link, settings: ML }).lines[0]!.ml, 60);
+	}
 });
 
 void test('the Method text picks the preparation first; a flash blend is shaken; an override replaces the percentage', () => {
@@ -116,6 +128,7 @@ void test('dashes count, ranges use the midpoint, and garnishes and rinses don�
 		],
 		method: 'Stir.',
 		link,
+		settings: ML,
 	});
 	const ml = estimate.lines.map((line) => line.ml);
 	close(ml[1]!, 2 * DASH_ML);
@@ -142,7 +155,12 @@ void test('dashes count, ranges use the midpoint, and garnishes and rinses don�
 });
 
 void test('a top without an amount assumes a pour, added after dilution; a stated amount is used', () => {
-	const soda = estimateAlcohol({ lines: ['2 oz (60 ml) [[Gin]]', 'Top with [[Soda]]'], method: 'Build.', link });
+	const soda = estimateAlcohol({
+		lines: ['2 oz (60 ml) [[Gin]]', 'Top with [[Soda]]'],
+		method: 'Build.',
+		link,
+		settings: ML,
+	});
 	assert.equal(soda.lines[1]!.shape, 'top');
 	close(soda.volumeMl, 60 * 1.1 + DEFAULT_TOP_ML);
 	close(soda.alcoholMl, 25.8);
@@ -152,6 +170,7 @@ void test('a top without an amount assumes a pour, added after dilution; a state
 		lines: ['1 oz (30 ml) [[Gin]]', 'Top with 3 oz (90 ml) [[Champagne]]'],
 		method: 'Shake gin, top with champagne.',
 		link,
+		settings: ML,
 	});
 	assert.equal(wine.lines[1]!.shape, 'measured');
 	assert.equal(wine.basis, 'typical');
@@ -203,6 +222,7 @@ void test('stored estimates are rounded, and a recipe with nothing to pour store
 		lines: ['2 oz (60 ml) [[Rum]]', '1 oz (30 ml) [[Lime]]', '¾ oz (22.5 ml) [[Syrup]]'],
 		method: 'Shake.',
 		link,
+		settings: ML,
 	});
 	assert.deepEqual(storedEstimate(estimate), {
 		'cc-est-alcohol-ml': 24,
@@ -226,13 +246,19 @@ void test('the logging line scales by servings and says how sure it is', () => {
 		lines: ['2 oz (60 ml) [[Rum]]', '1 oz (30 ml) [[Lime]]', '¾ oz (22.5 ml) [[Syrup]]'],
 		method: 'Shake.',
 		link,
+		settings: ML,
 	});
 	assert.equal(estimateText(daiquiri, 1), '≈ 1.4 drinks (24.0 mL alcohol), 17.1% ABV · exact');
 	assert.equal(estimateText(daiquiri, 2), '≈ 2.7 drinks (48.0 mL alcohol), 17.1% ABV · exact');
 	assert.equal(estimateText(daiquiri, 1, 'uk'), '≈ 2.4 units (24.0 mL alcohol), 17.1% ABV · exact');
 	assert.equal(drinksText(daiquiri, 2), '≈ 2.7 drinks');
 	assert.equal(drinksText(daiquiri, 1, 'uk'), '≈ 2.4 units');
-	const partial = estimateAlcohol({ lines: ['2 oz (60 ml) [[Rum]]', '1 oz [[Mystery]]'], method: 'Stir.', link });
+	const partial = estimateAlcohol({
+		lines: ['2 oz (60 ml) [[Rum]]', '1 oz [[Mystery]]'],
+		method: 'Stir.',
+		link,
+		settings: ML,
+	});
 	assert.match(estimateText(partial, 1), /^≥ 1\.4 drinks .* ≥ \d+\.\d% ABV · some ABVs or amounts unknown$/);
 	assert.equal(estimateText(estimateAlcohol({ lines: ['Garnish: cherry'], method: '', link }), 1), '');
 });

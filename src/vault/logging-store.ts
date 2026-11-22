@@ -8,6 +8,8 @@ import type { LoggingPlan } from '../core/logging-plan';
 import { sameStock, stockSnapshot } from '../core/logging-stock';
 import type { StockSource } from '../core/logging-stock';
 import { localDate } from '../core/notes';
+import { DEFAULT_VOLUME_UNIT } from '../core/recipe-amount';
+import type { VolumeUnit } from '../core/recipe-amount';
 import type { CabinetNote } from '../core/schema';
 import { oneOffContent, oneOffDailyEntry, oneOffDailyText } from '../core/one-off';
 import type { OneOff } from '../core/one-off';
@@ -68,6 +70,7 @@ export class LoggingStore {
 		private app: App,
 		private cabinet: CabinetStore,
 		readonly journal: LogJournal = memoryJournal(),
+		private volumeUnit: () => VolumeUnit = () => DEFAULT_VOLUME_UNIT,
 	) {
 		this.daily = new LoggingDaily(app);
 		this.undo = new LogUndoStore(app, this);
@@ -115,6 +118,7 @@ export class LoggingStore {
 			notes,
 			sources,
 			(link) => this.cabinet.resolve(link, recipe.path)?.path ?? null,
+			this.volumeUnit(),
 		);
 		return { recipe, content, sources, lines, daily: await this.daily.preview(recipe, date) };
 	}
@@ -133,6 +137,7 @@ export class LoggingStore {
 			notes,
 			sources,
 			(link) => this.cabinet.resolve(link, oneOff.riffOn?.path ?? '')?.path ?? null,
+			this.volumeUnit(),
 		);
 		lines.skipped = lines.skipped.map(({ link: _link, ...line }) => line);
 		return { oneOff, content, sources, lines, daily: await this.daily.preview(null, date) };

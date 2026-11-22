@@ -3,7 +3,7 @@ import type { TextComponent } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
-import { recipeVolumeMl, splitEcho, splitIngredient } from '../core/recipe-amount';
+import { lineVolumeMl, splitEcho, splitIngredient } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
 import { canRemember, rememberedNote } from '../core/written-as';
 import { addCreateItems, pickIngredient } from './link-choice';
@@ -123,12 +123,12 @@ export class RecipeIngredients {
 		let keepText = false;
 		let nameInput!: TextComponent;
 		const describe = () => {
-			// The amount before any echoed volume, as logging reads the saved line.
-			const ml = recipeVolumeMl(splitIngredient(`${data.amount} x`).amount || data.amount);
+			const unit = this.plugin.settings.volumeUnit;
+			const ml = lineVolumeMl(`${data.amount} x`, unit);
 			const amount =
 				ml === null
 					? 'Amount kept as written; review it when logging.'
-					: `Volume recognized: ${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) && !/ml|millilit(?:er|re)s?/i.test(data.amount) ? ' (US fl oz)' : ''}.`;
+					: `Volume recognized: ${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) && (unit === 'oz' || !/ml|millilit(?:er|re)s?/i.test(data.amount)) ? ' (US fl oz)' : ''}.`;
 			status.setText(
 				`${data.note ? `Linked to ${data.note.kind}: ${data.note.name}${data.remembered ? ', from a remembered wording' : ''}.` : /\[\[/.test(data.text) ? 'Existing Markdown links kept as written.' : 'Plain text; no cabinet link.'} ${amount}`,
 			);
