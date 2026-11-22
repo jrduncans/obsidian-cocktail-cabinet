@@ -11,7 +11,8 @@ const FRACTIONS: Record<string, string> = {
 };
 /** A barspoon is treated as one US teaspoon; a tablespoon is three. */
 const US_TEASPOON_ML = 4.92892159375;
-const NUMBER = '(?:\\d+\\s+\\d+\\s*/\\s*\\d+|\\d+\\s*/\\s*\\d+|\\d*[¼½¾⅓⅔⅛⅜⅝⅞]|(?:\\d+(?:[.,]\\d+)?|[.,]\\d+))';
+// A fraction may use the fraction slash (⁄, U+2044), as some recipe sites write 2⁄3.
+const NUMBER = '(?:\\d+\\s+\\d+\\s*[/⁄]\\s*\\d+|\\d+\\s*[/⁄]\\s*\\d+|\\d*[¼½¾⅓⅔⅛⅜⅝⅞]|(?:\\d+(?:[.,]\\d+)?|[.,]\\d+))';
 const UNIT =
 	'(?:fl\\.?\\s*oz\\.?|oz\\.?|ounces?|ml|millilit(?:er|re)s?|cl|centilit(?:er|re)s?|dash(?:es)?|drops?|barspoons?|teaspoons?|tablespoons?|tsp\\.?|tbsp\\.?|parts?|sprigs?|leaf|leaves|slices?|wedges?|pieces?)';
 const PREFIX = new RegExp(`^(${NUMBER}(?:\\s*[-–—]\\s*${NUMBER})?\\s*${UNIT}(?:\\s*\\([^)]*\\))?)\\s+(.+)$`, 'i');
@@ -54,7 +55,10 @@ export function lineVolumeMl(line: string, prefer: VolumeUnit = DEFAULT_VOLUME_U
  * parenthetical pair of US fluid ounces and mL, `prefer` picks which stated amount wins, in either order.
  */
 export function recipeVolumeMl(amount: string, prefer: VolumeUnit = DEFAULT_VOLUME_UNIT): number | null {
-	const normalized = amount.replace(/[¼½¾⅓⅔⅛⅜⅝⅞]/g, (character) => ` ${FRACTIONS[character]}`).trim();
+	const normalized = amount
+		.replace(/⁄/g, '/')
+		.replace(/[¼½¾⅓⅔⅛⅜⅝⅞]/g, (character) => ` ${FRACTIONS[character]}`)
+		.trim();
 	const explicit = normalized.match(
 		new RegExp(
 			`^(${NUMBER})\\s*(?:barspoons?|teaspoons?|tablespoons?|tsp\\.?|tbsp\\.?|dash(?:es)?|drops?)\\s*\\(([^()]+)\\)$`,

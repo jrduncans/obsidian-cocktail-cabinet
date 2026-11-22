@@ -165,7 +165,10 @@ export function structuredRecipe(doc: Document, parse: ParseHtml): StructuredRec
 	return (root && microdataRecipe(root)) || fromJson;
 }
 
-const REMOVED = 'script, style, noscript, template, svg, iframe, object, nav, footer, form, button, dialog, select';
+const REMOVED =
+	'script, style, noscript, template, svg, iframe, object, nav, footer, form, button, dialog, select, img, picture, video, audio';
+/** Kept as their text: links and emphasis would otherwise become Markdown inside ingredient wording. */
+const UNWRAPPED = 'a, strong, b, em, i, u, mark';
 
 function isHidden(el: Element): boolean {
 	if (el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true') return true;
@@ -180,7 +183,8 @@ const AMOUNT = /\d\s*(?:oz|ml|cl|ounces?|dash(?:es)?|tsp|barspoons?)\b/i;
 
 /**
  * The part of the page a reader sees, without scripts, navigation, forms, or elements hidden inline. Taken
- * from the microdata recipe, else a post body or article that reads like a recipe, else `main`, else the body.
+ * from the microdata recipe, else a post body or article that reads like a recipe, else `main`, else the body
+ * (not just any article: on some pages those are reader comments).
  */
 export function visibleContent(doc: Document): Element | null {
 	const recipeLike = (el: Element) =>
@@ -191,12 +195,23 @@ export function visibleContent(doc: Document): Element | null {
 		Array.from(doc.querySelectorAll(POST_BODY)).find(recipeLike) ??
 		articles.find(recipeLike) ??
 		doc.querySelector('main') ??
-		articles[0] ??
 		doc.body;
 	if (!root) return null;
 	const copy = root.cloneNode(true) as Element;
 	for (const el of Array.from(copy.querySelectorAll(REMOVED))) el.remove();
 	for (const el of Array.from(copy.querySelectorAll('*'))) if (isHidden(el)) el.remove();
+	for (const el of Array.from(copy.querySelectorAll(UNWRAPPED))) el.replaceWith(...Array.from(el.childNodes));
+	// Ingredient tables (Difford's) read as one line per row, not Markdown table syntax.
+	for (const table of Array.from(copy.querySelectorAll('table'))) {
+		const block = doc.createElement('div');
+		for (const row of Array.from(table.querySelectorAll('tr'))) {
+			const cells = Array.from(row.querySelectorAll('th, td'))
+				.map((cell) => (cell.textContent ?? '').replace(/\s+/g, ' ').trim())
+				.filter(Boolean);
+			if (cells.length) block.appendChild(doc.createElement('p')).textContent = cells.join(' ');
+		}
+		table.replaceWith(block);
+	}
 	return copy;
 }
 

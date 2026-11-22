@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DOMParser } from 'linkedom';
 import { readRecipePage, recipeUrl, sourceUrl } from '../src/core/web-recipe';
+import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
 import { roughMarkdown } from './support-markdown';
 
 const parse = (html: string) => new DOMParser().parseFromString(html, 'text/html') as unknown as Document;
@@ -148,4 +149,45 @@ void test('a page with nothing readable gives no ingredients, and scripts never 
 		page('<title>Simple Page</title>', '<div id="root"></div><script>var r = "1 oz gin";</script>'),
 	);
 	assert.deepEqual(recipe.ingredients, []);
+});
+
+void test('amounts may use the fraction slash, and links and images in page text come through as plain text', () => {
+	assert.deepEqual(splitIngredient('2⁄3 fl oz Amaro'), { amount: '2⁄3 fl oz', text: 'Amaro' });
+	assert.equal(recipeVolumeMl('2⁄3 fl oz')?.toFixed(2), recipeVolumeMl('2/3 fl oz')?.toFixed(2));
+	const { recipe } = read(
+		page(
+			'',
+			`<article><article class="comment"><p>Great drink!</p></article><h1>Today is Friday</h1><img src="x.jpg" alt="photo">
+			<h2>Ingredients</h2><ul><li>¾ oz <a href="/syrup"><strong>Marion Blackberry Syrup</strong></a></li><li>2 oz white rum</li></ul>
+			<h2>Directions</h2><p>Shake with ice. <a href="#">Print</a></p></article>`,
+		),
+	);
+	assert.deepEqual(recipe.ingredients[0], { amount: '¾ oz', text: 'Marion Blackberry Syrup' });
+	assert.doesNotMatch(JSON.stringify(recipe), /\]\(|x\.jpg|\*\*/);
+});
+
+void test('without a recipe-like container, the body is read rather than the first article', () => {
+	const { recipe } = read(
+		page(
+			'',
+			`<div class="content"><h1>Tunnel Negroni</h1><h2>Ingredients</h2><ul><li>1 fl oz London Dry Gin</li></ul></div>
+			<h2>Comments</h2><article class="comment"><p>Lovely.</p></article>`,
+		),
+	);
+	assert.equal(recipe.name, 'Tunnel Negroni');
+	assert.deepEqual(recipe.ingredients, [{ amount: '1 fl oz', text: 'London Dry Gin' }]);
+});
+
+void test('ingredient tables read as one line per row', () => {
+	const { recipe } = read(
+		page(
+			'',
+			`<main><h1>Tunnel Negroni</h1><h2>Ingredients</h2><table><tr><td></td><td>1 fl oz</td><td><a href="#">London Dry Gin</a></td></tr>
+			<tr><td></td><td>2⁄3 fl oz</td><td>Amaro</td></tr></table><h2>How to make</h2><ol><li>STIR with ice.</li></ol></main>`,
+		),
+	);
+	assert.deepEqual(recipe.ingredients, [
+		{ amount: '1 fl oz', text: 'London Dry Gin' },
+		{ amount: '2⁄3 fl oz', text: 'Amaro' },
+	]);
 });

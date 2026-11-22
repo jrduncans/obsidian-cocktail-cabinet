@@ -1,6 +1,6 @@
 # Recipe import design
 
-Drafted on 2026-11-22 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the `knowledge` vault's `cocktail-recipe-import` skill. Reviewed the same day: the [decisions](#decisions) record what was agreed. Slice 1, remembered wordings, built 2026-11-22; the `knowledge` starting entries wait for the release to be installed there.
+Drafted on 2026-11-22 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the `knowledge` vault's `cocktail-recipe-import` skill. Reviewed the same day: the [decisions](#decisions) record what was agreed. Slice 1, remembered wordings, built 2026-11-22 and installed in `knowledge` with its starting entries (`Cocchi Americano`, not the skill's `Cocchi American`). Slice 2, web pages, built 2026-11-22; see [as built](#as-built).
 
 ## Goal
 
@@ -56,6 +56,19 @@ The review opens as for pasted text, with the warnings it gives today, and **Ori
 ### Source
 
 `source` is the page's canonical URL (`<link rel="canonical">`, else the URL as given), with tracking parameters (`utm_*`, `fbclid`, and similar) removed. Today's `knowledge` has several with Instagram campaign strings attached.
+
+### As built
+
+Checked on 2026-11-22 against saved copies of the sampled pages, then in the dev vault. Beyond the plan above:
+
+- **Where the text comes from.** The microdata recipe element, else a common post-body container (`articleBody`, `.entry-content`, `.post-body`, `.post-content`, `.article-body`) or an article that mentions ingredients or has recipe-like amounts, else `main`. A blog's sidebar of ingredient labels (cocktailvirgin's) is left out that way.
+- **Name.** The structured name, else the first top-level heading in that text, else the post title (hAtom `entry-title`/`post-title`), else the page's first heading or title. Text before the first top-level heading is dropped, so navigation such as "Back to Recipes" isn't taken as the name.
+- **Garnish.** A "Garnish:" line in the page text is added to structured ingredients that have none (Punch keeps it outside its marked-up list).
+- **Echoed volumes.** `1 oz · 30 ml pineapple rum` (Daniel Zajic) keeps `· 30 ml` with the amount in the review, as `/ 30 ml.` already was elsewhere, so the wording linked and remembered is just the ingredient.
+- **Page text.** Images are dropped, links and emphasis keep only their text (Liber & Co's ingredient was a bold link), and table rows become one line each (Difford's ingredient table). Not every article counts: on Difford's they're reader comments, so without a post body or recipe-like article the body is read.
+- **Sites vary by client.** Obsidian was served a version of Difford's with no recipe data, which curl got, and liquor.com answered Obsidian though it refused curl. Testing a site means testing it in Obsidian.
+- **Fraction slash.** Amounts accept `2⁄3` (U+2044) as well as `2/3`.
+- **Failure.** The text field is left as `Source: <url>` and a blank line, so pasting the recipe below keeps the source. Shaker of Spirits builds its page with scripts and lands here.
 
 ### Not supported
 
