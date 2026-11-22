@@ -2,7 +2,7 @@ import { ButtonComponent, ExtraButtonComponent, Menu, Notice, Setting, TextCompo
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
-import { lineVolumeMl, splitEcho, splitIngredient } from '../core/recipe-amount';
+import { lineVolumeMl, splitEcho, splitSavedLine } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
 import { canRemember, rememberedNote } from '../core/written-as';
 import { addCreateItems, pickIngredient } from './link-choice';
@@ -141,7 +141,10 @@ export class RecipeIngredients {
 					: /\[\[/.test(data.text)
 						? 'Existing Markdown links kept as written.'
 						: '',
-				data.amount.trim() && ml === null ? 'Amount kept as written; review it when logging.' : '',
+				// Dashes, drops, and pinches are meant to be unmeasured; only a volume logging can't read is worth a note.
+				ml === null && /\b(?:oz|ounces?|ml|cl|millilit(?:er|re)s?)\b/i.test(data.amount)
+					? 'Amount kept as written; review it when logging.'
+					: '',
 			];
 			status.setText(parts.filter(Boolean).join(' '));
 		};
@@ -297,7 +300,7 @@ export function ingredientRows(
 	sourcePath = '',
 ): IngredientRow[] {
 	return lines.map((original) => {
-		const { amount, text } = splitIngredient(original);
+		const { amount, text } = splitSavedLine(original);
 		const link = text.match(/^\[\[([^\]]+)\]\]$/)?.[1];
 		const file = link ? plugin.store.resolve(link, sourcePath) : null;
 		const note = file ? plugin.store.notes().find((item) => item.path === file.path) : undefined;

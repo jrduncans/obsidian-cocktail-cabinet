@@ -11,7 +11,7 @@ import {
 	sourceText,
 } from '../core/note-edit';
 import type { FieldEdit } from '../core/note-edit';
-import { splitIngredient } from '../core/recipe-amount';
+import { splitSavedLine } from '../core/recipe-amount';
 import { recipeIngredientNotes } from '../core/recipe-import';
 import { ingredientList, readRecipeSections } from '../core/recipe-sections';
 import type { RecipeSection, RecipeSections } from '../core/recipe-sections';
@@ -209,7 +209,7 @@ export class EditNoteModal extends CabinetForm {
 
 	/** A saved ingredient line; a line that is one link to a cabinet note opens as a linked row. */
 	private savedRow(line: string): IngredientRow {
-		const { amount, text } = splitIngredient(line);
+		const { amount, text } = splitSavedLine(line);
 		const link = text.match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/);
 		const file = link ? this.plugin.store.resolve(text, this.note.path) : null;
 		const note = file && recipeIngredientNotes(this.plugin.store.notes()).find((item) => item.path === file.path);
