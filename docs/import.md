@@ -1,6 +1,6 @@
 # Recipe import design
 
-Drafted on 2026-11-22 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the `knowledge` vault's `cocktail-recipe-import` skill. Reviewed the same day: the [decisions](#decisions) record what was agreed. Slice 1, remembered wordings, built 2026-11-22 and installed in `knowledge` with its starting entries (`Cocchi Americano`, not the skill's `Cocchi American`). Slice 2, web pages, built 2026-11-22; see [as built](#as-built). Slice 3, the CLI handlers, built 2026-11-22; see [agents](#agents).
+Drafted on 2026-11-22 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the-remaining-skills) and the `knowledge` vault's `cocktail-recipe-import` skill. Reviewed the same day: the [decisions](#decisions) record what was agreed. Slice 1, remembered wordings, built 2026-11-22 and installed in `knowledge` with its starting entries (`Cocchi Americano`, not the skill's `Cocchi American`). Slice 2, web pages, built 2026-11-22; see [as built](#as-built). Slice 3, the CLI handlers, built 2026-11-22 and installed in `knowledge`, whose import skill now calls them; see [agents](#agents).
 
 ## Goal
 
