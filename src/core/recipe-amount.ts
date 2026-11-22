@@ -32,6 +32,14 @@ export function splitIngredient(line: string): { amount: string; text: string } 
 	return match ? { amount: match[1]!, text: match[2]! } : { amount: '', text: line.trim() };
 }
 
+/** A saved line's amount and wording, with an echoed volume ("· 45 ml") kept with the amount. */
+export function splitSavedLine(line: string): { amount: string; text: string } {
+	const { amount, text } = splitIngredient(line);
+	if (!amount) return { amount, text };
+	const { lead, wording } = splitEcho(text);
+	return lead ? { amount: `${amount} ${lead}`, text: wording } : { amount, text };
+}
+
 /** Which stated amount wins when a recipe gives both US fluid ounces and mL. */
 export type VolumeUnit = 'oz' | 'ml';
 export const DEFAULT_VOLUME_UNIT: VolumeUnit = 'oz';

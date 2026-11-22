@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { parseRecipeText, recipeIngredientNotes, suggestIngredient } from '../src/core/recipe-import';
-import { lineVolumeMl, recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
+import { lineVolumeMl, recipeVolumeMl, splitIngredient, splitSavedLine } from '../src/core/recipe-amount';
 import { renderNote } from '../src/core/notes';
 import { wikiLink } from '../src/core/schema';
 import type { CabinetNote } from '../src/core/schema';
@@ -396,4 +396,20 @@ void test('a short first line without a heading becomes the recipe name', () => 
 	])
 		assert.equal(parseRecipeText(`${first}\n\n- 1 oz rye\n- 1 oz sweet vermouth`).name, '', first);
 	assert.equal(parseRecipeText('# Proper Title\n\n- 1 oz rye').name, 'Proper Title');
+});
+
+void test('a saved line keeps an echoed volume with the amount, so the wording is just the link', () => {
+	assert.deepEqual(splitSavedLine('1½ oz · 45 ml [[Cocktails/Types/Aged Rhum Agricole|aged rhum agricole]]'), {
+		amount: '1½ oz · 45 ml',
+		text: '[[Cocktails/Types/Aged Rhum Agricole|aged rhum agricole]]',
+	});
+	assert.deepEqual(splitSavedLine('1 oz. / 30 ml. [[Cocktails/Types/London Dry Gin|London Dry Gin]]'), {
+		amount: '1 oz. / 30 ml.',
+		text: '[[Cocktails/Types/London Dry Gin|London Dry Gin]]',
+	});
+	assert.deepEqual(splitSavedLine('1 dash [[Cocktails/Types/Orange Bitters|orange bitters]]'), {
+		amount: '1 dash',
+		text: '[[Cocktails/Types/Orange Bitters|orange bitters]]',
+	});
+	assert.deepEqual(splitSavedLine('Garnish: lime wheel'), { amount: '', text: 'Garnish: lime wheel' });
 });
