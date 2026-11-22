@@ -78,14 +78,15 @@ try {
 		}
 	}
 
-	const added = add(await load(resolve('.'), 'current'));
+	add(await load(resolve('.'), 'current'));
 	// Fields that have only ever been empty carry no information.
 	for (const fields of Object.values(history))
 		for (const field of Object.keys(fields))
 			if (fields[field].length === 1 && fields[field][0] === null) delete fields[field];
 	const content = `${JSON.stringify(history, null, '\t')}\n`;
 	if (process.argv.includes('--check')) {
-		if (added) {
+		// Compare the file itself: fields only ever empty are re-added above, then pruned.
+		if (content !== (await readFile(HISTORY, 'utf8'))) {
 			process.stderr.write('Catalog history is missing current values. Run npm run catalog:docs.\n');
 			process.exitCode = 1;
 		}
