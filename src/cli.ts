@@ -6,6 +6,7 @@ import { RECIPE_STATUSES } from './core/availability';
 import { draftFromText } from './core/recipe-draft';
 import { duplicateRecipes } from './core/recipe-tags';
 import { ingredientLines, ingredientParts, linkTextError } from './core/unlinked-lines';
+import { defaultLinkSource, wordingLink } from './core/link-text';
 import { canRemember } from './core/written-as';
 import type { CabinetNote } from './core/schema';
 import { RecipeLinkStore } from './vault/recipe-links';
@@ -130,7 +131,11 @@ export function registerCli(plugin: CocktailCabinetPlugin) {
 				required: true,
 			},
 			target: { value: '<path or name>', description: 'The ingredient note to link', required: true },
-			text: { value: '<text>', description: 'The link text; the recipe’s wording by default' },
+			text: {
+				value: '<text>',
+				description:
+					'The link text, linking the whole wording. By default the Link text setting decides: the cabinet name for a name it counts, keeping other words beside the link, else the recipe’s wording',
+			},
 			remember: { description: 'Also remember the wording for the note (cc-written-as)' },
 		},
 		json(async (params) => {
@@ -150,9 +155,13 @@ export function registerCli(plugin: CocktailCabinetPlugin) {
 			if (!entry) throw new Error(`The Ingredients list has no line ${number}.`);
 			if (/\[\[/.test(entry.raw)) throw new Error(`Line ${number} is already linked.`);
 			const { wording } = ingredientParts(entry.text);
-			const text = optional(params.text) ?? wording;
-			const error = linkTextError(text);
-			if (error) throw new Error(error);
+			const given = optional(params.text);
+			if (given !== undefined) {
+				const error = linkTextError(given);
+				if (error) throw new Error(error);
+			}
+			const text =
+				given ?? wordingLink(wording, target, defaultLinkSource(wording, target, plugin.settings.linkText));
 			await links.linkLine({ path, line: entry.line, raw: entry.raw, text }, target.path);
 			const remembered =
 				params.remember === 'true' && canRemember(wording, target)

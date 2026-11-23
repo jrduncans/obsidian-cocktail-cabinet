@@ -6,8 +6,8 @@ import { linkTextError } from '../core/unlinked-lines';
 import { canRemember } from '../core/written-as';
 import type { LinkPreview } from '../core/unlinked-lines';
 
-/** Where the link text came from: the note's name, the text already there, or typed. */
-export type LinkTextSource = 'name' | 'original' | 'typed';
+import type { LinkTextSource } from '../core/link-text';
+export type { LinkTextSource } from '../core/link-text';
 
 export interface LinkTextControls {
 	name: string;
@@ -76,8 +76,11 @@ export interface LinkTextOptions {
 	note: CabinetNote;
 	original: string;
 	originalLabel: string;
-	preview: (text: string) => LinkPreview;
-	submit: (text: string) => Promise<void> | void;
+	/** Which text to start on (docs/link-text.md); the text already there by default. */
+	source?: LinkTextSource;
+	/** How the line reads with this text; a recipe line keeps words beside the cabinet name. */
+	preview: (text: string, source: LinkTextSource) => LinkPreview;
+	submit: (text: string, source: LinkTextSource) => Promise<void> | void;
 	/** A recipe line's wording: offers to remember it for the note (`cc-written-as`) once linked. */
 	remember?: string;
 }
@@ -113,6 +116,7 @@ export async function rememberAfterLink(plugin: CocktailCabinetPlugin, note: Cab
 /** Choose a link's text before writing it: the cabinet name, the text already there, or your own. */
 export class LinkTextModal extends Modal {
 	private text: string;
+	private source: LinkTextSource;
 	private busy = false;
 	private remember = false;
 
@@ -121,7 +125,8 @@ export class LinkTextModal extends Modal {
 		private options: LinkTextOptions,
 	) {
 		super(plugin.app);
-		this.text = options.original;
+		this.source = options.source ?? 'original';
+		this.text = this.source === 'name' ? options.note.name : options.original;
 	}
 
 	onOpen() {
@@ -134,7 +139,7 @@ export class LinkTextModal extends Modal {
 		let errorEl: HTMLElement | undefined;
 		const update = () => {
 			if (!previewEl || !errorEl) return;
-			renderPreview(previewEl, this.options.preview(this.text));
+			renderPreview(previewEl, this.options.preview(this.text, this.source));
 			const error = linkTextError(this.text);
 			errorEl.setText(error);
 			linkButton?.setDisabled(this.busy || !!error);
@@ -144,10 +149,11 @@ export class LinkTextModal extends Modal {
 			original,
 			originalLabel,
 			text: this.text,
-			source: 'original',
+			source: this.source,
 			desc: () => `Links to ${note.path.replace(/\.md$/, '')} (${note.kind}).`,
-			onChange: (text) => {
+			onChange: (text, source) => {
 				this.text = text;
+				this.source = source;
 				update();
 			},
 		});
@@ -184,7 +190,7 @@ export class LinkTextModal extends Modal {
 		if (this.busy || linkTextError(this.text)) return;
 		this.busy = true;
 		try {
-			await this.options.submit(this.text.trim());
+			await this.options.submit(this.text.trim(), this.source);
 			if (this.remember && this.options.remember)
 				await rememberAfterLink(this.plugin, this.options.note, this.options.remember);
 		} catch (error) {
