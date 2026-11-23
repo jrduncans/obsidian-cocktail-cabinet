@@ -4,14 +4,21 @@ import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
 import { lineVolumeMl, splitEcho, splitSavedLine } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
+import { defaultLinkSource, savedWordingLink, wordingLink } from '../core/link-text';
 import { canRemember, rememberedNote } from '../core/written-as';
 import { addCreateItems, pickIngredient } from './link-choice';
 import { IngredientSuggest } from './ingredient-suggest';
 
 export interface IngredientRow {
 	amount: string;
+	/** The link's text on a linked row, else the whole wording. */
 	text: string;
 	note?: CabinetNote;
+	/** Words kept beside the link, as written: "fresh " in "fresh [[…|Lime Juice]]". */
+	before?: string;
+	after?: string;
+	/** The wording as it read when linked here, offered for remembering. */
+	said?: string;
 	/** The line as saved, written back unchanged unless the row is edited. */
 	original?: string;
 	/** Linked from a remembered wording when the form opened. */
@@ -29,7 +36,7 @@ export interface IngredientOptions {
 export class RecipeIngredients {
 	private rows: IngredientRow[] = [];
 	/** Each saved row's values when the form opened. */
-	private loaded = new Map<IngredientRow, { amount: string; text: string; note?: string }>();
+	private loaded = new Map<IngredientRow, { amount: string; shown: string; note?: string }>();
 	private rowsEl: HTMLElement;
 	private rowData = new Map<HTMLElement, IngredientRow>();
 	private notes: CabinetNote[];
@@ -78,13 +85,14 @@ export class RecipeIngredients {
 					row.original !== undefined &&
 					loaded &&
 					loaded.amount === row.amount &&
-					loaded.text === row.text &&
+					loaded.shown === shown(row) &&
 					loaded.note === row.note?.path
 				)
 					return row.original;
-				return [row.amount.trim(), row.note ? wikiLink(row.note.path, row.text.trim()) : row.text.trim()]
-					.filter(Boolean)
-					.join(' ');
+				const linked = row.note
+					? `${row.before ?? ''}${wikiLink(row.note.path, row.text.trim())}${row.after ?? ''}`.trim()
+					: row.text.trim();
+				return [row.amount.trim(), linked].filter(Boolean).join(' ');
 			});
 		if (!lines.length) throw new Error('Add at least one ingredient.');
 		return lines;
@@ -93,15 +101,15 @@ export class RecipeIngredients {
 	/** Remember the ticked rows' wordings for their notes; call once the form has saved. Failures are reported, not thrown. */
 	async saveRemembered(): Promise<void> {
 		const rows = this.rows.filter(
-			(row) => row.remember && row.note && row.text.trim() && canRemember(row.text, row.note),
+			(row) => row.remember && row.note && said(row) && canRemember(said(row), row.note),
 		);
 		const remembered: string[] = [];
 		for (const row of rows) {
 			try {
-				if (await this.plugin.store.rememberWording(row.note!.path, row.text.trim()))
-					remembered.push(`“${row.text.trim()}” for ${row.note!.name}`);
+				if (await this.plugin.store.rememberWording(row.note!.path, said(row)))
+					remembered.push(`“${said(row)}” for ${row.note!.name}`);
 			} catch (error) {
-				new Notice(error instanceof Error ? error.message : `Couldn’t remember “${row.text.trim()}”.`);
+				new Notice(error instanceof Error ? error.message : `Couldn’t remember “${said(row)}”.`);
 			}
 		}
 		if (remembered.length) new Notice(`Remembered ${remembered.join(', ')}.`);
@@ -112,7 +120,7 @@ export class RecipeIngredients {
 		const index = after ? this.rows.indexOf(this.rowData.get(after)!) + 1 : this.rows.length;
 		this.rows.splice(index, 0, data);
 		if (data.original !== undefined)
-			this.loaded.set(data, { amount: data.amount, text: data.text, note: data.note?.path });
+			this.loaded.set(data, { amount: data.amount, shown: shown(data), note: data.note?.path });
 		const wrapper = createDiv({ cls: 'cocktail-cabinet-ingredient' });
 		if (after) after.after(wrapper);
 		else this.rowsEl.appendChild(wrapper);
@@ -146,6 +154,9 @@ export class RecipeIngredients {
 					? 'Amount kept as written; review it when logging.'
 					: '',
 			];
+			const beside = [data.before, data.after].map((part) => part?.trim()).filter(Boolean);
+			if (data.note && beside.length)
+				parts.splice(1, 0, `${beside.map((part) => `“${part}”`).join(' and ')} kept beside the link.`);
 			status.setText(parts.filter(Boolean).join(' '));
 		};
 		/** Offer to remember the wording for a note linked in this form, unless it's already recognized. */
@@ -153,7 +164,7 @@ export class RecipeIngredients {
 			rememberEl.empty();
 			const loaded = this.loaded.get(data);
 			const linkedHere = data.note && !data.remembered && (!loaded || loaded.note !== data.note.path);
-			if (!linkedHere || !canRemember(data.text, data.note!)) {
+			if (!linkedHere || !canRemember(said(data), data.note!)) {
 				data.remember = false;
 				return;
 			}
@@ -163,22 +174,29 @@ export class RecipeIngredients {
 			box.addEventListener('change', () => {
 				data.remember = box.checked;
 			});
-			label.appendText(` Remember “${data.text.trim()}” for ${data.note!.name}`);
+			label.appendText(` Remember “${said(data)}” for ${data.note!.name}`);
 		};
-		/** Link the row; suggestions and pickers keep the wording as display text, the type-ahead uses the note's name. */
-		const choose = (note: CabinetNote, label = plainIngredient(data.text) || note.name) => {
+		/**
+		 * Link the row. Suggestions and pickers link the wording by the Link text setting (docs/link-text.md):
+		 * the cabinet name for a name it counts, with other words kept beside the link, else the wording.
+		 * The type-ahead's text was only a search, so it links the note's name.
+		 */
+		const choose = (note: CabinetNote, search = false) => {
 			if (!this.notes.some((item) => item.path === note.path)) this.notes.push(note);
-			data.note = note;
-			data.text = label;
-			data.remembered = false;
-			nameInput.setValue(data.text);
+			const wording = plainIngredient(shown(data)).trim();
+			const link = search
+				? { before: '', text: note.name, after: '' }
+				: wording
+					? wordingLink(wording, note, defaultLinkSource(wording, note, this.plugin.settings.linkText))
+					: { before: '', text: note.name, after: '' };
+			Object.assign(data, { note, ...link, said: search ? undefined : wording, remembered: false });
+			nameInput.setValue(shown(data));
 			keepText = false;
 			refresh();
 		};
 		const unlink = () => {
-			data.note = undefined;
-			data.remembered = false;
-			data.text = plainIngredient(data.text);
+			data.text = plainIngredient(shown(data)).trim();
+			Object.assign(data, { note: undefined, before: undefined, after: undefined, remembered: false });
 			nameInput.setValue(data.text);
 			keepText = true;
 			refresh();
@@ -213,11 +231,11 @@ export class RecipeIngredients {
 		amountInput.inputEl.setAttribute('aria-label', 'Ingredient amount');
 		amountInput.inputEl.addClass('cocktail-cabinet-amount-input');
 		nameInput
-			.setValue(data.text)
+			.setValue(shown(data))
 			.setPlaceholder('Ingredient or garnish')
 			.onChange((value) => {
 				data.text = value;
-				data.note = undefined;
+				Object.assign(data, { note: undefined, before: undefined, after: undefined, said: undefined });
 				data.remembered = false;
 				keepText = false;
 				refresh();
@@ -229,7 +247,7 @@ export class RecipeIngredients {
 			this.plugin.app,
 			nameInput.inputEl,
 			() => this.notes,
-			(note) => choose(note, note.name),
+			(note) => choose(note, true),
 		);
 		const move = (step: -1 | 1) => {
 			const index = this.rows.indexOf(data);
@@ -247,9 +265,9 @@ export class RecipeIngredients {
 				item
 					.setTitle('Select link…')
 					.setIcon('link')
-					.onClick(() => pickIngredient(this.plugin, choose, plainIngredient(data.text))),
+					.onClick(() => pickIngredient(this.plugin, (note) => choose(note), plainIngredient(shown(data)))),
 			);
-			addCreateItems(menu, this.plugin, plainIngredient(data.text), choose, 'Create ');
+			addCreateItems(menu, this.plugin, plainIngredient(shown(data)), (note) => choose(note), 'Create ');
 			if (data.note || /\[\[/.test(data.text))
 				menu.addItem((item) => item.setTitle('Unlink').setIcon('unlink').onClick(unlink));
 			menu.addSeparator();
@@ -291,22 +309,39 @@ export class RecipeIngredients {
 }
 
 /**
- * Rows for saved ingredient lines, kept as written unless edited. A line whose ingredient is one cabinet
- * link shows as that note with its display text, as if just linked.
+ * Rows for saved ingredient lines, kept as written unless edited. A line whose wording holds one link to
+ * an ingredient note shows as that note with its display text, and any words beside it, as if just linked.
  */
 export function ingredientRows(
 	plugin: CocktailCabinetPlugin,
 	lines: readonly string[],
 	sourcePath = '',
 ): IngredientRow[] {
-	return lines.map((original) => {
-		const { amount, text } = splitSavedLine(original);
-		const link = text.match(/^\[\[([^\]]+)\]\]$/)?.[1];
-		const file = link ? plugin.store.resolve(link, sourcePath) : null;
-		const note = file ? plugin.store.notes().find((item) => item.path === file.path) : undefined;
-		return note ? { amount, text: plainIngredient(text), note, original } : { amount, text, original };
-	});
+	return lines.map((original) => savedRow(plugin, original, sourcePath));
 }
+
+/** One saved line as a row; see `ingredientRows`. */
+export function savedRow(plugin: CocktailCabinetPlugin, original: string, sourcePath = ''): IngredientRow {
+	const { amount, text } = splitSavedLine(original);
+	const link = savedWordingLink(text);
+	const file = link ? plugin.store.resolve(link.target, sourcePath) : null;
+	const note = file ? recipeIngredientNotes(plugin.store.notes()).find((item) => item.path === file.path) : undefined;
+	if (!link || !note) return { amount, text, original };
+	return {
+		amount,
+		text: link.text,
+		note,
+		original,
+		...(link.before ? { before: link.before } : {}),
+		...(link.after ? { after: link.after } : {}),
+	};
+}
+
+/** The row as it reads: the words beside the link, and the link's text. */
+const shown = (row: IngredientRow) => `${row.before ?? ''}${row.text}${row.after ?? ''}`;
+
+/** The wording to offer for remembering: as it read when linked here, else as it reads now. */
+const said = (row: IngredientRow) => (row.said ?? plainIngredient(shown(row))).trim();
 
 function plainIngredient(text: string): string {
 	return text.replace(/\[\[([^\]]+)\]\]/g, (_, target: string) => target.split('|').at(-1)!.split('/').at(-1)!);

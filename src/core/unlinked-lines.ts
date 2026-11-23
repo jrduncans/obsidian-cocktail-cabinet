@@ -1,6 +1,7 @@
 import { recipeVolumeMl, splitEcho, splitIngredient } from './recipe-amount';
 import { wikiLink } from './schema';
 import type { CabinetNote } from './schema';
+import type { WordingLink } from './link-text';
 
 /** A line of a recipe's Ingredients section: its line number in the note, as written, and without the list marker. */
 export interface IngredientLine {
@@ -106,17 +107,21 @@ export function linkTextError(text: string): string {
 	return '';
 }
 
-/** The line with its wording linked to `path`, shown as `text` (the wording by default); the amount and list marker stay as written. */
-export function linkedLine(raw: string, path: string, text?: string): string {
+/**
+ * The line with its wording linked to `path`; the amount and list marker stay as written. `link` is the
+ * link's text (the whole wording by default), or a wording link keeping words beside it (`link-text.ts`).
+ */
+export function linkedLine(raw: string, path: string, link?: string | WordingLink): string {
 	const marker = raw.match(MARKER)?.[1] ?? '';
 	const { prefix, amount, lead, wording, suffix } = ingredientParts(raw.slice(marker.length).trim());
 	if (!wording) throw new Error('This line has no ingredient to link.');
-	const shown = text ?? wording;
-	if (text === undefined && /[|[\]]/.test(wording))
+	const parts = typeof link === 'object' ? link : { before: '', text: link ?? wording, after: '' };
+	if ((link === undefined || typeof link === 'object') && /[|[\]]/.test(wording))
 		throw new Error(`“${wording}” has brackets or a vertical bar; link it in the recipe instead.`);
-	const error = linkTextError(shown);
+	const error = linkTextError(parts.text);
 	if (error) throw new Error(error);
-	return marker + [prefix, amount, lead, wikiLink(path, shown)].filter(Boolean).join(' ') + (suffix ?? '');
+	const linked = `${parts.before}${wikiLink(path, parts.text)}${parts.after}`.trim();
+	return marker + [prefix, amount, lead, linked].filter(Boolean).join(' ') + (suffix ?? '');
 }
 
 /** A line as a reader will see it once linked: the text around the link, and the link's text. */
@@ -126,10 +131,15 @@ export interface LinkPreview {
 	after: string;
 }
 
-/** How an ingredient line (without its marker) reads with its wording linked as `text`. */
-export function linkedLinePreview(text: string, link: string): LinkPreview {
+/** How an ingredient line (without its marker) reads with its wording linked as `link`. */
+export function linkedLinePreview(text: string, link: string | WordingLink): LinkPreview {
 	const { prefix, amount, lead, suffix } = ingredientParts(text);
-	return { before: [prefix, amount, lead].filter(Boolean).join(' '), link: link.trim(), after: suffix ?? '' };
+	const parts = typeof link === 'object' ? link : { before: '', text: link, after: '' };
+	return {
+		before: [prefix, amount, lead, parts.before.trim()].filter(Boolean).join(' '),
+		link: parts.text.trim(),
+		after: parts.after + (suffix ?? ''),
+	};
 }
 
 /** How `line` reads with the characters from `start` to `end` replaced by a link shown as `text`. */
@@ -175,11 +185,11 @@ export class StaleLineError extends Error {
 	}
 }
 
-/** A line to link, as it read when reviewed; `text` is the link's text, the line's own wording by default. */
+/** A line to link, as it read when reviewed; `text` is the link's text or a wording link, the line's own wording by default. */
 export interface LineEdit {
 	line: number;
 	raw: string;
-	text?: string;
+	text?: string | WordingLink;
 }
 
 /** Link each line, checking it still reads as reviewed; any change aborts the whole note. */

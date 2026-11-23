@@ -4,10 +4,12 @@ import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { suggestIngredient } from '../core/recipe-import';
 import { ingredientParts, linkedLinePreview, linkTextError } from '../core/unlinked-lines';
-import type { UnlinkedGroup } from '../core/unlinked-lines';
+import type { UnlinkedGroup, UnlinkedUse } from '../core/unlinked-lines';
 import { RecipeLinkStore } from '../vault/recipe-links';
 import { addCreateItems, pickIngredient } from './link-choice';
 import { rememberAfterLink, renderLinkText, renderPreview, renderRemember } from './link-text';
+import { defaultLinkSource, wordingLink } from '../core/link-text';
+import type { LinkTextSource } from '../core/link-text';
 import { rememberedNote } from '../core/written-as';
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
@@ -29,10 +31,20 @@ export class UnlinkedView extends ItemView {
 	private closed = false;
 	private summaryEl!: HTMLElement;
 	private listEl!: HTMLElement;
-	/** The note chosen for a wording, the lines (by index into its uses) still ticked, and the link text (null: each line's own wording). */
+	/**
+	 * The note chosen for a wording, the lines (by index into its uses) still ticked, and the link text:
+	 * the cabinet name (keeping other words beside it, line by line), each line's own wording, or typed.
+	 */
 	private pending = new Map<
 		string,
-		{ note: CabinetNote; ticked: Set<number>; text: string | null; remembered?: boolean; remember?: boolean }
+		{
+			note: CabinetNote;
+			ticked: Set<number>;
+			source: LinkTextSource;
+			text: string;
+			remembered?: boolean;
+			remember?: boolean;
+		}
 	>();
 
 	constructor(
@@ -92,7 +104,8 @@ export class UnlinkedView extends ItemView {
 					this.pending.set(group.key, {
 						note,
 						ticked: new Set(group.uses.map((_use, index) => index)),
-						text: null,
+						source: 'original',
+						text: group.wording,
 						remembered: true,
 					});
 			}
@@ -168,7 +181,13 @@ export class UnlinkedView extends ItemView {
 				`${plural(recipes, 'recipe')}${group.uses.length > recipes ? `, ${group.uses.length} lines` : ''}`,
 			);
 		const choose = (note: CabinetNote) => {
-			this.pending.set(group.key, { note, ticked: new Set(group.uses.map((_use, index) => index)), text: null });
+			const source = defaultLinkSource(group.wording, note, this.plugin.settings.linkText);
+			this.pending.set(group.key, {
+				note,
+				ticked: new Set(group.uses.map((_use, index) => index)),
+				source,
+				text: source === 'name' ? note.name : group.wording,
+			});
 			this.renderGroup(el, group);
 		};
 		if (!pending) {
@@ -196,7 +215,8 @@ export class UnlinkedView extends ItemView {
 			`Link to ${pending.note.name} (${pending.note.kind}) in the ticked recipes${pending.remembered ? ', from a remembered wording' : ''}.`,
 		);
 		let linkButton!: ButtonComponent;
-		const textError = () => (pending.text === null ? '' : linkTextError(pending.text));
+		const textError = () => (pending.source === 'typed' ? linkTextError(pending.text) : '');
+		const lineLink = (use: UnlinkedUse) => this.lineLink(use, pending);
 		const update = () => {
 			const count = new Set([...pending.ticked].map((index) => group.uses[index]!.recipe.path)).size;
 			linkButton
@@ -208,12 +228,17 @@ export class UnlinkedView extends ItemView {
 			name: pending.note.name,
 			original: group.wording,
 			originalLabel: 'Recipe wording',
-			text: pending.text ?? group.wording,
-			source: pending.text === null ? 'original' : pending.text === pending.note.name ? 'name' : 'typed',
+			text: pending.text,
+			source: pending.source,
 			desc: (source) =>
-				source === 'original' ? 'Each recipe keeps its own wording.' : 'Every ticked line shows this text.',
+				source === 'original'
+					? 'Each recipe keeps its own wording.'
+					: source === 'name'
+						? 'Other words in a line stay beside the link.'
+						: 'Every ticked line shows this text.',
 			onChange: (text, source) => {
-				pending.text = source === 'original' ? null : text;
+				pending.source = source;
+				pending.text = text;
 				renderUses();
 				update();
 			},
@@ -241,10 +266,7 @@ export class UnlinkedView extends ItemView {
 				item.appendText(' ');
 				this.recipeLink(item, use.recipe);
 				item.appendText(': ');
-				renderPreview(
-					item.createSpan(),
-					linkedLinePreview(use.text, pending.text ?? ingredientParts(use.text).wording),
-				);
+				renderPreview(item.createSpan(), linkedLinePreview(use.text, lineLink(use)));
 			});
 		};
 		renderUses();
@@ -259,6 +281,11 @@ export class UnlinkedView extends ItemView {
 				linkButton = button.setCta().onClick(() => void this.link(el, group));
 			});
 		update();
+	}
+
+	/** A line linked as chosen for its group. */
+	private lineLink(use: UnlinkedUse, pending: { note: CabinetNote; source: LinkTextSource; text: string }) {
+		return wordingLink(ingredientParts(use.text).wording, pending.note, pending.source, pending.text);
 	}
 
 	/** A recipe's name that opens it in the main area, or a new tab with Ctrl or Cmd. */
@@ -280,9 +307,14 @@ export class UnlinkedView extends ItemView {
 		this.busy = true;
 		const chosen = group.uses.filter((_use, index) => pending.ticked.has(index));
 		try {
-			const text = pending.text ?? undefined;
+			const text = pending.source === 'original' ? undefined : pending.text;
 			const result = await this.links.linkMany(
-				chosen.map((use) => ({ path: use.recipe.path, line: use.line, raw: use.raw, text })),
+				chosen.map((use) => ({
+					path: use.recipe.path,
+					line: use.line,
+					raw: use.raw,
+					text: this.lineLink(use, pending),
+				})),
 				pending.note.path,
 			);
 			const failed = new Set(result.failed.map((item) => item.path));

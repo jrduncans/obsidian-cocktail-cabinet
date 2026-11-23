@@ -102,7 +102,7 @@ A recipe has **Ingredients**, **Method**, **Description**, and optionally **Tast
 
 Each ingredient line links the note it calls for, which is what lets the cabinet tell whether you can make it and subtract what you pour. As you type an ingredient, matching notes drop down; anything you don't pick stays plain text.
 
-Link what the recipe asks for, no narrower: a type such as London Dry Gin when any will do, a family such as rum for a broad call, a bottle only when the recipe names one. The link text keeps the recipe's wording, as in \`[[${root}/Types/London Dry Gin|gin]]\`.
+Link what the recipe asks for, no narrower: a type such as London Dry Gin when any will do, a family such as rum for a broad call, a bottle only when the recipe names one. The **Link text** setting decides the link's text: by default, the cabinet name when the wording is the same name written differently (\`lime juice\` becomes \`[[${root}/Types/Lime Juice|Lime Juice]]\`), with other words kept beside the link (\`fresh [[${root}/Types/Lime Juice|Lime Juice]]\`); other wording stays as the recipe wrote it. You can always choose different text when linking.
 
 - **Review unlinked ingredients** gathers measured lines with no link, grouped by wording, and links a wording across every recipe at once.
 - **Link this ingredient line**, **Edit this ingredient link**, and **Insert ingredient link** work in the editor, from the command palette or the right-click menu.
@@ -322,7 +322,7 @@ obsidian cocktail-cabinet:link-line path="<recipe>" line=<n> target=<note> [text
 
 - \`text\` is the recipe as the source writes it: name, ingredient lines, then Method or Directions and Description headings. Write \`\\n\` for a newline. Put in only what the source says.
 - \`create-recipe\` refuses a filename that already exists and lists recipes with a similar name as \`duplicates\`. It links only wordings listed in exactly one note's \`${PROP.writtenAs}\`; every other line comes back with \`link: null\` and up to three \`suggestions\`.
-- \`link-line\` links one line of the Ingredients list, numbered from 1 as \`create-recipe\` reports it, keeping the recipe's wording as the link text unless \`text\` is given. It refuses a line that's already linked. \`remember\` adds the wording to the note's \`${PROP.writtenAs}\`: only when the user asks.
+- \`link-line\` links one line of the Ingredients list, numbered from 1 as \`create-recipe\` reports it, choosing the link text as the **Link text** setting does (the cabinet name for a name it counts, other words kept beside the link, else the recipe's wording) unless \`text\` is given, which links the whole wording. It refuses a line that's already linked. \`remember\` adds the wording to the note's \`${PROP.writtenAs}\`: only when the user asks.
 - Both write to the vault, so expect the user to approve each call.
 
 ## Asking the cabinet

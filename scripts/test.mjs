@@ -25,6 +25,7 @@ try {
 		'alcohol-estimate.test',
 		'one-off.test',
 		'unlinked-lines.test',
+		'link-text.test',
 		'logging-store.test',
 		'vault-install.test',
 	];

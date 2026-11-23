@@ -9,6 +9,8 @@ import { DEFAULT_DILUTION, DEFAULT_TOP_ML } from './core/alcohol-estimate';
 import type { Preparation } from './core/alcohol-estimate';
 import { DEFAULT_VOLUME_UNIT } from './core/recipe-amount';
 import type { VolumeUnit } from './core/recipe-amount';
+import { DEFAULT_LINK_TEXT_LEVEL } from './core/link-text';
+import type { LinkTextLevel } from './core/link-text';
 import { SetupModal } from './ui/setup-modal';
 
 export interface CocktailCabinetSettings {
@@ -41,6 +43,8 @@ export interface CocktailCabinetSettings {
 	dailyAlcohol: boolean;
 	/** Which stated amount logging and estimates use when a recipe line gives both US fluid ounces and mL. */
 	volumeUnit: VolumeUnit;
+	/** When linking a recipe's wording uses the cabinet name without asking (docs/link-text.md). */
+	linkText: LinkTextLevel;
 }
 
 export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
@@ -59,6 +63,7 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	drinkUnit: 'us',
 	dailyAlcohol: false,
 	volumeUnit: DEFAULT_VOLUME_UNIT,
+	linkText: DEFAULT_LINK_TEXT_LEVEL,
 };
 
 const positive = (value: unknown, max = Infinity): value is number =>
@@ -110,6 +115,8 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	if (saved.drinkUnit === 'uk') settings.drinkUnit = 'uk';
 	if (saved.dailyAlcohol === true) settings.dailyAlcohol = true;
 	if (saved.volumeUnit === 'oz' || saved.volumeUnit === 'ml') settings.volumeUnit = saved.volumeUnit;
+	if (saved.linkText === 'keep' || saved.linkText === 'name' || saved.linkText === 'alias')
+		settings.linkText = saved.linkText;
 	if (Array.isArray(saved.recentLogs)) settings.recentLogs = saved.recentLogs.filter(isLogRecord).slice(-KEPT_LOGS);
 	return settings;
 }
@@ -201,6 +208,25 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 				name: 'Running low: mL',
 				desc: 'For bottles without a size, and other stock tracked in mL, running low means at or under this many mL.',
 				render: (setting: Setting) => this.threshold(setting, 'lowStockMl', Infinity),
+			},
+			{
+				name: 'Link text',
+				desc: 'When you link a recipe’s ingredient, use the cabinet name instead of the recipe’s wording without asking. Extra words stay beside the link: “fresh lime juice” links only “Lime Juice”. You can always choose other text.',
+				render: (setting: Setting) => {
+					setting.addDropdown((dropdown) =>
+						dropdown
+							.addOptions({
+								keep: 'Keep the recipe’s wording',
+								name: 'Same name, written differently',
+								alias: 'Same name or an alias',
+							})
+							.setValue(this.plugin.settings.linkText)
+							.onChange(async (value) => {
+								this.plugin.settings.linkText = value === 'keep' || value === 'alias' ? value : 'name';
+								await this.plugin.saveSettings();
+							}),
+					);
+				},
 			},
 			{
 				name: 'Amounts given in oz and mL',

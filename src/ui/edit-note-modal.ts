@@ -11,8 +11,6 @@ import {
 	sourceText,
 } from '../core/note-edit';
 import type { FieldEdit } from '../core/note-edit';
-import { splitSavedLine } from '../core/recipe-amount';
-import { recipeIngredientNotes } from '../core/recipe-import';
 import { ingredientList, readRecipeSections } from '../core/recipe-sections';
 import type { RecipeSection, RecipeSections } from '../core/recipe-sections';
 import { PROP } from '../core/schema';
@@ -21,7 +19,7 @@ import { hasChanges } from '../vault/edit-store';
 import type { EditChanges, EditSnapshot, EditStore } from '../vault/edit-store';
 import { CabinetForm } from './form';
 import { subtypeParents } from '../core/relationships';
-import { RecipeIngredients } from './recipe-ingredients';
+import { RecipeIngredients, savedRow } from './recipe-ingredients';
 import { RecipeTagsField } from './recipe-tags';
 import { parseTags, splitTags, uniqueTags } from '../core/recipe-tags';
 import type { IngredientRow } from './recipe-ingredients';
@@ -207,15 +205,9 @@ export class EditNoteModal extends CabinetForm {
 		);
 	}
 
-	/** A saved ingredient line; a line that is one link to a cabinet note opens as a linked row. */
+	/** A saved ingredient line; a line holding one link to a cabinet note opens as a linked row. */
 	private savedRow(line: string): IngredientRow {
-		const { amount, text } = splitSavedLine(line);
-		const link = text.match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/);
-		const file = link ? this.plugin.store.resolve(text, this.note.path) : null;
-		const note = file && recipeIngredientNotes(this.plugin.store.notes()).find((item) => item.path === file.path);
-		return note
-			? { amount, text: link![2]?.trim() || note.name, note, original: line }
-			: { amount, text, original: line };
+		return savedRow(this.plugin, line, this.note.path);
 	}
 
 	private changes(): EditChanges {

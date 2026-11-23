@@ -11,6 +11,7 @@ import type { StockStore } from '../vault/stock-store';
 import { EditStockModal } from './edit-stock-modal';
 import { showLinkMenu } from './link-choice';
 import { LinkTextModal } from './link-text';
+import { defaultLinkSource, wordingLink } from '../core/link-text';
 
 /** Can I make this? Each Ingredients line's availability, with the fixes at hand: Edit stock, Link…, and Log. */
 export class CanMakeModal extends Modal {
@@ -132,8 +133,10 @@ export class CanMakeModal extends Modal {
 				original: wording,
 				originalLabel: 'Recipe wording',
 				remember: wording,
-				preview: (text) => linkedLinePreview(line.text, text),
-				submit: async (text) => {
+				source: defaultLinkSource(wording, note, this.plugin.settings.linkText),
+				preview: (text, source) => linkedLinePreview(line.text, wordingLink(wording, note, source, text)),
+				submit: async (typed, source) => {
+					const text = wordingLink(wording, note, source, typed);
 					if (this.closed) return;
 					try {
 						await this.links.linkLine(

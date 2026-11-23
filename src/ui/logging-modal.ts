@@ -27,6 +27,7 @@ import type { StockStore } from '../vault/stock-store';
 import type { RecipeLinkStore } from '../vault/recipe-links';
 import { showLinkMenu } from './link-choice';
 import { LinkTextModal } from './link-text';
+import { defaultLinkSource, wordingLink } from '../core/link-text';
 import { undoNotice } from './undo-log-modal';
 
 /** Dropdown value for splitting a line between sources. */
@@ -92,8 +93,10 @@ export class LoggingModal extends Modal {
 				original: wording,
 				originalLabel: 'Recipe wording',
 				remember: wording,
-				preview: (text) => linkedLinePreview(line.text, text),
-				submit: async (text) => {
+				source: defaultLinkSource(wording, note, this.plugin.settings.linkText),
+				preview: (text, source) => linkedLinePreview(line.text, wordingLink(wording, note, source, text)),
+				submit: async (typed, source) => {
+					const text = wordingLink(wording, note, source, typed);
 					if (this.closed || this.busy || this.terminal || !this.recipe) return;
 					try {
 						await this.links.linkLine(
@@ -101,7 +104,7 @@ export class LoggingModal extends Modal {
 							note.path,
 						);
 						await this.reload(
-							`Linked ${wording} to ${note.name} in the recipe${text === wording ? '' : `, shown as ${text}`}.`,
+							`Linked ${wording} to ${note.name} in the recipe${text.text === wording ? '' : `, shown as ${text.text}`}.`,
 						);
 					} catch (error) {
 						await this.reload(error instanceof Error ? error.message : 'Couldn’t link the line.');

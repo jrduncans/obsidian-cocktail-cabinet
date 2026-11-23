@@ -16,6 +16,8 @@ import {
 } from '../core/unlinked-lines';
 import type { LinkPreview } from '../core/unlinked-lines';
 import { LinkTextModal } from '../ui/link-text';
+import { defaultLinkSource, wholeLinkSource, wordingLink } from '../core/link-text';
+import type { LinkTextSource } from '../core/link-text';
 import { pickIngredient } from '../ui/link-choice';
 
 type Context = MarkdownView | MarkdownFileInfo;
@@ -30,11 +32,13 @@ function chooseAndLink(
 	options: {
 		wording: string;
 		originalLabel: string;
-		preview: (text: string) => LinkPreview;
+		/** Which link text to start on for the chosen note (docs/link-text.md). */
+		source: (note: CabinetNote) => LinkTextSource;
+		preview: (note: CabinetNote, text: string, source: LinkTextSource) => LinkPreview;
 		/** The text to replace, as it read when chosen, and what replaces it. */
 		from: { line: number; ch: number };
 		to: { line: number; ch: number };
-		replacement: (note: CabinetNote, text: string) => string;
+		replacement: (note: CabinetNote, text: string, source: LinkTextSource) => string;
 		/** Offer to remember the wording: on an unlinked Ingredients line. */
 		remember?: boolean;
 	},
@@ -48,12 +52,13 @@ function chooseAndLink(
 				note,
 				original: options.wording,
 				originalLabel: options.originalLabel,
-				preview: options.preview,
+				source: options.source(note),
+				preview: (text, source) => options.preview(note, text, source),
 				...(options.remember ? { remember: options.wording } : {}),
-				submit: (text) => {
+				submit: (text, source) => {
 					if (!path || ctx.file?.path !== path || editor.getRange(options.from, options.to) !== before)
 						throw new Error(STALE);
-					editor.replaceRange(options.replacement(note, text), options.from, options.to);
+					editor.replaceRange(options.replacement(note, text, source), options.from, options.to);
 				},
 			}).open();
 		},
@@ -79,10 +84,13 @@ function insertLink(plugin: CocktailCabinetPlugin, editor: Editor, ctx: Context)
 	const from = editor.getCursor('from');
 	const to = editor.getCursor('to');
 	const line = editor.getLine(from.line);
+	const wording = plainIngredient(selection).trim();
 	chooseAndLink(plugin, ctx, editor, {
-		wording: plainIngredient(selection).trim(),
+		wording,
 		originalLabel: 'Selected text',
-		preview: (text) => replacedPreview(line, from.ch, to.ch, text),
+		// You chose what to link, so it's linked whole: the cabinet name only when it's all the name.
+		source: (note) => wholeLinkSource(wording, note, plugin.settings.linkText),
+		preview: (_note, text) => replacedPreview(line, from.ch, to.ch, text),
 		from,
 		to,
 		replacement: (note, text) => wikiLink(note.path, text),
@@ -122,7 +130,8 @@ function linkTarget(
 		chooseAndLink(plugin, ctx, editor, {
 			wording: span.text,
 			originalLabel: 'Current text',
-			preview: (text) => replacedPreview(raw, span.start, span.end, text),
+			source: (note) => wholeLinkSource(span.text, note, plugin.settings.linkText),
+			preview: (_note, text) => replacedPreview(raw, span.start, span.end, text),
 			...range,
 			replacement: (note, text) => replaceLink(raw, span, note.path, text),
 		});
@@ -131,9 +140,10 @@ function linkTarget(
 		chooseAndLink(plugin, ctx, editor, {
 			wording,
 			originalLabel: 'Recipe wording',
-			preview: (text) => linkedLinePreview(line.text, text),
+			source: (note) => defaultLinkSource(wording, note, plugin.settings.linkText),
+			preview: (note, text, source) => linkedLinePreview(line.text, wordingLink(wording, note, source, text)),
 			...range,
-			replacement: (note, text) => linkedLine(raw, note.path, text),
+			replacement: (note, text, source) => linkedLine(raw, note.path, wordingLink(wording, note, source, text)),
 			remember: true,
 		});
 	}

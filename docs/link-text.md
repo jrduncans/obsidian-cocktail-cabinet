@@ -1,6 +1,6 @@
 # Recipe link text and amounts design
 
-Drafted on 2026-11-23 from a conversation on 2026-11-22. Agreed in conversation; not yet built. It replaces the [link text decision of 2026-11-07](cabinet-design.md#unlinked-lines), which had no setting and kept the recipe's wording by default when linking someone else's text.
+Drafted on 2026-11-23 from a conversation on 2026-11-22. Agreed in conversation. Slice 1 built 2026-11-23. It replaces the [link text decision of 2026-11-07](cabinet-design.md#unlinked-lines), which had no setting and kept the recipe's wording by default when linking someone else's text.
 
 ## Goal
 
