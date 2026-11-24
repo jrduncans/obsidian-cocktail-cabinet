@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { tidiedLine, tidyChanges, tidyContent, tidyLines } from '../src/core/tidy-recipe';
+import { cabinetNameChanges, tidiedLine, tidyChanges, tidyContent, tidyLines } from '../src/core/tidy-recipe';
 import type { TidyOptions } from '../src/core/tidy-recipe';
 import { StaleLineError } from '../src/core/unlinked-lines';
 import type { CabinetNote } from '../src/core/schema';
@@ -108,4 +108,17 @@ void test('a recipe lists only lines with changes, and writes only the given cha
 	assert.match(written, /^- ½ oz \[\[Cocktails\/Types\/Falernum Syrup\|Falernum\]\]$/m);
 	assert.match(written, /^- 1 1\/2 oz in a method line$/m);
 	assert.throws(() => tidyContent(content.replace('1 1/2 oz [[Gin]]', '2 oz [[Gin]]'), edits), StaleLineError);
+});
+
+void test('Use cabinet name switches one link to the cabinet name, dropping words in it and adding a full path', () => {
+	const raw = '- 1 oz [[Campari|bitter Amaro Campari]] and [[Cocktails/Types/Lime Juice|lime]]';
+	assert.equal(
+		tidiedLine(raw, cabinetNameChanges(raw, 0, resolve, name)),
+		'- 1 oz [[Cocktails/Bottles/Campari|Campari]] and [[Cocktails/Types/Lime Juice|lime]]',
+	);
+	assert.equal(
+		tidiedLine(raw, cabinetNameChanges(raw, 1, resolve, name)),
+		'- 1 oz [[Campari|bitter Amaro Campari]] and [[Cocktails/Types/Lime Juice|Lime Juice]]',
+	);
+	assert.deepEqual(cabinetNameChanges('- 1 oz [[Cocktails/Bottles/Campari|Campari]]', 0, resolve, name), []);
 });
