@@ -2,7 +2,7 @@ import type CocktailCabinetPlugin from '../main';
 import { checkOneOffName } from '../core/one-off';
 import type { OneOff } from '../core/one-off';
 import { CabinetForm } from './form';
-import { ingredientRows, RecipeIngredients } from './recipe-ingredients';
+import { ingredientRows, RecipeIngredients, ROW_MENU } from './recipe-ingredients';
 
 /**
  * The first step of logging a drink without a recipe note: an optional name and the ingredients, entered like
@@ -27,7 +27,7 @@ export class OneOffModal extends CabinetForm {
 			this.plugin,
 			this.contentEl,
 			ingredientRows(this.plugin, this.initial.lines, riffOn?.path),
-			'Amounts per serving. Start typing to pick what you poured, so logging can subtract it; plain text is fine for anything else.',
+			`Amounts per serving. Start typing to pick what you poured, so logging can subtract it; plain text is fine for anything else. ${ROW_MENU}`,
 			{ linkRemembered: true },
 		);
 		// After the ingredients, so the name reads as the extra it is.
