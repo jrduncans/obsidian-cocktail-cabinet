@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { Notice, Setting } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import {
 	abvText,
@@ -23,6 +23,7 @@ import { RecipeIngredients, savedRow } from './recipe-ingredients';
 import { RecipeTagsField } from './recipe-tags';
 import { parseTags, splitTags, uniqueTags } from '../core/recipe-tags';
 import type { IngredientRow } from './recipe-ingredients';
+import { contentTidyLines } from './tidy-recipe-modal';
 
 const PARENT_KIND: Partial<Record<NoteKind, NoteKind>> = {
 	family: 'category',
@@ -52,6 +53,8 @@ export class EditNoteModal extends CabinetForm {
 		private edits: EditStore,
 		private note: CabinetNote,
 		private snapshot: EditSnapshot,
+		/** Opens Tidy this recipe on the note. */
+		private tidy?: () => void,
 	) {
 		super(plugin.app);
 	}
@@ -164,6 +167,26 @@ export class EditNoteModal extends CabinetForm {
 		return row;
 	}
 
+	/** Point to Tidy this recipe when it would change lines on its own: its ticked-by-default changes. */
+	private tidyMention() {
+		if (!this.tidy) return;
+		const lines = contentTidyLines(this.plugin, this.snapshot.content, this.note.path).filter((line) =>
+			line.changes.some((change) => change.ticked),
+		).length;
+		if (!lines) return;
+		new Setting(this.contentEl)
+			.setName('Lines to tidy')
+			.setDesc(
+				`${lines} ingredient ${lines === 1 ? 'line' : 'lines'} could use the cabinet name, a full link, or fraction characters. Tidy this recipe lists each change to choose from. It closes this form without saving.`,
+			)
+			.addButton((button) =>
+				button.setButtonText('Tidy this recipe…').onClick(() => {
+					this.close();
+					this.tidy!();
+				}),
+			);
+	}
+
 	private recipeFields() {
 		const { properties, content } = this.snapshot;
 		const sections = (this.sections = readRecipeSections(content));
@@ -175,6 +198,7 @@ export class EditNoteModal extends CabinetForm {
 		this.select('Rating', options, rating, (value) => {
 			this.edit.rating = value;
 		});
+		this.tidyMention();
 		if (sections.ingredientsEditable) {
 			this.ingredients = new RecipeIngredients(
 				this.plugin,

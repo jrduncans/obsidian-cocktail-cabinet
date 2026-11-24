@@ -30,6 +30,7 @@ import { saveOneOff } from '../ui/save-one-off';
 import type { OneOff } from '../core/one-off';
 import { ingredientLines } from '../core/unlinked-lines';
 import { ReviewUpdatesModal } from '../ui/review-updates-modal';
+import { openTidy } from '../ui/tidy-recipe-modal';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(
@@ -140,6 +141,13 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 				),
 		},
 		{
+			id: 'tidy-this-recipe',
+			name: 'Tidy this recipe',
+			icon: 'sparkles',
+			kinds: ['recipe'],
+			run: (file) => void handle(() => openTidy(plugin, noteFor(file))),
+		},
+		{
 			id: 'what-can-i-make-with-this',
 			name: 'What can I make with this?',
 			icon: 'list-checks',
@@ -191,7 +199,13 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 			run: (file) =>
 				void handle(async () => {
 					const note = noteFor(file);
-					new EditNoteModal(plugin, edits, note, await edits.read(note)).open();
+					new EditNoteModal(
+						plugin,
+						edits,
+						note,
+						await edits.read(note),
+						() => void handle(() => openTidy(plugin, note)),
+					).open();
 				}),
 		},
 		{

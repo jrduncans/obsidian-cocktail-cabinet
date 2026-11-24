@@ -307,6 +307,8 @@ Everything is under \`${root}/\`. A note takes part only when it has a \`${PROP.
 
 ## Making drinks
 
+To bring a recipe's ingredient lines to the preferred form (cabinet-name link text, full-path links, fraction characters), point the user to **Tidy this recipe** on the recipe note rather than rewriting the lines yourself.
+
 When the user made a cocktail, point them to **Log this cocktail** on the recipe note: it subtracts stock and writes the daily-note line. For a drink with no recipe note, **Log a one-off**, or **Riff on this cocktail** when it varies a recipe. Don't edit stock by hand for a logged drink, and don't create a recipe note for a one-off unless asked.
 
 A one-off's daily-note entry is a \`Made a one-off (Name):\` line, optionally ending \`, a riff on\` and a link to the recipe, followed by its ingredients as a list. **Save one-off as recipe** reads that format, so keep it intact.

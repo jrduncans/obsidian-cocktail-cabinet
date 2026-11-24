@@ -26,6 +26,7 @@ try {
 		'one-off.test',
 		'unlinked-lines.test',
 		'link-text.test',
+		'tidy-recipe.test',
 		'logging-store.test',
 		'vault-install.test',
 	];

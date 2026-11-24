@@ -1,6 +1,6 @@
 # Recipe link text and amounts design
 
-Drafted on 2026-11-23 from a conversation on 2026-11-22. Agreed in conversation. Slice 1 built 2026-11-23; slice 2 built 2026-11-24. It replaces the [link text decision of 2026-11-07](cabinet-design.md#unlinked-lines), which had no setting and kept the recipe's wording by default when linking someone else's text.
+Drafted on 2026-11-23 from a conversation on 2026-11-22. Agreed in conversation. Slice 1 built 2026-11-23; slices 2 and 3 built 2026-11-24. It replaces the [link text decision of 2026-11-07](cabinet-design.md#unlinked-lines), which had no setting and kept the recipe's wording by default when linking someone else's text.
 
 ## Goal
 
@@ -53,7 +53,7 @@ Each of these acts on links that already exist, so the note has already been cho
 
 - **In the forms.** A linked row whose text isn't the cabinet name gets a small **Use "Lime Juice"** button. When the text contains the name plus other words (`[[…/Campari|bitter Amaro Campari]]`), a second button, **Move words out**, gives `bitter Amaro [[…/Campari|Campari]]`. Ignoring both keeps the text.
 - **In the note.** With the cursor in an Ingredients link, **Use cabinet name** switches just that link, beside **Edit this ingredient link**. Like the other editor commands it writes through the editor, so undo works.
-- **For a whole recipe.** **Tidy this recipe**, on recipe notes (file menu, More options, command palette), lists every Ingredients line that would change, before and after, with a checkbox each. Lines whose change the setting would make on its own, short links, and fraction changes start ticked; dropping or moving words starts unticked. It writes the ticked lines, each checked against what was listed, like **Review unlinked ingredients**. **Edit cabinet note** mentions when a recipe has lines to tidy, with a button to open it.
+- **For a whole recipe.** **Tidy this recipe**, on recipe notes (file menu, More options, command palette), lists every Ingredients line that would change, before and after, with a checkbox each. Lines whose change the setting would make on its own, short links, and fraction changes start ticked; dropping or moving words starts unticked. It writes the ticked lines, each checked against what was listed, like **Review unlinked ingredients**. **Edit cabinet note** mentions when a recipe has lines to tidy, with a button to open it. Built: the mention counts only lines with a change that starts ticked, so an offer you've passed over (`Falernum`) doesn't keep the mention showing; the button closes the Edit form without saving, since Tidy writes the note itself.
 
 ## Fractions
 
