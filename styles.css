@@ -92,6 +92,16 @@
 	flex: 3 1 10rem;
 	min-width: 0;
 }
+/* Phones: the name gets its own row, so the amount is wide enough to read. */
+@media (max-width: 40rem) {
+	.cocktail-cabinet-ingredient-line {
+		flex-wrap: wrap;
+	}
+	.cocktail-cabinet-ingredient-line .cocktail-cabinet-ingredient-input {
+		order: 1;
+		flex-basis: 100%;
+	}
+}
 .cocktail-cabinet-ingredient-status {
 	margin: var(--size-4-1) 0 0;
 	color: var(--text-muted);
@@ -155,6 +165,26 @@
 }
 .cocktail-cabinet-log-line {
 	overflow-wrap: anywhere;
+}
+/* Phones: each ingredient's check stacks into one column instead of two cramped ones. */
+@media (max-width: 40rem) {
+	.cocktail-cabinet-check-table,
+	.cocktail-cabinet-check-table tbody,
+	.cocktail-cabinet-check-table tr,
+	.cocktail-cabinet-check-table td {
+		display: block;
+	}
+	.cocktail-cabinet-check-table tr {
+		padding: var(--size-4-2) 0;
+		border-bottom: 1px solid var(--background-modifier-border);
+	}
+	.cocktail-cabinet-check-table td {
+		padding: 0 var(--size-4-2);
+		border-bottom: 0;
+	}
+	.cocktail-cabinet-check-table td:empty {
+		display: none;
+	}
 }
 .cocktail-cabinet-log-notice:not(:empty) {
 	padding: var(--size-4-2);
@@ -228,7 +258,8 @@
 }
 .cocktail-cabinet-purchase-fields {
 	display: grid;
-	grid-template-columns: 6rem 8rem 9.5rem;
+	/* Grow past the minimums when a larger (mobile) font needs it; every row's fields are the same size, so columns still line up. */
+	grid-template-columns: minmax(5rem, max-content) minmax(7rem, max-content) minmax(8rem, max-content);
 	align-items: center;
 	justify-items: end;
 	column-gap: var(--size-4-3);
@@ -267,6 +298,10 @@
 }
 .cocktail-cabinet-purchase-field input.is-medium {
 	width: 5em;
+}
+/* Mobile themes pad inputs generously; keep the padding small so the fixed widths fit their values. */
+.cocktail-cabinet-purchases .cocktail-cabinet-purchase-field input[type='text'] {
+	padding-inline: var(--size-4-2);
 }
 .cocktail-cabinet-purchase-note {
 	color: var(--text-muted);
@@ -508,4 +543,14 @@
 }
 .cocktail-cabinet-tidy-line .cocktail-cabinet-unlinked-uses {
 	margin: var(--size-4-2) 0 0;
+}
+
+/* Touch screens: small buttons and checkboxes grow to a comfortable tap size. */
+.is-mobile .cocktail-cabinet-suggestions button,
+.is-mobile .cocktail-cabinet-log-link {
+	min-height: var(--input-height);
+}
+.is-mobile .cocktail-cabinet-purchase-check {
+	width: var(--size-4-6);
+	height: var(--size-4-6);
 }

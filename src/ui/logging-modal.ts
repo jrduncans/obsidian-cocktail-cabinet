@@ -281,9 +281,9 @@ export class LoggingModal extends Modal {
 				this.refreshPreview();
 			}),
 		);
-		const actions = new Setting(this.contentEl).addButton((button) =>
-			button.setButtonText('Cancel').onClick(() => this.close()),
-		);
+		const actions = new Setting(this.contentEl)
+			.setClass('cocktail-cabinet-submit')
+			.addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()));
 		const back = this.back,
 			oneOff = this.oneOff;
 		if (back && oneOff)
