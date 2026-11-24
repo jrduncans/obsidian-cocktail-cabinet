@@ -68,3 +68,17 @@ void test('a draft takes a given name and rating, and refuses text it cannot mak
 	assert.deepEqual(linked.draft.ingredients, ['1 oz [[Gin]]']);
 	assert.deepEqual(linked.lines[0]!.suggestions, []);
 });
+
+void test('a draft writes fluid-ounce amounts with fraction characters only when asked', () => {
+	const text = 'Halves\n- 1 1/2 oz. / 45 ml. gin\n- .75 oz lime juice\n- 22.5 ml syrup';
+	assert.deepEqual(draftFromText(text, notes, { fractions: true }).draft.ingredients, [
+		'1½ oz. / 45 ml. gin',
+		'¾ oz lime juice',
+		'22.5 ml syrup',
+	]);
+	assert.deepEqual(draftFromText(text, notes).draft.ingredients, [
+		'1 1/2 oz. / 45 ml. gin',
+		'.75 oz lime juice',
+		'22.5 ml syrup',
+	]);
+});

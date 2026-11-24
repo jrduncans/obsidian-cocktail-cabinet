@@ -110,3 +110,69 @@ export function recipeVolumeMl(amount: string, prefer: VolumeUnit = DEFAULT_VOLU
 						: 29.5735295625);
 	return Number.isFinite(ml) && ml > 0 ? ml : null;
 }
+
+/** The fraction characters amounts are written with: ⅛, ¼, ⅓, ½, ⅔, and ¾. */
+const FRACTION_CHARACTERS: Record<string, string> = {
+	'1/8': '⅛',
+	'1/4': '¼',
+	'1/3': '⅓',
+	'1/2': '½',
+	'2/3': '⅔',
+	'3/4': '¾',
+};
+
+const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
+
+/** A quantity as a whole number and a fraction character, or null when it has no exact one. */
+function fractionText(numerator: number, denominator: number): string | null {
+	if (!denominator || !Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) return null;
+	const whole = Math.floor(numerator / denominator);
+	const rest = numerator - whole * denominator;
+	if (!rest) return String(whole);
+	const divisor = gcd(rest, denominator);
+	const character = FRACTION_CHARACTERS[`${rest / divisor}/${denominator / divisor}`];
+	return character ? `${whole || ''}${character}` : null;
+}
+
+/** The quantity a written number stands for, as a fraction; null when it isn't one this rewrites. */
+function writtenQuantity(number: string): [number, number] | null {
+	const text = number.replace(/⁄/g, '/').trim();
+	const character = text.match(/^(\d*)\s*([¼½¾⅓⅔⅛])$/);
+	if (character) {
+		const [top, bottom] = FRACTIONS[character[2]!]!.split('/').map(Number) as [number, number];
+		return [Number(character[1] || 0) * bottom + top, bottom];
+	}
+	const mixed = text.match(/^(?:(\d+)\s+)?(\d+)\s*\/\s*(\d+)$/);
+	if (mixed) {
+		const bottom = Number(mixed[3]);
+		return [Number(mixed[1] || 0) * bottom + Number(mixed[2]), bottom];
+	}
+	const decimal = text.match(/^(\d*)\.(\d{1,3})$/);
+	if (decimal) {
+		const bottom = 10 ** decimal[2]!.length;
+		return [Number(decimal[1] || 0) * bottom + Number(decimal[2]), bottom];
+	}
+	return null;
+}
+
+const OUNCE_AMOUNT = new RegExp(
+	`^(\\d+\\s+\\d+\\s*[/⁄]\\s*\\d+|\\d+\\s*[/⁄]\\s*\\d+|\\d*\\s*[¼½¾⅓⅔⅛]|\\d*\\.\\d+)(\\s*)((?:fl\\.?\\s*)?oz\\.?|ounces?)(?![\\p{L}])(.*)$`,
+	'iu',
+);
+
+/**
+ * A fluid-ounce amount with its number written in fraction characters (docs/link-text.md#fractions):
+ * `1 1/2 oz`, `1 ½ oz`, and `1.5 oz` become `1½ oz`, and `.75 oz` becomes `¾ oz`. The unit's spelling and
+ * anything after it, such as an echoed volume, stay as written. Ranges, other units, and numbers with no
+ * exact fraction character (`1.3 oz`, `3/8 oz`) are returned unchanged.
+ */
+export function fractionAmount(amount: string): string {
+	const match = amount.match(OUNCE_AMOUNT);
+	if (!match) return amount;
+	const [, number, space, unit, rest] = match as unknown as [string, string, string, string, string];
+	if (/^\s*[-–—]|^\s*to\b/i.test(rest)) return amount;
+	const quantity = writtenQuantity(number);
+	const text = quantity && fractionText(...quantity);
+	if (!text || text === '0') return amount;
+	return `${text}${space || ' '}${unit}${rest}`;
+}

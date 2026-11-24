@@ -102,6 +102,7 @@ export function registerCli(plugin: CocktailCabinetPlugin) {
 				name: optional(params.name),
 				source: optional(params.source),
 				rating: optional(params.rating),
+				fractions: plugin.settings.fractionCharacters,
 			});
 			const duplicates = duplicateRecipes(draft.name, notes).map((note) => note.path);
 			const file = await plugin.store.create(draft);

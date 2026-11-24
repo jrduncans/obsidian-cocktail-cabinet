@@ -2,7 +2,7 @@ import type { CabinetNote, NoteDraft } from './schema';
 import { parseRating, wikiLink } from './schema';
 import { parseRecipeText, recipeIngredientNotes, suggestIngredient } from './recipe-import';
 import type { RecipeImport } from './recipe-import';
-import { splitEcho } from './recipe-amount';
+import { fractionAmount, splitEcho } from './recipe-amount';
 import { splitTags, uniqueTags } from './recipe-tags';
 import { rememberedNote } from './written-as';
 
@@ -26,11 +26,15 @@ export interface RecipeDraft {
  * A recipe note from recipe text, as Create a cocktail recipe would save it without changes: the text read as
  * pasted text is, an echoed volume kept with the amount, and only remembered wordings linked (docs/import.md#agents).
  */
-export function draftFromText(
-	text: string,
-	notes: readonly CabinetNote[],
-	options: { name?: string; source?: string; rating?: string } = {},
-): RecipeDraft {
+export interface DraftOptions {
+	name?: string;
+	source?: string;
+	rating?: string;
+	/** Write fluid-ounce amounts with fraction characters (the Fraction characters setting). */
+	fractions?: boolean;
+}
+
+export function draftFromText(text: string, notes: readonly CabinetNote[], options: DraftOptions = {}): RecipeDraft {
 	const recipe = parseRecipeText(text);
 	return draftFromImport(recipe, notes, options);
 }
@@ -38,7 +42,7 @@ export function draftFromText(
 export function draftFromImport(
 	recipe: RecipeImport,
 	notes: readonly CabinetNote[],
-	options: { name?: string; source?: string; rating?: string } = {},
+	options: DraftOptions = {},
 ): RecipeDraft {
 	const name = (options.name ?? recipe.name).trim();
 	if (!name) throw new Error('The recipe has no name. Give one with name=, or start the text with it.');
@@ -53,7 +57,7 @@ export function draftFromImport(
 	const ingredientNotes = recipeIngredientNotes(notes);
 	const lines = recipe.ingredients.map(({ amount, text: rest }): DraftLine => {
 		const { lead, wording } = amount ? splitEcho(rest) : { lead: '', wording: rest.trim() };
-		const prefix = [amount, lead].filter(Boolean).join(' ');
+		const prefix = [options.fractions ? fractionAmount(amount) : amount, lead].filter(Boolean).join(' ');
 		const link = /\[\[/.test(wording) ? undefined : rememberedNote(wording, ingredientNotes);
 		const written = link ? wikiLink(link.path, wording) : wording;
 		return {
