@@ -69,7 +69,7 @@ export class RecipeIngredients {
 			}
 		}
 		new Setting(container).setName('Ingredients').setHeading();
-		container.createEl('p', { text: description });
+		container.createEl('p', { cls: 'setting-item-description', text: description });
 		this.rowsEl = container.createDiv({ cls: 'cocktail-cabinet-ingredients' });
 		for (const data of initial.length ? initial : [{ amount: '', text: '' }]) this.add(data);
 		// Left-aligned and joined to the list, so it reads as part of the list rather than a form action.
