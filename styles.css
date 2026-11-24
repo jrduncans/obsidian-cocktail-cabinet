@@ -1,6 +1,10 @@
 .cocktail-cabinet-form .setting-item-control {
 	flex-wrap: wrap;
 }
+/* Obsidian pads headings for its grouped settings; a form's headings line up with its fields. */
+.cocktail-cabinet-form .setting-item-heading {
+	padding-inline: 0;
+}
 .cocktail-cabinet-form .cocktail-cabinet-name {
 	flex-direction: column;
 	align-items: stretch;
