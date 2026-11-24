@@ -70,7 +70,9 @@ export class CanMakeModal extends Modal {
 			text: statusText(recipe.availability),
 		});
 		this.contentEl.createEl('p', { cls: 'cocktail-cabinet-log-notice', text: this.notice });
-		const table = this.contentEl.createEl('table', { cls: 'cocktail-cabinet-log-preview' });
+		const table = this.contentEl.createEl('table', {
+			cls: 'cocktail-cabinet-log-preview cocktail-cabinet-check-table',
+		});
 		const body = table.createEl('tbody');
 		for (const line of recipe.availability.lines) {
 			const row = body.createEl('tr', { cls: `cocktail-cabinet-check-${line.state}` });
