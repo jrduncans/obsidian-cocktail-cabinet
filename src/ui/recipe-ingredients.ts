@@ -32,6 +32,10 @@ export interface IngredientOptions {
 	linkRemembered?: boolean;
 }
 
+/** What each row's ⋯ menu does, for a form's ingredient guidance. */
+export const ROW_MENU =
+	'Each row’s ⋯ menu can also pick or create a note, unlink it, and move the row or add one below it.';
+
 /** Shared review controls for pasted and manually entered ingredients. */
 export class RecipeIngredients {
 	private rows: IngredientRow[] = [];
@@ -45,7 +49,7 @@ export class RecipeIngredients {
 		private plugin: CocktailCabinetPlugin,
 		container: HTMLElement,
 		initial: IngredientRow[],
-		description = 'Type to find an ingredient note to link, at the specificity the recipe calls for. Plain text is fine for garnishes. The ⋯ menu searches, creates, unlinks, and moves an ingredient.',
+		description = `Type in a row to find a note to link, as specific as the recipe calls for. Plain text is fine for garnishes. ${ROW_MENU}`,
 		options: IngredientOptions = {},
 	) {
 		this.notes = recipeIngredientNotes(plugin.store.notes());
@@ -136,17 +140,24 @@ export class RecipeIngredients {
 		const suggestions = wrapper.createDiv({ cls: 'cocktail-cabinet-suggestions' });
 		const rememberEl = wrapper.createDiv({ cls: 'cocktail-cabinet-remember' });
 		let keepText = false;
+		/** The amount field has focus, so the line under the row shows its recognized volume. */
+		let editingAmount = false;
+		/** Unlinked wording with no suggestions: the line under the row points to ⋯ for creating a note. */
+		let unmatched = false;
 		const amountInput = new TextComponent(line);
 		const nameInput = new TextComponent(line);
 		const describe = () => {
 			const unit = this.plugin.settings.volumeUnit;
 			const ml = data.amount.trim() ? lineVolumeMl(`${data.amount} x`, unit) : null;
-			// A recognized volume goes in the amount's tooltip; only an amount logging can't read needs a line.
-			amountInput.inputEl.title =
+			// A recognized volume is the amount's tooltip, and shows under the row while the amount is edited,
+			// since touch screens have no tooltips. Otherwise only an amount logging can't read needs a line.
+			const volume =
 				ml === null
 					? ''
 					: `${Number(ml.toFixed(2))} mL${/oz|ounce/i.test(data.amount) && (unit === 'oz' || !/ml|millilit(?:er|re)s?/i.test(data.amount)) ? ' (US fl oz)' : ''}`;
+			amountInput.inputEl.title = volume;
 			const parts = [
+				editingAmount && volume ? `Reads as ${volume}.` : '',
 				data.note
 					? `Linked to ${data.note.kind}: ${data.note.name}${data.remembered ? ', from a remembered wording' : ''}.`
 					: /\[\[/.test(data.text)
@@ -156,6 +167,7 @@ export class RecipeIngredients {
 				ml === null && /\b(?:oz|ounces?|ml|cl|millilit(?:er|re)s?)\b/i.test(data.amount)
 					? 'Amount kept as written; review it when logging.'
 					: '',
+				unmatched ? 'No matching note; ⋯ can create one.' : '',
 			];
 			const beside = [data.before, data.after].map((part) => part?.trim()).filter(Boolean);
 			if (data.note && beside.length)
@@ -240,6 +252,16 @@ export class RecipeIngredients {
 					.onClick(() => adopt(found));
 		};
 		const refresh = () => {
+			const candidates = data.note || keepText ? [] : suggestIngredient(data.text, this.notes);
+			// Not on a saved line left as it was, so plain garnishes in Edit cabinet note stay quiet.
+			const loaded = this.loaded.get(data);
+			unmatched =
+				!data.note &&
+				!keepText &&
+				!candidates.length &&
+				!!data.text.trim() &&
+				!/\[\[/.test(data.text) &&
+				(!loaded || loaded.shown !== shown(data));
 			describe();
 			offerRemember();
 			suggestions.empty();
@@ -248,8 +270,6 @@ export class RecipeIngredients {
 				adoptButtons(data.note);
 				return;
 			}
-			if (keepText) return;
-			const candidates = suggestIngredient(data.text, this.notes);
 			if (!candidates.length) return;
 			suggestions.createSpan({ text: 'Link to:' });
 			for (const note of candidates) {
@@ -273,6 +293,14 @@ export class RecipeIngredients {
 		// Typing `1 1/2 oz` gives `1½ oz` on leaving the field; an amount only tabbed through stays as it was.
 		let typed = false;
 		amountInput.inputEl.addEventListener('input', () => (typed = true));
+		amountInput.inputEl.addEventListener('focus', () => {
+			editingAmount = true;
+			describe();
+		});
+		amountInput.inputEl.addEventListener('blur', () => {
+			editingAmount = false;
+			describe();
+		});
 		amountInput.inputEl.addEventListener('blur', () => {
 			if (!typed || !this.plugin.settings.fractionCharacters) return;
 			typed = false;
