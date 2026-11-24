@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { parseRecipeText, recipeIngredientNotes, suggestIngredient } from '../src/core/recipe-import';
-import { lineVolumeMl, recipeVolumeMl, splitIngredient, splitSavedLine } from '../src/core/recipe-amount';
+import {
+	fractionAmount,
+	lineVolumeMl,
+	recipeVolumeMl,
+	splitIngredient,
+	splitSavedLine,
+} from '../src/core/recipe-amount';
 import { renderNote } from '../src/core/notes';
 import { wikiLink } from '../src/core/schema';
 import type { CabinetNote } from '../src/core/schema';
@@ -412,4 +418,46 @@ void test('a saved line keeps an echoed volume with the amount, so the wording i
 		text: '[[Cocktails/Types/Orange Bitters|orange bitters]]',
 	});
 	assert.deepEqual(splitSavedLine('Garnish: lime wheel'), { amount: '', text: 'Garnish: lime wheel' });
+});
+
+void test('fluid-ounce amounts are written with fraction characters', () => {
+	const cases: [string, string][] = [
+		['1 1/2 oz', '1½ oz'],
+		['1 ½ oz', '1½ oz'],
+		['1.5 oz', '1½ oz'],
+		['.75 oz', '¾ oz'],
+		['0.25 oz', '¼ oz'],
+		['3/4 oz', '¾ oz'],
+		['2⁄3 oz', '⅔ oz'],
+		['1 1/3 ounces', '1⅓ ounces'],
+		['1/2 ounce', '½ ounce'],
+		['1.125 oz.', '1⅛ oz.'],
+		['2/4 fl oz', '½ fl oz'],
+		['1.5oz', '1½ oz'],
+		['2.0 oz', '2 oz'],
+		['1 1/2 oz (45 ml)', '1½ oz (45 ml)'],
+		['1.5 oz · 45 ml', '1½ oz · 45 ml'],
+		['1 oz. / 30 ml.', '1 oz. / 30 ml.'],
+	];
+	for (const [given, written] of cases) assert.equal(fractionAmount(given), written, given);
+});
+
+void test('amounts without an exact fraction character, ranges, and other units are left alone', () => {
+	for (const amount of [
+		'1½ oz',
+		'2 oz',
+		'1.3 oz',
+		'3/8 oz',
+		'.33 oz',
+		'1-1.5 oz',
+		'1 to 1 1/2 oz',
+		'1.5 oz - 2 oz',
+		'22.5 ml',
+		'1/2 barspoon',
+		'1.5 cl',
+		'45 ml (1 1/2 oz)',
+		'2 dashes',
+		'',
+	])
+		assert.equal(fractionAmount(amount), amount, amount);
 });

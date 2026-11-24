@@ -45,6 +45,8 @@ export interface CocktailCabinetSettings {
 	volumeUnit: VolumeUnit;
 	/** When linking a recipe's wording uses the cabinet name without asking (docs/link-text.md). */
 	linkText: LinkTextLevel;
+	/** Fluid-ounce amounts are written with fraction characters, as in 1½ oz (docs/link-text.md#fractions). */
+	fractionCharacters: boolean;
 }
 
 export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
@@ -64,6 +66,7 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	dailyAlcohol: false,
 	volumeUnit: DEFAULT_VOLUME_UNIT,
 	linkText: DEFAULT_LINK_TEXT_LEVEL,
+	fractionCharacters: true,
 };
 
 const positive = (value: unknown, max = Infinity): value is number =>
@@ -117,6 +120,7 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	if (saved.volumeUnit === 'oz' || saved.volumeUnit === 'ml') settings.volumeUnit = saved.volumeUnit;
 	if (saved.linkText === 'keep' || saved.linkText === 'name' || saved.linkText === 'alias')
 		settings.linkText = saved.linkText;
+	if (saved.fractionCharacters === false) settings.fractionCharacters = false;
 	if (Array.isArray(saved.recentLogs)) settings.recentLogs = saved.recentLogs.filter(isLogRecord).slice(-KEPT_LOGS);
 	return settings;
 }
@@ -225,6 +229,18 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 								this.plugin.settings.linkText = value === 'keep' || value === 'alias' ? value : 'name';
 								await this.plugin.saveSettings();
 							}),
+					);
+				},
+			},
+			{
+				name: 'Fraction characters',
+				desc: 'Write fluid-ounce amounts with fraction characters: “1 1/2 oz” and “1.5 oz” become “1½ oz” as you type or import them. Amounts in mL, and decimals with no exact fraction, stay as written.',
+				render: (setting: Setting) => {
+					setting.addToggle((toggle) =>
+						toggle.setValue(this.plugin.settings.fractionCharacters).onChange(async (value) => {
+							this.plugin.settings.fractionCharacters = value;
+							await this.plugin.saveSettings();
+						}),
 					);
 				},
 			},

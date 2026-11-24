@@ -1,6 +1,6 @@
 # Recipe link text and amounts design
 
-Drafted on 2026-11-23 from a conversation on 2026-11-22. Agreed in conversation. Slice 1 built 2026-11-23. It replaces the [link text decision of 2026-11-07](cabinet-design.md#unlinked-lines), which had no setting and kept the recipe's wording by default when linking someone else's text.
+Drafted on 2026-11-23 from a conversation on 2026-11-22. Agreed in conversation. Slice 1 built 2026-11-23; slice 2 built 2026-11-24. It replaces the [link text decision of 2026-11-07](cabinet-design.md#unlinked-lines), which had no setting and kept the recipe's wording by default when linking someone else's text.
 
 ## Goal
 
@@ -57,9 +57,9 @@ Each of these acts on links that already exist, so the note has already been cho
 
 ## Fractions
 
-For fluid-ounce amounts only: `1 1/2 oz`, `1 ½ oz`, `1.5 oz`, and `.75 oz` become `1½ oz` and `¾ oz`, with ⅛, ¼, ⅓, ½, ⅔, and ¾ and their whole-number mixes. Units written as `ounce`, `ounces`, or `oz.` keep their spelling; only the number changes. Decimals with no exact fraction (`1.3 oz`), ranges, mL and cL amounts, dashes, and barspoons are left alone.
+For fluid-ounce amounts only: `1 1/2 oz`, `1 ½ oz`, `1.5 oz`, and `.75 oz` become `1½ oz` and `¾ oz`, with ⅛, ¼, ⅓, ½, ⅔, and ¾ and their whole-number mixes (`2/4` reduces to `½`; a decimal converts only when exact to three places, so `.33` stays). Units written as `ounce`, `ounces`, or `oz.` keep their spelling; only the number changes. Decimals with no exact fraction (`1.3 oz`), ranges, mL and cL amounts, dashes, and barspoons are left alone.
 
-- **Where.** A form's amount field converts when you leave it, so typing `1 1/2` gives `1½`. Pasted, page, and CLI recipes convert as they're read, and **Tidy this recipe** offers the change for saved lines.
+- **Where.** A form's amount field converts when you leave it after typing in it, so typing `1 1/2 oz` gives `1½ oz`; a saved amount you only tab through stays as it is. Pasted, page, and CLI recipes (`create-recipe`) convert as they're read, as do new rows in any form, and **Tidy this recipe** offers the change for saved lines.
 - **Setting.** **Fraction characters**, on by default. It changes nothing for recipes measured in mL.
 - **Echoed volumes** (`1 oz. / 30 ml.`, `1½ oz · 45 ml`) stay as written. Dropping the second unit was considered; it doesn't hurt to keep, and making it a preference isn't worth the setting.
 

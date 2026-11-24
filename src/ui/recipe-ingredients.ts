@@ -2,7 +2,7 @@ import { ButtonComponent, ExtraButtonComponent, Menu, Notice, Setting, TextCompo
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
-import { lineVolumeMl, splitEcho, splitSavedLine } from '../core/recipe-amount';
+import { fractionAmount, lineVolumeMl, splitEcho, splitSavedLine } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
 import { defaultLinkSource, savedWordingLink, wordingLink } from '../core/link-text';
 import { canRemember, rememberedNote } from '../core/written-as';
@@ -54,6 +54,8 @@ export class RecipeIngredients {
 			if (row.original !== undefined || !row.amount) continue;
 			const { lead, wording } = splitEcho(row.text);
 			if (lead) Object.assign(row, { amount: `${row.amount} ${lead}`, text: wording });
+			// Read recipes write fluid ounces with fraction characters; saved lines change only when edited.
+			if (plugin.settings.fractionCharacters) row.amount = fractionAmount(row.amount);
 		}
 		if (options.linkRemembered) {
 			for (const row of initial) {
@@ -228,6 +230,18 @@ export class RecipeIngredients {
 				data.amount = value;
 				describe();
 			});
+		// Typing `1 1/2 oz` gives `1½ oz` on leaving the field; an amount only tabbed through stays as it was.
+		let typed = false;
+		amountInput.inputEl.addEventListener('input', () => (typed = true));
+		amountInput.inputEl.addEventListener('blur', () => {
+			if (!typed || !this.plugin.settings.fractionCharacters) return;
+			typed = false;
+			const written = fractionAmount(data.amount);
+			if (written === data.amount) return;
+			data.amount = written;
+			amountInput.setValue(written);
+			describe();
+		});
 		amountInput.inputEl.setAttribute('aria-label', 'Ingredient amount');
 		amountInput.inputEl.addClass('cocktail-cabinet-amount-input');
 		nameInput
