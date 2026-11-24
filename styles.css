@@ -492,3 +492,20 @@
 .cocktail-cabinet-unlinked-pane .cocktail-cabinet-unlinked-uses li {
 	border-bottom: 0;
 }
+
+/* Tidy this recipe */
+.cocktail-cabinet-tidy-line {
+	padding: var(--size-4-3) 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.cocktail-cabinet-tidy-before {
+	color: var(--text-muted);
+	padding: 0 var(--size-4-3) var(--size-4-1);
+	overflow-wrap: anywhere;
+}
+.cocktail-cabinet-tidy-line .cocktail-cabinet-link-preview.is-unchanged {
+	opacity: 0.6;
+}
+.cocktail-cabinet-tidy-line .cocktail-cabinet-unlinked-uses {
+	margin: var(--size-4-2) 0 0;
+}

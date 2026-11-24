@@ -64,9 +64,16 @@ const namesAt = (note: CabinetNote, level: LinkTextLevel) =>
  * ingredient ("strawberry-infused Campari"); otherwise the name replaces the wording.
  */
 export function cabinetNameLink(wording: string, note: CabinetNote): WordingLink {
+	return nameInWording(wording, note) ?? { before: '', text: note.name, after: '' };
+}
+
+/**
+ * The wording with the note's name, or else one of its aliases, found in it as whole words and linked as
+ * the cabinet name, the other words beside it; null when the wording contains neither.
+ */
+export function nameInWording(wording: string, note: CabinetNote): WordingLink | null {
 	const span = nameSpan(wording, [note.name]) ?? nameSpan(wording, note.aliases ?? []);
-	if (!span) return { before: '', text: note.name, after: '' };
-	return { before: wording.slice(0, span.start), text: note.name, after: wording.slice(span.end) };
+	return span ? { before: wording.slice(0, span.start), text: note.name, after: wording.slice(span.end) } : null;
 }
 
 /** Which link text a new link starts on: the cabinet name when the wording contains a name the level counts. */
