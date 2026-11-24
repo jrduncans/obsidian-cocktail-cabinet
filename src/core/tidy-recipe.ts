@@ -84,6 +84,29 @@ export function tidyChanges(
 	return changes;
 }
 
+/**
+ * What **Use cabinet name** does to the link at `link` in a line: its text becomes the cabinet name, dropping
+ * any other words in it, and a short link gets its full path. Empty when the link already reads that way.
+ */
+export function cabinetNameChanges(
+	raw: string,
+	link: number,
+	resolve: (target: string) => CabinetNote | undefined,
+	options: TidyOptions,
+): TidyChange[] {
+	return tidyChanges(raw, resolve, options)
+		.filter((change) => change.link === link)
+		.map((change) =>
+			change.kind === 'move'
+				? {
+						...change,
+						kind: 'name' as const,
+						text: { ...change.text!, to: { before: '', text: change.note!.name, after: '' } },
+					}
+				: change,
+		);
+}
+
 /** Every Ingredients line Tidy this recipe would change, with its changes. */
 export function tidyLines(
 	content: string,

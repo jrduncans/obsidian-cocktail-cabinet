@@ -1,7 +1,7 @@
 import { Modal, Notice, Setting, TFile } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import { tidiedLine, tidyContent, tidyLines } from '../core/tidy-recipe';
-import type { TidyChange, TidyLine } from '../core/tidy-recipe';
+import type { TidyChange, TidyLine, TidyOptions } from '../core/tidy-recipe';
 import { linkSpans, StaleLineError } from '../core/unlinked-lines';
 import type { CabinetNote } from '../core/schema';
 
@@ -14,16 +14,22 @@ export async function recipeTidyLines(plugin: CocktailCabinetPlugin, file: TFile
 
 /** The lines of a recipe's `content`, saved at `path`, that Tidy this recipe would change. */
 export function contentTidyLines(plugin: CocktailCabinetPlugin, content: string, path: string): TidyLine[] {
-	const notes = plugin.store.notes();
-	return tidyLines(
-		content,
-		(target) => {
-			const found = plugin.store.resolve(target, path);
-			return found ? notes.find((note) => note.path === found.path && note.kind !== 'recipe') : undefined;
-		},
-		{ level: plugin.settings.linkText, fractions: plugin.settings.fractionCharacters },
-	);
+	return tidyLines(content, ingredientResolver(plugin, path), tidyOptions(plugin));
 }
+
+/** The ingredient note a link target in the note at `path` points to. */
+export function ingredientResolver(plugin: CocktailCabinetPlugin, path: string) {
+	const notes = plugin.store.notes();
+	return (target: string): CabinetNote | undefined => {
+		const found = plugin.store.resolve(target, path);
+		return found ? notes.find((note) => note.path === found.path && note.kind !== 'recipe') : undefined;
+	};
+}
+
+export const tidyOptions = (plugin: CocktailCabinetPlugin): TidyOptions => ({
+	level: plugin.settings.linkText,
+	fractions: plugin.settings.fractionCharacters,
+});
 
 /** **Tidy this recipe**: list the lines that would change, or say there are none. */
 export async function openTidy(plugin: CocktailCabinetPlugin, note: CabinetNote): Promise<void> {

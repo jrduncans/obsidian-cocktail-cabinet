@@ -4,7 +4,7 @@ import type { CabinetNote } from '../core/schema';
 import { wikiLink } from '../core/schema';
 import { fractionAmount, lineVolumeMl, splitEcho, splitSavedLine } from '../core/recipe-amount';
 import { recipeIngredientNotes, suggestIngredient } from '../core/recipe-import';
-import { defaultLinkSource, savedWordingLink, wordingLink } from '../core/link-text';
+import { defaultLinkSource, nameInWording, savedWordingLink, wordingLink } from '../core/link-text';
 import { canRemember, rememberedNote } from '../core/written-as';
 import { addCreateItems, pickIngredient } from './link-choice';
 import { IngredientSuggest } from './ingredient-suggest';
@@ -36,7 +36,7 @@ export interface IngredientOptions {
 export class RecipeIngredients {
 	private rows: IngredientRow[] = [];
 	/** Each saved row's values when the form opened. */
-	private loaded = new Map<IngredientRow, { amount: string; shown: string; note?: string }>();
+	private loaded = new Map<IngredientRow, { amount: string; shown: string; text: string; note?: string }>();
 	private rowsEl: HTMLElement;
 	private rowData = new Map<HTMLElement, IngredientRow>();
 	private notes: CabinetNote[];
@@ -88,6 +88,7 @@ export class RecipeIngredients {
 					loaded &&
 					loaded.amount === row.amount &&
 					loaded.shown === shown(row) &&
+					loaded.text === row.text &&
 					loaded.note === row.note?.path
 				)
 					return row.original;
@@ -122,7 +123,7 @@ export class RecipeIngredients {
 		const index = after ? this.rows.indexOf(this.rowData.get(after)!) + 1 : this.rows.length;
 		this.rows.splice(index, 0, data);
 		if (data.original !== undefined)
-			this.loaded.set(data, { amount: data.amount, shown: shown(data), note: data.note?.path });
+			this.loaded.set(data, { amount: data.amount, shown: shown(data), text: data.text, note: data.note?.path });
 		const wrapper = createDiv({ cls: 'cocktail-cabinet-ingredient' });
 		if (after) after.after(wrapper);
 		else this.rowsEl.appendChild(wrapper);
@@ -203,12 +204,51 @@ export class RecipeIngredients {
 			keepText = true;
 			refresh();
 		};
+		/** Change a linked row's text, keeping the note; ignoring the buttons keeps the text. */
+		const adopt = (link: { before: string; text: string; after: string }) => {
+			Object.assign(data, {
+				before: `${data.before ?? ''}${link.before}`,
+				text: link.text,
+				after: `${link.after}${data.after ?? ''}`,
+			});
+			nameInput.setValue(shown(data));
+			refresh();
+		};
+		/**
+		 * On a linked row whose text isn't the cabinet name: **Use "…"** switches to the name, dropping other
+		 * words in the link, and, when the text contains the name, **Move words out** keeps them beside it.
+		 */
+		const adoptButtons = (note: CabinetNote) => {
+			const text = data.text.trim();
+			if (!text || text === note.name) return;
+			const found = nameInWording(text, note);
+			const words = found && /[\p{L}\p{N}]/u.test(found.before + found.after);
+			new ButtonComponent(suggestions)
+				.setButtonText(`Use “${note.name}”`)
+				.setTooltip(`Show the link as ${note.name}${words ? `, dropping the other words in it` : ''}`)
+				.onClick(() => adopt(found && !words ? found : { before: '', text: note.name, after: '' }));
+			if (found && words)
+				new ButtonComponent(suggestions)
+					.setButtonText('Move words out')
+					.setTooltip(
+						`Link only ${note.name}, with ${[found.before, found.after]
+							.map((part) => part.trim())
+							.filter(Boolean)
+							.map((part) => `“${part}”`)
+							.join(' and ')} beside it`,
+					)
+					.onClick(() => adopt(found));
+		};
 		const refresh = () => {
 			describe();
 			offerRemember();
 			suggestions.empty();
 			wrapper.toggleClass('is-linked', !!data.note);
-			if (data.note || keepText) return;
+			if (data.note) {
+				adoptButtons(data.note);
+				return;
+			}
+			if (keepText) return;
 			const candidates = suggestIngredient(data.text, this.notes);
 			if (!candidates.length) return;
 			suggestions.createSpan({ text: 'Link to:' });

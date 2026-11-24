@@ -19,6 +19,8 @@ import { LinkTextModal } from '../ui/link-text';
 import { defaultLinkSource, wholeLinkSource, wordingLink } from '../core/link-text';
 import type { LinkTextSource } from '../core/link-text';
 import { pickIngredient } from '../ui/link-choice';
+import { cabinetNameChanges, tidiedLine } from '../core/tidy-recipe';
+import { ingredientResolver, tidyOptions } from '../ui/tidy-recipe-modal';
 
 type Context = MarkdownView | MarkdownFileInfo;
 
@@ -149,6 +151,30 @@ function linkTarget(
 	}
 }
 
+/** **Use cabinet name** for the link under the cursor: the new line, or undefined when it already reads so. */
+function cabinetNameLine(
+	plugin: CocktailCabinetPlugin,
+	editor: Editor,
+	ctx: Context,
+	target: ReturnType<typeof ingredientTarget>,
+) {
+	if (target?.kind !== 'link' || !ctx.file) return undefined;
+	const index = linkSpans(target.raw).findIndex((span) => span.start === target.span.start);
+	const changes = cabinetNameChanges(
+		target.raw,
+		index,
+		ingredientResolver(plugin, ctx.file.path),
+		tidyOptions(plugin),
+	);
+	if (!changes.some((change) => change.kind === 'name')) return undefined;
+	return { line: target.line.line, raw: target.raw, written: tidiedLine(target.raw, changes) };
+}
+
+/** Write a line through the editor, so undo works. */
+function useCabinetName(editor: Editor, change: NonNullable<ReturnType<typeof cabinetNameLine>>) {
+	editor.replaceRange(change.written, { line: change.line, ch: 0 }, { line: change.line, ch: change.raw.length });
+}
+
 const TARGET_COMMANDS = [
 	{ kind: 'line', id: 'link-ingredient-line', name: 'Link this ingredient line', icon: 'link-2' },
 	{ kind: 'link', id: 'edit-ingredient-link', name: 'Edit this ingredient link', icon: 'pencil-line' },
@@ -175,6 +201,18 @@ export function registerEditorLinks(plugin: CocktailCabinetPlugin) {
 			},
 		});
 	}
+	// Only with the cursor in an Ingredients link whose text isn't the cabinet name.
+	plugin.addCommand({
+		id: 'use-cabinet-name',
+		name: 'Use cabinet name',
+		icon: 'text-select',
+		editorCheckCallback: (checking, editor, ctx) => {
+			const change = cabinetNameLine(plugin, editor, ctx, ingredientTarget(plugin, editor, ctx));
+			if (!change) return false;
+			if (!checking) useCabinetName(editor, change);
+			return true;
+		},
+	});
 	// In cabinet notes, also offer them from the editor's context menu (right-click, or long-press on mobile).
 	plugin.registerEvent(
 		plugin.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, ctx: Context) => {
@@ -188,6 +226,16 @@ export function registerEditorLinks(plugin: CocktailCabinetPlugin) {
 						.setTitle(command.name)
 						.setIcon(command.icon)
 						.onClick(() => linkTarget(plugin, editor, ctx, target)),
+				);
+			}
+			const named = cabinetNameLine(plugin, editor, ctx, target);
+			if (named) {
+				menu.addItem((item) =>
+					item
+						.setSection('cocktail-cabinet')
+						.setTitle('Use cabinet name')
+						.setIcon('text-select')
+						.onClick(() => useCabinetName(editor, named)),
 				);
 			}
 			menu.addItem((item) =>
