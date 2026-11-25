@@ -474,6 +474,13 @@ family(
 		['Ginger Syrup', 'A sweet ginger preparation; record the concentration and preparation you use.'],
 		['Cinnamon Syrup', 'A sweet cinnamon preparation; record the concentration and preparation you use.'],
 		['Passion Fruit Syrup', 'Sweetened passion fruit syrup, distinct from unsweetened juice.'],
+		['Raspberry Syrup', 'Sweetened raspberry syrup, homemade or bottled, as in the Clover Club.'],
+		['Strawberry Syrup', 'Sweetened strawberry syrup, homemade or bottled.'],
+		[
+			'Pineapple Syrup',
+			'Sweetened pineapple syrup, homemade or bottled. Gum (gomme) syrup, thickened with gum arabic for a silkier texture, counts too: recipes treat them as interchangeable.',
+			{ aliases: ['Pineapple Gum Syrup', 'Pineapple Gomme Syrup'] },
+		],
 	],
 );
 family('Carbonated Mixer', undefined, 'Carbonated cocktail mixers.', [

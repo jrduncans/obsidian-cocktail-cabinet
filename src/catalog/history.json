@@ -2454,5 +2454,38 @@
 		"abvTypical": [
 			0.4
 		]
+	},
+	"type/Raspberry Syrup": {
+		"description": [
+			"Sweetened raspberry syrup, homemade or bottled, as in the Clover Club."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			0
+		]
+	},
+	"type/Strawberry Syrup": {
+		"description": [
+			"Sweetened strawberry syrup, homemade or bottled."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			0
+		]
+	},
+	"type/Pineapple Syrup": {
+		"description": [
+			"Sweetened pineapple syrup, homemade or bottled. Gum (gomme) syrup, thickened with gum arabic for a silkier texture, counts too: recipes treat them as interchangeable."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			0
+		]
 	}
 }
