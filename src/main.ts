@@ -171,15 +171,20 @@ export default class CocktailCabinetPlugin extends Plugin {
 	/** Update the plugin's views; `force` rewrites every view that differs or is missing. */
 	async syncViews(force = false): Promise<number> {
 		try {
-			const { updated, written } = await this.store.syncViews(this.settings.viewVersions, force);
+			const { updated, removed, written } = await this.store.syncViews(this.settings.viewVersions, force);
 			this.settings.viewVersions = written;
 			await this.saveSettings();
-			const names = updated.map((path) => path.slice(path.lastIndexOf('/') + 1).replace(/\.base$/, ''));
+			const baseName = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.base$/, '');
+			const names = updated.map(baseName);
+			const gone = removed.length
+				? ` Moved retired views to the trash: ${removed.map(baseName).join(', ')}.`
+				: '';
 			if (names.length)
 				new Notice(
-					`Cocktail Cabinet ${force ? 'refreshed' : 'updated'} ${names.length === 1 ? 'a view' : `${names.length} views`}: ${names.join(', ')}.`,
+					`Cocktail Cabinet ${force ? 'refreshed' : 'updated'} ${names.length === 1 ? 'a view' : `${names.length} views`}: ${names.join(', ')}.${gone}`,
 				);
-			return names.length;
+			else if (gone) new Notice(`Cocktail Cabinet${gone}`);
+			return names.length + removed.length;
 		} catch (error) {
 			new Notice(`Couldn’t update cabinet views: ${error instanceof Error ? error.message : String(error)}`);
 			return 0;

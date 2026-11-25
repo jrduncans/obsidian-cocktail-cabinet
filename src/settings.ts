@@ -147,8 +147,10 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 		this.containerEl.empty();
 		// Older Obsidian versions use this renderer; newer versions can also index the definitions.
 		for (const definition of this.getSettingDefinitions()) {
-			const setting = new Setting(this.containerEl).setName(definition.name).setDesc(definition.desc);
-			definition.render?.(setting);
+			const setting = new Setting(this.containerEl).setName(definition.name);
+			if ('heading' in definition) setting.setHeading();
+			else setting.setDesc(definition.desc);
+			if ('render' in definition) definition.render?.(setting);
 		}
 	}
 
@@ -203,6 +205,7 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 					);
 				},
 			},
+			{ name: 'Stock', heading: true },
 			{
 				name: 'Running low: percent full',
 				desc: 'In the Restock view, the last bottle of a kind counts as running low at or under this percent full.',
@@ -213,6 +216,7 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 				desc: 'For bottles without a size, and other stock tracked in mL, running low means at or under this many mL.',
 				render: (setting: Setting) => this.threshold(setting, 'lowStockMl', Infinity),
 			},
+			{ name: 'Recipes', heading: true },
 			{
 				name: 'Link text',
 				desc: 'When you link a recipe’s ingredient, use the cabinet name instead of the recipe’s wording without asking. Extra words stay beside the link: “fresh lime juice” links only “Lime Juice”. You can always choose other text.',
@@ -260,6 +264,7 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 					);
 				},
 			},
+			{ name: 'Alcohol estimates', heading: true },
 			{
 				name: 'Standard drink',
 				desc: 'Alcohol estimates show mL of alcohol and standard drinks of this size.',
@@ -313,6 +318,7 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 					});
 				},
 			},
+			{ name: 'Maintenance', heading: true },
 			{
 				name: 'Cabinet notes and views',
 				desc: `The plugin keeps the Cocktail Cabinet and Shopping list notes and the Bases in the Views folder current. An edited note is left alone and offered in Review cabinet updates. To change a view, copy it into ${CUSTOM_VIEWS_FOLDER} and edit the copy. Refresh restores the original views and any notes you haven't edited.`,

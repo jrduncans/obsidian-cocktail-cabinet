@@ -65,14 +65,11 @@ export const ONE_OFF_HEADER = new RegExp(
 	'u',
 );
 
-/** A tasting note's line in the daily note; it names the recipe, so the recipe's backlinks show it. */
+/**
+ * A tasting note's line, as earlier releases wrote them under a drink's “Made …” line. It names the recipe
+ * and may say “made”, so it's never read as a log.
+ */
 export const TASTING_NOTE = /^Tasting note on \[\[([^\]]+)\]\]:/;
-
-export function tastingNoteLine(recipe: CabinetNote, text: string): string {
-	const note = text.replace(/\s+/g, ' ').trim();
-	if (!note) throw new Error('Write a tasting note first.');
-	return `Tasting note on ${wikiLink(recipe.path, recipe.name)}: ${note}`;
-}
 
 /** Whether a line's links include the recipe: resolved when possible, else by path or bare name. */
 function linksRecipe(line: string, recipe: CabinetNote, resolve?: (link: string) => string | null): boolean {
@@ -98,26 +95,4 @@ function isLogLine(line: string, recipe: CabinetNote, resolve?: (link: string) =
 /** Restrict duplicate matching to made-cocktail sentences, on the same line as the recipe link; a riff isn't the recipe. */
 export function hasDailyLog(content: string, recipe: CabinetNote, resolve?: (link: string) => string | null): boolean {
 	return content.split(/\r?\n/).some((line) => isLogLine(line, recipe, resolve));
-}
-
-/**
- * Put a tasting note under the day's last “Made …” line for the recipe, after any notes already there,
- * or at the end of the note when the drink wasn't logged that day.
- */
-export function insertTastingNote(
-	content: string,
-	recipe: CabinetNote,
-	line: string,
-	resolve?: (link: string) => string | null,
-): string {
-	const lines = content.split('\n');
-	let made = -1;
-	lines.forEach((text, index) => {
-		if (isLogLine(text.replace(/\r$/, ''), recipe, resolve)) made = index;
-	});
-	if (made < 0) return `${content}${content && !content.endsWith('\n') ? '\n' : ''}${line}\n`;
-	let at = made + 1;
-	while (at < lines.length && TASTING_NOTE.test(lines[at]!) && linksRecipe(lines[at]!, recipe, resolve)) at++;
-	lines.splice(at, 0, line);
-	return lines.join('\n');
 }

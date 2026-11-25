@@ -53,7 +53,7 @@ export class EditNoteModal extends CabinetForm {
 		private edits: EditStore,
 		private note: CabinetNote,
 		private snapshot: EditSnapshot,
-		/** Opens Tidy this recipe on the note. */
+		/** Opens Tidy ingredient lines on the note. */
 		private tidy?: () => void,
 	) {
 		super(plugin.app);
@@ -167,7 +167,7 @@ export class EditNoteModal extends CabinetForm {
 		return row;
 	}
 
-	/** Point to Tidy this recipe when it would change lines on its own: its ticked-by-default changes. */
+	/** Point to Tidy ingredient lines when it would change lines on its own: its ticked-by-default changes. */
 	private tidyMention() {
 		if (!this.tidy) return;
 		const lines = contentTidyLines(this.plugin, this.snapshot.content, this.note.path).filter((line) =>
@@ -177,10 +177,10 @@ export class EditNoteModal extends CabinetForm {
 		new Setting(this.contentEl)
 			.setName('Lines to tidy')
 			.setDesc(
-				`${lines} ingredient ${lines === 1 ? 'line' : 'lines'} could use the cabinet name, a full link, or fraction characters. Tidy this recipe lists each change to choose from. It closes this form without saving.`,
+				`${lines} ingredient ${lines === 1 ? 'line' : 'lines'} could use the cabinet name, a full link, or fraction characters. Tidy ingredient lines lists each change to choose from. It closes this form without saving.`,
 			)
 			.addButton((button) =>
-				button.setButtonText('Tidy this recipe…').onClick(() => {
+				button.setButtonText('Tidy ingredient lines…').onClick(() => {
 					this.close();
 					this.tidy!();
 				}),

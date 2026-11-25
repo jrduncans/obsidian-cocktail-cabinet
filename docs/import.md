@@ -6,7 +6,7 @@ Drafted on 2026-11-22 from the [roadmap's Phase 5](roadmap.md#5-reach-retire-the
 
 Get a recipe from where it was found into the cabinet with its links right, keeping only what the source says. It retires the `cocktail-recipe-import` skill, which today writes the note shape, filename, and links by hand from prose rules.
 
-**Create a cocktail recipe** already reads pasted text into the recipe review, with suggestions, tags, rating, and the duplicate warning. Import builds on that review rather than beside it. What's missing:
+**Add recipe** already reads pasted text into the recipe review, with suggestions, tags, rating, and the duplicate warning. Import builds on that review rather than beside it. What's missing:
 
 1. **Fetching a page.** Today the review says "pages are not fetched"; you copy the text yourself, and on most recipe sites that copy is messy.
 2. **Remembering wordings.** Each "rum, such as Coruba" or "Vermouth (Sweet)" is linked again by hand every time. The skill keeps a few of these as prose defaults.
@@ -35,7 +35,7 @@ Sampled on 2026-11-22, what the top sites publish:
 
 ## Web pages
 
-**Create a cocktail recipe** takes a URL as well as text: a URL alone in the field fetches that page instead of reading it as text.
+**Add recipe** takes a URL as well as text: a URL alone in the field fetches that page instead of reading it as text.
 
 ### Fetching
 
@@ -105,7 +105,7 @@ A CLI handler that creates a recipe from text, so the skill fetches and reads (i
 
 `cocktail-cabinet:create-recipe text=<recipe text> [source=<url or label>] [rating=<1-5>]`
 
-- Reads the text with `parseRecipeText`, links remembered wordings only, applies the filename and duplicate rules, and writes the note as **Create a cocktail recipe** would. Refuses a filename clash; a name match with a different filename is created and reported, as the review warns.
+- Reads the text with `parseRecipeText`, links remembered wordings only, applies the filename and duplicate rules, and writes the note as **Add recipe** would. Refuses a filename clash; a name match with a different filename is created and reported, as the review warns.
 - Returns JSON: the path, each line with its link or "not linked" and up to three suggestions, and any duplicates. The agent can then link lines through a second handler, `cocktail-cabinet:link-line path=<recipe> line=<n> target=<note> [text=<display>]`, which writes as **Link this ingredient line** does.
 - Writes, unlike the availability handlers. In `knowledge` both go in the "ask" group of `.claude/settings.json` and the Codex rules, so the native approval prompt is the check.
 - The skill shrinks to source fidelity (what may be taken from a page), retrieval, and calling these.
@@ -120,7 +120,7 @@ As built on 2026-11-22:
 ## Suggested slices
 
 1. **Remembered wordings.** `cc-written-as`, the offer to remember in the three linking places, pre-linking in the review, and the `knowledge` starting entries. Useful at once for pasted recipes.
-2. **Web pages.** URL in **Create a cocktail recipe**: fetch, structured data, visible text, canonical source, README note. Tests use small synthetic pages shaped like each sampled site (JSON-LD, microdata with hidden duplicates, prose blog), not saved copies.
+2. **Web pages.** URL in **Add recipe**: fetch, structured data, visible text, canonical source, README note. Tests use small synthetic pages shaped like each sampled site (JSON-LD, microdata with hidden duplicates, prose blog), not saved copies.
 3. **CLI handlers**, `create-recipe` and `link-line`, then rewrite the `knowledge` skill around them.
 4. **Bevnap files**, once a sample export is in hand.
 

@@ -1,6 +1,7 @@
 import { parseYaml, TFile } from 'obsidian';
 import type { App } from 'obsidian';
 import {
+	followedName,
 	frontmatterOf,
 	linkTargets,
 	renamedAliases,
@@ -11,6 +12,14 @@ import {
 import type { LinkRename, RenameTarget } from '../core/rename';
 import { fileName, PROP } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
+
+/** What following a rename made outside the plugin changed. */
+export interface FollowResult {
+	name: string;
+	/** Other notes whose link text was checked. */
+	linked: number;
+	failed: string[];
+}
 
 export interface RenameResult {
 	/** Other notes whose links were checked. */
@@ -49,6 +58,53 @@ export class RenameStore {
 		this.writing = true;
 		try {
 			return await this.apply(note, target, keepOld);
+		} finally {
+			this.writing = false;
+		}
+	}
+
+	/**
+	 * After the user renamed a cabinet note's file outside the plugin (title bar or file explorer), bring the
+	 * rest along as **Rename cabinet note** would: `cc-name` and aliases, the heading, and link text in other
+	 * notes that showed the old name. Obsidian has already moved the file and, with its link updating on,
+	 * repointed the links in its own link format; notes under `root` get their full-path links back, as the
+	 * cabinet writes them. Null when there was nothing to follow.
+	 */
+	async follow(file: TFile, oldPath: string, root: string): Promise<FollowResult | null> {
+		if (this.writing) return null;
+		const oldBasename = oldPath.slice(oldPath.lastIndexOf('/') + 1).replace(/\.md$/, '');
+		const current: unknown = this.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.name];
+		const name = followedName(current, oldBasename, file.basename);
+		if (!name) return null;
+		const oldName = typeof current === 'string' && current.trim() ? current.trim() : oldBasename;
+		this.writing = true;
+		try {
+			await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
+				properties[PROP.name] = name;
+				const aliases = renamedAliases(properties.aliases, oldName, name, false);
+				if (aliases) properties.aliases = aliases;
+			});
+			await this.app.vault.process(
+				file,
+				(content) => renameHeading(content, [oldName, oldBasename], name) ?? content,
+			);
+			const sources = this.linkingNotes(file.path);
+			const failed: string[] = [];
+			for (const source of sources) {
+				const rename: LinkRename = {
+					matches: (link) => this.app.metadataCache.getFirstLinkpathDest(link, source)?.path === file.path,
+					repoint: (link) => source.startsWith(`${root}/`) && !link.includes('/'),
+					target: file.path.replace(/\.md$/, ''),
+					names: [oldName, oldBasename],
+					name,
+				};
+				try {
+					await this.relink(source, rename);
+				} catch {
+					failed.push(source);
+				}
+			}
+			return { name, linked: sources.length, failed };
 		} finally {
 			this.writing = false;
 		}

@@ -1,4 +1,4 @@
-import { basePath } from './bases';
+import { basePath, GROUPS_BASE } from './bases';
 import { IN_STOCK_BASE } from './in-stock';
 import { markdown } from './notes';
 import { NAVIGATION_BASE } from './navigation';
@@ -81,7 +81,7 @@ Notes, links, and properties are the system: they stay readable and editable wit
 
 1. Open ${view('Other stock', 'Kitchen staples')}, walk through your kitchen, and set what you have: Have, Low, or Out.
 2. Record your bottles. Starter bottles and types start as Unknown; set the stock on a note you have, or use **Add a bottle** for one that's missing. See ${page('Stock')}.
-3. Add a favorite recipe with **Create a cocktail recipe**, or paste one from a website. See ${page('Recipes')}.
+3. Add a favorite recipe with **Add recipe**, or paste one from a website. See ${page('Recipes')}.
 4. Run ${viewOpenLink('can-make')} to see what your cabinet makes now, then make one and run **Log this cocktail** on its recipe. See ${page('Making Drinks')}.
 
 ## Yours and the plugin's
@@ -94,8 +94,8 @@ ${view('Recipes')} lists your recipes; its **Latest** view shows the newest firs
 
 ## Adding recipes
 
-- **Create a cocktail recipe**: paste a recipe copied from a website, or the page's address on its own, with **Paste a recipe…**, or read a page with **Read recipe page…** (or its address in **Source**, then **Read page**), or fill in the form by hand. A page is fetched and read; nothing is filled in from anywhere else, and **Original text** shows what was read. Pages behind a sign-in can't be read: copy the text instead. Check the name, source, ingredients, method, rating, and tags before saving. Amounts and wording are kept as written.
-- **Enhance as cocktail recipe**: turn an existing note into a cabinet recipe, keeping its properties. A note outside the cabinet moves into **Recipes**.
+- **Add recipe**: paste a recipe copied from a website, or the page's address on its own, with **Paste a recipe…**, or read a page with **Read recipe page…** (or its address in **Source**, then **Read page**), or fill in the form by hand. A page is fetched and read; nothing is filled in from anywhere else, and **Original text** shows what was read. Pages behind a sign-in can't be read: copy the text instead. Check the name, source, ingredients, method, rating, and tags before saving. Amounts and wording are kept as written.
+- **Convert note to recipe**: turn a note that isn't part of the cabinet yet into a recipe, keeping its properties. A note outside the cabinet moves into **Recipes**.
 
 A recipe has **Ingredients**, **Method**, **Description**, and optionally **Tasting Notes** sections. Its rating is a whole number from 1 to 5.
 
@@ -106,7 +106,7 @@ Each ingredient line links the note it calls for, which is what lets the cabinet
 Link what the recipe asks for, no narrower: a type such as London Dry Gin when any will do, a family such as rum for a broad call, a bottle only when the recipe names one. The **Link text** setting decides the link's text: by default, the cabinet name when the wording is the same name written differently (\`lime juice\` becomes \`[[${root}/Types/Lime Juice|Lime Juice]]\`), with other words kept beside the link (\`fresh [[${root}/Types/Lime Juice|Lime Juice]]\`); other wording stays as the recipe wrote it. You can always choose different text when linking. With the **Fraction characters** setting on (the default), fluid-ounce amounts are written with fraction characters: \`1½ oz\`, \`¾ oz\`, not \`1 1/2 oz\` or \`.75 oz\`.
 
 - ${viewOpenLink('unlinked')} gathers measured lines with no link, grouped by wording, and links a wording across every recipe at once.
-- **Link this ingredient line**, **Edit this ingredient link**, and **Insert ingredient link** work in the editor, from the command palette or the right-click menu.
+- **Link this ingredient line**, **Edit this ingredient link**, and **Insert ingredient link** work in a recipe's editor, from the command palette or the right-click menu.
 - **Create** items in an ingredient row's ⋯ menu add a missing type, bottle, or other stock without losing your draft.
 - **Remember** a wording when you link it, such as “rum, such as Coruba” for Aged Jamaican Rum. The next recipe with the same wording comes into review already linked, marked as remembered, and you can unlink it. Remembered wordings are kept in the note's \`${PROP.writtenAs}\` property; edit or remove them there.
 
@@ -117,8 +117,8 @@ Tags are yours: the plugin defines none. The recipe form offers the tags already
 ## Changing recipes
 
 - **Edit cabinet note** (also a button in the note's header) changes the source, rating, tags, ingredients, method, and description.
-- **Rename cabinet note** changes the name everywhere, keeping links working.
-- **Add tasting note** writes how a drink tasted into that day's daily note, under the line logging wrote. The recipe's **Backlinks** pane then collects every impression with its date.
+- **Rename cabinet note** changes the name everywhere, keeping links working. Renaming the file in Obsidian does the same, but a filename can't hold every character: for a name such as Tuxedo #2, use Rename cabinet note.
+- **Tidy ingredient lines** brings the lines to the cabinet name, full-path links, and fraction characters your settings choose.
 
 Each recipe also gets an alcohol estimate; see ${page('Making Drinks')}.
 `,
@@ -136,7 +136,7 @@ ${view('Other stock')} lists everything else. **Add other stock** records a sour
 
 ## Kitchen staples
 
-Everyday things such as salt, mint, and saline solution are kitchen staples: one note each, tracked by availability, linked directly from recipes. ${view('Other stock', 'Kitchen staples')} lists them. **Add kitchen staple** adds one.
+Everyday things such as salt, mint, and saline solution are kitchen staples: one note each, tracked by availability, linked directly from recipes. ${view('Other stock', 'Kitchen staples')} lists them. **Add other stock** with the **Kitchen staple** form adds one.
 
 ## Amount or availability
 
@@ -182,7 +182,7 @@ On a recipe, **Log this cocktail** (the glass in the note's header) records that
 
 ## One-off drinks
 
-For a drink with no recipe, run **Log a one-off**, or **Riff on this cocktail** on a recipe to start from its ingredients. No recipe note is made: the daily note gets “Made a one-off (Name):” with the ingredients listed under it. If it's a keeper, run **Save one-off as recipe** on that daily note.
+For a drink with no recipe, run **Log a one-off**, or **Riff on this cocktail** on a recipe to start from its ingredients. No recipe note is made: the daily note gets “Made a one-off (Name):” with the ingredients listed under it. If it's a keeper, run **Save one-off as recipe** on that daily note, or right-click the one-off's line.
 
 ## Alcohol estimates
 
@@ -209,10 +209,10 @@ Recipes call for ingredients at different levels, and the cabinet's ingredient h
 
 - **Types** are what a recipe usually names: London Dry Gin, Aged Jamaican Rum, Lime Juice. ${view('Ingredient types')}; its **Browse** view groups them.
 - **Subtypes** narrow a type: Bonded Bourbon is a kind of Bourbon. A type with subtypes lists them on its note.
-- **Families** group related types: Gin, Rum. ${view('Ingredient families')}.
-- **Categories** group families: Spirit, Liqueur. ${view('Ingredient categories')}.
+- **Families** group related types: Gin, Rum. ${view(GROUPS_BASE, 'Families')}.
+- **Categories** group families: Spirit, Liqueur. ${view(GROUPS_BASE, 'Categories')}.
 
-Families and categories are optional; a type can stand alone. Each note has at most one parent.
+Families and categories are optional; a type can stand alone. Each note has at most one parent. **Add ingredient type** adds any of the three: choose its **Level**.
 
 ## What fills a recipe line
 
@@ -237,7 +237,7 @@ Each type, family, category, bottle, and other-stock note shows sections from th
 	'Views and Customizing': ({ root, page, view }) => `
 ## Views
 
-The tables in **Views** are core Obsidian Bases: ${view('Recipes')}, ${view('Bottles')}, ${view('Other stock')}, ${view(IN_STOCK_BASE)}, ${view(RESTOCK_BASE)}, ${view('Ingredient types')}, ${view('Ingredient families')}, ${view('Ingredient categories')}, the ${SHOPPING_NOTE} tables, and ${view(NAVIGATION_BASE)}, which supplies the sections in each note. Edit properties directly in a table cell.
+The tables in **Views** are core Obsidian Bases: ${view('Recipes')}, ${view('Bottles')}, ${view('Other stock')}, ${view(IN_STOCK_BASE)}, ${view(RESTOCK_BASE)}, ${view('Ingredient types')}, ${view(GROUPS_BASE)}, and the ${SHOPPING_NOTE} tables. Edit properties directly in a table cell. ${view(NAVIGATION_BASE)} supplies the sections inside notes; there's no need to open it.
 
 They belong to the plugin, which updates them in new releases. Column widths and sorting you change stay until a release changes that view. To make lasting changes, copy a view into **${CUSTOM_VIEWS}** and edit the copy; the plugin never touches that folder.
 
@@ -308,7 +308,7 @@ Everything is under \`${root}/\`. A note takes part only when it has a \`${PROP.
 
 ## Making drinks
 
-To bring a recipe's ingredient lines to the preferred form (cabinet-name link text, full-path links, fraction characters), point the user to **Tidy this recipe** on the recipe note, or **Use cabinet name** with the cursor in one link, rather than rewriting the lines yourself.
+To bring a recipe's ingredient lines to the preferred form (cabinet-name link text, full-path links, fraction characters), point the user to **Tidy ingredient lines** on the recipe note, or **Use cabinet name** with the cursor in one link, rather than rewriting the lines yourself.
 
 When the user made a cocktail, point them to **Log this cocktail** on the recipe note: it subtracts stock and writes the daily-note line. For a drink with no recipe note, **Log a one-off**, or **Riff on this cocktail** when it varies a recipe. Don't edit stock by hand for a logged drink, and don't create a recipe note for a one-off unless asked.
 

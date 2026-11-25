@@ -19,7 +19,7 @@ import { starterPlan } from '../src/core/setup';
 import { isLinkedView, LINKED_VIEWS, viewOpenLink } from '../src/core/view-links';
 import { STARTER_EXAMPLES, examplePlan } from '../src/catalog/examples';
 import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
-import { basePath, RESOURCE_BASES, resourceBases } from '../src/core/bases';
+import { basePath, GROUPS_BASE, RESOURCE_BASES, RETIRED_BASES, resourceBases } from '../src/core/bases';
 import { ingredientLinkTargets, linkTarget, sameKeys } from '../src/core/ingredient-links';
 import { NAVIGATION_BASE, NAVIGATION_VIEWS, navigationBase, navigationEmbeds } from '../src/core/navigation';
 import { RESTOCK_BASE, RESTOCK_VIEWS, restockBase } from '../src/core/restock';
@@ -264,11 +264,13 @@ void test('starter groupings are optional at both parent levels', () => {
 	}
 });
 
-void test('the Cocktail Cabinet note introduces all six resource Bases in context without embeds or stock-unit advice', () => {
+void test('the Cocktail Cabinet note introduces all five resource Bases in context without embeds or stock-unit advice', () => {
 	const files = starterPlan('Drinks/Cabinet');
 	const home = files.find((file) => file.kind === 'cabinet')!;
 	const bases = files.filter((file) => file.kind === 'base');
-	assert.equal(bases.length, 10);
+	assert.equal(bases.length, 9);
+	for (const retired of RETIRED_BASES)
+		assert.ok(!bases.some((file) => file.path === basePath('Drinks/Cabinet', retired)));
 	assert.ok(home.content.includes(wikiLink(basePath('Drinks/Cabinet', RESTOCK_BASE), RESTOCK_BASE)));
 	assert.ok(bases.some((file) => file.path === basePath('Drinks/Cabinet', NAVIGATION_BASE)));
 	assert.ok(bases.some((file) => file.path === basePath('Drinks/Cabinet', SHOPPING_BASE)));
@@ -1067,4 +1069,19 @@ void test('the path index is reused for a notes list and rebuilt when the list g
 	assert.ok(!isWithin(notes, 'Old Tom Gin', 'Gin'));
 	notes.push(note('Old Tom Gin', ['Gin']));
 	assert.ok(isWithin(notes, 'Old Tom Gin', 'Gin'));
+});
+
+void test('families and categories share a Base, one view each', () => {
+	const base = parseBase(
+		resourceBases('Cocktails').find((file) => file.path === basePath('Cocktails', GROUPS_BASE))!.content,
+	);
+	assert.deepEqual(
+		base.views.map((view) => [view.name, view.filters?.and]),
+		[
+			['Families', ['note["cc-kind"] == "family"']],
+			['Categories', ['note["cc-kind"] == "category"']],
+		],
+	);
+	assert.deepEqual(base.views[0]!.order, ['formula.name', 'cc-category']);
+	assert.deepEqual(base.views[1]!.order, ['formula.name']);
 });

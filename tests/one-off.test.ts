@@ -3,6 +3,7 @@ import test from 'node:test';
 import { hasDailyLog } from '../src/core/logging-daily';
 import {
 	findOneOffs,
+	isOneOffHeader,
 	oneOffContent,
 	oneOffDailyEntry,
 	oneOffDailyText,
@@ -112,4 +113,11 @@ void test('a one-off header ends with its drinks, which read back and carry over
 		'Made a [[Cocktails/Recipes/Rye Thing|Rye Thing]] (≈ 1.6 drinks):',
 	);
 	assert.equal(hasDailyLog(savedOneOffHeader(found[1]!, saved), saved), true);
+});
+
+void test('only an unsaved one-off header offers Save one-off as recipe on its line', () => {
+	assert.equal(isOneOffHeader('Made a one-off (Penicillin-ish):'), true);
+	assert.equal(isOneOffHeader('Made 2 servings of a one-off:\r'), true);
+	assert.equal(isOneOffHeader('- 1 oz lime juice'), false);
+	assert.equal(isOneOffHeader('Made a [[Cocktails/Recipes/Penicillin|Penicillin]]:'), false);
 });

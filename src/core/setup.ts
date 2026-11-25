@@ -3,7 +3,7 @@ import { STARTER_EXAMPLES, examplePlan } from '../catalog/examples';
 import { localDate, markdown, renderNote } from './notes';
 import { cabinetFolder, notePath, PROP, wikiLink } from './schema';
 import { IN_STOCK_BASE, inStockBase } from './in-stock';
-import { basePath, resourceBases } from './bases';
+import { basePath, GROUPS_BASE, resourceBases } from './bases';
 import { navigationBase } from './navigation';
 import { SHOPPING_NOTE, shoppingBase, shoppingNote, shoppingNotePath } from './shopping';
 import { DEFAULT_RESTOCK, RESTOCK_BASE, restockBase } from './restock';
@@ -130,7 +130,7 @@ Your bottles, ingredients, and cocktail recipes. New here? Start with ${guideLin
 
 ## Ingredients
 
-- ${viewLink('Ingredient types')}, grouped by family in its **Browse** view · ${viewLink('Ingredient families')} · ${viewLink('Ingredient categories')}
+- ${viewLink('Ingredient types')}, grouped by family in its **Browse** view · ${viewLink(GROUPS_BASE)}
 - ${viewOpenLink('unlinked')}: recipe lines not yet linked to an ingredient, linked across recipes at once.
 
 ## Guide

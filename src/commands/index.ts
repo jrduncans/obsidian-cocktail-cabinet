@@ -2,18 +2,15 @@ import { openAvailability } from '../ui/availability-view';
 import { openBuy } from '../ui/buy-view';
 import { CanMakeModal } from '../ui/can-make-modal';
 import type CocktailCabinetPlugin from '../main';
-import { MarkdownView, Notice } from 'obsidian';
-import type { TFile } from 'obsidian';
+import { MarkdownView, Notice, TFile } from 'obsidian';
 import { IngredientModal } from '../ui/ingredient-modal';
 import { PurchaseModal } from '../ui/purchase-modal';
 import { StockModal } from '../ui/stock-modal';
-import { StapleModal } from '../ui/staple-modal';
 import { RecipeModal } from '../ui/recipe-modal';
 import { SetupModal } from '../ui/setup-modal';
 import { LoggingModal } from '../ui/logging-modal';
 import { LoggingStore } from '../vault/logging-store';
 import { UndoLogModal } from '../ui/undo-log-modal';
-import { TastingNoteModal } from '../ui/tasting-note-modal';
 import { StockStore } from '../vault/stock-store';
 import { EditStockModal } from '../ui/edit-stock-modal';
 import { RenameStore } from '../vault/rename-store';
@@ -28,10 +25,14 @@ import { isLinkedView, VIEW_LINK_ACTION } from '../core/view-links';
 import { registerEditorLinks } from './editor-links';
 import { OneOffModal } from '../ui/one-off-modal';
 import { saveOneOff } from '../ui/save-one-off';
+import { isOneOffHeader } from '../core/one-off';
 import type { OneOff } from '../core/one-off';
 import { ingredientLines } from '../core/unlinked-lines';
 import { ReviewUpdatesModal } from '../ui/review-updates-modal';
 import { openTidy } from '../ui/tidy-recipe-modal';
+import { PROP } from '../core/schema';
+import { cabinetNotePath } from '../core/setup';
+import { registerRenameFollowing } from './rename-following';
 
 export function registerCommands(plugin: CocktailCabinetPlugin) {
 	const logger = new LoggingStore(
@@ -50,7 +51,11 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		id: 'undo-last-log',
 		name: 'Undo last log',
 		icon: 'undo-2',
-		callback: () => handle(() => UndoLogModal.openLast(plugin.app, logger.undo)),
+		checkCallback: (checking) => {
+			if (!plugin.settings.recentLogs.length) return false;
+			if (!checking) void handle(() => UndoLogModal.openLast(plugin.app, logger.undo));
+			return true;
+		},
 	});
 	const stocks = new StockStore(plugin.app);
 	const renamer = new RenameStore(plugin.app);
@@ -87,16 +92,38 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		icon: 'flask-conical',
 		callback: () => handle(() => ready(() => logOneOff())),
 	});
+	// One-offs are logged to daily notes, so only a daily note can hold one.
+	const saveHere = (file: TFile | null, line?: number) => {
+		if (!file || file.extension !== 'md' || !logger.daily.dateOf(file)) return false;
+		return () => void handle(() => ready(() => saveOneOff(plugin, logger.daily, file, line)));
+	};
 	plugin.addCommand({
 		id: 'save-one-off-as-recipe',
 		name: 'Save one-off as recipe',
+		icon: 'file-plus',
 		checkCallback: (checking) => {
-			const file = plugin.app.workspace.getActiveFile();
-			if (!file || file.extension !== 'md') return false;
-			if (!checking) void handle(() => ready(() => saveOneOff(plugin, logger.daily, file)));
+			const run = saveHere(plugin.app.workspace.getActiveFile());
+			if (!run) return false;
+			if (!checking) run();
 			return true;
 		},
 	});
+	// On the one-off's own line in a daily note, the right-click menu saves that one.
+	plugin.registerEvent(
+		plugin.app.workspace.on('editor-menu', (menu, editor, ctx) => {
+			const line = editor.getCursor().line;
+			if (!isOneOffHeader(editor.getLine(line))) return;
+			const run = saveHere(ctx.file, line);
+			if (run)
+				menu.addItem((item) =>
+					item
+						.setSection('cocktail-cabinet')
+						.setTitle('Save one-off as recipe')
+						.setIcon('file-plus')
+						.onClick(run),
+				);
+		}),
+	);
 	const recordPurchases = () => handle(() => ready(() => new PurchaseModal(plugin, stocks).open()));
 	plugin.addCommand({
 		id: 'what-can-i-make',
@@ -148,8 +175,8 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 				),
 		},
 		{
-			id: 'tidy-this-recipe',
-			name: 'Tidy this recipe',
+			id: 'tidy-ingredient-lines',
+			name: 'Tidy ingredient lines',
 			icon: 'sparkles',
 			kinds: ['recipe'],
 			run: (file) => void handle(() => openTidy(plugin, noteFor(file))),
@@ -160,14 +187,6 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 			icon: 'list-checks',
 			kinds: ['category', 'family', 'type', 'bottle', 'ingredient'],
 			run: (file) => void handle(() => openAvailability(plugin, noteFor(file))),
-		},
-		{
-			id: 'add-tasting-note',
-			name: 'Add tasting note',
-			icon: 'notebook-pen',
-			kinds: ['recipe'],
-			run: (file) =>
-				void handle(async () => new TastingNoteModal(plugin.app, logger.daily, noteFor(file)).open()),
 		},
 		{
 			id: 'riff-on-this-cocktail',
@@ -244,10 +263,21 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		name: 'Open cabinet',
 		callback: open,
 	});
+	// Once set up, the settings tab keeps a Set up cabinet button for moving or repairing the cabinet.
+	const isSetUp = () => {
+		const note = plugin.app.vault.getAbstractFileByPath(cabinetNotePath(plugin.store.root));
+		return (
+			note instanceof TFile && plugin.app.metadataCache.getFileCache(note)?.frontmatter?.[PROP.kind] === 'cabinet'
+		);
+	};
 	plugin.addCommand({
 		id: 'setup-cabinet',
 		name: 'Set up cabinet',
-		callback: () => new SetupModal(plugin).open(),
+		checkCallback: (checking) => {
+			if (isSetUp()) return false;
+			if (!checking) new SetupModal(plugin).open();
+			return true;
+		},
 	});
 	plugin.addCommand({
 		id: 'refresh-cabinet-notes',
@@ -268,52 +298,41 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		callback: () => handle(() => ready(() => openUnlinked(plugin))),
 	});
 	registerEditorLinks(plugin);
+	registerRenameFollowing(plugin, renamer);
 	// Links on the Cocktail Cabinet note and the guide open these views (see core/view-links.ts).
 	const views = { 'can-make': openAvailability, buy: openBuy, unlinked: openUnlinked } as const;
 	plugin.registerObsidianProtocolHandler(VIEW_LINK_ACTION, ({ open }) => {
 		if (isLinkedView(open)) void handle(() => ready(() => views[open](plugin)));
 	});
+	// Families and categories are a Level choice in this form, and kitchen staples a Form in Add other stock.
 	plugin.addCommand({
-		id: 'create-ingredient-type',
+		id: 'add-ingredient-type',
 		name: 'Add ingredient type',
-		callback: () => handle(() => ready(() => new IngredientModal(plugin).open())),
+		callback: () => handle(() => ready(() => new IngredientModal(plugin, 'type', undefined, '', true).open())),
 	});
 	plugin.addCommand({
-		id: 'create-ingredient-family',
-		name: 'Add ingredient family',
-		callback: () => handle(() => ready(() => new IngredientModal(plugin, 'family').open())),
-	});
-	plugin.addCommand({
-		id: 'create-ingredient-category',
-		name: 'Add ingredient category',
-		callback: () => handle(() => ready(() => new IngredientModal(plugin, 'category').open())),
-	});
-	plugin.addCommand({
-		id: 'create-bottle',
+		id: 'add-bottle',
 		name: 'Add a bottle',
 		callback: () => handle(() => ready(() => new StockModal(plugin, true).open())),
 	});
 	plugin.addCommand({
-		id: 'create-ingredient-stock',
+		id: 'add-other-stock',
 		name: 'Add other stock',
 		callback: () => handle(() => ready(() => new StockModal(plugin, false).open())),
 	});
 	plugin.addCommand({
-		id: 'create-kitchen-staple',
-		name: 'Add kitchen staple',
-		callback: () => handle(() => ready(() => new StapleModal(plugin).open())),
-	});
-	plugin.addCommand({
-		id: 'create-recipe',
-		name: 'Create a cocktail recipe',
+		id: 'add-recipe',
+		name: 'Add recipe',
 		callback: () => handle(() => ready(() => new RecipeModal(plugin).open())),
 	});
+	// Only a note that isn't already part of the cabinet: recipes have Edit cabinet note and Tidy ingredient lines.
 	plugin.addCommand({
-		id: 'enhance-recipe',
-		name: 'Enhance as cocktail recipe',
+		id: 'convert-note-to-recipe',
+		name: 'Convert note to recipe',
 		checkCallback: (checking) => {
 			const file = plugin.app.workspace.getActiveFile();
 			if (!file || file.extension !== 'md') return false;
+			if (plugin.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind] !== undefined) return false;
 			if (!checking)
 				void handle(() =>
 					ready(async () => {

@@ -162,13 +162,7 @@ export class RecipeModal extends CabinetForm {
 	/** The form; `pasted` is what the paste box read, kept there for another try. */
 	private edit(recipe: RecipeImport, original = '', metadata: Record<string, unknown> = {}, pasted = '') {
 		this.contentEl.empty();
-		this.begin(
-			this.prefill
-				? 'Review cocktail recipe'
-				: this.snapshot
-					? 'Enhance as cocktail recipe'
-					: 'Create a cocktail recipe',
-		);
+		this.begin(this.prefill ? 'Review cocktail recipe' : this.snapshot ? 'Convert note to recipe' : 'Add recipe');
 		if (!this.snapshot && !this.prefill) this.renderPaste(pasted);
 		this.contentEl.createEl('p', {
 			cls: 'setting-item-description',

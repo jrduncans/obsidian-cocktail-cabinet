@@ -40,6 +40,8 @@ function formulas(drinkGrams: number): Record<string, string> {
 interface ResourceBase {
 	kind: NoteKind;
 	name: string;
+	/** The default view's name, when it isn't the Base's. */
+	first?: string;
 	/** After the linked name, in display order: narrow screens scroll the last ones off. */
 	columns: Column[];
 	/** More table views after the default one, which sorts by file name. */
@@ -53,7 +55,14 @@ interface ResourceView {
 	columns?: Column[];
 	/** Rows grouped by a formula, not shown as a column; the heading shows only the group's value. */
 	groupBy?: string;
+	/** Another kind than the Base's, for a Base listing two; each view then filters by its own kind. */
+	kind?: NoteKind;
 }
+
+/** Families and categories share a Base: both are short lists, added rarely. */
+export const GROUPS_BASE = 'Ingredient families and categories';
+/** Bases earlier releases wrote that no longer exist; syncing removes them from Views. */
+export const RETIRED_BASES = ['Ingredient families', 'Ingredient categories'] as const;
 
 const purchasingColumns: Column[] = [
 	[PROP.lastPurchasePrice, 'Last purchase price'],
@@ -75,10 +84,11 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 	},
 	{
 		kind: 'family',
-		name: 'Ingredient families',
+		name: GROUPS_BASE,
+		first: 'Families',
 		columns: [[PROP.category, 'Category']],
+		views: [{ name: 'Categories', kind: 'category', sort: [['file.name', 'ASC']], columns: [] }],
 	},
-	{ kind: 'category', name: 'Ingredient categories', columns: [] },
 	{
 		kind: 'bottle',
 		name: 'Bottles',
@@ -177,7 +187,9 @@ const withName = (list: readonly Column[]): Column[] => [
 function renderBase(root: string, resource: ResourceBase, drinkGrams: number): string {
 	const FORMULAS = formulas(drinkGrams);
 	const columns = withName(resource.columns);
-	const first: ResourceView = { name: resource.name, sort: [['file.name', 'ASC']] };
+	const first: ResourceView = { name: resource.first ?? resource.name, sort: [['file.name', 'ASC']] };
+	const kindOf = (kind: NoteKind) => `note[${JSON.stringify(PROP.kind)}] == ${JSON.stringify(kind)}`;
+	const perView = resource.views?.some((view) => view.kind) ?? false;
 	const views = [first, ...(resource.views ?? [])].map((view) => ({
 		...view,
 		order: view.columns ? withName(view.columns) : columns,
@@ -241,7 +253,7 @@ function renderBase(root: string, resource: ResourceBase, drinkGrams: number): s
 			and: [
 				`file.inFolder(${JSON.stringify(root)})`,
 				'file.ext == "md"',
-				`note[${JSON.stringify(PROP.kind)}] == ${JSON.stringify(resource.kind)}`,
+				...(perView ? [] : [kindOf(resource.kind)]),
 			],
 		},
 		formulas: Object.fromEntries(used),
@@ -249,7 +261,16 @@ function renderBase(root: string, resource: ResourceBase, drinkGrams: number): s
 		views: views.map((view) => ({
 			type: 'table',
 			name: view.name,
-			...(view.filter ? { filters: { and: [view.filter] } } : {}),
+			...(perView || view.filter
+				? {
+						filters: {
+							and: [
+								...(perView ? [kindOf(view.kind ?? resource.kind)] : []),
+								...(view.filter ? [view.filter] : []),
+							],
+						},
+					}
+				: {}),
 			// Obsidian saves groupBy between filters and order.
 			...(view.groupBy ? { groupBy: { property: view.groupBy, direction: 'ASC' } } : {}),
 			order: view.order.map(([property]) => viewProperty(property)),

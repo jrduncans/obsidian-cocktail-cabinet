@@ -53,13 +53,13 @@ Each of these acts on links that already exist, so the note has already been cho
 
 - **In the forms.** A linked row whose text isn't the cabinet name gets a small **Use "Lime Juice"** button. When the text contains the name plus other words (`[[…/Campari|bitter Amaro Campari]]`), a second button, **Move words out**, gives `bitter Amaro [[…/Campari|Campari]]`. Ignoring both keeps the text.
 - **In the note.** With the cursor in an Ingredients link, **Use cabinet name** switches just that link, beside **Edit this ingredient link**. Like the other editor commands it writes through the editor, so undo works. Built: it drops any other words in the link and gives a short link its full path, and appears only when the link's text isn't the cabinet name.
-- **For a whole recipe.** **Tidy this recipe**, on recipe notes (file menu, More options, command palette), lists every Ingredients line that would change, before and after, with a checkbox each. Lines whose change the setting would make on its own, short links, and fraction changes start ticked; dropping or moving words starts unticked. It writes the ticked lines, each checked against what was listed, like **Review unlinked ingredients**. **Edit cabinet note** mentions when a recipe has lines to tidy, with a button to open it. Built: the mention counts only lines with a change that starts ticked, so an offer you've passed over (`Falernum`) doesn't keep the mention showing; the button closes the Edit form without saving, since Tidy writes the note itself.
+- **For a whole recipe.** **Tidy ingredient lines**, on recipe notes (file menu, More options, command palette), lists every Ingredients line that would change, before and after, with a checkbox each. Lines whose change the setting would make on its own, short links, and fraction changes start ticked; dropping or moving words starts unticked. It writes the ticked lines, each checked against what was listed, like **Review unlinked ingredients**. **Edit cabinet note** mentions when a recipe has lines to tidy, with a button to open it. Built: the mention counts only lines with a change that starts ticked, so an offer you've passed over (`Falernum`) doesn't keep the mention showing; the button closes the Edit form without saving, since Tidy writes the note itself.
 
 ## Fractions
 
 For fluid-ounce amounts only: `1 1/2 oz`, `1 ½ oz`, `1.5 oz`, and `.75 oz` become `1½ oz` and `¾ oz`, with ⅛, ¼, ⅓, ½, ⅔, and ¾ and their whole-number mixes (`2/4` reduces to `½`; a decimal converts only when exact to three places, so `.33` stays). Units written as `ounce`, `ounces`, or `oz.` keep their spelling; only the number changes. Decimals with no exact fraction (`1.3 oz`), ranges, mL and cL amounts, dashes, and barspoons are left alone.
 
-- **Where.** A form's amount field converts when you leave it after typing in it, so typing `1 1/2 oz` gives `1½ oz`; a saved amount you only tab through stays as it is. Pasted, page, and CLI recipes (`create-recipe`) convert as they're read, as do new rows in any form, and **Tidy this recipe** offers the change for saved lines.
+- **Where.** A form's amount field converts when you leave it after typing in it, so typing `1 1/2 oz` gives `1½ oz`; a saved amount you only tab through stays as it is. Pasted, page, and CLI recipes (`create-recipe`) convert as they're read, as do new rows in any form, and **Tidy ingredient lines** offers the change for saved lines.
 - **Setting.** **Fraction characters**, on by default. It changes nothing for recipes measured in mL.
 - **Echoed volumes** (`1 oz. / 30 ml.`, `1½ oz · 45 ml`) stay as written. Dropping the second unit was considered; it doesn't hurt to keep, and making it a preference isn't worth the setting.
 
@@ -67,10 +67,10 @@ For fluid-ounce amounts only: `1 1/2 oz`, `1 ½ oz`, `1.5 oz`, and `.75 oz` beco
 
 1. **The setting and linking new wording.** The comparison and contained-name split as pure code with tests; every link step and the CLI handlers use them; link text choices start on the result.
 2. **Fractions.** The amount formatter as pure code, the form fields, readers, and CLI, and the setting.
-3. **Tidy this recipe**, with the Edit mention.
+3. **Tidy ingredient lines**, with the Edit mention.
 4. **Adopting as you go:** the form row buttons and the **Use cabinet name** editor command.
 
-Later, and only if needed: something across many recipes, reusing **Tidy this recipe**'s line changes. Still deferred on 2026-11-24; see [upkeep views](cabinet-design.md#upkeep-views) for when to revisit.
+Later, and only if needed: something across many recipes, reusing **Tidy ingredient lines**'s line changes. Still deferred on 2026-11-24; see [upkeep views](cabinet-design.md#upkeep-views) for when to revisit.
 
 ## Decisions
 

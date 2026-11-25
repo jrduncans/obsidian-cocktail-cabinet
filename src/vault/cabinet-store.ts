@@ -6,6 +6,7 @@ import { withNavigationSections, withSubtypesSection } from '../core/navigation'
 import { cabinetNotePath, cabinetViews, customViewsPath, managedNotes, starterPlan } from '../core/setup';
 import { managedFingerprint, managedState, withoutMarker, yourVersionPath } from '../core/managed';
 import { STARTER_EXAMPLES } from '../catalog/examples';
+import { basePath, RETIRED_BASES } from '../core/bases';
 import { DEFAULT_RESTOCK } from '../core/restock';
 import type { RestockThresholds } from '../core/restock';
 import type { SetupPreview } from '../core/setup';
@@ -276,9 +277,9 @@ export class CabinetStore {
 	async syncViews(
 		written: Readonly<Record<string, string>>,
 		force = false,
-	): Promise<{ updated: string[]; written: Record<string, string> }> {
+	): Promise<{ updated: string[]; removed: string[]; written: Record<string, string> }> {
 		return this.write(async () => {
-			if (!(await this.isSetUp())) return { updated: [], written: { ...written } };
+			if (!(await this.isSetUp())) return { updated: [], removed: [], written: { ...written } };
 			const root = this.root;
 			const updated: string[] = [];
 			const next: Record<string, string> = {};
@@ -300,7 +301,15 @@ export class CabinetStore {
 					updated.push(view.path);
 				}
 			}
-			return { updated, written: next };
+			// Views belong to the plugin, so one a release retired goes to the trash, where it can be recovered.
+			const removed: string[] = [];
+			for (const name of RETIRED_BASES) {
+				const retired = this.app.vault.getAbstractFileByPath(basePath(root, name));
+				if (!(retired instanceof TFile)) continue;
+				await this.app.fileManager.trashFile(retired);
+				removed.push(retired.path);
+			}
+			return { updated, removed, written: next };
 		});
 	}
 

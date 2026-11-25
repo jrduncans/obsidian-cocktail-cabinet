@@ -1,8 +1,8 @@
 import { Notice } from 'obsidian';
-import type { Editor, MarkdownFileInfo, MarkdownView, Menu } from 'obsidian';
+import type { Editor, MarkdownFileInfo, MarkdownView, Menu, TFile } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
-import { wikiLink } from '../core/schema';
+import { PROP, wikiLink } from '../core/schema';
 import {
 	ingredientLines,
 	ingredientParts,
@@ -180,12 +180,25 @@ const TARGET_COMMANDS = [
 	{ kind: 'link', id: 'edit-ingredient-link', name: 'Edit this ingredient link', icon: 'pencil-line' },
 ] as const;
 
+function isRecipe(plugin: CocktailCabinetPlugin, file: TFile | null | undefined): boolean {
+	return (
+		!!file &&
+		file.path.startsWith(`${plugin.store.root}/`) &&
+		plugin.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.kind] === 'recipe'
+	);
+}
+
 export function registerEditorLinks(plugin: CocktailCabinetPlugin) {
+	// A command, not just a menu item, so it can go on the mobile editing toolbar; only in recipes.
 	plugin.addCommand({
 		id: 'insert-ingredient-link',
 		name: 'Insert ingredient link',
 		icon: 'link',
-		editorCallback: (editor, ctx) => insertLink(plugin, editor, ctx),
+		editorCheckCallback: (checking, editor, ctx) => {
+			if (!isRecipe(plugin, ctx.file)) return false;
+			if (!checking) insertLink(plugin, editor, ctx);
+			return true;
+		},
 	});
 	// Each appears only where it applies: on an unlinked Ingredients line, or with the cursor in an Ingredients link.
 	for (const command of TARGET_COMMANDS) {
@@ -238,13 +251,14 @@ export function registerEditorLinks(plugin: CocktailCabinetPlugin) {
 						.onClick(() => useCabinetName(editor, named)),
 				);
 			}
-			menu.addItem((item) =>
-				item
-					.setSection('cocktail-cabinet')
-					.setTitle('Insert ingredient link')
-					.setIcon('link')
-					.onClick(() => insertLink(plugin, editor, ctx)),
-			);
+			if (isRecipe(plugin, ctx.file))
+				menu.addItem((item) =>
+					item
+						.setSection('cocktail-cabinet')
+						.setTitle('Insert ingredient link')
+						.setIcon('link')
+						.onClick(() => insertLink(plugin, editor, ctx)),
+				);
 		}),
 	);
 }

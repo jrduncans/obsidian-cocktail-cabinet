@@ -56,6 +56,11 @@ export function oneOffDailyText(oneOff: OneOff, servings: number, alcohol?: stri
 	return `${header(oneOff, servings, oneOff.riffOn?.name, alcohol)}.`;
 }
 
+/** Whether a daily-note line is a one-off's header, still unsaved. */
+export function isOneOffHeader(line: string): boolean {
+	return ONE_OFF_HEADER.test(line.replace(/\r$/, ''));
+}
+
 /** Every one-off entry in a note, with the list lines directly under each header. */
 export function findOneOffs(content: string): LoggedOneOff[] {
 	const lines = content.split('\n').map((line) => line.replace(/\r$/, ''));

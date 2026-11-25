@@ -7,12 +7,12 @@ import type { CabinetNote } from '../core/schema';
 
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/;
 
-/** The recipe's lines Tidy this recipe would change, read now, with the settings' choices. */
+/** The recipe's lines Tidy ingredient lines would change, read now, with the settings' choices. */
 export async function recipeTidyLines(plugin: CocktailCabinetPlugin, file: TFile): Promise<TidyLine[]> {
 	return contentTidyLines(plugin, await plugin.app.vault.read(file), file.path);
 }
 
-/** The lines of a recipe's `content`, saved at `path`, that Tidy this recipe would change. */
+/** The lines of a recipe's `content`, saved at `path`, that Tidy ingredient lines would change. */
 export function contentTidyLines(plugin: CocktailCabinetPlugin, content: string, path: string): TidyLine[] {
 	return tidyLines(content, ingredientResolver(plugin, path), tidyOptions(plugin));
 }
@@ -31,7 +31,7 @@ export const tidyOptions = (plugin: CocktailCabinetPlugin): TidyOptions => ({
 	fractions: plugin.settings.fractionCharacters,
 });
 
-/** **Tidy this recipe**: list the lines that would change, or say there are none. */
+/** **Tidy ingredient lines**: list the lines that would change, or say there are none. */
 export async function openTidy(plugin: CocktailCabinetPlugin, note: CabinetNote): Promise<void> {
 	const file = plugin.app.vault.getAbstractFileByPath(note.path);
 	if (!(file instanceof TFile)) throw new Error(`${note.path} was moved or deleted.`);

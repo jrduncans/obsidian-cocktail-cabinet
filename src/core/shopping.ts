@@ -4,6 +4,7 @@ import { COMMON_FORMULAS, kindIs, linkWithName, q, renderFormulaBase } from './b
 import type { FormulaView } from './base-formulas';
 import { markdown } from './notes';
 import { RESTOCK_BASE } from './restock';
+import { viewOpenLink } from './view-links';
 import { cabinetFolder, PROP, wikiLink } from './schema';
 import type { PlannedFile } from './schema';
 
@@ -83,7 +84,7 @@ export function shoppingNote(root: string): PlannedFile {
 		kind: 'shopping',
 		content: markdown(
 			{ [PROP.kind]: 'shopping' },
-			`# ${SHOPPING_NOTE}\n\nTurn on **Add to shopping list** on a bottle, ingredient type, or other stock to list it here. A type means any bottle of that type will do. To find more to add, see ${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)}. After shopping, use the cart button in this note's header (**Record purchases**) to add what you bought to your stock.\n\n${embeds}`,
+			`# ${SHOPPING_NOTE}\n\nTurn on **Add to shopping list** on a bottle, ingredient type, or other stock to list it here. A type means any bottle of that type will do. To find more to add, see ${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)} for stock running low, or ${viewOpenLink('buy')} for what would unlock the most recipes. After shopping, use the cart button in this note's header (**Record purchases**) to add what you bought to your stock.\n\n${embeds}`,
 		),
 	};
 }

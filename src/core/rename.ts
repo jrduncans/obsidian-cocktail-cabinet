@@ -124,3 +124,20 @@ export function linkTargets(content: string): Set<string> {
 	}
 	return targets;
 }
+
+/**
+ * The proper name a note takes after it was renamed outside the plugin (the title bar or file explorer),
+ * or null when there's nothing to follow: only a folder changed, or `cc-name` already matches the new
+ * filename (the plugin's own rename, or a rename that was already followed). A filename can't hold every
+ * character a proper name can, so the new name is the filename as typed; **Rename cabinet note** sets others.
+ */
+export function followedName(current: unknown, oldBasename: string, newBasename: string): string | null {
+	if (oldBasename === newBasename) return null;
+	const name = typeof current === 'string' && current.trim() ? current.trim() : oldBasename;
+	try {
+		if (fileName(name) === newBasename) return null;
+		return noteName(newBasename).normalize('NFC');
+	} catch {
+		return null;
+	}
+}

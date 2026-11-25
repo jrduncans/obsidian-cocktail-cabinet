@@ -31,9 +31,15 @@ class OneOffPicker extends FuzzySuggestModal<LoggedOneOff> {
 
 /**
  * Turn a one-off on this note into a recipe: the recipe review opens with its name and ingredients, and once
- * created the daily line links the recipe, which counts as made on that day.
+ * created the daily line links the recipe, which counts as made on that day. `line`, a header's line from the
+ * right-click menu, picks that one-off; otherwise a note with several asks which.
  */
-export async function saveOneOff(plugin: CocktailCabinetPlugin, daily: LoggingDaily, file: TFile): Promise<void> {
+export async function saveOneOff(
+	plugin: CocktailCabinetPlugin,
+	daily: LoggingDaily,
+	file: TFile,
+	line?: number,
+): Promise<void> {
 	const found = findOneOffs(await plugin.app.vault.read(file));
 	if (!found.length) throw new Error('No one-offs in this note.');
 	const open = (oneOff: LoggedOneOff) => {
@@ -85,6 +91,8 @@ export async function saveOneOff(plugin: CocktailCabinetPlugin, daily: LoggingDa
 			},
 		}).open();
 	};
-	if (found.length === 1) open(found[0]!);
+	const chosen = found.find((oneOff) => oneOff.line === line);
+	if (chosen) open(chosen);
+	else if (found.length === 1) open(found[0]!);
 	else new OneOffPicker(plugin, found, open).open();
 }

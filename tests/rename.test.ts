@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+	followedName,
 	linkTargets,
 	renamedAliases,
 	renameHeading,
@@ -13,7 +14,7 @@ import { PROP } from '../src/core/schema';
 import type { CabinetNote } from '../src/core/schema';
 import { RenameStore } from '../src/vault/rename-store';
 import { TFile } from './obsidian-stub';
-import type { App } from 'obsidian';
+import type { App, TFile as VaultFile } from 'obsidian';
 
 void test('the target keeps the folder and derives the filename from the proper name', () => {
 	assert.deepEqual(renameTarget('Cocktails/Recipes/Vieux Carre.md', 'Vieux Carre', ' Vieux Carré '), {
@@ -170,14 +171,16 @@ function fixture(options: { updateLinks: boolean }) {
 			(path) => path.replace(/\.md$/, '') === link || path.split('/').at(-1)!.replace(/\.md$/, '') === link,
 		) ?? null;
 	const writes: string[] = [];
+	const resolvedLinks: Record<string, Record<string, number>> = {
+		'Cocktails/Recipes/Sour.md': { 'Cocktails/Types/Fruit Juice.md': 2 },
+		'Cocktails/Ingredients/Fresh Limes.md': { 'Cocktails/Types/Fruit Juice.md': 1 },
+		'Daily/2026-11-05.md': { 'Cocktails/Types/Fruit Juice.md': 1 },
+		'Cocktails/Types/Juice Blend.md': {},
+	};
 	const app = {
 		metadataCache: {
-			resolvedLinks: {
-				'Cocktails/Recipes/Sour.md': { 'Cocktails/Types/Fruit Juice.md': 2 },
-				'Cocktails/Ingredients/Fresh Limes.md': { 'Cocktails/Types/Fruit Juice.md': 1 },
-				'Daily/2026-11-05.md': { 'Cocktails/Types/Fruit Juice.md': 1 },
-				'Cocktails/Types/Juice Blend.md': {},
-			},
+			resolvedLinks,
+			getFileCache: (file: TFile) => (contents.has(file.path) ? { frontmatter: properties(file.path) } : null),
 			getFirstLinkpathDest: (link: string) => {
 				const path = resolve(link);
 				return path ? fileAt(path) : null;
@@ -235,7 +238,17 @@ function fixture(options: { updateLinks: boolean }) {
 	Object.defineProperty(type, 'basename', { value: 'Fruit Juice', configurable: true });
 	files.set(type.path, type);
 	const note: CabinetNote = { path: type.path, name: 'Fruit Juice', kind: 'type', parents: [] };
-	return { renamer: new RenameStore(app as unknown as App), contents, note, writes };
+	/** A rename made in Obsidian itself: the file moves, links update, and the link index follows. */
+	const move = async (file: TFile, path: string) => {
+		const old = file.path;
+		await app.fileManager.renameFile(file, path);
+		for (const targets of Object.values(resolvedLinks))
+			if (targets[old]) {
+				targets[path] = targets[old];
+				delete targets[old];
+			}
+	};
+	return { renamer: new RenameStore(app as unknown as App), contents, note, writes, file: () => type, move };
 }
 
 for (const updateLinks of [true, false]) {
@@ -296,5 +309,43 @@ void test('rename refuses a taken filename or a name changed since the form open
 	assert.equal(
 		f.contents.get('Cocktails/Types/Fruit Juice.md'),
 		'---\ncc-kind: "type"\ncc-name: "Fruit Juice"\n---\n# Fruit Juice\n\nBody',
+	);
+});
+
+void test('a rename made outside the plugin is followed only when the filename and cc-name disagree', () => {
+	assert.equal(followedName('Fruit Juice', 'Fruit Juice', 'Juice'), 'Juice');
+	assert.equal(followedName(undefined, 'Fruit Juice', 'Juice'), 'Juice');
+	// A folder move, the plugin's own rename (cc-name already set), and a rename already followed.
+	assert.equal(followedName('Fruit Juice', 'Fruit Juice', 'Fruit Juice'), null);
+	assert.equal(followedName('Jüice', 'Fruit Juice', 'Juice'), null);
+	assert.equal(followedName('Tuxedo #2', 'Tuxedo', 'Tuxedo No 2'), null);
+	assert.equal(followedName('Vieux Carré', 'Vieux Carre', 'Vieux Carre Royale'), 'Vieux Carre Royale');
+});
+
+void test('following a native rename brings the name, aliases, heading, and link text along', async () => {
+	const f = fixture({ updateLinks: true });
+	// Display text Obsidian's own updating leaves alone, since the link has a heading.
+	f.contents.set('Daily/2026-11-05.md', 'Bought [[Cocktails/Types/Fruit Juice#Notes|Fruit Juice]].');
+	const file = f.file();
+	await f.move(file, 'Cocktails/Types/Juice.md');
+	const result = await f.renamer.follow(file as unknown as VaultFile, 'Cocktails/Types/Fruit Juice.md', 'Cocktails');
+	assert.deepEqual(result, { name: 'Juice', linked: 3, failed: [] });
+	assert.equal(
+		f.contents.get('Cocktails/Types/Juice.md'),
+		'---\ncc-kind: "type"\ncc-name: "Juice"\n---\n# Juice\n\nBody',
+	);
+	// Obsidian repointed the links in its short format; cabinet notes get full paths back, and recipe wording stays.
+	assert.equal(
+		f.contents.get('Cocktails/Recipes/Sour.md'),
+		'---\ncc-kind: "recipe"\n---\n# Sour\n\n- 1 oz [[Cocktails/Types/Juice|Juice]]\n- 1 oz [[Cocktails/Types/Juice|lemon juice]]',
+	);
+	assert.equal(
+		f.contents.get('Cocktails/Ingredients/Fresh Limes.md'),
+		'---\ncc-kind: "ingredient"\ncc-provides: ["[[Cocktails/Types/Juice|Juice]]"]\n---\n# Fresh Limes',
+	);
+	assert.equal(f.contents.get('Daily/2026-11-05.md'), 'Bought [[Juice#Notes|Juice]].');
+	assert.equal(
+		await f.renamer.follow(file as unknown as VaultFile, 'Cocktails/Types/Fruit Juice.md', 'Cocktails'),
+		null,
 	);
 });

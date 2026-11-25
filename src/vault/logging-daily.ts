@@ -1,6 +1,6 @@
 import { moment, normalizePath, TFile, TFolder } from 'obsidian';
 import type { App } from 'obsidian';
-import { hasDailyLog, insertTastingNote } from '../core/logging-daily';
+import { hasDailyLog } from '../core/logging-daily';
 import type { CabinetNote } from '../core/schema';
 
 type DailyDate = ReturnType<typeof moment>;
@@ -143,18 +143,5 @@ export class LoggingDaily {
 			return `${content}${content && !content.endsWith('\n') ? '\n' : ''}${line}\n`;
 		});
 		return appended;
-	}
-
-	/** Add a tasting note to the day's note, creating it from the template if needed; see `insertTastingNote`. */
-	async addTastingNote(preview: DailyPreview, recipe: CabinetNote, line: string): Promise<void> {
-		const instance = this.instance();
-		if (preview.configuration !== JSON.stringify(instance.options))
-			throw new Error('The daily note settings changed.');
-		const file = await instance.getDailyNote(moment(preview.date, 'YYYY-MM-DD'));
-		if (!(file instanceof TFile) || file.path !== preview.path)
-			throw new Error('Couldn’t open or create the daily note.');
-		await this.app.vault.process(file, (content) =>
-			insertTastingNote(content, recipe, line, (link) => this.resolve(link, file.path)),
-		);
 	}
 }

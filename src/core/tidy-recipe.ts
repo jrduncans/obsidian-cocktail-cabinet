@@ -7,7 +7,7 @@ import { wikiLink } from './schema';
 import type { CabinetNote } from './schema';
 
 /**
- * One change Tidy this recipe offers for a line (docs/link-text.md#adopting-the-cabinet-name-as-you-go):
+ * One change Tidy ingredient lines offers for a line (docs/link-text.md#adopting-the-cabinet-name-as-you-go):
  * - `fraction`: the fluid-ounce amount written with fraction characters.
  * - `path`: a short link given its full path.
  * - `name`: the link's text becomes the cabinet name; any punctuation stays outside the link.
@@ -46,7 +46,7 @@ const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/;
 const LINK = /^\[\[([^\]|]+)(?:\|([^\]]*))?\]\]$/;
 const hasWords = (text: string) => /[\p{L}\p{N}]/u.test(text);
 
-/** The changes Tidy this recipe offers for one Ingredients line; `resolve` finds the note a link target points to. */
+/** The changes Tidy ingredient lines offers for one Ingredients line; `resolve` finds the note a link target points to. */
 export function tidyChanges(
 	raw: string,
 	resolve: (target: string) => CabinetNote | undefined,
@@ -107,7 +107,7 @@ export function cabinetNameChanges(
 		);
 }
 
-/** Every Ingredients line Tidy this recipe would change, with its changes. */
+/** Every Ingredients line Tidy ingredient lines would change, with its changes. */
 export function tidyLines(
 	content: string,
 	resolve: (target: string) => CabinetNote | undefined,

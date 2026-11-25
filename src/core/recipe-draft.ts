@@ -23,7 +23,7 @@ export interface RecipeDraft {
 }
 
 /**
- * A recipe note from recipe text, as Create a cocktail recipe would save it without changes: the text read as
+ * A recipe note from recipe text, as Add recipe would save it without changes: the text read as
  * pasted text is, an echoed volume kept with the amount, and only remembered wordings linked (docs/import.md#agents).
  */
 export interface DraftOptions {

@@ -4,12 +4,19 @@ import type { CabinetNote, NoteKind, Properties } from '../core/schema';
 import { CabinetForm } from './form';
 import { subtypeParents } from '../core/relationships';
 
+type Level = 'category' | 'family' | 'type';
+const LEVELS: Record<Level, string> = { type: 'Type', family: 'Family', category: 'Category' };
+
 export class IngredientModal extends CabinetForm {
+	private description = '';
+
+	/** `chooseLevel` adds a Level dropdown, for **Add ingredient type**: families and categories are rarely added. */
 	constructor(
 		private plugin: CocktailCabinetPlugin,
-		private kind: 'category' | 'family' | 'type' = 'type',
+		private kind: Level = 'type',
 		private created?: (note: CabinetNote) => void,
-		private initialName = '',
+		private name = '',
+		private chooseLevel = false,
 	) {
 		super(plugin.app);
 	}
@@ -23,18 +30,23 @@ export class IngredientModal extends CabinetForm {
 					? 'A family is optional. For a narrower kind of an existing type, such as Bonded Bourbon under Bourbon, choose that type under Subtype of instead: its bottles then fill recipes calling for the type.'
 					: 'An ingredient category is optional. Select one when it provides a useful grouping.',
 		);
-		let name = this.initialName,
-			description = '',
-			preparation = '';
+		if (this.chooseLevel)
+			this.select('Level', LEVELS, this.kind, (value) => {
+				// Name and description carry over; the rest of the form belongs to the level.
+				this.kind = value as Level;
+				this.contentEl.empty();
+				this.onOpen();
+			});
+		let preparation = '';
 		let shoppingList = false,
 			catchAll = false;
 		let parents: CabinetNote[] = [];
 		let parentType: CabinetNote[] = [];
-		this.text('Name', name, (value) => {
-			name = value;
+		this.text('Name', this.name, (value) => {
+			this.name = value;
 		});
-		this.area('Description', description, (value) => {
-			description = value;
+		this.area('Description', this.description, (value) => {
+			this.description = value;
 		});
 		if (this.kind !== 'category') {
 			const parentKind: NoteKind = this.kind === 'family' ? 'category' : 'family';
@@ -83,8 +95,8 @@ export class IngredientModal extends CabinetForm {
 			}
 			const file = await this.plugin.store.create({
 				kind: this.kind,
-				name,
-				description,
+				name: this.name,
+				description: this.description,
 				method: preparation,
 				properties,
 			});
@@ -94,7 +106,7 @@ export class IngredientModal extends CabinetForm {
 			if (this.created)
 				this.created({
 					path: file.path,
-					name: noteName(name).normalize('NFC'),
+					name: noteName(this.name).normalize('NFC'),
 					kind: this.kind,
 					parents: (parentType[0] ? parentType : parents).map((note) => note.path),
 				});
