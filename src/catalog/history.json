@@ -2432,5 +2432,16 @@
 		"parent": [
 			"Bitter Aperitif Wine"
 		]
+	},
+	"type/Blackstrap Rum": {
+		"description": [
+			"Very dark rum with blackstrap molasses added after distilling, bitter and burnt-sugar rich with little aging, such as Cruzan Black Strap. A disputed category, kept because recipes such as the modern Jungle Bird call for it. Not Black Jamaican Rum, whose weight is Jamaican character and caramel."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			0.4
+		]
 	}
 }

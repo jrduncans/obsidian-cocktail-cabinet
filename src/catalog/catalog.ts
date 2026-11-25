@@ -133,6 +133,10 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 		'Dark, molasses-rich Jamaican rum, such as Coruba or Myers’s, for recipes that want its weight rather than an aged rum. A dark color alone doesn’t make a rum this type.',
 	],
 	[
+		'Blackstrap Rum',
+		'Very dark rum with blackstrap molasses added after distilling, bitter and burnt-sugar rich with little aging, such as Cruzan Black Strap. A disputed category, kept because recipes such as the modern Jungle Bird call for it. Not Black Jamaican Rum, whose weight is Jamaican character and caramel.',
+	],
+	[
 		'Pineapple Rum',
 		'Pineapple-flavored rum, including Stiggins’ Fancy. Other pineapple rums can differ substantially in flavor; recipes often name the intended bottle.',
 	],
@@ -671,6 +675,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Unaged Rhum Agricole': 50,
 	'Aged Rhum Agricole': 40,
 	'Black Jamaican Rum': 40,
+	'Blackstrap Rum': 40,
 	'Pineapple Rum': 40,
 	'Unaged Cachaça': 40,
 	'Aged Cachaça': 40,
