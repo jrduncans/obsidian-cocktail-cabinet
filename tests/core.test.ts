@@ -465,7 +465,7 @@ void test('Apple Brandy is a Brandy type whose styles are subtypes, with no fami
 		STARTER_CATALOG.filter((entry) => entry.kind === 'type' && entry.parent === 'Brandy Family')
 			.map((entry) => entry.name)
 			.sort(),
-		['Apple Brandy', 'Brandy', 'Kirsch'],
+		['Apple Brandy', 'Brandy', 'Kirsch', 'Pear Brandy'],
 	);
 	// Plain brandy is a type, with Cognac and Armagnac under it; no family shares its name.
 	assert.deepEqual(

@@ -2498,5 +2498,27 @@
 		"abvTypical": [
 			0
 		]
+	},
+	"type/Pear Brandy": {
+		"description": [
+			"Unsweetened pear eau de vie, usually from Williams (Bartlett) pears, such as Clear Creek Pear Brandy; distinct from Pear Liqueur."
+		],
+		"parent": [
+			"Brandy Family"
+		],
+		"abvTypical": [
+			0.4
+		]
+	},
+	"type/Pear Liqueur": {
+		"description": [
+			"Sweet pear liqueur, on a neutral, brandy, or cognac base, such as Mathilde Poire, Rothman & Winter Orchard Pear, and Belle de Brillet. Spiced pear liqueur is its own type: the spice changes too much to fill these recipes. Distinct from unsweetened Pear Brandy."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			0.25
+		]
 	}
 }

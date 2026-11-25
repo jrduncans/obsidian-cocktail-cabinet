@@ -193,6 +193,11 @@ family(
 			'Kirsch',
 			'Unsweetened cherry eau de vie (kirschwasser), distinct from cherry liqueur and Maraschino Liqueur.',
 		],
+		[
+			'Pear Brandy',
+			'Unsweetened pear eau de vie, usually from Williams (Bartlett) pears, such as Clear Creek Pear Brandy; distinct from Pear Liqueur.',
+			{ aliases: ['Poire Williams', 'Poire William', 'Pear Eau de Vie'] },
+		],
 	],
 );
 family('Aquavit', 'Spirit', 'Aquavit styles.', [
@@ -211,6 +216,10 @@ family('Fruit Liqueur', 'Liqueur', 'Fruit-flavored liqueurs.', [
 	['Maraschino Liqueur', 'Maraschino liqueur, distinct from cherry brandy and cherry syrup.'],
 	['Cherry Liqueur', 'Sweet cherry liqueur, such as Cherry Heering, distinct from Maraschino Liqueur and kirsch.'],
 	['Apricot Liqueur', 'Apricot liqueur, distinct from dry apricot brandy.'],
+	[
+		'Pear Liqueur',
+		'Sweet pear liqueur, on a neutral, brandy, or cognac base, such as Mathilde Poire, Rothman & Winter Orchard Pear, and Belle de Brillet. Spiced pear liqueur is its own type: the spice changes too much to fill these recipes. Distinct from unsweetened Pear Brandy.',
+	],
 	[
 		'Peach Liqueur',
 		'Sweet peach-flavored liqueur, also called crème de pêche; distinguish from unsweetened peach brandy.',
@@ -711,6 +720,8 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	Applejack: 40,
 	Calvados: 40,
 	Kirsch: 40,
+	'Pear Brandy': 40,
+	'Pear Liqueur': 25,
 	'Unaged Aquavit': 40,
 	'Aged Aquavit': 40,
 	Absinthe: 68,
