@@ -45,7 +45,32 @@ export interface CatalogPlan {
 	silent: CatalogFieldUpdate[];
 	/** Fields the user changed, where the catalog has a different value to offer. */
 	review: CatalogFieldUpdate[];
+	/** Entries new to this cabinet since it last synced: added without asking. */
+	fresh: CatalogAddition[];
+	/** Missing entries whose history is unknown, offered in review with **Add** or **Skip**. */
 	additions: CatalogAddition[];
+}
+
+/**
+ * What the plugin remembers about the cabinet's catalog entries, in its settings. `seen` lists every entry
+ * the cabinet has had a chance to hold, so a missing one on it was deleted on purpose and stays deleted;
+ * `null` means it was never recorded (a cabinet from before this was tracked). `pending` lists missing
+ * entries offered for review, `skipped` the ones the user declined, `kept` fields kept against a value.
+ */
+export interface CatalogState {
+	kept: Readonly<Record<string, string>>;
+	skipped: readonly string[];
+	seen: readonly string[] | null;
+	pending: readonly string[];
+}
+
+/** The outcome of a sync, with the `seen` and `pending` lists to save. */
+export interface CatalogSyncResult {
+	updated: string[];
+	added: string[];
+	review: number;
+	seen: string[];
+	pending: string[];
 }
 
 /** Key for a field the user chose to keep, recorded with the catalog value they kept it against. */
@@ -61,14 +86,14 @@ const PARENT_KEYS: Partial<Record<CatalogEntry['kind'], readonly string[]>> = {
 /**
  * Keeps starter notes in step with the catalog (docs/ownership.md): each field still matching some value
  * the catalog has had is updated silently; a field the user changed is offered for review; a catalog
- * entry the cabinet lacks is offered for adding. Notes are found by `cc-catalog-id`, wherever they are.
+ * entry new to the cabinet is added, and one the user deleted stays deleted. Notes are found by
+ * `cc-catalog-id`, wherever they are.
  */
 export class CatalogSync {
 	constructor(
 		private app: App,
 		private cabinet: CabinetStore,
-		private kept: () => Readonly<Record<string, string>>,
-		private skipped: () => readonly string[],
+		private state: () => CatalogState,
 	) {}
 
 	private async notes() {
@@ -85,22 +110,27 @@ export class CatalogSync {
 	}
 
 	async plan(): Promise<CatalogPlan> {
-		const plan: CatalogPlan = { silent: [], review: [], additions: [] };
+		const plan: CatalogPlan = { silent: [], review: [], fresh: [], additions: [] };
 		if (!(await this.cabinet.isSetUp())) return plan;
 		const root = this.cabinet.root;
 		const notes = await this.notes();
-		const kept = this.kept();
-		const skipped = new Set(this.skipped());
+		const state = this.state();
+		const kept = state.kept;
+		const skipped = new Set(state.skipped);
+		const seen = state.seen && new Set(state.seen);
+		const pending = new Set(state.pending);
 		for (const entry of STARTER_CATALOG) {
 			const note = notes.get(entry.id);
 			if (!note) {
-				if (!skipped.has(entry.id))
-					plan.additions.push({
-						id: entry.id,
-						name: entry.name,
-						kind: entry.kind,
-						path: renderNote(root, catalogDraft(root, entry, paths(notes)), localDate()).path,
-					});
+				if (skipped.has(entry.id)) continue;
+				const addition = {
+					id: entry.id,
+					name: entry.name,
+					kind: entry.kind,
+					path: renderNote(root, catalogDraft(root, entry, paths(notes)), localDate()).path,
+				};
+				if (!seen || pending.has(entry.id)) plan.additions.push(addition);
+				else if (!seen.has(entry.id)) plan.fresh.push(addition);
 				continue;
 			}
 			if (note.properties[PROP.kind] !== entry.kind) continue;
@@ -123,6 +153,42 @@ export class CatalogSync {
 			}
 		}
 		return plan;
+	}
+
+	/**
+	 * Bring the cabinet up to date: untouched fields silently, and entries new to it added. An entry that
+	 * can't be added (a file in the way) is offered in review instead. Returns `null` before setup, so a
+	 * cabinet's entries are first recorded once it has notes.
+	 */
+	async sync(): Promise<CatalogSyncResult | null> {
+		if (!(await this.cabinet.isSetUp())) return null;
+		const state = this.state();
+		const plan = await this.plan();
+		const updated = await this.apply(plan.silent);
+		const added: string[] = [];
+		const pending = new Set(plan.additions.map((item) => item.id));
+		for (const addition of plan.fresh) {
+			try {
+				await this.add(addition);
+				added.push(addition.name);
+			} catch {
+				pending.add(addition.id);
+			}
+		}
+		const present = await this.notes();
+		const seen = new Set([
+			...(state.seen ?? []),
+			...present.keys(),
+			...plan.fresh.map((item) => item.id),
+			...pending,
+		]);
+		return {
+			updated,
+			added,
+			review: new Set(plan.review.map((item) => item.path)).size + pending.size,
+			seen: STARTER_CATALOG.map((entry) => entry.id).filter((id) => seen.has(id)),
+			pending: [...pending],
+		};
 	}
 
 	/** Write the catalog's value for each field, skipping any note that changed since it was planned. */

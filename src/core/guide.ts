@@ -251,7 +251,7 @@ The Cocktail Cabinet note, the ${SHOPPING_NOTE} note, and these guide pages are 
 
 ## Starter notes
 
-The starter types, families, categories, bottles, and staples are yours, but when a release improves one, such as a clearer description or a typical ABV, the change arrives silently wherever you haven't edited that part. Parts you've changed are offered in **Review cabinet updates** with **Use catalog's** or **Keep mine**, and starter notes your cabinet lacks with **Add** or **Skip**. Keep a starter note's \`${PROP.catalogId}\` property so the plugin recognizes it.
+The starter types, families, categories, bottles, and staples are yours, but when a release improves one, such as a clearer description or a typical ABV, the change arrives silently wherever you haven't edited that part. Parts you've changed are offered in **Review cabinet updates** with **Use catalog's** or **Keep mine**, New starter notes in a release are added for you, and one you delete stays deleted. Keep a starter note's \`${PROP.catalogId}\` property so the plugin recognizes it.
 
 ## Refresh
 

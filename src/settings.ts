@@ -31,6 +31,10 @@ export interface CocktailCabinetSettings {
 	catalogKept: Record<string, string>;
 	/** Catalog entries the user chose not to add. */
 	catalogSkipped: string[];
+	/** Catalog entries the cabinet has had a chance to hold; `null` until first recorded (see `CatalogState`). */
+	catalogSeen: string[] | null;
+	/** Missing catalog entries offered in **Review cabinet updates**. */
+	catalogPending: string[];
 	/** The latest logs, oldest first, kept for **Undo last log**. */
 	recentLogs: LogRecord[];
 	/** Alcohol estimate: water added by chilling, as a share of the pour, by preparation. */
@@ -59,6 +63,8 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	catalogVersion: '',
 	catalogKept: {},
 	catalogSkipped: [],
+	catalogSeen: null,
+	catalogPending: [],
 	recentLogs: [],
 	dilution: { ...DEFAULT_DILUTION },
 	topMl: DEFAULT_TOP_ML,
@@ -79,6 +85,7 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 		managedVersions: {},
 		catalogKept: {},
 		catalogSkipped: [],
+		catalogPending: [],
 		recentLogs: [],
 		dilution: { ...DEFAULT_DILUTION },
 	};
@@ -106,6 +113,10 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	settings.catalogKept = record(saved.catalogKept);
 	if (Array.isArray(saved.catalogSkipped))
 		settings.catalogSkipped = saved.catalogSkipped.filter((id): id is string => typeof id === 'string');
+	if (Array.isArray(saved.catalogSeen))
+		settings.catalogSeen = saved.catalogSeen.filter((id): id is string => typeof id === 'string');
+	if (Array.isArray(saved.catalogPending))
+		settings.catalogPending = saved.catalogPending.filter((id): id is string => typeof id === 'string');
 	const dilution = saved.dilution;
 	if (dilution && typeof dilution === 'object') {
 		for (const key of Object.keys(DEFAULT_DILUTION) as Preparation[]) {

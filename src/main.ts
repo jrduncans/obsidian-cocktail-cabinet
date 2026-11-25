@@ -36,12 +36,12 @@ export default class CocktailCabinetPlugin extends Plugin {
 			() => ({ percent: this.settings.lowStockPercent, ml: this.settings.lowStockMl }),
 			() => this.settings.volumeUnit,
 		);
-		this.catalog = new CatalogSync(
-			this.app,
-			this.store,
-			() => this.settings.catalogKept,
-			() => this.settings.catalogSkipped,
-		);
+		this.catalog = new CatalogSync(this.app, this.store, () => ({
+			kept: this.settings.catalogKept,
+			skipped: this.settings.catalogSkipped,
+			seen: this.settings.catalogSeen,
+			pending: this.settings.catalogPending,
+		}));
 		this.registerView(AVAILABILITY_VIEW, (leaf) => new AvailabilityView(leaf, this));
 		this.registerView(BUY_VIEW, (leaf) => new BuyView(leaf, this));
 		this.registerView(UNLINKED_VIEW, (leaf) => new UnlinkedView(leaf, this));
@@ -116,34 +116,50 @@ export default class CocktailCabinetPlugin extends Plugin {
 		}
 		if (catalog.review) review.push(catalog.review === 1 ? 'a starter note' : `${catalog.review} starter notes`);
 		if (review.length && force) new ReviewUpdatesModal(this).open();
-		else if (review.length)
-			new Notice(
-				`Cocktail Cabinet has updates waiting for review: ${review.join(', ')}. Run Review cabinet updates to compare.`,
-				10000,
-			);
+		else if (review.length) this.reviewNotice(review);
 		else if (force && !notes && !views && !sections && !catalog.updated)
 			new Notice('Cabinet notes and views are already current.');
 	}
 
 	/**
-	 * Update starter notes from the catalog when it changed, or with `force`: untouched fields silently;
-	 * returns how many notes were updated and how many have changes waiting for review.
+	 * Waiting reviews stay on screen until dismissed, with a button that opens them, since a passing
+	 * notice is easy to miss and nothing else prompts for **Review cabinet updates**.
+	 */
+	private reviewNotice(review: string[]) {
+		const message = createFragment();
+		message.createDiv({ text: `Cocktail Cabinet has updates waiting for review: ${review.join(', ')}.` });
+		const button = message.createEl('button', { text: 'Review', cls: 'mod-cta cocktail-cabinet-notice-button' });
+		const notice = new Notice(message, 0);
+		button.addEventListener('click', () => {
+			notice.hide();
+			new ReviewUpdatesModal(this).open();
+		});
+	}
+
+	/**
+	 * Update starter notes from the catalog when it changed, with `force`, or until the cabinet's entries
+	 * are first recorded: untouched fields silently, and entries new to the cabinet added. Returns how many
+	 * notes were updated or added and how many have changes waiting for review.
 	 */
 	private async syncCatalog(force: boolean): Promise<{ updated: number; review: number }> {
-		if (!force && this.settings.catalogVersion === CATALOG_VERSION) return { updated: 0, review: 0 };
+		const current = this.settings.catalogVersion === CATALOG_VERSION && this.settings.catalogSeen !== null;
+		if (!force && current) return { updated: 0, review: 0 };
 		try {
-			const plan = await this.catalog.plan();
-			const updated = await this.catalog.apply(plan.silent);
+			const result = await this.catalog.sync();
 			this.settings.catalogVersion = CATALOG_VERSION;
+			if (result) {
+				this.settings.catalogSeen = result.seen;
+				this.settings.catalogPending = result.pending;
+			}
 			await this.saveSettings();
+			if (!result) return { updated: 0, review: 0 };
+			const { updated, added } = result;
 			if (updated.length)
 				new Notice(
 					`Cocktail Cabinet updated ${updated.length === 1 ? noteName(updated[0]!) : `${updated.length} starter notes`} from the catalog.`,
 				);
-			return {
-				updated: updated.length,
-				review: new Set(plan.review.map((item) => item.path)).size + plan.additions.length,
-			};
+			if (added.length) new Notice(`Cocktail Cabinet added new starter notes: ${listNames(added)}.`, 10000);
+			return { updated: updated.length + added.length, review: result.review };
 		} catch (error) {
 			new Notice(`Couldn’t update starter notes: ${error instanceof Error ? error.message : String(error)}`);
 			return { updated: 0, review: 0 };
@@ -193,3 +209,10 @@ export default class CocktailCabinetPlugin extends Plugin {
 }
 
 const noteName = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, '');
+
+/** Names in a notice: the first few, then how many more. */
+function listNames(names: readonly string[], shown = 5): string {
+	return names.length <= shown + 1
+		? names.join(', ')
+		: `${names.slice(0, shown).join(', ')}, and ${names.length - shown} more`;
+}

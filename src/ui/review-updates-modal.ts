@@ -13,8 +13,9 @@ const CONTEXT = 2;
 /**
  * **Review cabinet updates**: managed notes you've edited that have a newer version (compare, then **Use
  * new version**, optionally saving yours as a copy, or **Keep mine**); starter note fields you've changed
- * where the catalog has something new (**Use catalog’s** or **Keep mine**); and catalog entries the
- * cabinet lacks (**Add** or **Skip**). Anything left is offered again next time.
+ * where the catalog has something new (**Use catalog’s** or **Keep mine**); and missing catalog entries
+ * the plugin can't tell were deleted (**Add**, **Add all**, or **Skip**). Entries new to the cabinet are
+ * added on startup instead. Anything left is offered again next time.
  */
 export class ReviewUpdatesModal extends Modal {
 	private keepCopy = true;
@@ -61,7 +62,7 @@ export class ReviewUpdatesModal extends Modal {
 			text:
 				updates.length || fields.length
 					? 'This release changes things you’ve edited. Choose which to keep, or close this to decide later.'
-					: 'This release adds starter notes. Choose which to add, or close this to decide later.',
+					: 'Some starter notes are missing. Choose which to add, or close this to decide later.',
 		});
 		if (updates.length) {
 			new Setting(this.contentEl).setName('Cabinet notes').setHeading();
@@ -79,10 +80,29 @@ export class ReviewUpdatesModal extends Modal {
 			for (const field of fields) this.renderField(field);
 		}
 		if (additions.length) {
-			new Setting(this.contentEl)
-				.setName('New in the catalog')
-				.setDesc('Starter notes your cabinet doesn’t have yet.')
+			const heading = new Setting(this.contentEl)
+				.setName('Missing starter notes')
+				.setDesc(
+					'Your cabinet doesn’t have these, and the plugin can’t tell whether you deleted them. New starter notes in later releases are added for you.',
+				)
 				.setHeading();
+			if (additions.length > 1)
+				heading.addButton((button) =>
+					button
+						.setButtonText(`Add all ${additions.length}`)
+						.setCta()
+						.onClick(() =>
+							this.act(async () => {
+								const failed: string[] = [];
+								for (const addition of additions)
+									await this.plugin.catalog.add(addition).catch(() => failed.push(addition.name));
+								const added = additions.length - failed.length;
+								return failed.length
+									? `Added ${added}; couldn’t add ${failed.join(', ')}, since a file is in the way.`
+									: `Added ${added} starter notes.`;
+							}),
+						),
+				);
 			for (const addition of additions) this.renderAddition(addition);
 		}
 	}
@@ -143,6 +163,9 @@ export class ReviewUpdatesModal extends Modal {
 				button.setButtonText('Skip').onClick(() =>
 					this.act(async () => {
 						this.plugin.settings.catalogSkipped.push(addition.id);
+						this.plugin.settings.catalogPending = this.plugin.settings.catalogPending.filter(
+							(id) => id !== addition.id,
+						);
 						await this.plugin.saveSettings();
 						return `Skipped ${addition.name}; it won’t be offered again.`;
 					}),

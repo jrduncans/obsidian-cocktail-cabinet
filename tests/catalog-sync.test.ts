@@ -50,14 +50,14 @@ function fixture() {
 	} as unknown as App;
 	const kept: Record<string, string> = {};
 	const skipped: string[] = [];
-	const catalog = new CatalogSync(
-		app,
-		new CabinetStore(app, () => 'Cocktails'),
-		() => kept,
-		() => skipped,
-	);
+	const state: { seen: string[] | null; pending: string[] } = { seen: null, pending: [] };
+	const catalog = new CatalogSync(app, new CabinetStore(app, () => 'Cocktails'), () => ({
+		kept,
+		skipped,
+		...state,
+	}));
 	const edit = (path: string, change: (content: string) => string) => contents.set(path, change(contents.get(path)!));
-	return { contents, catalog, kept, skipped, edit, split };
+	return { contents, catalog, kept, skipped, state, edit, split };
 }
 
 const NAVY = 'Cocktails/Types/Navy Strength Gin.md';
@@ -66,7 +66,7 @@ const RYE = 'Cocktails/Types/Rye Whiskey.md';
 
 void test('a new cabinet matches the catalog', async () => {
 	const { catalog } = fixture();
-	assert.deepEqual(await catalog.plan(), { silent: [], review: [], additions: [] });
+	assert.deepEqual(await catalog.plan(), { silent: [], review: [], fresh: [], additions: [] });
 });
 
 void test('fields still at an earlier catalog value update silently; edited ones wait for review', async () => {
@@ -94,7 +94,7 @@ void test('fields still at an earlier catalog value update silently; edited ones
 	assert.equal(split(contents.get(BOURBON)!).properties['cc-abv-typical'], 0.43);
 	// Keep mine holds until the catalog's value changes again.
 	kept[keptKey(plan.review[0]!)] = keptValue(plan.review[0]!);
-	assert.deepEqual(await catalog.plan(), { silent: [], review: [], additions: [] });
+	assert.deepEqual(await catalog.plan(), { silent: [], review: [], fresh: [], additions: [] });
 	kept[keptKey(plan.review[0]!)] = JSON.stringify('an older catalog value');
 	assert.equal((await catalog.plan()).review.length, 1);
 });
@@ -137,7 +137,7 @@ void test('a type moving under a same-named type is a parent change, applied as 
 	const properties = split(contents.get(cognac)!).properties;
 	assert.equal(properties['cc-type'], '[[Cocktails/Types/Brandy|Brandy]]');
 	assert.equal(properties['cc-family'], undefined);
-	assert.deepEqual(await catalog.plan(), { silent: [], review: [], additions: [] });
+	assert.deepEqual(await catalog.plan(), { silent: [], review: [], fresh: [], additions: [] });
 });
 
 void test('missing catalog entries are offered until added or skipped', async () => {
@@ -155,6 +155,58 @@ void test('missing catalog entries are offered until added or skipped', async ()
 	contents.delete(absinthe);
 	skipped.push(additions[0]!.id);
 	assert.deepEqual((await catalog.plan()).additions, []);
+});
+
+void test('a first sync records the cabinet’s entries and offers missing ones without adding them', async () => {
+	const { contents, catalog, state } = fixture();
+	const absinthe = 'Cocktails/Types/Absinthe.md';
+	contents.delete(absinthe);
+	const result = (await catalog.sync())!;
+	assert.deepEqual(result.added, []);
+	assert.deepEqual(result.pending, ['type/Absinthe']);
+	assert.equal(result.review, 1);
+	assert.ok(result.seen.includes('type/Absinthe') && result.seen.includes('type/Bourbon'));
+	assert.ok(!contents.has(absinthe));
+	Object.assign(state, { seen: result.seen, pending: result.pending });
+	assert.deepEqual(
+		(await catalog.plan()).additions.map((item) => item.id),
+		['type/Absinthe'],
+	);
+});
+
+void test('entries new to the cabinet are added; ones it already had stay deleted', async () => {
+	const { contents, catalog, state } = fixture();
+	const absinthe = 'Cocktails/Types/Absinthe.md';
+	const original = contents.get(absinthe)!;
+	const all = (await catalog.sync())!.seen;
+	// Absinthe is new to this cabinet; Bourbon was deleted after the cabinet had it.
+	contents.delete(absinthe);
+	contents.delete(BOURBON);
+	Object.assign(state, { seen: all.filter((id) => id !== 'type/Absinthe'), pending: [] });
+	const plan = await catalog.plan();
+	assert.deepEqual(
+		plan.fresh.map((item) => item.id),
+		['type/Absinthe'],
+	);
+	assert.deepEqual(plan.additions, []);
+	const result = (await catalog.sync())!;
+	assert.deepEqual(result.added, ['Absinthe']);
+	assert.equal(result.review, 0);
+	assert.equal(contents.get(absinthe), original);
+	assert.ok(!contents.has(BOURBON));
+	assert.deepEqual(result.seen, all);
+});
+
+void test('a new entry blocked by a file is offered in review instead', async () => {
+	const { contents, catalog, state } = fixture();
+	const absinthe = 'Cocktails/Types/Absinthe.md';
+	const all = (await catalog.sync())!.seen;
+	contents.set(absinthe, '# My absinthe\n');
+	Object.assign(state, { seen: all.filter((id) => id !== 'type/Absinthe'), pending: [] });
+	const result = (await catalog.sync())!;
+	assert.deepEqual(result.added, []);
+	assert.deepEqual(result.pending, ['type/Absinthe']);
+	assert.equal(contents.get(absinthe), '# My absinthe\n');
 });
 
 void test('description and preparation edits leave the rest of the note alone', () => {
