@@ -523,11 +523,18 @@ entries.push({
 	properties: { ...stapleProperties('Unknown'), [PROP.form]: 'Fresh ingredient' },
 });
 
+subtypes('Simple Syrup (2:1)', [
+	[
+		'Cane Syrup (2:1)',
+		'Rich syrup of less-refined cane sugar, rounder and a little grassier than white-sugar rich simple, such as Petite Canne. Its bottles also fill recipes calling for Simple Syrup (2:1). Louisiana cane syrup, such as Steen’s, is boiled cane juice, dark like molasses, and not this.',
+	],
+]);
 // Ratio names are unambiguous; the everyday names are aliases so pickers find them too.
 const sugar = [
 	['Simple Syrup (1:1)', '1:1', 'white sugar', ['Simple Syrup']],
 	['Simple Syrup (2:1)', '2:1', 'white sugar', ['Rich Simple Syrup']],
 	['Demerara Syrup (2:1)', '2:1', 'demerara sugar', ['Demerara Syrup', 'Rich Demerara Syrup']],
+	['Cane Syrup (2:1)', '2:1', 'cane sugar', ['Cane Syrup', 'Rich Cane Syrup']],
 ] as const;
 for (const [name, ratio, ingredient, aliases] of sugar) {
 	const entry = entries.find((item) => item.name === name);
@@ -623,6 +630,7 @@ const NON_ALCOHOLIC_TYPES = [
 	'Grapefruit Peel',
 	'Cocktail Cherry',
 	'Club Soda',
+	'Cane Syrup (2:1)',
 ];
 for (const entry of entries) {
 	const zero =

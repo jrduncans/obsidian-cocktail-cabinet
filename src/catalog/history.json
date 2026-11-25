@@ -2407,5 +2407,22 @@
 		"abvTypical": [
 			0.16
 		]
+	},
+	"type/Cane Syrup (2 to 1)": {
+		"description": [
+			"Rich syrup of less-refined cane sugar, rounder and a little grassier than white-sugar rich simple, such as Petite Canne. Its bottles also fill recipes calling for Simple Syrup (2:1). Louisiana cane syrup, such as Steen’s, is boiled cane juice, dark like molasses, and not this."
+		],
+		"preparation": [
+			"Combine two parts by weight of cane sugar and one part by weight of water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup)."
+		],
+		"parent": [
+			"Subtype of Simple Syrup (2:1)"
+		],
+		"abvTypical": [
+			0
+		],
+		"sugarWaterRatio": [
+			"2:1 by weight"
+		]
 	}
 }
