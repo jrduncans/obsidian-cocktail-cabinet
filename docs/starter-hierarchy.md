@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-139 ingredient types, 29 families, 6 categories, and 2 reference bottles.
+140 ingredient types, 29 families, 6 categories, and 2 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -83,6 +83,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Ginger Syrup | Flavored Syrup | Syrup |
 | Grapefruit Bitters | Bitters | — |
 | Grapefruit Juice | Citrus Juice | Juice |
+| Grapefruit Peel | — | — |
 | Green Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Grenadine | Flavored Syrup | Syrup |
 | Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |

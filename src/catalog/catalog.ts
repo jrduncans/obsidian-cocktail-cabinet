@@ -460,9 +460,10 @@ ingredientTypes(undefined, [
 	['Whole Egg', 'A whole egg, including yolk, for flips and other cocktails that specify it.'],
 ]);
 ingredientTypes(undefined, [
-	['Lime Peel', 'Lime peel for garnish or expressed oils.'],
-	['Lemon Peel', 'Lemon peel for garnish or expressed oils.'],
-	['Orange Peel', 'Orange peel for garnish or expressed oils.'],
+	['Lime Peel', 'Lime peel for garnish or expressed oils.', { aliases: ['Lime Twist'] }],
+	['Lemon Peel', 'Lemon peel for garnish or expressed oils.', { aliases: ['Lemon Twist'] }],
+	['Orange Peel', 'Orange peel for garnish or expressed oils.', { aliases: ['Orange Twist'] }],
+	['Grapefruit Peel', 'Grapefruit peel for garnish or expressed oils.', { aliases: ['Grapefruit Twist'] }],
 	['Cocktail Cherry', 'A prepared cherry used as a cocktail garnish.'],
 ]);
 staples([
@@ -583,6 +584,7 @@ const NON_ALCOHOLIC_TYPES = [
 	'Lime Peel',
 	'Lemon Peel',
 	'Orange Peel',
+	'Grapefruit Peel',
 	'Cocktail Cherry',
 	'Club Soda',
 ];

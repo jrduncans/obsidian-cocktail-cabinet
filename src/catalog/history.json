@@ -2330,5 +2330,13 @@
 		"abvTypical": [
 			0
 		]
+	},
+	"type/Grapefruit Peel": {
+		"description": [
+			"Grapefruit peel for garnish or expressed oils."
+		],
+		"abvTypical": [
+			0
+		]
 	}
 }
