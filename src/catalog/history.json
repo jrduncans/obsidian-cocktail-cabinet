@@ -2443,5 +2443,16 @@
 		"abvTypical": [
 			0.4
 		]
+	},
+	"type/Genepy": {
+		"description": [
+			"Alpine liqueur of génépi artemisia from Savoie and the Aosta Valley, herbal, floral, and lightly bitter, such as Dolin Génépy le Chamois. Lighter and less sweet than Green Herbal Liqueur, and without absinthe’s anise."
+		],
+		"parent": [
+			"Herbal & Spice Liqueur"
+		],
+		"abvTypical": [
+			0.4
+		]
 	}
 }

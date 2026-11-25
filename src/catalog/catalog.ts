@@ -259,6 +259,11 @@ family(
 		],
 		['Allspice Dram', 'Allspice liqueur, also called pimento dram.'],
 		[
+			'Génépy',
+			'Alpine liqueur of génépi artemisia from Savoie and the Aosta Valley, herbal, floral, and lightly bitter, such as Dolin Génépy le Chamois. Lighter and less sweet than Green Herbal Liqueur, and without absinthe’s anise.',
+			{ aliases: ['Genepi', 'Génépi'] },
+		],
+		[
 			'Falernum',
 			'Falernum liqueur, distinct from non-alcoholic Falernum Syrup. Sweetness and strength vary by bottle.',
 		],
@@ -711,6 +716,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Blackberry Liqueur': 18,
 	'Crème de Menthe': 27,
 	'Green Herbal Liqueur': 55,
+	Génépy: 40,
 	'Yellow Herbal Liqueur': 43,
 	'Allspice Dram': 22.5,
 	Falernum: 11,
