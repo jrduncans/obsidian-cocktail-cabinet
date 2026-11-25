@@ -625,7 +625,8 @@
 	},
 	"type/Apricot Liqueur": {
 		"description": [
-			"Apricot liqueur, distinct from dry apricot brandy."
+			"Apricot liqueur, distinct from dry apricot brandy.",
+			"Sweet apricot liqueur, such as Marie Brizard Apry or Giffard Abricot du Roussillon. Classic recipes call it apricot brandy; an unsweetened apricot eau de vie such as barack pálinka is something else."
 		],
 		"parent": [
 			"Fruit Liqueur"

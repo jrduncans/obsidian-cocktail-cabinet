@@ -226,7 +226,11 @@ family('Fruit Liqueur', 'Liqueur', 'Fruit-flavored liqueurs.', [
 	],
 	['Maraschino Liqueur', 'Maraschino liqueur, distinct from cherry brandy and cherry syrup.'],
 	['Cherry Liqueur', 'Sweet cherry liqueur, such as Cherry Heering, distinct from Maraschino Liqueur and kirsch.'],
-	['Apricot Liqueur', 'Apricot liqueur, distinct from dry apricot brandy.'],
+	[
+		'Apricot Liqueur',
+		'Sweet apricot liqueur, such as Marie Brizard Apry or Giffard Abricot du Roussillon. Classic recipes call it apricot brandy; an unsweetened apricot eau de vie such as barack pálinka is something else.',
+		{ aliases: ['Apricot Brandy'] },
+	],
 	[
 		'Pear Liqueur',
 		'Sweet pear liqueur, on a neutral, brandy, or cognac base, such as Mathilde Poire, Rothman & Winter Orchard Pear, and Belle de Brillet. Spiced pear liqueur is its own type: the spice changes too much to fill these recipes. Distinct from unsweetened Pear Brandy.',
