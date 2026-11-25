@@ -395,6 +395,12 @@ referenceBottle(
 	['Angostura Aromatic Bitters'],
 );
 referenceBottle(
+	'Lillet Blanc',
+	'Bitter Aperitif Wine',
+	'Lillet Blanc, the aperitif wine of the Vesper, Corpse Reviver No. 2, and Twentieth Century. Since 1986 it has been less bitter than the Kina Lillet older recipes were written for, which is why many bartenders use Cocchi Americano instead: link the type when any bottle of it will do. Set availability or quantities to record your stock.',
+	['Lillet'],
+);
+referenceBottle(
 	"Peychaud's Bitters",
 	'Creole Bitters',
 	'Peychaud’s bitters, the anise-forward bitters of the Sazerac. Recipes can name this bottle specifically or call for its Creole Bitters type. Set availability or quantities to record your stock.',

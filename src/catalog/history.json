@@ -2424,5 +2424,13 @@
 		"sugarWaterRatio": [
 			"2:1 by weight"
 		]
+	},
+	"bottle/Lillet Blanc": {
+		"description": [
+			"Lillet Blanc, the aperitif wine of the Vesper, Corpse Reviver No. 2, and Twentieth Century. Since 1986 it has been less bitter than the Kina Lillet older recipes were written for, which is why many bartenders use Cocchi Americano instead: link the type when any bottle of it will do. Set availability or quantities to record your stock."
+		],
+		"parent": [
+			"Bitter Aperitif Wine"
+		]
 	}
 }

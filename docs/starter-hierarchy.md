@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-145 ingredient types, 29 families, 6 categories, and 2 reference bottles.
+145 ingredient types, 29 families, 6 categories, and 3 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -163,6 +163,7 @@ Named bottles can be linked in recipes without asserting that they are owned. Re
 | Bottle | Ingredient type | Availability |
 | --- | --- | --- |
 | Angostura Bitters | Aromatic Bitters | Unknown |
+| Lillet Blanc | Bitter Aperitif Wine | Unknown |
 | Peychaud's Bitters | Creole Bitters | Unknown |
 
 ## Starter other stock
