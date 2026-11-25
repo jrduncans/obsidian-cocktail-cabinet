@@ -570,7 +570,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Blackcurrant Liqueur': 15,
 	'Crème de Menthe': 27,
 	'Green Herbal Liqueur': 55,
-	'Yellow Herbal Liqueur': 40,
+	'Yellow Herbal Liqueur': 43,
 	'Herbal Liqueur': 40,
 	'Allspice Dram': 22.5,
 	Falernum: 11,
