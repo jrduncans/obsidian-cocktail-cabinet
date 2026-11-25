@@ -209,7 +209,7 @@ void test('a new entry blocked by a file is offered in review instead', async ()
 	assert.equal(contents.get(absinthe), '# My absinthe\n');
 });
 
-void test('a note of the user’s at a missing entry’s path is a conflict, and Use mine adopts it', async () => {
+void test('a note of the user’s at a missing entry’s path is a conflict, and linking adopts it', async () => {
 	const { contents, catalog, split } = fixture();
 	const absinthe = 'Cocktails/Types/Absinthe.md';
 	const mine = '---\ncc-kind: type\ncc-name: Absinthe\n---\n# Absinthe\n\nMy notes.\n';
@@ -217,7 +217,7 @@ void test('a note of the user’s at a missing entry’s path is a conflict, and
 	const { additions } = await catalog.plan();
 	assert.deepEqual(
 		additions.map((item) => [item.id, item.existing]),
-		[['type/Absinthe', { kind: 'type' }]],
+		[['type/Absinthe', { kind: 'type', differs: ['description', 'parent', 'abvTypical'] }]],
 	);
 	await catalog.adopt(additions[0]!);
 	const { properties, body } = split(contents.get(absinthe)!);
@@ -229,12 +229,23 @@ void test('a note of the user’s at a missing entry’s path is a conflict, and
 	assert.ok(plan.review.some((item) => item.id === 'type/Absinthe' && item.field === 'description'));
 });
 
+void test('linking fills in the catalog’s aliases only where the note has none', async () => {
+	const { contents, catalog, split } = fixture();
+	const blanc = 'Cocktails/Types/Unaged Rhum Agricole.md';
+	const vieux = 'Cocktails/Types/Aged Rhum Agricole.md';
+	contents.set(blanc, '---\ncc-kind: type\n---\n# Unaged Rhum Agricole\n');
+	contents.set(vieux, '---\ncc-kind: type\naliases: ["Vieux"]\n---\n# Aged Rhum Agricole\n');
+	for (const addition of (await catalog.plan()).additions) await catalog.adopt(addition);
+	assert.deepEqual(split(contents.get(blanc)!).properties.aliases, ['Rhum Agricole Blanc']);
+	assert.deepEqual(split(contents.get(vieux)!).properties.aliases, ['Vieux']);
+});
+
 void test('a note of another kind can’t stand in for a missing entry', async () => {
 	const { contents, catalog } = fixture();
 	const absinthe = 'Cocktails/Types/Absinthe.md';
 	contents.set(absinthe, '---\ncc-kind: bottle\n---\n# Absinthe\n');
 	const [addition] = (await catalog.plan()).additions;
-	assert.deepEqual(addition?.existing, { kind: 'bottle' });
+	assert.deepEqual(addition?.existing, { kind: 'bottle', differs: [] });
 	await assert.rejects(catalog.adopt(addition), /isn’t a type note/);
 	assert.equal(contents.get(absinthe), '---\ncc-kind: bottle\n---\n# Absinthe\n');
 });

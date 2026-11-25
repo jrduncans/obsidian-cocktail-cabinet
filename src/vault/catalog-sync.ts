@@ -38,8 +38,11 @@ export interface CatalogAddition {
 	name: string;
 	kind: CatalogEntry['kind'];
 	path: string;
-	/** A note of the user's already at `path`, with its `cc-kind`: a conflict, not something to add. */
-	existing?: { kind: string | null };
+	/**
+	 * A note of the user's already at `path`: a conflict, not something to add. `differs` lists the catalog
+	 * fields where a note of the entry's kind differs from the catalog, each offered for review once linked.
+	 */
+	existing?: { kind: string | null; differs: CatalogField[] };
 }
 
 export interface CatalogPlan {
@@ -133,9 +136,15 @@ export class CatalogSync {
 				};
 				const there = this.app.vault.getAbstractFileByPath(addition.path);
 				if (there) {
-					const kind =
-						there instanceof TFile ? frontmatter(await this.app.vault.read(there))[PROP.kind] : null;
-					addition.existing = { kind: typeof kind === 'string' ? kind : null };
+					const content = there instanceof TFile ? await this.app.vault.read(there) : '';
+					const properties = frontmatter(content);
+					const kind = properties[PROP.kind];
+					const mine = kind === entry.kind ? noteFields(entry.kind, properties, content) : null;
+					const next = entryFields(entry);
+					addition.existing = {
+						kind: typeof kind === 'string' ? kind : null,
+						differs: mine ? CATALOG_FIELDS.filter((field) => !sameValue(mine[field], next[field])) : [],
+					};
 				}
 				if (!seen || pending.has(entry.id)) plan.additions.push(addition);
 				else if (!seen.has(entry.id)) (addition.existing ? plan.additions : plan.fresh).push(addition);
@@ -237,8 +246,9 @@ export class CatalogSync {
 	}
 
 	/**
-	 * Make the user's note at a missing entry's path that entry's starter note, by giving it the catalog
-	 * ID; nothing else in it changes. Only a note of the same kind can stand in for the entry.
+	 * Make the user's note at a missing entry's path that entry's starter note: it gets the catalog ID, and
+	 * the catalog's aliases if it has none, so recipes find it by them too. Nothing else changes; fields that
+	 * differ from the catalog are then offered for review. Only a note of the same kind can stand in.
 	 */
 	async adopt(addition: CatalogAddition): Promise<void> {
 		const entry = STARTER_CATALOG.find((item) => item.id === addition.id);
@@ -250,8 +260,12 @@ export class CatalogSync {
 		const kind = frontmatter(await this.app.vault.read(file))[PROP.kind];
 		if (kind !== entry.kind)
 			throw new Error(`${addition.path} isn’t a ${entry.kind} note, so it can’t stand in for ${addition.name}.`);
+		const aliases = entry.properties?.aliases;
 		await this.app.fileManager.processFrontMatter(file, (properties: Properties) => {
 			properties[PROP.catalogId] = entry.id;
+			const mine = properties.aliases;
+			const empty = mine === undefined || mine === null || (Array.isArray(mine) && !mine.length);
+			if (empty && Array.isArray(aliases) && aliases.length) properties.aliases = [...aliases];
 		});
 	}
 

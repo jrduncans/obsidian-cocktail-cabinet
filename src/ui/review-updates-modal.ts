@@ -138,7 +138,7 @@ export class ReviewUpdatesModal extends Modal {
 			new Setting(this.contentEl)
 				.setName('Already in your vault')
 				.setDesc(
-					'A note of yours already has the name of one of these starter notes. Use mine makes your note the starter one, keeping its text and stock; Skip leaves it as it is.',
+					'A note of yours already has the name of one of these starter notes. Link to catalog makes it that starter note: it keeps its text and stock, gains the catalog’s aliases if it has none, and each difference from the catalog appears above for you to decide. Skip leaves it outside the catalog, never updated.',
 				)
 				.setHeading();
 			for (const addition of conflicts) this.renderConflict(addition);
@@ -264,29 +264,37 @@ export class ReviewUpdatesModal extends Modal {
 
 	private renderConflict(addition: CatalogAddition) {
 		const sameKind = addition.existing?.kind === addition.kind;
+		const differs = addition.existing?.differs ?? [];
 		const setting = new Setting(this.contentEl)
 			.setName(addition.name)
 			.setDesc(
 				sameKind
-					? `Your note: ${addition.path}`
+					? `Your note: ${addition.path}. ${
+							differs.length
+								? `Differs from the catalog in ${differs.map((field) => lower(field)).join(', ')}.`
+								: 'Matches the catalog.'
+						}`
 					: `${addition.path} is a different kind of note, so it can’t stand in for this ${addition.kind}.`,
 			);
 		if (sameKind)
 			setting.addButton((button) =>
 				button
-					.setButtonText('Use mine')
+					.setButtonText('Link to catalog')
 					.setCta()
 					.onClick(() =>
 						this.act(async () => {
 							await this.plugin.catalog.adopt(addition);
-							// Your note's own text and properties stay yours: don't ask about them now.
+							// Fields still at an earlier catalog value take the current one, as for any starter note;
+							// the rest wait above as review cards.
+							const { silent, review } = await this.plugin.catalog.plan();
+							await this.plugin.catalog.apply(silent.filter((update) => update.id === addition.id));
 							const settings = this.plugin.settings;
-							for (const update of (await this.plugin.catalog.plan()).review)
-								if (update.id === addition.id)
-									settings.catalogKept[keptKey(update)] = keptValue(update);
 							settings.catalogPending = settings.catalogPending.filter((id) => id !== addition.id);
 							await this.plugin.saveSettings();
-							return `${addition.name} is now your starter note.`;
+							const waiting = review.filter((update) => update.id === addition.id).length;
+							return waiting
+								? `Linked ${addition.name}. Decide its ${waiting === 1 ? 'difference' : `${waiting} differences`} under Starter notes.`
+								: `Linked ${addition.name}; it matches the catalog.`;
 						}),
 					),
 			);
@@ -294,7 +302,7 @@ export class ReviewUpdatesModal extends Modal {
 			button.setButtonText('Skip').onClick(() =>
 				this.act(async () => {
 					await this.skip([addition]);
-					return `Skipped ${addition.name}; your note stays as it is.`;
+					return `Skipped ${addition.name}; your note stays outside the catalog.`;
 				}),
 			),
 		);
@@ -337,11 +345,13 @@ function lower(field: CatalogField): string {
 
 /** What **Use catalog’s** does to the note, in words. */
 function change(update: CatalogFieldUpdate): string {
-	const { name, field, next } = update;
+	const { field, next } = update;
+	const label = FIELD_LABELS[field];
 	if (field === 'parent')
-		return next === null ? `${name} becomes standalone, with no parent.` : `${name} moves to ${show(field, next)}.`;
-	if (next === null) return `${name}’s ${lower(field)} is cleared.`;
-	if (field === 'description' || field === 'preparation')
-		return `${name}’s ${lower(field)} is replaced with the catalog’s text.`;
-	return `${name}’s ${lower(field)} becomes ${show(field, next)}.`;
+		return next === null
+			? 'the note becomes standalone, with no parent.'
+			: `the note moves to ${show(field, next)}.`;
+	if (next === null) return `the ${lower(field)} is cleared.`;
+	if (field === 'description' || field === 'preparation') return `the catalog’s ${lower(field)} replaces yours.`;
+	return `${label} becomes ${show(field, next)}.`;
 }
