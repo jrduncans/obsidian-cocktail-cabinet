@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-140 ingredient types, 29 families, 6 categories, and 2 reference bottles.
+143 ingredient types, 29 families, 6 categories, and 2 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -41,6 +41,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Blanco Tequila | Agave Spirit | Spirit |
 | Blended Overproof Rum | Rum | Spirit |
 | Blended Scotch | Whiskey | Spirit |
+| Blue Curaçao (subtype of Orange Liqueur) | Fruit Liqueur | Liqueur |
 | Bonded Apple Brandy (subtype of Apple Brandy) | Brandy Family | Spirit |
 | Bonded Bourbon (subtype of Bourbon) | Whiskey | Spirit |
 | Bonded Rye (subtype of Rye Whiskey) | Whiskey | Spirit |
@@ -63,6 +64,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Crème de Cacao | Other Liqueur | Liqueur |
 | Crème de Menthe | Herbal & Spice Liqueur | Liqueur |
 | Creole Bitters | Bitters | — |
+| Curaçao (subtype of Orange Liqueur) | Fruit Liqueur | Liqueur |
 | Demerara 151 Rum | Rum | Spirit |
 | Demerara Rum | Rum | Spirit |
 | Demerara Syrup (2:1) | Sugar Syrup | Syrup |
@@ -137,6 +139,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Tiki Bitters | Bitters | — |
 | Tomato Juice | Vegetable Juice | Juice |
 | Tonic Water | Carbonated Mixer | — |
+| Triple Sec (subtype of Orange Liqueur) | Fruit Liqueur | Liqueur |
 | Unaged Aquavit | Aquavit | Spirit |
 | Unaged Cachaça | Cachaça | Spirit |
 | Unaged Overproof Jamaican Rum | Rum | Spirit |

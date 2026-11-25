@@ -587,7 +587,8 @@
 		"description": [
 			"Orange liqueur; refine to a specific style or bottle when the recipe needs it.",
 			"Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles. Bottles share this broad recipe role; link a specific bottle when needed.",
-			"Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles, such as Cointreau and Pierre Ferrand Dry Curaçao. Link a specific bottle when a recipe names one."
+			"Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles, such as Cointreau and Pierre Ferrand Dry Curaçao. Link a specific bottle when a recipe names one.",
+			"Orange liqueur of any style, for recipes that just say orange liqueur. Its subtypes Curaçao, Triple Sec, and Blue Curaçao are for recipes that name one; link a specific bottle when a recipe names one."
 		],
 		"parent": [
 			"Fruit Liqueur"
@@ -2337,6 +2338,39 @@
 		],
 		"abvTypical": [
 			0
+		]
+	},
+	"type/Curacao": {
+		"description": [
+			"Orange liqueur on a brandy or rum base, richer than triple sec, such as Pierre Ferrand Dry Curaçao, Senior Curaçao of Curaçao, Grand Marnier, and Clément Créole Shrubb. Its bottles also fill recipes calling for Orange Liqueur."
+		],
+		"parent": [
+			"Subtype of Orange Liqueur"
+		],
+		"abvTypical": [
+			0.4
+		]
+	},
+	"type/Triple Sec": {
+		"description": [
+			"Orange liqueur on a neutral spirit base, clean and dry, such as Cointreau and Combier. Its bottles also fill recipes calling for Orange Liqueur."
+		],
+		"parent": [
+			"Subtype of Orange Liqueur"
+		],
+		"abvTypical": [
+			0.4
+		]
+	},
+	"type/Blue Curacao": {
+		"description": [
+			"Orange liqueur colored blue, usually on a neutral base and sweeter than triple sec, such as Bols and Giffard. Its bottles also fill recipes calling for Orange Liqueur."
+		],
+		"parent": [
+			"Subtype of Orange Liqueur"
+		],
+		"abvTypical": [
+			0.24
 		]
 	}
 }

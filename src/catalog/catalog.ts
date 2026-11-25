@@ -202,7 +202,7 @@ family('Anise Spirit', 'Spirit', 'Anise-flavored spirits used for pours and rins
 family('Fruit Liqueur', 'Liqueur', 'Fruit-flavored liqueurs.', [
 	[
 		'Orange Liqueur',
-		'Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles, such as Cointreau and Pierre Ferrand Dry Curaçao. Link a specific bottle when a recipe names one.',
+		'Orange liqueur of any style, for recipes that just say orange liqueur. Its subtypes Curaçao, Triple Sec, and Blue Curaçao are for recipes that name one; link a specific bottle when a recipe names one.',
 	],
 	['Maraschino Liqueur', 'Maraschino liqueur, distinct from cherry brandy and cherry syrup.'],
 	['Cherry Liqueur', 'Sweet cherry liqueur, such as Cherry Heering, distinct from Maraschino Liqueur and kirsch.'],
@@ -527,6 +527,21 @@ subtypes('Rye Whiskey', [
 		'Bottled-in-bond rye whiskey, at 100 US proof (50% ABV), for recipes calling for bonded rye. Its bottles also fill recipes calling for Rye Whiskey.',
 	],
 ]);
+subtypes('Orange Liqueur', [
+	[
+		'Curaçao',
+		'Orange liqueur on a brandy or rum base, richer than triple sec, such as Pierre Ferrand Dry Curaçao, Senior Curaçao of Curaçao, Grand Marnier, and Clément Créole Shrubb. Its bottles also fill recipes calling for Orange Liqueur.',
+		{ aliases: ['Dry Curaçao', 'Orange Curaçao'] },
+	],
+	[
+		'Triple Sec',
+		'Orange liqueur on a neutral spirit base, clean and dry, such as Cointreau and Combier. Its bottles also fill recipes calling for Orange Liqueur.',
+	],
+	[
+		'Blue Curaçao',
+		'Orange liqueur colored blue, usually on a neutral base and sweeter than triple sec, such as Bols and Giffard. Its bottles also fill recipes calling for Orange Liqueur.',
+	],
+]);
 subtypes('Soda Water', [
 	[
 		'Club Soda',
@@ -645,6 +660,9 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	Absinthe: 68,
 	Pastis: 40,
 	'Orange Liqueur': 40,
+	Curaçao: 40,
+	'Triple Sec': 40,
+	'Blue Curaçao': 24,
 	'Maraschino Liqueur': 32,
 	'Cherry Liqueur': 24,
 	'Apricot Liqueur': 24,
