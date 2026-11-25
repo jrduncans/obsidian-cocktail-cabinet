@@ -94,7 +94,7 @@ export class EditNoteModal extends CabinetForm {
 			this.number('Typical ABV (%)', abvText(properties[PROP.abvTypical]), (value) => {
 				this.edit.typicalAbv = value;
 			}).setDesc(
-				'For recipes that name this type rather than a bottle. Use 0 for non-alcoholic ingredients, or leave it blank if it varies too much to say.',
+				'Used for recipes that name this type when you have no bottle of it in stock. Leave it blank if you’re unsure: bottles of it you’ve had, or its family, fill in. Use 0 for non-alcoholic ingredients.',
 			);
 		}
 		if (kind === 'ingredient') {

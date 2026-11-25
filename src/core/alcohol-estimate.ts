@@ -68,8 +68,8 @@ function median(values: readonly number[]): number | null {
  * your in-stock bottles of it (what you'd pour), then of its subtypes' in-stock bottles, its typical
  * ABV (a reference value), then the median of every bottle of it or its subtypes you've had; then the
  * subtype's type, or the family. A family has no ABV of its own, since most span
- * too wide a range: it uses the median of your in-stock bottles in it, then of every bottle in it, or
- * 0 when all its types are non-alcoholic. Other stock uses its first provided type, and a staple is 0.
+ * too wide a range: it uses the median of your in-stock bottles in it, then of every bottle in it, 0
+ * when all its types are non-alcoholic, or else the median of its alcoholic types' typical ABVs. Other stock uses its first provided type, and a staple is 0.
  * A bottle without an ABV falls back to its type.
  */
 export function noteAbv(note: AbvNote | null | undefined): { abv: number | null; source: AbvSource } {
@@ -93,9 +93,10 @@ export function noteAbv(note: AbvNote | null | undefined): { abv: number | null;
 		const past = median(note.bottleAbvs ?? []);
 		if (past !== null) return { abv: past, source: 'past' };
 		const types = note.typeAbvs ?? [];
-		return types.length && types.every((value) => fraction(value) === 0)
-			? { abv: 0, source: 'typical' }
-			: { abv: null, source: 'unknown' };
+		if (types.length && types.every((value) => fraction(value) === 0)) return { abv: 0, source: 'typical' };
+		// Not a family typical ABV: the values set on its alcoholic types.
+		const typical = median(types.filter((value): value is number => (fraction(value) ?? 0) > 0));
+		return typical !== null ? { abv: typical, source: 'typical' } : { abv: null, source: 'unknown' };
 	}
 	if (note.kind === 'ingredient') {
 		if (note.staple) return { abv: 0, source: 'typical' };
