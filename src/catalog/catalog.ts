@@ -428,7 +428,7 @@ referenceBottle(
 	'Angostura Bitters',
 	'Aromatic Bitters',
 	'Angostura aromatic bitters. Recipes can name this bottle specifically or call for its Aromatic Bitters type. Set availability or quantities to record your stock.',
-	['Angostura Aromatic Bitters'],
+	['Angostura Aromatic Bitters', 'Ango'],
 );
 referenceBottle(
 	'Lillet Blanc',
