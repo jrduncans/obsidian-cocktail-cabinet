@@ -108,6 +108,7 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 	[
 		'Unaged Overproof Jamaican Rum',
 		'High-strength unaged Jamaican rum, such as Wray & Nephew White Overproof. Not a substitute for Aged Overproof Jamaican Rum.',
+		{ aliases: ['White Overproof Jamaican Rum'] },
 	],
 	['Demerara Rum', 'Demerara rum; choose a bottle and strength to suit the recipe.'],
 	[
