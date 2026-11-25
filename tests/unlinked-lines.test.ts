@@ -3,6 +3,7 @@ import test from 'node:test';
 import { classifyLoggingLines } from '../src/core/logging-lines';
 import { splitIngredient } from '../src/core/recipe-amount';
 import {
+	groupLines,
 	groupUnlinked,
 	ingredientKey,
 	ingredientLines,
@@ -13,6 +14,7 @@ import {
 	linkLines,
 	linkSpans,
 	linkTextError,
+	onlyLinesMoved,
 	replacedPreview,
 	replaceLink,
 	StaleLineError,
@@ -399,4 +401,18 @@ void test('a trailing garnish marker groups with the ingredient and stays outsid
 
 void test('a measured line keeps its whole wording, even ending in a garnish phrase', () => {
 	assert.equal(ingredientParts('15 ml syrup to garnish').wording, 'syrup to garnish');
+});
+
+void test('a re-read where only line numbers moved keeps the shown groups', () => {
+	const notes: CabinetNote[] = [{ name: 'Gin', path: GIN, kind: 'type', parents: [] }];
+	const body = '### Ingredients\n- 2 oz gin\n- 1 oz lime';
+	const shown = groupUnlinked([{ note: recipe('A'), content: `---\na: 1\n---\n${body}` }], notes);
+	const moved = groupUnlinked([{ note: recipe('A'), content: `---\na: 1\nb: 2\n---\n${body}` }], notes);
+	assert.notEqual(shown[0]!.uses[0]!.line, moved[0]!.uses[0]!.line);
+	assert.equal(groupLines(shown[0]!), groupLines(moved[0]!));
+	assert.ok(onlyLinesMoved(shown, moved));
+	const edited = groupUnlinked([{ note: recipe('A'), content: body.replace('1 oz lime', '¾ oz lime') }], notes);
+	assert.ok(!onlyLinesMoved(shown, edited));
+	const linked = groupUnlinked([{ note: recipe('A'), content: body.replace('\n- 1 oz lime', '') }], notes);
+	assert.ok(!onlyLinesMoved(shown, linked));
 });

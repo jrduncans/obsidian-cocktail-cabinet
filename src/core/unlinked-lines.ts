@@ -248,3 +248,18 @@ export function groupUnlinked(
 					new Set(a.uses.map((use) => use.recipe.path)).size || a.key.localeCompare(b.key),
 		);
 }
+
+/**
+ * What a group's checkboxes point at: its lines by recipe and text, in order. Line numbers are left out,
+ * since an edit elsewhere in a recipe (such as the synced `cc-ingredients` growing) moves them without
+ * changing what a tick means.
+ */
+export function groupLines(group: UnlinkedGroup): string {
+	return JSON.stringify([group.wording, ...group.uses.map((use) => [use.recipe.path, use.raw])]);
+}
+
+/** Whether a fresh read differs from the shown one only in line numbers, so nothing needs redrawing. */
+export function onlyLinesMoved(shown: readonly UnlinkedGroup[], fresh: readonly UnlinkedGroup[]): boolean {
+	const before = new Map(shown.map((group) => [group.key, groupLines(group)]));
+	return shown.length === fresh.length && fresh.every((group) => before.get(group.key) === groupLines(group));
+}

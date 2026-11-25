@@ -1,10 +1,19 @@
-import { ButtonComponent, ItemView, Menu, Notice, SearchComponent, TextComponent, ToggleComponent } from 'obsidian';
+import {
+	ButtonComponent,
+	debounce,
+	ItemView,
+	Menu,
+	Notice,
+	SearchComponent,
+	TextComponent,
+	ToggleComponent,
+} from 'obsidian';
 import { openView, viewLink } from './view-leaves';
 import type { WorkspaceLeaf } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
 import { suggestIngredient } from '../core/recipe-import';
-import { ingredientParts, linkedLinePreview, linkTextError } from '../core/unlinked-lines';
+import { groupLines, ingredientParts, linkedLinePreview, linkTextError, onlyLinesMoved } from '../core/unlinked-lines';
 import type { UnlinkedGroup, UnlinkedUse } from '../core/unlinked-lines';
 import { RecipeLinkStore } from '../vault/recipe-links';
 import { addCreateItems, pickIngredient } from './link-choice';
@@ -22,8 +31,10 @@ export const UNLINKED_VIEW = 'cocktail-cabinet-unlinked';
 
 /**
  * Reviewable unlinked lines across recipes, linked in bulk by wording. A main-area tab, so each recipe
- * opens in a split beside it. It reads the recipes when opened and on Refresh, not on every change, so
- * choices in progress aren't lost; linking checks each line against what was read.
+ * opens in a split beside it. It reads the recipes when opened, on Refresh, and quietly after a recipe
+ * changes: when only line numbers moved (a link's synced `cc-ingredients` adds a line above the
+ * ingredients) it takes the new numbers without redrawing, so choices in progress aren't lost, and it
+ * redraws only when lines themselves changed. Linking checks each line against what was read.
  */
 export class UnlinkedView extends ItemView {
 	private links: RecipeLinkStore;
@@ -32,6 +43,10 @@ export class UnlinkedView extends ItemView {
 	private showGarnishes = false;
 	private busy = false;
 	private closed = false;
+	/** Counts reads, so an older read finishing late doesn't replace a newer one. */
+	private reads = 0;
+	/** A recipe changed during a link; read again once it's done. */
+	private stale = false;
 	private summaryEl!: HTMLElement;
 	private listEl!: HTMLElement;
 	/**
@@ -76,7 +91,15 @@ export class UnlinkedView extends ItemView {
 		this.render();
 		this.listEl.setText('Loading…');
 		// A pane restored with the workspace waits for the vault to be indexed.
-		this.app.workspace.onLayoutReady(() => void this.read());
+		this.app.workspace.onLayoutReady(() => {
+			void this.read();
+			const refresh = debounce(() => this.refresh(), 500, true);
+			this.registerEvent(
+				this.app.metadataCache.on('changed', (file) => {
+					if (file.path.startsWith(`${this.plugin.store.root}/`)) refresh();
+				}),
+			);
+		});
 		return Promise.resolve();
 	}
 
@@ -97,26 +120,44 @@ export class UnlinkedView extends ItemView {
 		void this.read();
 	}
 
-	/** The lines a group covers, to tell whether a choice made on it still applies. */
-	private static lines(group: UnlinkedGroup): string {
-		return JSON.stringify(group.uses.map((use) => [use.recipe.path, use.line, use.raw]));
+	/** Read again after a recipe changed, unless a link is being written; that reads again when done. */
+	private refresh() {
+		if (this.closed) return;
+		if (this.busy) this.stale = true;
+		else void this.read(true);
 	}
 
-	private async read() {
+	/**
+	 * Read the recipes. Quietly, a read that only moved line numbers updates them in place with nothing
+	 * redrawn; otherwise the list is redrawn, keeping each choice whose lines are the same.
+	 */
+	private async read(quiet = false) {
+		const read = ++this.reads;
 		try {
 			if (!(await this.plugin.store.isSetUp())) {
-				if (!this.closed) this.listEl.setText('The cabinet isn’t set up yet.');
+				if (!this.closed && read === this.reads) this.listEl.setText('The cabinet isn’t set up yet.');
 				return;
 			}
-			const before = new Map(this.groups.map((group) => [group.key, UnlinkedView.lines(group)]));
-			this.groups = await this.links.unlinked({ includeGarnishes: this.showGarnishes });
-			if (this.closed) return;
-			const after = new Map(this.groups.map((group) => [group.key, UnlinkedView.lines(group)]));
+			const groups = await this.links.unlinked({ includeGarnishes: this.showGarnishes });
+			if (this.closed || read !== this.reads) return;
+			// A link started while reading changes the groups itself; it reads again when it's done.
+			if (this.busy) {
+				this.stale = true;
+				return;
+			}
+			if (quiet && onlyLinesMoved(this.groups, groups)) {
+				const fresh = new Map(groups.map((group) => [group.key, group.uses]));
+				for (const group of this.groups) group.uses = fresh.get(group.key)!;
+				return;
+			}
+			const before = new Map(this.groups.map((group) => [group.key, groupLines(group)]));
+			this.groups = groups;
+			const after = new Map(this.groups.map((group) => [group.key, groupLines(group)]));
 			for (const key of [...this.pending.keys()])
 				if (!after.has(key) || after.get(key) !== before.get(key)) this.pending.delete(key);
 			this.renderList();
 		} catch (error) {
-			if (!this.closed)
+			if (!this.closed && read === this.reads && !quiet)
 				this.listEl.setText(error instanceof Error ? error.message : 'Couldn’t read the recipes.');
 		}
 	}
@@ -361,6 +402,7 @@ export class UnlinkedView extends ItemView {
 		if (!pending || this.busy) return;
 		this.busy = true;
 		const chosen = group.uses.filter((_use, index) => pending.ticked.has(index));
+		let changed = false;
 		try {
 			const text = pending.source === 'original' ? undefined : pending.text;
 			const result = await this.links.linkMany(
@@ -373,6 +415,7 @@ export class UnlinkedView extends ItemView {
 				pending.note.path,
 			);
 			const failed = new Set(result.failed.map((item) => item.path));
+			changed = result.failed.some((item) => item.changed);
 			const linked = chosen.filter((use) => !failed.has(use.recipe.path));
 			group.uses = group.uses.filter((use) => !linked.includes(use));
 			new Notice(
@@ -397,6 +440,12 @@ export class UnlinkedView extends ItemView {
 		} else {
 			this.renderSummary();
 			this.renderGroup(el, group);
+		}
+		// A recipe that changed since it was read, or during the link, is read again, so linking it
+		// again works on what it says now.
+		if (this.stale || changed) {
+			this.stale = false;
+			void this.read(true);
 		}
 	}
 }
