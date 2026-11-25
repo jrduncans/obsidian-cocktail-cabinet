@@ -117,6 +117,29 @@ void test('an edited parent is offered, and using the catalog’s rewrites the l
 	assert.equal(split(contents.get(BOURBON)!).properties['cc-family'], '[[Cocktails/Families/Whiskey|Whiskey]]');
 });
 
+void test('a type moving under a same-named type is a parent change, applied as a subtype link', async () => {
+	const { contents, catalog, edit, split } = fixture();
+	const cognac = 'Cocktails/Types/Cognac.md';
+	// Cognac as an earlier catalog wrote it: a type in the family then named Brandy.
+	edit(cognac, (content) =>
+		content.replace(
+			'cc-type: "[[Cocktails/Types/Brandy|Brandy]]"',
+			'cc-family: "[[Cocktails/Families/Brandy|Brandy]]"',
+		),
+	);
+	const { silent, review } = await catalog.plan();
+	assert.deepEqual(review, []);
+	assert.deepEqual(
+		silent.map((update) => [update.name, update.field, update.yours, update.next]),
+		[['Cognac', 'parent', 'Brandy', 'Subtype of Brandy']],
+	);
+	assert.deepEqual(await catalog.apply(silent), [cognac]);
+	const properties = split(contents.get(cognac)!).properties;
+	assert.equal(properties['cc-type'], '[[Cocktails/Types/Brandy|Brandy]]');
+	assert.equal(properties['cc-family'], undefined);
+	assert.deepEqual(await catalog.plan(), { silent: [], review: [], additions: [] });
+});
+
 void test('missing catalog entries are offered until added or skipped', async () => {
 	const { contents, catalog, skipped } = fixture();
 	const absinthe = 'Cocktails/Types/Absinthe.md';

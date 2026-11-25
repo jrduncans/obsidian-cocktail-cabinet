@@ -54,11 +54,18 @@ const names = (value: unknown): string[] | null => {
 };
 const number = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
+/**
+ * A type's parent is compared with its level, so moving Cognac from the Brandy family to the Brandy
+ * type is a change: a subtype's parent reads `Subtype of Brandy`.
+ */
+const subtypeOf = (name: string | null) => (name ? `Subtype of ${name}` : null);
+
 /** A catalog entry's fields, from any catalog version's entry shape. */
 export function entryFields(entry: {
 	description?: string;
 	method?: string;
 	parent?: string;
+	parentIsType?: boolean;
 	provides?: readonly string[];
 	properties?: Properties;
 }): CatalogFields {
@@ -66,7 +73,7 @@ export function entryFields(entry: {
 	return {
 		description: text(entry.description),
 		preparation: text(entry.method),
-		parent: text(entry.parent),
+		parent: entry.parentIsType ? subtypeOf(text(entry.parent)) : text(entry.parent),
 		provides: names(entry.provides),
 		abvTypical: number(properties[PROP.abvTypical]),
 		catchAll: properties[PROP.catchAll] === true ? true : null,
@@ -85,7 +92,9 @@ function linkName(value: unknown): string | null {
 /** A note's fields, read as the catalog writes them. */
 export function noteFields(kind: NoteKind, properties: Properties, content: string): CatalogFields {
 	const parentKeys = kind === 'family' ? [PROP.category] : kind === 'type' ? [PROP.type, PROP.family] : [PROP.type];
-	const parent = parentKeys.map((key) => linkName(properties[key])).find(Boolean) ?? null;
+	const key = parentKeys.find((item) => linkName(properties[item]));
+	const name = key ? linkName(properties[key]) : null;
+	const parent = kind === 'type' && key === PROP.type ? subtypeOf(name) : name;
 	const provides = Array.isArray(properties[PROP.provides])
 		? names((properties[PROP.provides] as unknown[]).map(linkName))
 		: names(linkName(properties[PROP.provides]));

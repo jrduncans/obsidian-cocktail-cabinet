@@ -1,6 +1,6 @@
 # Brandy organization
 
-Agreed in conversation on 2026-11-25. Not built. It revises how the starter models grape brandy and how the `knowledge` vault fits Pisco, Kirsch, and St-Rémy into it, ahead of the starter's typical-ABV pass.
+Agreed in conversation on 2026-11-25. The catalog and sync changes were built the same day; the `knowledge` steps are not done. It revises how the starter models grape brandy and how the `knowledge` vault fits Pisco, Kirsch, and St-Rémy into it, ahead of the starter's typical-ABV pass.
 
 ## Problem
 
@@ -53,19 +53,21 @@ The plain name goes to the type recipes link; the family takes the suffixed name
 
 1. **Catalog.** Rename the family to Brandy Family (ID `family/Brandy Family`, per the no-compatibility-mapping rule for development IDs), add the Brandy type and Kirsch, move Cognac and Armagnac under Brandy with `subtypes('Brandy', …)`, and set the descriptions and typical ABVs above. Update the glossary's Brandy entry. Run `npm run catalog:docs`. Add a test asserting Cognac's and Armagnac's parent and that no family is named Brandy.
 2. **Sync sees a parent's level.** `noteFields` and `entryFields` compare a parent by display name only, so Cognac moving from the Brandy _family_ to the Brandy _type_ reads as no change and existing cabinets are never updated. Compare the parent with its level (family or type), so the move is offered, or applied silently where the note is untouched. Catalog history keeps working: an earlier "Brandy" parent was always a family.
-3. **Existing cabinets** (the dev vault and `knowledge`). Names aren't a synced field, so the family rename is done by hand, in this order:
-    1. Relink family-level "brandy" recipe lines to the Brandy type first, keeping their text. Renaming the family afterwards would otherwise rewrite their link text to "Brandy Family", since renames through Obsidian update link text showing the old name.
-    2. Rename the family note in Obsidian to Brandy Family and set its `cc-catalog-id` to `family/Brandy Family`.
-    3. Point any local note that the catalog now covers at its catalog ID (`knowledge`'s Kirsch: `type/Kirsch`), so **Review cabinet updates** updates it rather than offering a conflicting new note.
-    4. Install the release and run **Review cabinet updates**: add Brandy (and Kirsch where missing), and accept the parent moves for Cognac and Armagnac.
+3. **Existing cabinets** (the dev vault and `knowledge`). Rehearsed in the dev vault on 2026-11-25. Installing the release runs catalog sync at startup, which at once moves Cognac and Armagnac under the Brandy type and Apple Brandy into Brandy Family; both targets are missing until the next steps, so those links dangle briefly. Names aren't a synced field, so the family rename is by hand, in this order:
+    1. Add Brandy from **Review cabinet updates** (offered as a missing entry). Leave the offered Brandy Family alone: the rename provides it.
+    2. Relink family-level "brandy" recipe lines to the Brandy type, keeping their text. This must come before the rename, which would otherwise rewrite their link text to "Brandy Family", since renames through Obsidian update link text showing the old name.
+    3. Rename the family note in Obsidian to Brandy Family and set its `cc-catalog-id` to `family/Brandy Family`. Every link to it, including the dangling Apple Brandy one, then resolves.
+    4. Point any local note that the catalog now covers at its catalog ID (`knowledge`'s Kirsch: `type/Kirsch`), so the catalog updates it rather than offering a conflicting new note.
+    5. Run **Review cabinet updates** again and accept the family's new description (offered for review, not silent, because its catalog ID is new) and Kirsch's description, family, and typical ABV.
 
 ## `knowledge` migration
 
 After the release is installed, following the order above:
 
-- Relink the five family-level lines (Backroom Brauler, Everyone's Gone Ape, Ginger Snap, Pineapple Amaro Sidecar, Turkey Legs) to the Brandy type, text "Brandy", through the plugin's link commands.
+- Add the Brandy type from **Review cabinet updates**.
+- Relink the five family-level lines (Backroom Brauler, Everyone's Gone Ape, Ginger Snap, Pineapple Amaro Sidecar, Turkey Legs) to the Brandy type, text "Brandy". In the dev vault the link target was swapped in place through Obsidian's vault API; the plugin keeps `cc-ingredients` in step.
 - Rename Families/Brandy to Brandy Family and update its catalog ID.
-- Kirsch: add `cc-catalog-id: type/Kirsch`; the catalog sets its family and description. High Horse's "kirsch" line keeps its link.
-- Pisco: set its family to Brandy Family (**Edit cabinet note**) and a typical ABV of 0.40.
+- Kirsch: add `cc-catalog-id: type/Kirsch`, then accept its catalog fields. High Horse's "kirsch" line keeps its link.
+- Pisco: set its family to Brandy Family and a typical ABV of 0.40.
 - St-Rémy VSOP: change its type to Brandy; then move French Brandy to the trash (no recipe links it).
-- Check afterward: `can-make` on a Cognac recipe lists St-Rémy as a substitute, and `makeable uses=Brandy` includes the five relinked recipes and the Cognac ones.
+- Check afterward: `can-make` on a Cognac recipe lists St-Rémy as a substitute when it's in stock, and `makeable uses=Brandy` includes the five relinked recipes and the Cognac ones. Both held in the dev vault rehearsal.

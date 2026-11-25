@@ -157,14 +157,25 @@ family('Agave Spirit', 'Spirit', 'Tequila, mezcal, and related agave spirits.', 
 	['Añejo Tequila', 'Aged tequila in the añejo style, kept distinct from blanco and reposado.'],
 	['Mezcal', 'Mezcal; agave variety and bottle can change the result.'],
 ]);
-family('Brandy', 'Spirit', 'Brandy in common cocktail usage: French grape brandy and apple brandy.', [
-	['Cognac', 'French grape brandy from the Cognac region, used in brandy cocktails.'],
-	['Armagnac', 'French grape brandy from the Armagnac region; keep distinct when a recipe specifies it.'],
+family(
+	'Brandy Family',
+	'Spirit',
+	'Spirits distilled from fruit: grape brandy, apple brandy, and unaged fruit brandies such as kirsch and pisco.',
 	[
-		'Apple Brandy',
-		'Apple brandy for recipes calling for it without naming a style. Plain apple brandy bottles go here; Bonded Apple Brandy, Applejack, and Calvados are its subtypes, so their bottles fill these recipes too.',
+		[
+			'Brandy',
+			'Aged grape brandy, what a recipe means by plain brandy. Cognac and Armagnac are its subtypes, so their bottles fill these recipes too. Other French, Spanish, and American grape brandies go here. Unaged grape brandy such as pisco is not this type.',
+		],
+		[
+			'Apple Brandy',
+			'Apple brandy for recipes calling for it without naming a style. Plain apple brandy bottles go here; Bonded Apple Brandy, Applejack, and Calvados are its subtypes, so their bottles fill these recipes too.',
+		],
+		[
+			'Kirsch',
+			'Unsweetened cherry eau de vie (kirschwasser), distinct from cherry liqueur and Maraschino Liqueur.',
+		],
 	],
-]);
+);
 family('Aquavit', 'Spirit', 'Aquavit styles.', [
 	['Unaged Aquavit', 'Caraway- or dill-led aquavit without an aged style designation.'],
 	['Aged Aquavit', 'Barrel-aged aquavit, kept distinct from unaged aquavit in recipes.'],
@@ -457,6 +468,10 @@ subtypes('London Dry Gin', [
 		'High-strength gin, around 57% ABV; strength affects the cocktail recipe. Its bottles also fill recipes calling for London Dry Gin.',
 	],
 ]);
+subtypes('Brandy', [
+	['Cognac', 'French grape brandy from the Cognac region, used in brandy cocktails.'],
+	['Armagnac', 'French grape brandy from the Armagnac region; keep distinct when a recipe specifies it.'],
+]);
 subtypes('Apple Brandy', [
 	[
 		'Bonded Apple Brandy',
@@ -534,6 +549,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Reposado Tequila': 40,
 	'Añejo Tequila': 40,
 	Mezcal: 40,
+	Brandy: 40,
 	Cognac: 40,
 	'Apple Brandy': 40,
 	'Bonded Apple Brandy': 50,
@@ -541,6 +557,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Bonded Rye': 50,
 	Applejack: 40,
 	Calvados: 40,
+	Kirsch: 40,
 	'Unaged Aquavit': 40,
 	'Aged Aquavit': 40,
 	Absinthe: 68,

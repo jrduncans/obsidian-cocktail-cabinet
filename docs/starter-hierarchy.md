@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-129 ingredient types, 25 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+131 ingredient types, 25 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -25,11 +25,11 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Amaro | Amaro Family | Liqueur |
 | Amontillado Sherry | Sherry | Fortified Wine |
 | Añejo Tequila | Agave Spirit | Spirit |
-| Apple Brandy | Brandy | Spirit |
+| Apple Brandy | Brandy Family | Spirit |
 | Apple Juice | Other Fruit Juice | Juice |
-| Applejack (subtype of Apple Brandy) | Brandy | Spirit |
+| Applejack (subtype of Apple Brandy) | Brandy Family | Spirit |
 | Apricot Liqueur | Fruit Liqueur | Liqueur |
-| Armagnac | Brandy | Spirit |
+| Armagnac (subtype of Brandy) | Brandy Family | Spirit |
 | Aromatic Bitters | Bitters | — |
 | Artichoke Amaro | Amaro Family | Liqueur |
 | Banana Liqueur | Fruit Liqueur | Liqueur |
@@ -41,18 +41,19 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Blanco Tequila | Agave Spirit | Spirit |
 | Blended Overproof Rum | Rum | Spirit |
 | Blended Scotch | Whiskey | Spirit |
-| Bonded Apple Brandy (subtype of Apple Brandy) | Brandy | Spirit |
+| Bonded Apple Brandy (subtype of Apple Brandy) | Brandy Family | Spirit |
 | Bonded Bourbon (subtype of Bourbon) | Whiskey | Spirit |
 | Bonded Rye (subtype of Rye Whiskey) | Whiskey | Spirit |
 | Bourbon | Whiskey | Spirit |
-| Calvados (subtype of Apple Brandy) | Brandy | Spirit |
+| Brandy | Brandy Family | Spirit |
+| Calvados (subtype of Apple Brandy) | Brandy Family | Spirit |
 | Champagne | Sparkling Wine | Wine |
 | Cherry Liqueur | Fruit Liqueur | Liqueur |
 | Chocolate Bitters | Bitters | — |
 | Cinnamon Syrup | Flavored Syrup | Syrup |
 | Cocktail Cherry | — | — |
 | Coffee Liqueur | — | — |
-| Cognac | Brandy | Spirit |
+| Cognac (subtype of Brandy) | Brandy Family | Spirit |
 | Cola | Carbonated Mixer | — |
 | Contemporary Gin | Gin | Spirit |
 | Cranberry Juice | Other Fruit Juice | Juice |
@@ -85,6 +86,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Honey Syrup | Sugar Syrup | Syrup |
 | Irish Whiskey | Whiskey | Spirit |
+| Kirsch | Brandy Family | Spirit |
 | Lemon Juice | Citrus Juice | Juice |
 | Lemon Peel | — | — |
 | Light Rum | Rum | Spirit |

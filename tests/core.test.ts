@@ -462,11 +462,22 @@ void test('Apple Brandy is a Brandy type whose styles are subtypes, with no fami
 		],
 	);
 	assert.deepEqual(
-		STARTER_CATALOG.filter((entry) => entry.kind === 'type' && entry.parent === 'Brandy')
+		STARTER_CATALOG.filter((entry) => entry.kind === 'type' && entry.parent === 'Brandy Family')
 			.map((entry) => entry.name)
 			.sort(),
-		['Apple Brandy', 'Armagnac', 'Cognac'],
+		['Apple Brandy', 'Brandy', 'Kirsch'],
 	);
+	// Plain brandy is a type, with Cognac and Armagnac under it; no family shares its name.
+	assert.deepEqual(
+		STARTER_CATALOG.filter((entry) => entry.kind === 'type' && entry.parent === 'Brandy')
+			.map((entry) => [entry.name, entry.parentIsType])
+			.sort(),
+		[
+			['Armagnac', true],
+			['Cognac', true],
+		],
+	);
+	assert.ok(!STARTER_CATALOG.some((entry) => entry.kind === 'family' && entry.name === 'Brandy'));
 	assert.ok(!STARTER_CATALOG.some((entry) => entry.name === 'Pisco' || entry.name === 'Grape Brandy'));
 });
 
@@ -479,6 +490,7 @@ void test('starter subtypes link their type, keep no family, and their types lis
 		['Navy Strength Gin', 'London Dry Gin'],
 		['Aged Overproof Jamaican Rum', 'Aged Jamaican Rum'],
 		['Calvados', 'Apple Brandy'],
+		['Cognac', 'Brandy'],
 	] as const) {
 		assert.ok(file(name).content.includes(`${PROP.type}: "[[Cocktails/Types/${parent}|${parent}]]"`), name);
 		assert.ok(!file(name).content.includes(`${PROP.family}:`), name);
