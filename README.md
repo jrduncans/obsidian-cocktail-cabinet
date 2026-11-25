@@ -1,6 +1,6 @@
 # Cocktail Cabinet
 
-An Obsidian plugin for building and maintaining your own cocktail recipes and ingredient cabinet. Early development; note schemas and the starter catalog are still being reviewed.
+An Obsidian plugin for building and maintaining your own cocktail recipes and ingredient cabinet. Early development: note schemas may still change.
 
 ## Get started
 
@@ -9,7 +9,7 @@ An Obsidian plugin for building and maintaining your own cocktail recipes and in
 3. Choose a folder and select **Preview** to inspect creation counts and conflicts, then **Create cabinet**.
 4. Follow the links in the cabinet note to the live views. Add ingredients, bottles, other stock, and cocktail recipes from the command palette.
 
-The starter catalog includes ingredient descriptions, with optional **Family** and **Category** groupings where they help. A type can stand alone, and a family can have no category. The three default sugar syrups record ratios by weight and include preparation instructions. It supplies ingredient definitions and an Angostura Bitters bottle reference classified as Aromatic Bitters, with unknown availability. A new cabinet also gets a worked example: Limes and Lemons (availability), House Simple Syrup (1:1) (mL), and a Daiquiri and Whiskey Sour they complete, all with stock unknown. Setup adds the example only when it creates the cabinet note, so deleted examples stay deleted. See the [draft starter hierarchy](docs/starter-hierarchy.md) for the complete list.
+The starter catalog includes ingredient descriptions, with optional **Family** and **Category** groupings where they help. A type can stand alone, and a family can have no category. The three default sugar syrups record ratios by weight and include preparation instructions. It supplies ingredient definitions and two bottle references, Angostura Bitters (Aromatic Bitters) and Peychaud's Bitters (Creole Bitters), with unknown availability. A new cabinet also gets a worked example: Limes and Lemons (availability), House Simple Syrup (1:1) (mL), and a Daiquiri and Whiskey Sour they complete, all with stock unknown. Setup adds the example only when it creates the cabinet note, so deleted examples stay deleted. See the [starter hierarchy](docs/starter-hierarchy.md) for the complete list.
 
 Setup creates ordinary Markdown notes and `.base` files (five resource views plus Related, Shopping list, In stock, and Restock) in a `Views` subfolder inside the chosen folder. The cabinet note explains your collection and the ingredient hierarchy, linking to each Base as it introduces the concept. Their tables reflect current notes rather than a snapshot of the starter catalog.
 

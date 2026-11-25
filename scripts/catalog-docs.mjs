@@ -39,10 +39,10 @@ try {
 		return `| ${name} | ${family?.name || '—'} | ${family?.parent || '—'} |`;
 	});
 	const content =
-		'# Starter hierarchy draft\n\n' +
+		'# Starter hierarchy\n\n' +
 		'Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changing the defaults; `npm test` checks that this table is current.\n\n' +
 		'Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.\n\n' +
-		`${types.length} ingredient types, ${families.length} families, ${categories.length} categories, and ${bottles.length} reference bottle${bottles.length === 1 ? '' : 's'}. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.\n\n` +
+		`${types.length} ingredient types, ${families.length} families, ${categories.length} categories, and ${bottles.length} reference bottle${bottles.length === 1 ? '' : 's'}.\n\n` +
 		'Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.\n\n' +
 		'| Ingredient type | Family (optional) | Category (optional) |\n| --- | --- | --- |\n' +
 		rows.join('\n') +

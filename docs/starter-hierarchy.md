@@ -1,10 +1,10 @@
-# Starter hierarchy draft
+# Starter hierarchy
 
 Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changing the defaults; `npm test` checks that this table is current.
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-131 ingredient types, 25 families, 6 categories, and 1 reference bottle. See [the design notes](cabinet-design.md) for agreed choices and remaining review questions.
+138 ingredient types, 29 families, 6 categories, and 2 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -47,18 +47,19 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Bourbon | Whiskey | Spirit |
 | Brandy | Brandy Family | Spirit |
 | Calvados (subtype of Apple Brandy) | Brandy Family | Spirit |
+| Canadian Whisky | Whiskey | Spirit |
 | Champagne | Sparkling Wine | Wine |
 | Cherry Liqueur | Fruit Liqueur | Liqueur |
 | Chocolate Bitters | Bitters | — |
 | Cinnamon Syrup | Flavored Syrup | Syrup |
 | Cocktail Cherry | — | — |
-| Coffee Liqueur | — | — |
+| Coffee Liqueur | Other Liqueur | Liqueur |
 | Cognac (subtype of Brandy) | Brandy Family | Spirit |
 | Cola | Carbonated Mixer | — |
 | Contemporary Gin | Gin | Spirit |
 | Cranberry Juice | Other Fruit Juice | Juice |
 | Cream of Coconut | — | — |
-| Crème de Cacao | — | — |
+| Crème de Cacao | Other Liqueur | Liqueur |
 | Crème de Menthe | Herbal & Spice Liqueur | Liqueur |
 | Creole Bitters | Bitters | — |
 | Demerara 151 Rum | Rum | Spirit |
@@ -85,7 +86,9 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Grenadine | Flavored Syrup | Syrup |
 | Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Honey Syrup | Sugar Syrup | Syrup |
+| Irish Cream | Cream Liqueur | Liqueur |
 | Irish Whiskey | Whiskey | Spirit |
+| Japanese Whisky | Whiskey | Spirit |
 | Kirsch | Brandy Family | Spirit |
 | Lemon Juice | Citrus Juice | Juice |
 | Lemon Peel | — | — |
@@ -118,6 +121,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Red Bitter Liqueur | Amaro Family | Liqueur |
 | Red Wine | Still Wine | Wine |
 | Reposado Tequila | Agave Spirit | Spirit |
+| Ruby Port | Port | Fortified Wine |
 | Rye Whiskey | Whiskey | Spirit |
 | Simple Syrup (1:1) | Sugar Syrup | Syrup |
 | Simple Syrup (2:1) | Sugar Syrup | Syrup |
@@ -125,7 +129,9 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Soda Water | Carbonated Mixer | — |
 | Specialty Bitters | Bitters | — |
 | Spice Liqueur | Herbal & Spice Liqueur | Liqueur |
+| Spiced Rum | Rum | Spirit |
 | Sweet Vermouth | Vermouth | Fortified Wine |
+| Tawny Port | Port | Fortified Wine |
 | Tiki Bitters | Bitters | — |
 | Tomato Juice | Vegetable Juice | Juice |
 | Tonic Water | Carbonated Mixer | — |
@@ -137,8 +143,9 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Vanilla Syrup | Flavored Syrup | Syrup |
 | Vermouth Amaro | Vermouth | Fortified Wine |
 | Violet Liqueur | Floral Liqueur | Liqueur |
-| Vodka | — | — |
+| Vodka | Vodka Family | Spirit |
 | White Blended Rum | Rum | Spirit |
+| White Port | Port | Fortified Wine |
 | Whole Egg | — | — |
 | Yellow Herbal Liqueur | Herbal & Spice Liqueur | Liqueur |
 
@@ -149,6 +156,7 @@ Named bottles can be linked in recipes without asserting that they are owned. Re
 | Bottle | Ingredient type | Availability |
 | --- | --- | --- |
 | Angostura Bitters | Aromatic Bitters | Unknown |
+| Peychaud's Bitters | Creole Bitters | Unknown |
 
 ## Starter other stock
 
@@ -158,10 +166,15 @@ Kitchen staples are the ingredient themselves and provide no type; recipes link 
 | --- | --- | --- |
 | Cinnamon Sticks | Kitchen staple | — |
 | Eggs | Fresh ingredient | Egg White, Whole Egg |
+| Espresso | Kitchen staple | — |
 | Heavy Cream | Kitchen staple | — |
+| Hot Sauce | Kitchen staple | — |
 | Milk | Kitchen staple | — |
 | Mint | Kitchen staple | — |
 | Saline Solution | Kitchen staple | — |
 | Salt | Kitchen staple | — |
+| Sugar | Kitchen staple | — |
+| Sugar Cubes | Kitchen staple | — |
 | Water | Kitchen staple | — |
 | Whole Nutmeg | Kitchen staple | — |
+| Worcestershire Sauce | Kitchen staple | — |

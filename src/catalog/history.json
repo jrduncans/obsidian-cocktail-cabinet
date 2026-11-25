@@ -59,7 +59,8 @@
 		],
 		"abvTypical": [
 			null,
-			0.4
+			0.4,
+			0.43
 		]
 	},
 	"type/Blended Scotch": {
@@ -119,7 +120,8 @@
 	"type/Aged Blended Rum": {
 		"description": [
 			"Aged blended rum; flavor and strength vary by bottling.",
-			"Aged blends of rum from multiple regions, in the recipe role represented by Planteray Original Dark. Keep distinct from Aged Barbados Rum and Aged Column Still Rum."
+			"Aged blends of rum from multiple regions, in the recipe role represented by Planteray Original Dark. Keep distinct from Aged Barbados Rum and Aged Column Still Rum.",
+			"Aged rum blended from several regions, such as Planteray Original Dark. A single-island style is Aged Barbados Rum or Aged Jamaican Rum."
 		],
 		"parent": [
 			"Rum"
@@ -139,7 +141,8 @@
 	},
 	"type/Aged Jamaican Rum": {
 		"description": [
-			"Barrel-aged Jamaican rum, kept distinct from unaged and explicitly overproof styles."
+			"Barrel-aged Jamaican rum, kept distinct from unaged and explicitly overproof styles.",
+			"Barrel-aged Jamaican rum at ordinary strength, such as Appleton Estate 8 Year. Aged overproof Jamaican rum is its subtype."
 		],
 		"parent": [
 			"Rum"
@@ -189,7 +192,8 @@
 	"type/Aged Rhum Agricole": {
 		"description": [
 			"Barrel-aged sugarcane-juice rhum in the agricole style.",
-			"Barrel-aged sugarcane-juice rhum in the agricole style, also called rhum agricole vieux in this cabinet. Kept distinct from Unaged Rhum Agricole."
+			"Barrel-aged sugarcane-juice rhum in the agricole style, also called rhum agricole vieux in this cabinet. Kept distinct from Unaged Rhum Agricole.",
+			"Barrel-aged rhum agricole (rhum agricole vieux), distilled from fresh sugarcane juice."
 		],
 		"parent": [
 			"Rum"
@@ -237,7 +241,8 @@
 	},
 	"type/Aged Cachaca": {
 		"description": [
-			"Barrel-aged cachaça, kept distinct when the recipe specifies an aged style."
+			"Barrel-aged cachaça, kept distinct when the recipe specifies an aged style.",
+			"Barrel-aged cachaça, for recipes that ask for an aged style."
 		],
 		"parent": [
 			"Cachaça"
@@ -282,7 +287,8 @@
 	},
 	"type/Plymouth Gin": {
 		"description": [
-			"Plymouth gin for recipes that specify it."
+			"Plymouth gin for recipes that specify it.",
+			"Gin from Plymouth, England: softer and earthier than London dry."
 		],
 		"parent": [
 			"Gin"
@@ -295,7 +301,8 @@
 	"type/Navy Strength Gin": {
 		"description": [
 			"High-strength gin; strength affects the cocktail recipe.",
-			"High-strength gin, around 57% ABV; strength affects the cocktail recipe. Its bottles also fill recipes calling for London Dry Gin."
+			"High-strength gin, around 57% ABV; strength affects the cocktail recipe. Its bottles also fill recipes calling for London Dry Gin.",
+			"Gin at around 57% ABV, such as Hayman’s Royal Dock. Its bottles also fill recipes calling for London Dry Gin."
 		],
 		"parent": [
 			"Gin",
@@ -308,7 +315,8 @@
 	},
 	"type/Genever": {
 		"description": [
-			"Genever for recipes that specify this style."
+			"Genever for recipes that specify this style.",
+			"Malty Dutch and Belgian juniper spirit, the ancestor of gin."
 		],
 		"parent": [
 			"Gin"
@@ -320,11 +328,15 @@
 	},
 	"type/Vodka": {
 		"description": [
-			"A neutral, unflavored spirit for recipes calling for vodka. Flavored vodkas can be added as distinct ingredients."
+			"A neutral, unflavored spirit for recipes calling for vodka. Flavored vodkas can be added as distinct ingredients.",
+			"Neutral, unflavored vodka, what a recipe means by plain vodka. Flavored vodkas are their own types in this family and don’t fill these recipes."
 		],
 		"abvTypical": [
 			null,
 			0.4
+		],
+		"parent": [
+			"Vodka Family"
 		]
 	},
 	"family/Agave Spirit": {
@@ -337,7 +349,8 @@
 	},
 	"type/Blanco Tequila": {
 		"description": [
-			"Tequila in the blanco style, distinct from barrel-aged tequila in recipes."
+			"Tequila in the blanco style, distinct from barrel-aged tequila in recipes.",
+			"Unaged or briefly rested tequila, also called plata."
 		],
 		"parent": [
 			"Agave Spirit"
@@ -349,7 +362,8 @@
 	},
 	"type/Reposado Tequila": {
 		"description": [
-			"Barrel-rested tequila in the reposado style."
+			"Barrel-rested tequila in the reposado style.",
+			"Tequila rested two to twelve months in oak."
 		],
 		"parent": [
 			"Agave Spirit"
@@ -361,7 +375,8 @@
 	},
 	"type/Anejo Tequila": {
 		"description": [
-			"Aged tequila in the añejo style, kept distinct from blanco and reposado."
+			"Aged tequila in the añejo style, kept distinct from blanco and reposado.",
+			"Tequila aged one to three years in oak."
 		],
 		"parent": [
 			"Agave Spirit"
@@ -408,7 +423,8 @@
 	},
 	"type/Armagnac": {
 		"description": [
-			"French grape brandy from the Armagnac region; keep distinct when a recipe specifies it."
+			"French grape brandy from the Armagnac region; keep distinct when a recipe specifies it.",
+			"French grape brandy from Gascony, usually more rustic than cognac."
 		],
 		"parent": [
 			"Brandy",
@@ -447,7 +463,8 @@
 	"type/Bonded Apple Brandy": {
 		"description": [
 			"Apple brandy for recipes specifying bonded apple brandy, typically at 100 US proof (50% ABV). Assign bottles deliberately; proof alone does not establish bonded status.",
-			"Apple brandy for recipes specifying bonded apple brandy, at 100 US proof (50% ABV). Assign bottles deliberately; proof alone does not establish bonded status."
+			"Apple brandy for recipes specifying bonded apple brandy, at 100 US proof (50% ABV). Assign bottles deliberately; proof alone does not establish bonded status.",
+			"Bottled-in-bond apple brandy at 100 US proof (50% ABV), such as Laird’s Bonded. Not every 100-proof apple brandy is bonded."
 		],
 		"parent": [
 			"Apple Brandy",
@@ -462,7 +479,8 @@
 	"type/Applejack": {
 		"description": [
 			"Applejack as named in recipes. Bottlings vary; decide which bottles fit the recipe style you intend.",
-			"Applejack as named in recipes. Bottles vary; decide which bottles fit the recipe style you intend."
+			"Applejack as named in recipes. Bottles vary; decide which bottles fit the recipe style you intend.",
+			"American apple brandy blended with neutral spirit, such as Laird’s Applejack. Older recipes that say applejack often mean any American apple brandy."
 		],
 		"parent": [
 			"Apple Brandy",
@@ -476,7 +494,8 @@
 	},
 	"type/Calvados": {
 		"description": [
-			"Calvados for recipes specifying this apple brandy style. Decide which of your bottles fit the recipe requirement."
+			"Calvados for recipes specifying this apple brandy style. Decide which of your bottles fit the recipe requirement.",
+			"Oak-aged apple brandy from Normandy, sometimes with pear."
 		],
 		"parent": [
 			"Apple Brandy",
@@ -498,7 +517,8 @@
 	},
 	"type/Unaged Aquavit": {
 		"description": [
-			"Caraway- or dill-led aquavit without an aged style designation."
+			"Caraway- or dill-led aquavit without an aged style designation.",
+			"Unaged aquavit led by caraway or dill."
 		],
 		"parent": [
 			"Aquavit"
@@ -510,7 +530,8 @@
 	},
 	"type/Aged Aquavit": {
 		"description": [
-			"Barrel-aged aquavit, kept distinct from unaged aquavit in recipes."
+			"Barrel-aged aquavit, kept distinct from unaged aquavit in recipes.",
+			"Barrel-aged aquavit, such as Linie."
 		],
 		"parent": [
 			"Aquavit"
@@ -542,7 +563,8 @@
 	},
 	"type/Pastis": {
 		"description": [
-			"Pastis for recipes that specify it."
+			"Pastis for recipes that specify it.",
+			"Sweeter French anise spirit, such as Ricard, lower in strength than absinthe."
 		],
 		"parent": [
 			"Anise Spirit"
@@ -563,7 +585,8 @@
 	"type/Orange Liqueur": {
 		"description": [
 			"Orange liqueur; refine to a specific style or bottle when the recipe needs it.",
-			"Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles. Bottles share this broad recipe role; link a specific bottle when needed."
+			"Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles. Bottles share this broad recipe role; link a specific bottle when needed.",
+			"Orange liqueurs including triple sec, curaçao, and brandy- or rum-based styles, such as Cointreau and Pierre Ferrand Dry Curaçao. Link a specific bottle when a recipe names one."
 		],
 		"parent": [
 			"Fruit Liqueur"
@@ -587,7 +610,8 @@
 	},
 	"type/Cherry Liqueur": {
 		"description": [
-			"Cherry liqueur for recipes that specify it."
+			"Cherry liqueur for recipes that specify it.",
+			"Sweet cherry liqueur, such as Cherry Heering, distinct from Maraschino Liqueur and kirsch."
 		],
 		"parent": [
 			"Fruit Liqueur"
@@ -623,7 +647,8 @@
 	},
 	"type/Blackcurrant Liqueur": {
 		"description": [
-			"Blackcurrant liqueur, including creme de cassis."
+			"Blackcurrant liqueur, including creme de cassis.",
+			"Blackcurrant liqueur, such as crème de cassis."
 		],
 		"parent": [
 			"Fruit Liqueur"
@@ -656,7 +681,8 @@
 	"type/Green Herbal Liqueur": {
 		"description": [
 			"Green herbal liqueur; use a specific bottle reference when a particular bottling is intended.",
-			"Green herbal liqueur; link a specific bottle when the recipe names one."
+			"Green herbal liqueur; link a specific bottle when the recipe names one.",
+			"Strong, intensely herbal green liqueur in the style of Green Chartreuse. Link a specific bottle when a recipe names one."
 		],
 		"parent": [
 			"Herbal Liqueur",
@@ -669,7 +695,8 @@
 	},
 	"type/Yellow Herbal Liqueur": {
 		"description": [
-			"Yellow herbal liqueur; use a specific bottle reference when needed."
+			"Yellow herbal liqueur; use a specific bottle reference when needed.",
+			"Sweeter, milder yellow herbal liqueur in the style of Yellow Chartreuse. Link a specific bottle when a recipe names one."
 		],
 		"parent": [
 			"Herbal Liqueur",
@@ -712,7 +739,8 @@
 	},
 	"type/Violet Liqueur": {
 		"description": [
-			"Sweet violet-flavored floral liqueur, also called creme de violette."
+			"Sweet violet-flavored floral liqueur, also called creme de violette.",
+			"Sweet violet-flavored floral liqueur, also called crème de violette."
 		],
 		"parent": [
 			"Floral Liqueur"
@@ -747,7 +775,8 @@
 		"description": [
 			"Falernum; sweetness and alcohol content vary between preparations and bottlings.",
 			"Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottling.",
-			"Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottle."
+			"Falernum liqueur, distinct from nonalcoholic Falernum Syrup. Sweetness and strength vary by bottle.",
+			"Falernum liqueur, distinct from non-alcoholic Falernum Syrup. Sweetness and strength vary by bottle."
 		],
 		"parent": [
 			"Spice Liqueur",
@@ -769,7 +798,8 @@
 	"type/Red Bitter Liqueur": {
 		"description": [
 			"Red bitter liqueur; specify a bottle where bitterness and sweetness matter.",
-			"Campari-style bitter liqueur, distinct from the Aperol-style Orange Bitter Liqueur recipe role. Color alone does not determine membership."
+			"Campari-style bitter liqueur, distinct from the Aperol-style Orange Bitter Liqueur recipe role. Color alone does not determine membership.",
+			"Bitter red aperitivo liqueur in the style of Campari. Lighter, sweeter aperitivos like Aperol are Orange Bitter Liqueur."
 		],
 		"parent": [
 			"Amaro",
@@ -783,7 +813,8 @@
 	"type/Gentian Liqueur": {
 		"description": [
 			"Bitter liqueur with gentian character; select a bottle to capture the specific formulation.",
-			"Bitter liqueurs in the gentian recipe role, including Salers, Suze, Avèze, and, in this cabinet, Bitter Bianco. Formulations and strengths vary; select a bottle when needed."
+			"Bitter liqueurs in the gentian recipe role, including Salers, Suze, Avèze, and, in this cabinet, Bitter Bianco. Formulations and strengths vary; select a bottle when needed.",
+			"Bitter gentian-root liqueurs, such as Salers, Suze, and Avèze. Formulations and strengths vary; link a bottle when a recipe names one."
 		],
 		"parent": [
 			"Amaro",
@@ -796,7 +827,8 @@
 	},
 	"type/Fernet": {
 		"description": [
-			"A strongly bitter herbal liqueur in the fernet style."
+			"A strongly bitter herbal liqueur in the fernet style.",
+			"Intensely bitter, minty herbal liqueur, such as Fernet-Branca."
 		],
 		"parent": [
 			"Amaro",
@@ -809,7 +841,8 @@
 	},
 	"type/Artichoke Amaro": {
 		"description": [
-			"A bitter herbal liqueur in an artichoke-based style."
+			"A bitter herbal liqueur in an artichoke-based style.",
+			"Bitter herbal amaro made with artichoke, such as Cynar."
 		],
 		"parent": [
 			"Amaro",
@@ -822,7 +855,8 @@
 	},
 	"family/Nut Liqueur": {
 		"description": [
-			"Nut-flavored liqueurs. Add other nut styles when useful to your recipes."
+			"Nut-flavored liqueurs. Add other nut styles when useful to your recipes.",
+			"Liqueurs that taste nutty, such as amaretto, crème de noyaux, Frangelico (hazelnut), and nocino (walnut). Go by taste: amaretto and crème de noyaux taste of almond even when made from apricot pits."
 		],
 		"parent": [
 			"Liqueur"
@@ -848,6 +882,9 @@
 		"abvTypical": [
 			null,
 			0.2
+		],
+		"parent": [
+			"Other Liqueur"
 		]
 	},
 	"type/Creme de Cacao": {
@@ -857,6 +894,9 @@
 		"abvTypical": [
 			null,
 			0.27
+		],
+		"parent": [
+			"Other Liqueur"
 		]
 	},
 	"family/Still Wine": {
@@ -939,7 +979,8 @@
 	},
 	"family/Vermouth": {
 		"description": [
-			"Vermouth styles distinguished by their recipe roles."
+			"Vermouth styles distinguished by their recipe roles.",
+			"Vermouth styles: sweet, dry, blanc, and bitter."
 		],
 		"parent": [
 			"Fortified Wine"
@@ -1047,18 +1088,28 @@
 	},
 	"type/Ruby Port": {
 		"description": [
-			"Fortified wine in the ruby port style."
+			"Fortified wine in the ruby port style.",
+			"Young, fruity red port, aged briefly in large vats."
 		],
 		"parent": [
-			"Other Fortified Wine"
+			"Other Fortified Wine",
+			"Port"
+		],
+		"abvTypical": [
+			0.195
 		]
 	},
 	"type/Tawny Port": {
 		"description": [
-			"Fortified wine in the tawny port style."
+			"Fortified wine in the tawny port style.",
+			"Red port aged longer in small casks, nutty and caramel-toned."
 		],
 		"parent": [
-			"Other Fortified Wine"
+			"Other Fortified Wine",
+			"Port"
+		],
+		"abvTypical": [
+			0.2
 		]
 	},
 	"type/Quinquina": {
@@ -1100,7 +1151,8 @@
 	},
 	"type/Creole Bitters": {
 		"description": [
-			"Creole-style aromatic bitters for recipes that specify that profile."
+			"Creole-style aromatic bitters for recipes that specify that profile.",
+			"Bright red, anise-forward aromatic bitters in the style of Peychaud’s."
 		],
 		"parent": [
 			"Bitters"
@@ -1485,7 +1537,8 @@
 	},
 	"type/Ginger Ale": {
 		"description": [
-			"Ginger-flavored soft drink, kept distinct from ginger beer in recipes."
+			"Ginger-flavored soft drink, kept distinct from ginger beer in recipes.",
+			"Ginger soft drink, milder and sweeter than ginger beer."
 		],
 		"parent": [
 			"Carbonated Mixer"
@@ -1583,7 +1636,8 @@
 	},
 	"type/Orange Bitter Liqueur": {
 		"description": [
-			"Aperol-style bitter liqueur, distinct from the Campari-style Red Bitter Liqueur recipe role and from Orange Liqueur. Color alone does not determine membership."
+			"Aperol-style bitter liqueur, distinct from the Campari-style Red Bitter Liqueur recipe role and from Orange Liqueur. Color alone does not determine membership.",
+			"Lighter, sweeter bitter aperitivo in the style of Aperol, at about half Campari’s strength. Not an Orange Liqueur."
 		],
 		"parent": [
 			"Amaro",
@@ -1596,7 +1650,8 @@
 	},
 	"type/Falernum Syrup": {
 		"description": [
-			"Nonalcoholic spiced falernum syrup, distinct from Falernum liqueur. Record the preparation or purchased source you use."
+			"Nonalcoholic spiced falernum syrup, distinct from Falernum liqueur. Record the preparation or purchased source you use.",
+			"Non-alcoholic spiced falernum syrup, distinct from Falernum liqueur. Record the preparation or purchased source you use."
 		],
 		"parent": [
 			"Flavored Syrup"
@@ -1617,7 +1672,8 @@
 	},
 	"type/Light Rum": {
 		"description": [
-			"Lightly aged rum filtered to remove color, with a relatively restrained flavor profile; Don Q Cristal is an example. Distinct from White Blended Rum."
+			"Lightly aged rum filtered to remove color, with a relatively restrained flavor profile; Don Q Cristal is an example. Distinct from White Blended Rum.",
+			"Light, clean rum, usually lightly aged and filtered clear, such as Don Q Cristal. A clear blend with more character is White Blended Rum."
 		],
 		"parent": [
 			"Rum"
@@ -1629,7 +1685,8 @@
 	},
 	"type/White Blended Rum": {
 		"description": [
-			"Clear multi-region rum blends, such as Probitas, combining different flavor profiles. Components may be aged or unaged; kept distinct from the more restrained Light Rum role."
+			"Clear multi-region rum blends, such as Probitas, combining different flavor profiles. Components may be aged or unaged; kept distinct from the more restrained Light Rum role.",
+			"Clear rum blended from several regions for more character than Light Rum, such as Probitas. Its components may be aged or unaged."
 		],
 		"parent": [
 			"Rum"
@@ -1641,7 +1698,8 @@
 	},
 	"type/Aged Barbados Rum": {
 		"description": [
-			"Moderately aged Barbados-style blends of pot- and column-still rum, represented by Real McCoy 5, Planteray Barbados 5 Year, and Mount Gay Eclipse. Older expressions such as Real McCoy 12 generally fit; lighter white styles such as Real McCoy 3 and Mount Gay Silver do not."
+			"Moderately aged Barbados-style blends of pot- and column-still rum, represented by Real McCoy 5, Planteray Barbados 5 Year, and Mount Gay Eclipse. Older expressions such as Real McCoy 12 generally fit; lighter white styles such as Real McCoy 3 and Mount Gay Silver do not.",
+			"Moderately aged Barbados-style blends of pot- and column-still rum, such as Real McCoy 5, Planteray Barbados 5 Year, and Mount Gay Eclipse. Older expressions generally fit too; Barbados white rums do not."
 		],
 		"parent": [
 			"Rum"
@@ -1653,7 +1711,8 @@
 	},
 	"type/Aged Column Still Rum": {
 		"description": [
-			"Aged column-still rum in the recipe role represented by Ron Abuelo Añejo and Don Q Gold, kept distinct from Aged Barbados Rum. Moderately aged expressions are typical; older expressions can generally fill the same role."
+			"Aged column-still rum in the recipe role represented by Ron Abuelo Añejo and Don Q Gold, kept distinct from Aged Barbados Rum. Moderately aged expressions are typical; older expressions can generally fill the same role.",
+			"Aged rum made only in column stills, lighter-bodied than Barbados-style blends, such as Ron Abuelo Añejo and Don Q Gold. Older expressions generally fit too."
 		],
 		"parent": [
 			"Rum"
@@ -1666,7 +1725,8 @@
 	"type/Aged Overproof Jamaican Rum": {
 		"description": [
 			"High-strength barrel-aged Jamaican rum for recipes specifying this role, distinct from Unaged Overproof Jamaican Rum and standard-strength Aged Jamaican Rum.",
-			"High-strength, lightly aged Jamaican rum in the recipe role represented by Smith & Cross. Distinct from Unaged Overproof Jamaican Rum; its bottles also fill recipes calling for Aged Jamaican Rum."
+			"High-strength, lightly aged Jamaican rum in the recipe role represented by Smith & Cross. Distinct from Unaged Overproof Jamaican Rum; its bottles also fill recipes calling for Aged Jamaican Rum.",
+			"High-strength, lightly aged Jamaican rum, such as Smith & Cross. Its bottles also fill recipes calling for Aged Jamaican Rum."
 		],
 		"parent": [
 			"Rum",
@@ -1679,7 +1739,8 @@
 	},
 	"type/Unaged Overproof Jamaican Rum": {
 		"description": [
-			"High-strength unaged Jamaican rum for recipes specifying this role, distinct from Aged Overproof Jamaican Rum."
+			"High-strength unaged Jamaican rum for recipes specifying this role, distinct from Aged Overproof Jamaican Rum.",
+			"High-strength unaged Jamaican rum, such as Wray & Nephew White Overproof. Not a substitute for Aged Overproof Jamaican Rum."
 		],
 		"parent": [
 			"Rum"
@@ -1691,7 +1752,8 @@
 	},
 	"type/Demerara 151 Rum": {
 		"description": [
-			"Demerara rum bottled at 151 US proof (75.5% ABV), for recipes specifying this strength and style. Distinct from standard-strength Demerara Rum and multi-region overproof blends."
+			"Demerara rum bottled at 151 US proof (75.5% ABV), for recipes specifying this strength and style. Distinct from standard-strength Demerara Rum and multi-region overproof blends.",
+			"Demerara rum bottled at 151 US proof (75.5% ABV), such as Hamilton 151. Standard-strength Demerara Rum and overproof blends are separate types."
 		],
 		"parent": [
 			"Rum"
@@ -1715,7 +1777,8 @@
 	},
 	"type/Unaged Rhum Agricole": {
 		"description": [
-			"Unaged sugarcane-juice rhum in the agricole style, also called rhum agricole blanc. Kept distinct from Aged Rhum Agricole."
+			"Unaged sugarcane-juice rhum in the agricole style, also called rhum agricole blanc. Kept distinct from Aged Rhum Agricole.",
+			"Unaged rhum agricole (rhum agricole blanc), distilled from fresh sugarcane juice."
 		],
 		"parent": [
 			"Rum"
@@ -1751,7 +1814,8 @@
 	},
 	"type/Black Jamaican Rum": {
 		"description": [
-			"Jamaican rum with pronounced caramel influence, distinct from the Aged Jamaican Rum recipe role. Color alone does not determine membership."
+			"Jamaican rum with pronounced caramel influence, distinct from the Aged Jamaican Rum recipe role. Color alone does not determine membership.",
+			"Dark, molasses-rich Jamaican rum, such as Coruba or Myers’s, for recipes that want its weight rather than an aged rum. A dark color alone doesn’t make a rum this type."
 		],
 		"parent": [
 			"Rum"
@@ -1775,7 +1839,8 @@
 	},
 	"type/Contemporary Gin": {
 		"description": [
-			"Gin with prominent citrus, floral, herbal, or other botanical notes, in a recipe role distinct from London Dry Gin. Individual gins can differ substantially; preserve a recipe’s named bottle when specified."
+			"Gin with prominent citrus, floral, herbal, or other botanical notes, in a recipe role distinct from London Dry Gin. Individual gins can differ substantially; preserve a recipe’s named bottle when specified.",
+			"Gin led by citrus, floral, herbal, or other botanicals rather than juniper, such as Hendrick’s or Aviation. These gins differ a lot, so keep a recipe’s named bottle."
 		],
 		"parent": [
 			"Gin"
@@ -1795,7 +1860,8 @@
 	},
 	"type/Creme de Menthe": {
 		"description": [
-			"Sweet mint liqueur, including clear expressions such as Menthe-Pastille. Kept distinct from the Green Herbal Liqueur recipe role; color alone does not determine membership."
+			"Sweet mint liqueur, including clear expressions such as Menthe-Pastille. Kept distinct from the Green Herbal Liqueur recipe role; color alone does not determine membership.",
+			"Sweet mint liqueur, green or clear, such as Tempus Fugit or Menthe-Pastille. Green herbal liqueurs are a separate type."
 		],
 		"parent": [
 			"Herbal Liqueur",
@@ -1833,7 +1899,8 @@
 	},
 	"type/Vermouth Amaro": {
 		"description": [
-			"Bitter vermouth in the recipe role represented by Punt e Mes and Cocchi Dopo Teatro, kept distinct from ordinary Sweet Vermouth. Preserve a recipe’s named bottle when specified."
+			"Bitter vermouth in the recipe role represented by Punt e Mes and Cocchi Dopo Teatro, kept distinct from ordinary Sweet Vermouth. Preserve a recipe’s named bottle when specified.",
+			"Sweet vermouth with a pronounced bitter edge, such as Punt e Mes and Cocchi Dopo Teatro. Keep a recipe’s named bottle."
 		],
 		"parent": [
 			"Vermouth"
@@ -1865,7 +1932,8 @@
 	},
 	"type/Flavored Rum": {
 		"description": [
-			"Catch-all for flavored rums without close substitutes, such as coconut rums. Bottles in this type are rarely interchangeable, so recipes usually name the bottle. Pineapple Rum has its own type."
+			"Catch-all for flavored rums without close substitutes, such as coconut rums. Bottles in this type are rarely interchangeable, so recipes usually name the bottle. Pineapple Rum has its own type.",
+			"Catch-all for flavored rums without close substitutes, such as coconut rums. Bottles in this type are rarely interchangeable, so recipes usually name the bottle. Pineapple Rum and Spiced Rum have their own types."
 		],
 		"parent": [
 			"Rum"
@@ -1901,7 +1969,8 @@
 	},
 	"type/Bergamot Liqueur": {
 		"description": [
-			"Bergamot-orange liqueur, such as Italicus, distinct from the broader Orange Liqueur role."
+			"Bergamot-orange liqueur, such as Italicus, distinct from the broader Orange Liqueur role.",
+			"Bergamot-orange liqueur, such as Italicus; more floral and bitter than Orange Liqueur."
 		],
 		"parent": [
 			"Fruit Liqueur"
@@ -1950,7 +2019,8 @@
 	},
 	"type/Spice Liqueur": {
 		"description": [
-			"Catch-all for spice-led liqueurs without close substitutes, such as chai spice liqueurs. Bottles in this type are rarely interchangeable, so recipes usually name the bottle."
+			"Catch-all for spice-led liqueurs without close substitutes, such as chai spice liqueurs. Bottles in this type are rarely interchangeable, so recipes usually name the bottle.",
+			"Catch-all for spice-led liqueurs without close substitutes, such as chai liqueurs, Ancho Reyes chile liqueur, or ginger liqueurs like Domaine de Canton. Bottles in this type are rarely interchangeable, so recipes usually name the bottle."
 		],
 		"parent": [
 			"Herbal & Spice Liqueur"
@@ -1970,7 +2040,8 @@
 	},
 	"type/Bitter Aperitif Wine": {
 		"description": [
-			"Quinquina-style aromatized wine, such as Cocchi Americano and Lillet Blanc, with quinine or other bitter notes. Kept distinct from Blanc Vermouth."
+			"Quinquina-style aromatized wine, such as Cocchi Americano and Lillet Blanc, with quinine or other bitter notes. Kept distinct from Blanc Vermouth.",
+			"Quinquina-style aromatized wine with quinine or other bitter notes, such as Cocchi Americano and Lillet Blanc."
 		],
 		"parent": [
 			"Aperitif Wine"
@@ -2121,6 +2192,126 @@
 		],
 		"abvTypical": [
 			0.4
+		]
+	},
+	"bottle/Peychaud's Bitters": {
+		"description": [
+			"Peychaud’s bitters, the anise-forward bitters of the Sazerac. Recipes can name this bottle specifically or call for its Creole Bitters type. Set availability or quantities to record your stock."
+		],
+		"parent": [
+			"Creole Bitters"
+		]
+	},
+	"ingredient/Sugar": {
+		"description": [
+			"White granulated sugar, for rims and for recipes that call for sugar itself rather than a syrup."
+		]
+	},
+	"ingredient/Sugar Cubes": {
+		"description": [
+			"White sugar cubes, for an Old Fashioned or Champagne Cocktail built on a cube."
+		]
+	},
+	"ingredient/Espresso": {
+		"description": [
+			"Freshly pulled espresso; cold brew concentrate is a different staple."
+		]
+	},
+	"ingredient/Worcestershire Sauce": {
+		"description": [
+			"Worcestershire sauce, for savory drinks such as the Bloody Mary."
+		]
+	},
+	"ingredient/Hot Sauce": {
+		"description": [
+			"Vinegar-based hot sauce, such as Tabasco. Recipes naming a specific sauce can link it as its own staple."
+		]
+	},
+	"type/Canadian Whisky": {
+		"description": [
+			"Light Canadian whisky, usually a corn-based blend, such as Canadian Club; Canadians often call it rye. Rye Whiskey is a separate type."
+		],
+		"parent": [
+			"Whiskey"
+		],
+		"abvTypical": [
+			0.4
+		]
+	},
+	"type/Japanese Whisky": {
+		"description": [
+			"Japanese whisky, most often a light blend for highballs, such as Suntory Toki. Not a substitute for Scotch in recipes that name it."
+		],
+		"parent": [
+			"Whiskey"
+		],
+		"abvTypical": [
+			0.43
+		]
+	},
+	"type/Spiced Rum": {
+		"description": [
+			"Rum flavored with vanilla, cinnamon, clove, and other spices, such as Sailor Jerry or Kraken. Sweetness and strength vary, but recipes calling for spiced rum treat bottles as interchangeable."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			0.4
+		]
+	},
+	"family/Vodka Family": {
+		"description": [
+			"Vodka, plain or flavored. Add a type here for each flavored vodka you buy."
+		],
+		"parent": [
+			"Spirit"
+		]
+	},
+	"family/Port": {
+		"description": [
+			"Port styles. A recipe calling for plain port accepts any of them."
+		],
+		"parent": [
+			"Fortified Wine"
+		]
+	},
+	"type/White Port": {
+		"description": [
+			"Port from white grapes, dry to sweet, as in a Portonic with tonic water."
+		],
+		"parent": [
+			"Port"
+		],
+		"abvTypical": [
+			0.19
+		]
+	},
+	"family/Cream Liqueur": {
+		"description": [
+			"Liqueurs made with cream or egg, such as Irish cream, RumChata, Amarula, and advocaat. They curdle with citrus and keep best refrigerated once opened."
+		],
+		"parent": [
+			"Liqueur"
+		]
+	},
+	"type/Irish Cream": {
+		"description": [
+			"Irish whiskey and cream liqueur, such as Baileys."
+		],
+		"parent": [
+			"Cream Liqueur"
+		],
+		"abvTypical": [
+			0.17
+		]
+	},
+	"family/Other Liqueur": {
+		"description": [
+			"Liqueurs that aren’t fruit, herbal or spice, floral, nut, bitter, or cream: coffee, chocolate, and other flavors such as corn (Nixta), honey, maple, butterscotch, or tea."
+		],
+		"parent": [
+			"Liqueur"
 		]
 	}
 }
