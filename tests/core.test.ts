@@ -332,6 +332,19 @@ void test('Bases use the selected root and kind without requiring parents or cat
 		['cc-est-alcohol-ml'],
 	);
 	assert.match(lower.filters!.and[0]!, /!= "partial"/);
+	// What keeps estimates partial, beside each recipe, only in its own view.
+	const partial = recipes.views.find((view: { name: string }) => view.name === 'Partial estimates')!;
+	assert.deepEqual(partial.filters!.and, ['note["cc-est-basis"] == "partial"']);
+	assert.deepEqual(partial.order.slice(0, 2), ['formula.name', 'cc-est-missing']);
+	assert.equal(recipes.properties['note.cc-est-missing']!.displayName, 'Missing');
+	assert.ok(!recipes.views[0]!.order.includes('cc-est-missing'));
+	// Bottles you own without an ABV, in stock first.
+	const bottles = parseBase(bases.find((base) => base.path.endsWith('/Bottles.base'))!.content);
+	const missing = bottles.views.find((view: { name: string }) => view.name === 'Missing ABV')!;
+	assert.deepEqual(missing.filters!.and, ['note["cc-abv"] == null']);
+	assert.deepEqual(missing.groupBy, { property: 'formula.inStock', direction: 'ASC' });
+	assert.match(bottles.formulas.inStock!, /^if\(.*, "In stock", "Not in stock"\)$/);
+	assert.ok(missing.order.includes('cc-abv'));
 	assert.match(recipes.formulas.drinks!, /\* 0\.789 \/ 14\)/);
 	const uk = parseBase(resourceBases('Cocktails', 8).find((base) => base.path.endsWith('/Recipes.base'))!.content);
 	assert.match(uk.formulas.drinks!, /\* 0\.789 \/ 8\)/);

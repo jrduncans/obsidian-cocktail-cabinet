@@ -122,6 +122,11 @@ export interface LineEstimate {
 	/** The line's links name alternatives whose ABVs differ by more than five points. */
 	alternativesDiffer?: boolean;
 }
+/**
+ * What keeps a partial estimate partial: a linked note without an ABV (its target as written), or a
+ * line to fix, unlinked or with an amount that can't be read, as plain text with links shown as their text.
+ */
+export type Missing = { link: string } | { line: string };
 export interface Estimate {
 	/** mL of ethanol per serving; a lower bound when the basis is partial. */
 	alcoholMl: number;
@@ -136,6 +141,8 @@ export interface Estimate {
 	dilution: number;
 	facts: Fact[];
 	lines: LineEstimate[];
+	/** Each once, in recipe order; empty unless the basis is partial. */
+	missing: Missing[];
 }
 export interface EstimateSettings {
 	dilution: Readonly<Record<Preparation, number>>;
@@ -196,6 +203,14 @@ function lineVolume(line: string, settings: EstimateSettings): { shape: LineShap
 
 const LINK = /\[\[([^\]]+)\]\]/g;
 
+/** A line as plain text: each link as its shown text, or the target's last segment. */
+function plainLine(line: string): string {
+	return line.replace(LINK, (_, inner: string) => {
+		const bar = inner.indexOf('|');
+		return bar >= 0 ? inner.slice(bar + 1) : linkTarget(inner).split('/').at(-1)!;
+	});
+}
+
 /** The preparation the Method text names first; a flash blend is a quick spin, so it counts as shaken. */
 export function methodPreparation(method: string): Preparation | null {
 	const found = (
@@ -235,8 +250,11 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 	let typical = false;
 	let mine = false;
 	let past = false;
+	const missing = new Map<string, Missing>();
+	const miss = (item: Missing) => missing.set('link' in item ? `link:${item.link}` : `line:${item.line}`, item);
 	for (const line of input.lines) {
-		const links = [...line.matchAll(LINK)].map((match) => input.link(linkTarget(match[1]!)));
+		const targets = [...line.matchAll(LINK)].map((match) => linkTarget(match[1]!));
+		const links = targets.map((target) => input.link(target));
 		for (const link of links) link?.facts.forEach((fact) => facts.add(fact));
 		const first = links[0];
 		const abv = first?.abv ?? null;
@@ -248,7 +266,10 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 		if (shape === 'ignored') continue;
 		if (shape === 'unmeasured') {
 			// An amount that can't be read only matters when it may carry alcohol.
-			if (first && abv !== 0) partial = true;
+			if (first && abv !== 0) {
+				partial = true;
+				miss({ line: plainLine(line) });
+			}
 			continue;
 		}
 		if (shape === 'top') tops += ml!;
@@ -256,7 +277,11 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 		if (shape === 'range' || shape === 'top') rough = true;
 		if (abv === null) {
 			// A few dashes of unknown strength hold well under a mL of alcohol: too little to make the estimate partial.
-			if (shape !== 'dash') partial = true;
+			if (shape !== 'dash') {
+				partial = true;
+				// A link that resolves names the note to complete; otherwise the line itself needs linking.
+				miss(first ? { link: targets[0]! } : { line: plainLine(line) });
+			}
 			continue;
 		}
 		alcohol += ml! * abv;
@@ -295,6 +320,7 @@ export function estimateAlcohol(input: EstimateInput): Estimate {
 		dilution,
 		facts: [...facts],
 		lines,
+		missing: basis === 'partial' ? [...missing.values()] : [],
 	};
 }
 

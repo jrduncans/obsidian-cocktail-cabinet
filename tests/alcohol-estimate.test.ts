@@ -217,6 +217,41 @@ void test('facts come from catalog IDs, or starter names when a note has none', 
 	assert.deepEqual(factsOf('type', 'type/London Dry Gin', 'London Dry Gin'), []);
 });
 
+void test('a partial estimate says what keeps it partial: notes without an ABV, and lines to fix', () => {
+	const estimate = estimateAlcohol({
+		lines: [
+			'2 oz [[Rum]]',
+			'1 oz [[Mystery]]',
+			'2 oz gin, unlinked',
+			'Splash of [[Overproof]]',
+			'1 oz [[Cocktails/Nowhere|nowhere]]',
+			'2 dashes [[Mystery]]',
+			'Garnish: lime wheel',
+			'¾ oz [[Mystery|mystery liqueur]]',
+		],
+		method: 'Stir.',
+		link,
+	});
+	assert.equal(estimate.basis, 'partial');
+	// Each once; a link as its target, a line as plain text so it can't be mistaken for one.
+	assert.deepEqual(estimate.missing, [
+		{ link: 'Mystery' },
+		{ line: '2 oz gin, unlinked' },
+		{ line: 'Splash of Overproof' },
+		{ line: '1 oz nowhere' },
+	]);
+	const exact = estimateAlcohol({ lines: ['2 oz [[Rum]]', '2 dashes [[Mystery]]'], method: 'Stir.', link });
+	assert.equal(exact.basis, 'exact');
+	assert.deepEqual(exact.missing, []);
+	const stored = storedEstimate(estimate, (target) => `[[Cocktails/${target}|${target}]]`);
+	assert.deepEqual(stored['cc-est-missing'], [
+		'[[Cocktails/Mystery|Mystery]]',
+		'2 oz gin, unlinked',
+		'Splash of Overproof',
+		'1 oz nowhere',
+	]);
+});
+
 void test('stored estimates are rounded, and a recipe with nothing to pour stores no numbers', () => {
 	const estimate = estimateAlcohol({
 		lines: ['2 oz (60 ml) [[Rum]]', '1 oz (30 ml) [[Lime]]', '¾ oz (22.5 ml) [[Syrup]]'],
@@ -230,6 +265,8 @@ void test('stored estimates are rounded, and a recipe with nothing to pour store
 		'cc-est-volume-ml': 141,
 		'cc-est-basis': 'exact',
 		'cc-contains': ['citrus', 'juice'],
+		// Removed once the estimate is complete.
+		'cc-est-missing': null,
 	});
 	const none = estimateAlcohol({ lines: ['Garnish: cherry'], method: '', link });
 	assert.deepEqual(storedEstimate(none), {
@@ -238,6 +275,7 @@ void test('stored estimates are rounded, and a recipe with nothing to pour store
 		'cc-est-volume-ml': null,
 		'cc-est-basis': 'none',
 		'cc-contains': [],
+		'cc-est-missing': null,
 	});
 });
 

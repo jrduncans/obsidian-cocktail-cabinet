@@ -20,22 +20,9 @@ export const ESTIMATE_PROPS = {
 	volume: 'cc-est-volume-ml',
 	basis: 'cc-est-basis',
 	contains: 'cc-contains',
+	/** Only while the basis is partial: removed once the estimate is complete. */
+	missing: 'cc-est-missing',
 } as const;
-/** A note whose ABV would complete partial estimates, and the recipes it would help. */
-export interface MissingAbv {
-	path: string;
-	name: string;
-	kind: 'bottle' | 'type' | 'family';
-	/** `cc-abv` for a bottle, `cc-abv-typical` for a type; null for a family, which has no ABV of its own. */
-	property: string | null;
-	recipes: string[];
-}
-export interface MissingAbvs {
-	notes: MissingAbv[];
-	/** Recipes partial because a line with an amount links nothing. */
-	unlinked: string[];
-}
-
 /** A recipe's own dilution, replacing the assumed percentage. */
 export const DILUTION_PROP = 'cc-dilution';
 
@@ -57,8 +44,14 @@ const round = (value: number, step: number) => Math.round(value / step) * step;
 const asLinks = (value: unknown): string[] =>
 	(Array.isArray(value) ? value : [value]).filter((item): item is string => typeof item === 'string');
 
-/** The estimate as stored: rounded so recalculation doesn't rewrite notes over noise. */
-export function storedEstimate(estimate: Estimate): Record<string, unknown> {
+/**
+ * The estimate as stored: rounded so recalculation doesn't rewrite notes over noise. `toLink` writes a
+ * missing note's link; `cc-est-missing` is null, meaning removed, unless the estimate is partial.
+ */
+export function storedEstimate(
+	estimate: Estimate,
+	toLink: (target: string) => string = (target) => `[[${target}]]`,
+): Record<string, unknown> {
 	const none = estimate.basis === 'none';
 	return {
 		[ESTIMATE_PROPS.alcohol]: none ? null : Number(round(estimate.alcoholMl, 0.1).toFixed(1)),
@@ -66,6 +59,9 @@ export function storedEstimate(estimate: Estimate): Record<string, unknown> {
 		[ESTIMATE_PROPS.volume]: none ? null : Math.round(estimate.volumeMl),
 		[ESTIMATE_PROPS.basis]: estimate.basis,
 		[ESTIMATE_PROPS.contains]: [...estimate.facts].sort(),
+		[ESTIMATE_PROPS.missing]: estimate.missing.length
+			? estimate.missing.map((item) => ('link' in item ? toLink(item.link) : item.line))
+			: null,
 	};
 }
 
@@ -263,12 +259,17 @@ export class RecipeSync {
 		const updates: Record<string, unknown> = {};
 		const links = this.plannedLinks(file, cache);
 		if (links) updates[PROP.ingredients] = links;
-		const stored = storedEstimate(await this.estimate(file, bottles));
+		const stored = storedEstimate(
+			await this.estimate(file, bottles),
+			(target) => this.links([target], file.path)[0]!,
+		);
 		for (const [key, value] of Object.entries(stored))
 			if (JSON.stringify(cache.frontmatter?.[key] ?? null) !== JSON.stringify(value)) updates[key] = value;
 		if (!Object.keys(updates).length) return false;
 		await this.app.fileManager.processFrontMatter(file, (properties: Record<string, unknown>) => {
-			if (properties[PROP.kind] === 'recipe') Object.assign(properties, updates);
+			if (properties[PROP.kind] !== 'recipe') return;
+			Object.assign(properties, updates);
+			if (properties[ESTIMATE_PROPS.missing] === null) delete properties[ESTIMATE_PROPS.missing];
 		});
 		return true;
 	}
@@ -323,61 +324,6 @@ export class RecipeSync {
 			}
 		}
 		return updated;
-	}
-
-	/**
-	 * What leaves estimates partial: notes whose ABV would complete them (a bottle's `cc-abv`, or a
-	 * type's or family's typical ABV), with the recipes each would help, most first; and recipes
-	 * partial because a line with an amount isn't linked to anything.
-	 */
-	async missingAbvs(): Promise<MissingAbvs> {
-		const bottles = this.bottleAbvs();
-		const notes = new Map<string, MissingAbv>();
-		const unlinked = new Set<string>();
-		for (const file of this.app.vault.getMarkdownFiles()) {
-			if (!this.isRecipe(file, this.app.metadataCache.getFileCache(file))) continue;
-			const estimate = await this.estimate(file, bottles);
-			if (estimate.basis !== 'partial') continue;
-			for (const line of estimate.lines) {
-				if (line.abv !== null || line.shape === 'ignored' || line.shape === 'dash') continue;
-				const link = line.line.match(/\[\[([^\]]+)\]\]/)?.[1];
-				const target = link ? this.resolve(link, file.path) : null;
-				const fill = target ? this.toFill(target) : null;
-				if (!fill) {
-					if (line.shape !== 'unmeasured') unlinked.add(file.path);
-					continue;
-				}
-				const entry = notes.get(fill.path) ?? { ...fill, recipes: [] };
-				if (!entry.recipes.includes(file.path)) entry.recipes.push(file.path);
-				notes.set(fill.path, entry);
-			}
-		}
-		return {
-			notes: [...notes.values()].sort(
-				(a, b) => b.recipes.length - a.recipes.length || a.name.localeCompare(b.name),
-			),
-			unlinked: [...unlinked],
-		};
-	}
-
-	/** The note whose ABV would settle a line linking `file`: the bottle, type, or family; other stock's first type. */
-	private toFill(file: TFile, depth = 0): Omit<MissingAbv, 'recipes'> | null {
-		const properties = this.frontmatter(file);
-		const kind = properties[PROP.kind];
-		const name = typeof properties[PROP.name] === 'string' ? (properties[PROP.name] as string) : file.basename;
-		if (kind === 'bottle' || kind === 'type' || kind === 'family')
-			return {
-				path: file.path,
-				name,
-				kind,
-				property: kind === 'bottle' ? PROP.abv : kind === 'type' ? PROP.abvTypical : null,
-			};
-		if (kind === 'ingredient' && depth === 0) {
-			const first = asLinks(properties[PROP.provides])[0];
-			const type = first ? this.resolve(first, file.path) : null;
-			return type ? this.toFill(type, depth + 1) : null;
-		}
-		return null;
 	}
 
 	/** Recalculate every recipe soon, such as after an estimate setting changes. */
