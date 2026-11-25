@@ -16,6 +16,7 @@ import type { CabinetNote } from '../src/core/schema';
 import { ingredientSection, localDate, renderNote } from '../src/core/notes';
 import { isWithin, relatedTargets } from '../src/core/relationships';
 import { starterPlan } from '../src/core/setup';
+import { isLinkedView, LINKED_VIEWS, viewOpenLink } from '../src/core/view-links';
 import { STARTER_EXAMPLES, examplePlan } from '../src/catalog/examples';
 import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
 import { basePath, RESOURCE_BASES, resourceBases } from '../src/core/bases';
@@ -1047,4 +1048,13 @@ void test('the starter gives types a typical ABV: 0 for non-alcoholic, a represe
 		const value = entry.properties?.[PROP.abvTypical];
 		if (value !== undefined) assert.ok(typeof value === 'number' && value >= 0 && value < 1, entry.name);
 	}
+});
+
+void test('the Cocktail Cabinet note links each view it names, and only those views open from a link', () => {
+	const home = starterPlan('Cocktails').find((file) => file.kind === 'cabinet')!.content;
+	for (const view of Object.keys(LINKED_VIEWS) as (keyof typeof LINKED_VIEWS)[])
+		assert.ok(home.includes(viewOpenLink(view)), view);
+	assert.equal(viewOpenLink('can-make'), '[What can I make?](obsidian://cocktail-cabinet?open=can-make)');
+	assert.ok(isLinkedView('buy'));
+	for (const other of ['toString', '__proto__', 'setup', undefined]) assert.ok(!isLinkedView(other), String(other));
 });

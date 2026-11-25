@@ -653,3 +653,9 @@
 	width: var(--size-4-6);
 	height: var(--size-4-6);
 }
+
+/* Links that open a cabinet view stay in Obsidian, so they don't get the external-link icon. */
+a.external-link[href^='obsidian://cocktail-cabinet?'] {
+	background-image: none;
+	padding-inline-end: 0;
+}

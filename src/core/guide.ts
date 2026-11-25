@@ -6,6 +6,7 @@ import { RESTOCK_BASE } from './restock';
 import { cabinetFolder, PROP, wikiLink } from './schema';
 import type { PlannedFile } from './schema';
 import { SHOPPING_NOTE, shoppingNotePath } from './shopping';
+import { viewOpenLink } from './view-links';
 
 /**
  * The guide: managed notes in `<root>/Guide/` explaining the cabinet in more depth than the Cocktail
@@ -81,7 +82,7 @@ Notes, links, and properties are the system: they stay readable and editable wit
 1. Open ${view('Other stock', 'Kitchen staples')}, walk through your kitchen, and set what you have: Have, Low, or Out.
 2. Record your bottles. Starter bottles and types start as Unknown; set the stock on a note you have, or use **Add a bottle** for one that's missing. See ${page('Stock')}.
 3. Add a favorite recipe with **Create a cocktail recipe**, or paste one from a website. See ${page('Recipes')}.
-4. Run **What can I make?** to see what your cabinet makes now, then make one and run **Log this cocktail** on its recipe. See ${page('Making Drinks')}.
+4. Run ${viewOpenLink('can-make')} to see what your cabinet makes now, then make one and run **Log this cocktail** on its recipe. See ${page('Making Drinks')}.
 
 ## Yours and the plugin's
 
@@ -104,7 +105,7 @@ Each ingredient line links the note it calls for, which is what lets the cabinet
 
 Link what the recipe asks for, no narrower: a type such as London Dry Gin when any will do, a family such as rum for a broad call, a bottle only when the recipe names one. The **Link text** setting decides the link's text: by default, the cabinet name when the wording is the same name written differently (\`lime juice\` becomes \`[[${root}/Types/Lime Juice|Lime Juice]]\`), with other words kept beside the link (\`fresh [[${root}/Types/Lime Juice|Lime Juice]]\`); other wording stays as the recipe wrote it. You can always choose different text when linking. With the **Fraction characters** setting on (the default), fluid-ounce amounts are written with fraction characters: \`1½ oz\`, \`¾ oz\`, not \`1 1/2 oz\` or \`.75 oz\`.
 
-- **Review unlinked ingredients** gathers measured lines with no link, grouped by wording, and links a wording across every recipe at once.
+- ${viewOpenLink('unlinked')} gathers measured lines with no link, grouped by wording, and links a wording across every recipe at once.
 - **Link this ingredient line**, **Edit this ingredient link**, and **Insert ingredient link** work in the editor, from the command palette or the right-click menu.
 - **Create** items in an ingredient row's ⋯ menu add a missing type, bottle, or other stock without losing your draft.
 - **Remember** a wording when you link it, such as “rum, such as Coruba” for Aged Jamaican Rum. The next recipe with the same wording comes into review already linked, marked as remembered, and you can unlink it. Remembered wordings are kept in the note's \`${PROP.writtenAs}\` property; edit or remove them there.
@@ -156,7 +157,7 @@ Unknown means you haven't said, and never counts as in stock.
 	'Making Drinks': ({ page }) => `
 ## What can I make?
 
-**What can I make?** opens a pane beside your notes listing every recipe by how close it is:
+${viewOpenLink('can-make')} opens a pane beside your notes listing every recipe by how close it is:
 
 - **Can make**: everything is on hand, some perhaps Low.
 - **With a substitute**: makeable with a likely substitute, such as another amaro for a named one. A suggestion, not a match.
@@ -196,7 +197,7 @@ ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} lists everything marked **Add
 ## Deciding what to buy
 
 - ${view(RESTOCK_BASE)} lists stock running low, out, or not yet filled in, each with a **Shopping list** checkbox. Running low means the last bottle at or under 10% full, or 70 mL; both are settings.
-- **What should I buy?** lists the missing ingredients that would unlock the most recipes, with a button to add each to the list. See ${page('Making Drinks')}.
+- ${viewOpenLink('buy')} lists the missing ingredients that would unlock the most recipes, with a button to add each to the list. See ${page('Making Drinks')}.
 
 ## After shopping
 

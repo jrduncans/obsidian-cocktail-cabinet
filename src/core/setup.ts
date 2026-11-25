@@ -10,6 +10,7 @@ import { DEFAULT_RESTOCK, RESTOCK_BASE, restockBase } from './restock';
 import type { RestockThresholds } from './restock';
 import type { PlannedFile } from './schema';
 import { asManaged } from './managed';
+import { viewOpenLink } from './view-links';
 import { AGENT_REFERENCE, GUIDE_PAGES, guideLink, guideNotes } from './guide';
 
 /** Where users keep their own Bases; the plugin never writes there. */
@@ -107,11 +108,11 @@ function cabinetNote(root: string, examples: ReadonlyMap<string, string>): Plann
 			properties,
 			`# Cocktail Cabinet
 
-Your bottles, ingredients, and cocktail recipes. New here? Start with ${guideLink(root, 'Getting Started')}. Every command is in the command palette under **Cocktail Cabinet**.${exampleSection(examples)}
+Your bottles, ingredients, and cocktail recipes. New here? Start with ${guideLink(root, 'Getting Started')}. Every command, including the views linked below, is in the command palette under **Cocktail Cabinet**.${exampleSection(examples)}
 
 ## Make a drink
 
-- **What can I make?** (command): every recipe by what you have on hand.
+- ${viewOpenLink('can-make')}: every recipe by what you have on hand.
 - ${viewLink('Recipes')}: your recipes, with **Latest** and **Recently made** views.
 - On a recipe, the glass button in the header logs the cocktail.
 
@@ -125,11 +126,12 @@ Your bottles, ingredients, and cocktail recipes. New here? Start with ${guideLin
 
 - ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)}: what you've marked to buy; the cart button in its header records purchases.
 - ${viewLink(RESTOCK_BASE)}: stock running low, out, or not filled in.
-- **What should I buy?** (command): what would unlock the most recipes.
+- ${viewOpenLink('buy')}: what would unlock the most recipes.
 
 ## Ingredients
 
 - ${viewLink('Ingredient types')}, grouped by family in its **Browse** view · ${viewLink('Ingredient families')} · ${viewLink('Ingredient categories')}
+- ${viewOpenLink('unlinked')}: recipe lines not yet linked to an ingredient, linked across recipes at once.
 
 ## Guide
 

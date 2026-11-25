@@ -24,6 +24,7 @@ import { isEditable } from '../core/note-edit';
 import { registerNoteActions } from './note-actions';
 import { RecipeLinkStore } from '../vault/recipe-links';
 import { openUnlinked } from '../ui/unlinked-view';
+import { isLinkedView, VIEW_LINK_ACTION } from '../core/view-links';
 import { registerEditorLinks } from './editor-links';
 import { OneOffModal } from '../ui/one-off-modal';
 import { saveOneOff } from '../ui/save-one-off';
@@ -267,6 +268,11 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		callback: () => handle(() => ready(() => openUnlinked(plugin))),
 	});
 	registerEditorLinks(plugin);
+	// Links on the Cocktail Cabinet note and the guide open these views (see core/view-links.ts).
+	const views = { 'can-make': openAvailability, buy: openBuy, unlinked: openUnlinked } as const;
+	plugin.registerObsidianProtocolHandler(VIEW_LINK_ACTION, ({ open }) => {
+		if (isLinkedView(open)) void handle(() => ready(() => views[open](plugin)));
+	});
 	plugin.addCommand({
 		id: 'create-ingredient-type',
 		name: 'Add ingredient type',
