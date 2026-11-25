@@ -55,7 +55,7 @@ Stock described by a manually maintained Unknown, Have, Low, or Out status, with
 An ingredient type, bottle, or other ingredient source explicitly marked for purchase or replenishment, independently of its stock level.
 
 **Brandy**:
-The family for brandy in common cocktail usage: French grape brandy (Cognac, Armagnac) and Apple Brandy.
+The family for brandy in common cocktail usage: French grape brandy (Cognac, Armagnac) and Apple Brandy. To be revised ([brandy organization](docs/brandy-organization.md), agreed 2026-11-25, not built): Brandy becomes the type for aged grape brandy, with Cognac and Armagnac as its subtypes, under a family renamed Brandy Family.
 
 **Apple Brandy**:
 Apple brandy of any style as an ingredient type. Bonded Apple Brandy, Applejack, and Calvados are its subtypes, so their bottles fill recipes calling for apple brandy.
