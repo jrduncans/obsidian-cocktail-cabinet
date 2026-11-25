@@ -163,7 +163,7 @@ Unknown means you haven't said, and never counts as in stock.
 - **Check stock**: something is Unknown; go and look.
 - **Missing one** and **Missing more**: what's missing, short of a pour, or not linked.
 
-Filter by an ingredient, rating, or tag. Within each group, your highest-rated recipes you haven't made lately come first. The **To buy** tab is in ${page('Shopping')}.
+Filter by an ingredient, rating, or tag. Within each group, your highest-rated recipes you haven't made lately come first. **What should I buy?** is in ${page('Shopping')}.
 
 On a bottle, other stock, type, or family, **What can I make with this?** narrows the list to recipes using it. On a recipe, **Can I make this?** checks each line, with buttons to fix stock or link a line.
 
@@ -196,7 +196,7 @@ ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} lists everything marked **Add
 ## Deciding what to buy
 
 - ${view(RESTOCK_BASE)} lists stock running low, out, or not yet filled in, each with a **Shopping list** checkbox. Running low means the last bottle at or under 10% full, or 70 mL; both are settings.
-- The **To buy** tab in **What can I make?** lists the missing ingredients that would unlock the most recipes, with a button to add each to the list. See ${page('Making Drinks')}.
+- **What should I buy?** lists the missing ingredients that would unlock the most recipes, with a button to add each to the list. See ${page('Making Drinks')}.
 
 ## After shopping
 

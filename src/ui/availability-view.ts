@@ -1,19 +1,10 @@
-import {
-	ButtonComponent,
-	DropdownComponent,
-	ExtraButtonComponent,
-	ItemView,
-	Notice,
-	TFile,
-	debounce,
-	setIcon,
-} from 'obsidian';
+import { ButtonComponent, DropdownComponent, ExtraButtonComponent, ItemView, debounce } from 'obsidian';
 import { openView, toolbarItem, viewLink } from './view-leaves';
 import type { WorkspaceLeaf } from 'obsidian';
-import { lineStatus, recipeSections, recipeTags, STATUS_LABELS, toBuy } from '../core/availability-lists';
+import { lineStatus, recipeSections, recipeTags, STATUS_LABELS } from '../core/availability-lists';
 import type { RecipeEntry } from '../core/availability-lists';
 import type { RecipeStatus } from '../core/availability';
-import { PROP, RATING_MAX } from '../core/schema';
+import { RATING_MAX } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetAvailability } from '../vault/availability-store';
@@ -25,33 +16,18 @@ export const AVAILABILITY_VIEW = 'cocktail-cabinet-availability';
 const OPEN_BY_DEFAULT: readonly RecipeStatus[] = ['can-make', 'substitute'];
 
 /**
- * What can I make? A side pane of recipes by availability, with filters, and what to buy. Recipes open
- * in the main area beside it. It refreshes when cabinet notes change, a second after the last change.
+ * What the availability views share: the cabinet's availability, read when opened and again a second
+ * after cabinet notes change, and links that open beside the view. See docs/availability.md.
  */
-export class AvailabilityView extends ItemView {
-	private data?: CabinetAvailability;
-	private tab: 'recipes' | 'buy' = 'recipes';
-	private uses?: string;
-	private minRating = 0;
-	private tag = '';
-	private openSections = new Set<RecipeStatus>(OPEN_BY_DEFAULT);
+export abstract class AvailabilityBase extends ItemView {
+	protected data?: CabinetAvailability;
 	private error = '';
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		private plugin: CocktailCabinetPlugin,
+		protected plugin: CocktailCabinetPlugin,
 	) {
 		super(leaf);
-	}
-
-	getViewType() {
-		return AVAILABILITY_VIEW;
-	}
-	getDisplayText() {
-		return 'What can I make?';
-	}
-	getIcon() {
-		return 'list-checks';
 	}
 
 	async onOpen() {
@@ -67,13 +43,6 @@ export class AvailabilityView extends ItemView {
 		await this.refresh();
 	}
 
-	/** Show recipes using a note (a bottle, type, family…), or every recipe. */
-	setUses(path: string | undefined) {
-		this.uses = path;
-		this.tab = 'recipes';
-		this.render();
-	}
-
 	private async refresh() {
 		try {
 			this.data = await this.plugin.availability.all();
@@ -84,39 +53,48 @@ export class AvailabilityView extends ItemView {
 		this.render();
 	}
 
-	private name = (path: string) => this.data?.notes.find((note) => note.path === path)?.name ?? path;
+	protected name = (path: string) => this.data?.notes.find((note) => note.path === path)?.name ?? path;
 
-	private render() {
+	protected render() {
 		const el = this.contentEl;
 		el.empty();
-		if (this.error) {
-			el.createEl('p', { cls: 'cocktail-cabinet-error', text: this.error });
-			return;
-		}
-		if (!this.data) {
-			el.createEl('p', { text: 'Checking…' });
-			return;
-		}
-		const tabs = el.createDiv({ cls: 'cocktail-cabinet-pane-tabs', attr: { role: 'tablist' } });
-		for (const [id, text] of [
-			['recipes', 'Recipes'],
-			['buy', 'To buy'],
-		] as const) {
-			const button = tabs.createEl('button', {
-				text,
-				attr: { role: 'tab', 'aria-selected': String(this.tab === id) },
-			});
-			button.toggleClass('is-active', this.tab === id);
-			button.addEventListener('click', () => {
-				this.tab = id;
-				this.render();
-			});
-		}
-		if (this.tab === 'recipes') this.renderRecipes(el, this.data);
-		else this.renderBuy(el, this.data);
+		if (this.error) el.createEl('p', { cls: 'cocktail-cabinet-error', text: this.error });
+		else if (!this.data) el.createEl('p', { text: 'Checking…' });
+		else this.renderData(el, this.data);
 	}
 
-	private renderRecipes(el: HTMLElement, data: CabinetAvailability) {
+	protected abstract renderData(el: HTMLElement, data: CabinetAvailability): void;
+
+	/** A link that opens the note beside the view, or a new tab with Ctrl or Cmd. */
+	protected noteLink(el: HTMLElement, path: string, text: string) {
+		viewLink(this, el, path, text);
+	}
+}
+
+/** What can I make? Recipes by availability, with filters, in a main-area tab. */
+export class AvailabilityView extends AvailabilityBase {
+	private uses?: string;
+	private minRating = 0;
+	private tag = '';
+	private openSections = new Set<RecipeStatus>(OPEN_BY_DEFAULT);
+
+	getViewType() {
+		return AVAILABILITY_VIEW;
+	}
+	getDisplayText() {
+		return 'What can I make?';
+	}
+	getIcon() {
+		return 'list-checks';
+	}
+
+	/** Show recipes using a note (a bottle, type, family…), or every recipe. */
+	setUses(path: string | undefined) {
+		this.uses = path;
+		this.render();
+	}
+
+	protected renderData(el: HTMLElement, data: CabinetAvailability) {
 		// One compact row of filters, styled like the other cabinet views' toolbars.
 		const bar = el.createDiv({ cls: 'cocktail-cabinet-pane-toolbar' });
 		const uses = toolbarItem(bar, 'Uses');
@@ -189,70 +167,6 @@ export class AvailabilityView extends ItemView {
 				cls: 'cocktail-cabinet-pane-caveats',
 				text: caveats.map((line) => lineStatus(line, this.name)).join(' · '),
 			});
-	}
-
-	private renderBuy(el: HTMLElement, data: CabinetAvailability) {
-		el.createEl('p', {
-			cls: 'setting-item-description',
-			text: 'What’s missing, by how many recipes buying it alone would let you make.',
-		});
-		const items = toBuy(data.recipes).filter((item) => item.unlocks.length || item.closer.length);
-		const recipeNames = new Map(data.recipes.map((entry) => [entry.path, entry.name]));
-		const list = el.createEl('ul', { cls: 'cocktail-cabinet-pane-buy' });
-		for (const item of items.slice(0, 100)) {
-			const row = list.createEl('li');
-			const head = row.createDiv({ cls: 'cocktail-cabinet-pane-row' });
-			item.targets.forEach((path, index) => {
-				if (index) head.appendText(' or ');
-				this.noteLink(head, path, this.name(path));
-			});
-			for (const path of item.targets) this.shoppingButton(head, path, item.targets.length > 1);
-			const detail = row.createDiv({ cls: 'cocktail-cabinet-pane-caveats' });
-			if (item.unlocks.length) {
-				detail.appendText(`Unlocks ${item.unlocks.length}: `);
-				item.unlocks.forEach((path, index) => {
-					if (index) detail.appendText(', ');
-					this.noteLink(detail, path, recipeNames.get(path) ?? path);
-				});
-			}
-			if (item.closer.length)
-				detail.appendText(`${item.unlocks.length ? '. ' : ''}${item.closer.length} more closer.`);
-		}
-		if (!items.length) el.createEl('p', { text: 'Nothing missing.' });
-	}
-
-	/** Mark a note for purchase; never removes a flag, since the shopping list is where that's done. */
-	private shoppingButton(el: HTMLElement, path: string, named: boolean) {
-		const file = this.app.vault.getAbstractFileByPath(path);
-		if (!(file instanceof TFile)) return;
-		const flagged = this.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.shoppingList] === true;
-		const label = flagged
-			? 'On shopping list'
-			: named
-				? `Add ${this.name(path)} to shopping list`
-				: 'Add to shopping list';
-		const button = el.createEl('button', {
-			cls: 'clickable-icon cocktail-cabinet-pane-shop',
-			attr: { 'aria-label': label },
-		});
-		setIcon(button, flagged ? 'shopping-cart' : 'list-plus');
-		button.disabled = flagged;
-		button.addEventListener('click', () => {
-			void this.app.fileManager
-				.processFrontMatter(file, (frontmatter: Record<string, unknown>) => {
-					frontmatter[PROP.shoppingList] = true;
-				})
-				.then(() => new Notice(`Added ${this.name(path)} to the shopping list.`))
-				.catch(
-					(error: unknown) =>
-						new Notice(error instanceof Error ? error.message : 'Couldn’t update the shopping list.'),
-				);
-		});
-	}
-
-	/** A link that opens the note beside the pane, or a new tab with Ctrl or Cmd. */
-	private noteLink(el: HTMLElement, path: string, text: string) {
-		viewLink(this, el, path, text);
 	}
 }
 

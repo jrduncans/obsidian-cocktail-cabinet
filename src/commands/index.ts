@@ -1,4 +1,5 @@
 import { openAvailability } from '../ui/availability-view';
+import { openBuy } from '../ui/buy-view';
 import { CanMakeModal } from '../ui/can-make-modal';
 import type CocktailCabinetPlugin from '../main';
 import { MarkdownView, Notice } from 'obsidian';
@@ -101,6 +102,12 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		name: 'What can I make?',
 		icon: 'list-checks',
 		callback: () => handle(() => ready(() => openAvailability(plugin))),
+	});
+	plugin.addCommand({
+		id: 'what-should-i-buy',
+		name: 'What should I buy?',
+		icon: 'shopping-cart',
+		callback: () => handle(() => ready(() => openBuy(plugin))),
 	});
 	plugin.addCommand({
 		id: 'record-purchases',

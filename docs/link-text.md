@@ -43,7 +43,7 @@ When an unlinked wording is linked (a form row, **Review unlinked ingredients**,
 2. **The wording contains the name or an alias plus other words:** only the name is linked, and the rest stays as plain text beside it. `fresh lime juice` → `fresh [[…/Lime Juice|Lime Juice]]`; `strawberry-infused Campari` → `strawberry-infused [[…/Campari|Campari]]`. Words are never dropped, because a modifier may name a different ingredient; keeping it visible is the cue that it may deserve its own note, which **Create…** from the wording offers. The contained name follows the setting: an alias counts only at the alias level, and the link text is then the cabinet name.
 3. **The wording doesn't contain the name** (`Falernum` linked to Falernum Syrup): the wording stays as the link text, as today. Adopting the cabinet name is one step (below).
 
-Where a link step shows the link text choice (**Cabinet name**, the recipe's wording, or your own), it starts on what these rules chose, so a different choice is still one click.
+Where a link step shows the link text choice (labelled **Link shows** since 2026-11-24: the note's name, **As written**, or your own; formerly **Cabinet name** and **Recipe wording**), it starts on what these rules chose, so a different choice is still one click.
 
 The amount, any echoed volume, the list marker, and anything after the wording (a parenthetical, "preferably …") stay as written, as linking does today.
 
