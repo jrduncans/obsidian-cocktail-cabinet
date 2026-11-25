@@ -1,4 +1,5 @@
-import { ItemView, Keymap, Notice, Setting, TFile, debounce, setIcon } from 'obsidian';
+import { ItemView, Notice, Setting, TFile, debounce, setIcon } from 'obsidian';
+import { openView, viewLink } from './view-leaves';
 import type { WorkspaceLeaf } from 'obsidian';
 import { lineStatus, recipeSections, recipeTags, STATUS_LABELS, toBuy } from '../core/availability-lists';
 import type { RecipeEntry } from '../core/availability-lists';
@@ -247,24 +248,14 @@ export class AvailabilityView extends ItemView {
 		});
 	}
 
-	/** A link that opens the note in the main area, or a new tab with Ctrl or Cmd. */
+	/** A link that opens the note beside the pane, or a new tab with Ctrl or Cmd. */
 	private noteLink(el: HTMLElement, path: string, text: string) {
-		const link = el.createEl('a', { cls: 'internal-link', text, href: path });
-		link.addEventListener('click', (event) => {
-			event.preventDefault();
-			void this.app.workspace.openLinkText(path, '', Keymap.isModEvent(event));
-		});
+		viewLink(this, el, path, text);
 	}
 }
 
-/** Open the pane in the right sidebar, reusing one already open; optionally filtered to recipes using a note. */
+/** Open the pane as a main-area tab, reusing one already open; optionally filtered to recipes using a note. */
 export async function openAvailability(plugin: CocktailCabinetPlugin, uses?: CabinetNote): Promise<void> {
-	const { workspace } = plugin.app;
-	let leaf = workspace.getLeavesOfType(AVAILABILITY_VIEW)[0];
-	if (!leaf) {
-		leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf('tab');
-		await leaf.setViewState({ type: AVAILABILITY_VIEW, active: true });
-	}
-	await workspace.revealLeaf(leaf);
+	const leaf = await openView(plugin, AVAILABILITY_VIEW);
 	if (leaf.view instanceof AvailabilityView) leaf.view.setUses(uses?.path);
 }

@@ -1,4 +1,5 @@
-import { ButtonComponent, ItemView, Keymap, Menu, Notice, Setting } from 'obsidian';
+import { ButtonComponent, ItemView, Menu, Notice, Setting } from 'obsidian';
+import { openView, viewLink } from './view-leaves';
 import type { WorkspaceLeaf } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
 import type { CabinetNote } from '../core/schema';
@@ -288,17 +289,9 @@ export class UnlinkedView extends ItemView {
 		return wordingLink(ingredientParts(use.text).wording, pending.note, pending.source, pending.text);
 	}
 
-	/** A recipe's name that opens it in the main area, or a new tab with Ctrl or Cmd. */
+	/** A recipe's name that opens it beside the review, or a new tab with Ctrl or Cmd. */
 	private recipeLink(el: HTMLElement, recipe: { name: string; path: string }) {
-		const link = el.createEl('a', {
-			cls: 'internal-link cocktail-cabinet-unlinked-recipe',
-			text: recipe.name,
-			href: recipe.path,
-		});
-		link.addEventListener('click', (event) => {
-			event.preventDefault();
-			void this.app.workspace.openLinkText(recipe.path, '', Keymap.isModEvent(event));
-		});
+		viewLink(this, el, recipe.path, recipe.name, 'cocktail-cabinet-unlinked-recipe');
 	}
 
 	private async link(el: HTMLElement, group: UnlinkedGroup) {
@@ -346,13 +339,7 @@ export class UnlinkedView extends ItemView {
 	}
 }
 
-/** Open the pane in the right sidebar, reusing one already open. */
+/** Open the review as a main-area tab, reusing one already open. */
 export async function openUnlinked(plugin: CocktailCabinetPlugin): Promise<void> {
-	const { workspace } = plugin.app;
-	let leaf = workspace.getLeavesOfType(UNLINKED_VIEW)[0];
-	if (!leaf) {
-		leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf('tab');
-		await leaf.setViewState({ type: UNLINKED_VIEW, active: true });
-	}
-	await workspace.revealLeaf(leaf);
+	await openView(plugin, UNLINKED_VIEW);
 }
