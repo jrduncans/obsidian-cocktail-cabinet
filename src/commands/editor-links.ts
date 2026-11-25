@@ -141,7 +141,7 @@ function linkTarget(
 		const wording = ingredientParts(line.text).wording;
 		chooseAndLink(plugin, ctx, editor, {
 			wording,
-			originalLabel: 'Recipe wording',
+			originalLabel: 'As written',
 			source: (note) => defaultLinkSource(wording, note, plugin.settings.linkText),
 			preview: (note, text, source) => linkedLinePreview(line.text, wordingLink(wording, note, source, text)),
 			...range,

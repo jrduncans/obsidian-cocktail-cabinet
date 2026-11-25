@@ -8,6 +8,8 @@ import { openView } from './view-leaves';
 
 export const BUY_VIEW = 'cocktail-cabinet-buy';
 
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
 /**
  * What should I buy? The missing ingredients that would let you make the most recipes, each with a
  * button for the shopping list. Its own tab, apart from What can I make?: shopping is a different
@@ -48,8 +50,13 @@ export class BuyView extends AvailabilityBase {
 					this.noteLink(detail, path, recipeNames.get(path) ?? path);
 				});
 			}
+			// Recipes it helps that still miss something else.
 			if (item.closer.length)
-				detail.appendText(`${item.unlocks.length ? '. ' : ''}${item.closer.length} more closer.`);
+				detail.appendText(
+					item.unlocks.length
+						? `. Also brings ${item.closer.length} more one step closer.`
+						: `Brings ${plural(item.closer.length, 'recipe')} one step closer.`,
+				);
 		}
 		if (!items.length) el.createEl('p', { text: 'Nothing missing.' });
 	}

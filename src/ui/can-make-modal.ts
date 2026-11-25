@@ -133,7 +133,7 @@ export class CanMakeModal extends Modal {
 			new LinkTextModal(this.plugin, {
 				note,
 				original: wording,
-				originalLabel: 'Recipe wording',
+				originalLabel: 'As written',
 				remember: wording,
 				source: defaultLinkSource(wording, note, this.plugin.settings.linkText),
 				preview: (text, source) => linkedLinePreview(line.text, wordingLink(wording, note, source, text)),

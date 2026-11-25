@@ -550,13 +550,15 @@
 	font-weight: var(--font-semibold);
 }
 .cocktail-cabinet-unlinked-count,
-.cocktail-cabinet-unlinked-label,
-.cocktail-cabinet-unlinked-choice {
+.cocktail-cabinet-unlinked-label {
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
-.cocktail-cabinet-unlinked-choice {
-	margin: 0 0 var(--size-4-2);
+.cocktail-cabinet-unlinked-group .cocktail-cabinet-unlinked-uses {
+	margin-bottom: var(--size-4-3);
+}
+.cocktail-cabinet-unlinked-more {
+	font-size: var(--font-ui-smaller);
 }
 .cocktail-cabinet-unlinked-actions {
 	display: flex;
@@ -569,11 +571,54 @@
 	color: var(--text-faint);
 	font-size: var(--font-ui-smaller);
 }
-.cocktail-cabinet-unlinked-buttons {
+.cocktail-cabinet-unlinked-suggestion.is-active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+.cocktail-cabinet-unlinked-suggestion.is-active .cocktail-cabinet-unlinked-kind {
+	color: var(--text-on-accent);
+	opacity: 0.8;
+}
+/* What Link will do, beside it: pinned to the bottom of the window while its card is on screen. */
+.cocktail-cabinet-unlinked-commit {
+	position: sticky;
+	bottom: 0;
 	display: flex;
-	justify-content: flex-end;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2) var(--size-4-4);
+	margin: var(--size-4-3) calc(-1 * var(--size-4-4)) calc(-1 * var(--size-4-3));
+	padding: var(--size-4-3) var(--size-4-4);
+	border-top: var(--border-width) solid var(--background-modifier-border);
+	border-radius: 0 0 var(--radius-m) var(--radius-m);
+	background-color: var(--background-secondary);
+}
+.cocktail-cabinet-unlinked-commit-summary {
+	flex-basis: 100%;
+	font-weight: var(--font-semibold);
+}
+.cocktail-cabinet-unlinked-shows,
+.cocktail-cabinet-unlinked-commit-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
 	gap: var(--size-4-2);
-	margin-top: var(--size-4-2);
+}
+.cocktail-cabinet-unlinked-shows button.is-active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+.cocktail-cabinet-unlinked-commit-buttons {
+	margin-inline-start: auto;
+}
+.cocktail-cabinet-unlinked-commit .cocktail-cabinet-remember {
+	font-size: var(--font-ui-small);
+}
+.cocktail-cabinet-unlinked-commit .cocktail-cabinet-error:empty {
+	display: none;
+}
+.cocktail-cabinet-hidden {
+	display: none;
 }
 .cocktail-cabinet-unlinked-pane .cocktail-cabinet-unlinked-uses li {
 	border-bottom: 0;

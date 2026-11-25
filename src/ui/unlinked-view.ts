@@ -1,4 +1,4 @@
-import { ButtonComponent, ItemView, Menu, Notice, SearchComponent, ToggleComponent } from 'obsidian';
+import { ButtonComponent, ItemView, Menu, Notice, SearchComponent, TextComponent, ToggleComponent } from 'obsidian';
 import { openView, viewLink } from './view-leaves';
 import type { WorkspaceLeaf } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
@@ -8,13 +8,15 @@ import { ingredientParts, linkedLinePreview, linkTextError } from '../core/unlin
 import type { UnlinkedGroup, UnlinkedUse } from '../core/unlinked-lines';
 import { RecipeLinkStore } from '../vault/recipe-links';
 import { addCreateItems, pickIngredient } from './link-choice';
-import { rememberAfterLink, renderLinkText, renderPreview, renderRemember } from './link-text';
+import { rememberAfterLink, renderPreview, renderRemember } from './link-text';
 import { defaultLinkSource, wordingLink } from '../core/link-text';
 import type { LinkTextSource } from '../core/link-text';
 import { rememberedNote } from '../core/written-as';
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 const recipeCount = (group: UnlinkedGroup) => new Set(group.uses.map((use) => use.recipe.path)).size;
+/** Lines shown in a wording's card before "Show all", so what the wording means is visible before choosing. */
+const PREVIEW_LINES = 3;
 
 export const UNLINKED_VIEW = 'cocktail-cabinet-unlinked';
 
@@ -45,8 +47,12 @@ export class UnlinkedView extends ItemView {
 			text: string;
 			remembered?: boolean;
 			remember?: boolean;
+			/** The link text choice is open; otherwise one line says what the link will show. */
+			editText?: boolean;
 		}
 	>();
+	/** Wordings whose cards show every line. */
+	private expanded = new Set<string>();
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -210,70 +216,32 @@ export class UnlinkedView extends ItemView {
 			});
 			this.renderGroup(el, group);
 		};
-		if (!pending) {
-			// What to link this wording to: the likely notes first, each saying what kind of note it is.
-			const actions = el.createDiv({ cls: 'cocktail-cabinet-unlinked-actions' });
-			const suggested = suggestIngredient(group.wording, this.plugin.store.notes());
-			actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'Link to' });
-			for (const note of suggested) {
-				const button = new ButtonComponent(actions)
-					.setClass('cocktail-cabinet-unlinked-suggestion')
-					.setTooltip(`Link to ${note.path}`)
-					.onClick(() => choose(note));
-				button.buttonEl.createSpan({ text: note.name });
-				button.buttonEl.createSpan({ cls: 'cocktail-cabinet-unlinked-kind', text: note.kind });
-			}
-			if (suggested.length) actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'or' });
-			new ButtonComponent(actions)
-				.setButtonText(suggested.length ? 'Another note…' : 'A note…')
-				.onClick(() => pickIngredient(this.plugin, choose));
-			new ButtonComponent(actions).setButtonText('New note…').onClick((event) => {
-				const menu = new Menu();
-				addCreateItems(menu, this.plugin, group.wording, choose);
-				menu.showAtMouseEvent(event);
-			});
-			return;
-		}
-		el.createEl('p', {
-			cls: 'cocktail-cabinet-unlinked-choice',
-			text: `Linking to ${pending.note.name} (${pending.note.kind}) in the ticked recipes${pending.remembered ? ', from a remembered wording' : ''}.`,
-		});
-		let linkButton!: ButtonComponent;
-		const textError = () => (pending.source === 'typed' ? linkTextError(pending.text) : '');
-		const lineLink = (use: UnlinkedUse) => this.lineLink(use, pending);
-		const update = () => {
-			const count = new Set([...pending.ticked].map((index) => group.uses[index]!.recipe.path)).size;
-			linkButton
-				.setButtonText(`Link in ${plural(count, 'recipe')}`)
-				.setDisabled(this.busy || !count || !!textError());
-			errorEl.setText(textError());
-		};
-		renderLinkText(el, {
-			name: pending.note.name,
-			original: group.wording,
-			originalLabel: 'Recipe wording',
-			text: pending.text,
-			source: pending.source,
-			desc: (source) =>
-				source === 'original'
-					? 'Each recipe keeps its own wording.'
-					: source === 'name'
-						? 'Other words in a line stay beside the link.'
-						: 'Every ticked line shows this text.',
-			onChange: (text, source) => {
-				pending.source = source;
-				pending.text = text;
-				renderUses();
-				update();
-			},
-		});
-		if (!pending.remembered)
-			renderRemember(el, group.wording, pending.note, !!pending.remember, (value) => {
-				pending.remember = value;
-			});
-		const errorEl = el.createEl('p', { cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 		const list = el.createEl('ul', { cls: 'cocktail-cabinet-unlinked-uses' });
+		if (!pending) {
+			// The lines first, so what the wording means is plain before choosing what it links to.
+			const all = this.expanded.has(group.key) || group.uses.length <= PREVIEW_LINES;
+			for (const use of all ? group.uses : group.uses.slice(0, PREVIEW_LINES)) {
+				const item = list.createEl('li');
+				this.recipeLink(item, use.recipe);
+				item.appendText(': ');
+				item.createSpan({ text: use.text });
+			}
+			if (!all) {
+				const more = list.createEl('li').createEl('a', {
+					cls: 'cocktail-cabinet-unlinked-more',
+					text: `Show all ${group.uses.length} lines`,
+					href: '#',
+				});
+				more.addEventListener('click', (event) => {
+					event.preventDefault();
+					this.expanded.add(group.key);
+					this.renderGroup(el, group);
+				});
+			}
+		}
+		// Every line once a note is chosen, ticked and shown as it will read, so nothing is linked unseen.
 		const renderUses = () => {
+			if (!pending) return;
 			list.empty();
 			group.uses.forEach((use, index) => {
 				const item = list.createEl('li');
@@ -290,16 +258,100 @@ export class UnlinkedView extends ItemView {
 				item.appendText(' ');
 				this.recipeLink(item, use.recipe);
 				item.appendText(': ');
-				renderPreview(item.createSpan(), linkedLinePreview(use.text, lineLink(use)));
+				renderPreview(item.createSpan(), linkedLinePreview(use.text, this.lineLink(use, pending)));
 			});
 		};
 		renderUses();
-		const buttons = el.createDiv({ cls: 'cocktail-cabinet-unlinked-buttons' });
-		new ButtonComponent(buttons).setButtonText('Cancel').onClick(() => {
+
+		// What to link this wording to: the likely notes first, each saying what kind of note it is. The
+		// chosen one stays here, highlighted, and choosing another switches to it.
+		const actions = el.createDiv({ cls: 'cocktail-cabinet-unlinked-actions' });
+		const suggested = suggestIngredient(group.wording, this.plugin.store.notes());
+		if (pending && !suggested.some((note) => note.path === pending.note.path)) suggested.unshift(pending.note);
+		actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'Link to' });
+		for (const note of suggested) {
+			const chosen = pending?.note.path === note.path;
+			const button = new ButtonComponent(actions)
+				.setClass('cocktail-cabinet-unlinked-suggestion')
+				.setTooltip(chosen ? `Linking to ${note.path}` : `Link to ${note.path}`)
+				.onClick(() => {
+					if (!chosen) choose(note);
+				});
+			button.buttonEl.toggleClass('is-active', chosen);
+			button.buttonEl.setAttribute('aria-pressed', String(chosen));
+			button.buttonEl.createSpan({ text: note.name });
+			button.buttonEl.createSpan({ cls: 'cocktail-cabinet-unlinked-kind', text: note.kind });
+		}
+		if (suggested.length) actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'or' });
+		new ButtonComponent(actions)
+			.setButtonText(suggested.length ? 'Another note…' : 'A note…')
+			.onClick(() => pickIngredient(this.plugin, choose));
+		new ButtonComponent(actions).setButtonText('New note…').onClick((event) => {
+			const menu = new Menu();
+			addCreateItems(menu, this.plugin, group.wording, choose);
+			menu.showAtMouseEvent(event);
+		});
+		if (!pending) return;
+
+		// Everything the Link button will do, beside it, pinned to the bottom of the window while the card shows.
+		const bar = el.createDiv({ cls: 'cocktail-cabinet-unlinked-commit' });
+		const summary = bar.createDiv({ cls: 'cocktail-cabinet-unlinked-commit-summary' });
+		const shows = bar.createDiv({ cls: 'cocktail-cabinet-unlinked-shows' });
+		shows.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'Link shows' });
+		const options: [LinkTextSource, string, string][] = [
+			['original', 'As written', 'Each recipe keeps its own wording'],
+			['name', pending.note.name, 'The note’s name; other words in a line stay beside it'],
+			['typed', 'Your own…', 'The same text in every ticked line'],
+		];
+		const sourceButtons = options.map(([source, label, tooltip]) => {
+			const button = new ButtonComponent(shows).setButtonText(label).setTooltip(tooltip);
+			button.onClick(() => {
+				pending.source = source;
+				if (source === 'name') pending.text = pending.note.name;
+				else if (source === 'original') pending.text = group.wording;
+				changed();
+				if (source === 'typed') typed.inputEl.focus();
+			});
+			return [button, source] as const;
+		});
+		const typed = new TextComponent(shows).setValue(pending.text).onChange((value) => {
+			pending.text = value;
+			changed();
+		});
+		typed.inputEl.setAttribute('aria-label', 'Link text');
+		const commit = bar.createDiv({ cls: 'cocktail-cabinet-unlinked-commit-buttons' });
+		if (!pending.remembered)
+			renderRemember(commit, group.wording, pending.note, !!pending.remember, (value) => {
+				pending.remember = value;
+			});
+		const errorEl = bar.createDiv({ cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
+		new ButtonComponent(commit).setButtonText('Cancel').onClick(() => {
 			this.pending.delete(group.key);
 			this.renderGroup(el, group);
 		});
-		linkButton = new ButtonComponent(buttons).setCta().onClick(() => void this.link(el, group));
+		const linkButton = new ButtonComponent(commit).setCta().onClick(() => void this.link(el, group));
+		const textError = () => (pending.source === 'typed' ? linkTextError(pending.text) : '');
+		const update = () => {
+			const lines = pending.ticked.size;
+			const recipes = new Set([...pending.ticked].map((index) => group.uses[index]!.recipe.path)).size;
+			summary.setText(
+				`Link ${plural(lines, 'line')} to ${pending.note.name} (${pending.note.kind})${pending.remembered ? ', from a remembered wording' : ''}`,
+			);
+			for (const [button, source] of sourceButtons) {
+				button.buttonEl.toggleClass('is-active', source === pending.source);
+				button.buttonEl.setAttribute('aria-pressed', String(source === pending.source));
+			}
+			typed.inputEl.toggleClass('cocktail-cabinet-hidden', pending.source !== 'typed');
+			linkButton
+				.setButtonText(`Link in ${plural(recipes, 'recipe')}`)
+				.setDisabled(this.busy || !recipes || !!textError());
+			errorEl.setText(textError());
+		};
+		const changed = () => {
+			if (pending.source === 'typed' && typed.getValue() !== pending.text) typed.setValue(pending.text);
+			renderUses();
+			update();
+		};
 		update();
 	}
 
