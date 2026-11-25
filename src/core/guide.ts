@@ -185,7 +185,7 @@ For a drink with no recipe, run **Log a one-off**, or **Riff on this cocktail** 
 
 ## Alcohol estimates
 
-Each recipe carries an estimate of one serving's alcohol, ABV as served, and volume, which the plugin keeps current. **Recipes → Lower alcohol** lists the gentlest first. ABVs come from the bottle a recipe names, else your bottles of that type, else the type's **Typical ABV**; chilling adds water by preparation. **Review missing ABV values** shows what's holding estimates back. Settings choose US or UK standard drinks, and whether logging records alcohol in the daily note.
+Each recipe carries an estimate of one serving's alcohol, ABV as served, and volume, which the plugin keeps current. **Recipes → Lower alcohol** lists the gentlest first. ABVs come from the bottle a recipe names, else your bottles of that type, else the type's **Typical ABV**; chilling adds water by preparation. **Recipes → Partial estimates** shows what keeps an estimate partial: a note without an ABV, or a line to link; a partial recipe's \`cc-est-missing\` says the same. **Bottles → Missing ABV** lists bottles whose ABV you can fill in from the label. Settings choose US or UK standard drinks, and whether logging records alcohol in the daily note.
 `,
 
 	Shopping: ({ root, page, view }) => `

@@ -32,6 +32,8 @@ function formulas(drinkGrams: number): Record<string, string> {
 		// Standard drinks from the estimated mL of alcohol (ethanol is 0.789 g/mL), and ABV as a percent.
 		drinks: `if(${ALCOHOL} == null, "", ${atLeast} + (${ALCOHOL} * 0.789 / ${drinkGrams}).toFixed(1))`,
 		abv: `if(${ABV} == null, "", ${atLeast} + (${ABV} * 100).toFixed(1) + "%")`,
+		// Group headings sort by value, so "In stock" comes first.
+		inStock: `if(${stockedExpression((key) => `note[${q(key)}]`)}, "In stock", "Not in stock")`,
 	};
 }
 
@@ -41,7 +43,16 @@ interface ResourceBase {
 	/** After the linked name, in display order: narrow screens scroll the last ones off. */
 	columns: Column[];
 	/** More table views after the default one, which sorts by file name. */
-	views?: { name: string; sort: Sort[]; filter?: string }[];
+	views?: ResourceView[];
+}
+interface ResourceView {
+	name: string;
+	sort: Sort[];
+	filter?: string;
+	/** Columns for this view alone, after the linked name; otherwise the Base's columns. */
+	columns?: Column[];
+	/** Rows grouped by a formula; the heading shows only the group's value. */
+	groupBy?: string;
 }
 
 const purchasingColumns: Column[] = [
@@ -82,6 +93,20 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 			[PROP.lastUsed, 'Last used'],
 			...purchasingColumns,
 		],
+		views: [
+			// A bottle you own without an ABV is a gap its label fills; see docs/alcohol-estimate.md#missing-values.
+			{
+				name: 'Missing ABV',
+				sort: [['file.name', 'ASC']],
+				filter: `note[${q(PROP.abv)}] == null`,
+				columns: [
+					[PROP.type, 'Ingredient type'],
+					[PROP.abv, 'ABV (fraction)'],
+					[PROP.volume, 'Bottle volume (mL)'],
+				],
+				groupBy: 'formula.inStock',
+			},
+		],
 	},
 	{
 		kind: 'ingredient',
@@ -120,6 +145,18 @@ export const RESOURCE_BASES: readonly ResourceBase[] = [
 				sort: [['note.cc-est-alcohol-ml', 'ASC']],
 				filter: `${ALCOHOL} != null && ${BASIS} != "partial" && ${BASIS} != "none"`,
 			},
+			// What keeps each estimate partial: notes without an ABV, and lines to link or fix.
+			{
+				name: 'Partial estimates',
+				sort: [['file.name', 'ASC']],
+				filter: `${BASIS} == "partial"`,
+				columns: [
+					['cc-est-missing', 'Missing'],
+					['formula.drinks', 'Drinks'],
+					['formula.rating', 'Rating'],
+					[PROP.lastMade, 'Last made'],
+				],
+			},
 		],
 	},
 ];
@@ -128,22 +165,31 @@ export function basePath(root: string, name: string): string {
 	return `${cabinetFolder(root)}/Views/${name}.base`;
 }
 
+/** The linked name, then `list` with plain properties written as `note.` ones. */
+const withName = (list: readonly Column[]): Column[] => [
+	['formula.name', 'Name'],
+	...list.map(([property, label]): Column => [
+		property.startsWith('formula.') ? property : `note.${property}`,
+		label,
+	]),
+];
+
 function renderBase(root: string, resource: ResourceBase, drinkGrams: number): string {
 	const FORMULAS = formulas(drinkGrams);
-	const columns: Column[] = [
-		['formula.name', 'Name'],
-		...resource.columns.map(([property, label]): Column => [
-			property.startsWith('formula.') ? property : `note.${property}`,
-			label,
-		]),
-	];
+	const columns = withName(resource.columns);
+	const first: ResourceView = { name: resource.name, sort: [['file.name', 'ASC']] };
+	const views = [first, ...(resource.views ?? [])].map((view) => ({
+		...view,
+		order: view.columns ? withName(view.columns) : columns,
+	}));
+	// Labels belong to the whole Base, so every view's columns are listed once.
+	const labelled = new Map(views.flatMap((view) => view.order));
 	const used = Object.entries(FORMULAS).filter(([name]) =>
-		columns.some(([property]) => property === `formula.${name}`),
+		views.some(
+			(view) =>
+				view.groupBy === `formula.${name}` || view.order.some(([property]) => property === `formula.${name}`),
+		),
 	);
-	const views = [
-		{ name: resource.name, sort: [['file.name', 'ASC']] as Sort[], filter: undefined },
-		...(resource.views ?? []),
-	];
 	if (resource.kind === 'type' || resource.kind === 'ingredient') {
 		const defaultView: FormulaView = {
 			name: resource.name,
@@ -195,12 +241,14 @@ function renderBase(root: string, resource: ResourceBase, drinkGrams: number): s
 			],
 		},
 		formulas: Object.fromEntries(used),
-		properties: Object.fromEntries(columns.map(([property, label]) => [property, { displayName: label }])),
+		properties: Object.fromEntries([...labelled].map(([property, label]) => [property, { displayName: label }])),
 		views: views.map((view) => ({
 			type: 'table',
 			name: view.name,
 			...(view.filter ? { filters: { and: [view.filter] } } : {}),
-			order: columns.map(([property]) => viewProperty(property)),
+			// Obsidian saves groupBy between filters and order.
+			...(view.groupBy ? { groupBy: { property: view.groupBy, direction: 'ASC' } } : {}),
+			order: view.order.map(([property]) => viewProperty(property)),
 			sort: sortEntries(view.sort),
 		})),
 	});

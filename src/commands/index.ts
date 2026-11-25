@@ -23,7 +23,6 @@ import { isEditable } from '../core/note-edit';
 import { registerNoteActions } from './note-actions';
 import { RecipeLinkStore } from '../vault/recipe-links';
 import { openUnlinked } from '../ui/unlinked-view';
-import { MissingAbvModal } from '../ui/missing-abv-modal';
 import { registerEditorLinks } from './editor-links';
 import { OneOffModal } from '../ui/one-off-modal';
 import { saveOneOff } from '../ui/save-one-off';
@@ -259,12 +258,6 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		name: 'Review unlinked ingredients',
 		icon: 'unlink',
 		callback: () => handle(() => ready(() => openUnlinked(plugin))),
-	});
-	plugin.addCommand({
-		id: 'review-missing-abvs',
-		name: 'Review missing ABV values',
-		icon: 'percent',
-		callback: () => handle(() => ready(() => new MissingAbvModal(plugin, () => void openUnlinked(plugin)).open())),
 	});
 	registerEditorLinks(plugin);
 	plugin.addCommand({
