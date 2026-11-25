@@ -343,6 +343,8 @@ void test('Bases use the selected root and kind without requiring parents or cat
 	const missing = bottles.views.find((view: { name: string }) => view.name === 'Missing ABV')!;
 	assert.deepEqual(missing.filters!.and, ['note["cc-abv"] == null']);
 	assert.deepEqual(missing.groupBy, { property: 'formula.inStock', direction: 'ASC' });
+	// A blank label leaves only "In stock" in each heading, not the formula's name.
+	assert.equal(bottles.properties['formula.inStock']!.displayName, ' ');
 	assert.match(bottles.formulas.inStock!, /^if\(.*, "In stock", "Not in stock"\)$/);
 	assert.ok(missing.order.includes('cc-abv'));
 	assert.match(recipes.formulas.drinks!, /\* 0\.789 \/ 14\)/);
