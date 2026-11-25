@@ -1506,7 +1506,8 @@
 	},
 	"type/Soda Water": {
 		"description": [
-			"Unflavored carbonated water."
+			"Unflavored carbonated water.",
+			"Unflavored carbonated water, also sold as seltzer or sparkling water. Club soda, with added minerals, is its subtype."
 		],
 		"parent": [
 			"Carbonated Mixer"
@@ -2317,6 +2318,17 @@
 	"ingredient/Hot Sauce": {
 		"description": [
 			"Vinegar-based hot sauce, such as Tabasco. Recipes naming a specific sauce can link it as its own staple."
+		]
+	},
+	"type/Club Soda": {
+		"description": [
+			"Soda water with added minerals, such as sodium bicarbonate, for a slightly salty taste. Its bottles also fill recipes calling for Soda Water; plain soda water is offered as a substitute for it."
+		],
+		"parent": [
+			"Subtype of Soda Water"
+		],
+		"abvTypical": [
+			0
 		]
 	}
 }

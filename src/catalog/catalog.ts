@@ -441,7 +441,11 @@ family(
 	],
 );
 family('Carbonated Mixer', undefined, 'Carbonated cocktail mixers.', [
-	['Soda Water', 'Unflavored carbonated water.'],
+	[
+		'Soda Water',
+		'Unflavored carbonated water, also sold as seltzer or sparkling water. Club soda, with added minerals, is its subtype.',
+		{ aliases: ['Seltzer', 'Sparkling Water'] },
+	],
 	['Tonic Water', 'Carbonated bitter-sweet mixer; sweetness and flavor vary by brand.'],
 	['Ginger Beer', 'Ginger-flavored mixer used for a more pronounced ginger profile; brands vary.'],
 	['Ginger Ale', 'Ginger soft drink, milder and sweeter than ginger beer.'],
@@ -522,6 +526,12 @@ subtypes('Rye Whiskey', [
 		'Bottled-in-bond rye whiskey, at 100 US proof (50% ABV), for recipes calling for bonded rye. Its bottles also fill recipes calling for Rye Whiskey.',
 	],
 ]);
+subtypes('Soda Water', [
+	[
+		'Club Soda',
+		'Soda water with added minerals, such as sodium bicarbonate, for a slightly salty taste. Its bottles also fill recipes calling for Soda Water; plain soda water is offered as a substitute for it.',
+	],
+]);
 subtypes('Aged Jamaican Rum', [
 	[
 		'Aged Overproof Jamaican Rum',
@@ -574,6 +584,7 @@ const NON_ALCOHOLIC_TYPES = [
 	'Lemon Peel',
 	'Orange Peel',
 	'Cocktail Cherry',
+	'Club Soda',
 ];
 for (const entry of entries) {
 	const zero =
