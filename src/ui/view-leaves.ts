@@ -78,3 +78,10 @@ export function viewLink(view: ItemView, el: HTMLElement, path: string, text: st
 	});
 	return link;
 }
+
+/** A labelled spot in a view's toolbar (`cocktail-cabinet-pane-toolbar`); add the control to what it returns. */
+export function toolbarItem(bar: HTMLElement, label: string): HTMLElement {
+	const item = bar.createDiv({ cls: 'cocktail-cabinet-pane-toolbar-item' });
+	item.createSpan({ cls: 'cocktail-cabinet-pane-toolbar-label', text: label });
+	return item;
+}
