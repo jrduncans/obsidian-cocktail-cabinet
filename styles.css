@@ -659,3 +659,10 @@ a.external-link[href^='obsidian://cocktail-cabinet?'] {
 	background-image: none;
 	padding-inline-end: 0;
 }
+
+/* A long press on a view's link opens the cabinet's menu, not the system's link preview or a text selection. */
+.cocktail-cabinet-pane a.internal-link {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
