@@ -50,7 +50,11 @@ function fixture() {
 	} as unknown as App;
 	const kept: Record<string, string> = {};
 	const skipped: string[] = [];
-	const state: { seen: string[] | null; pending: string[] } = { seen: null, pending: [] };
+	const state: { seen: string[] | null; pending: string[]; aliases: Record<string, string[]> | null } = {
+		seen: null,
+		pending: [],
+		aliases: null,
+	};
 	const catalog = new CatalogSync(app, new CabinetStore(app, () => 'Cocktails'), () => ({
 		kept,
 		skipped,
@@ -238,6 +242,35 @@ void test('linking fills in the catalog’s aliases only where the note has none
 	for (const addition of (await catalog.plan()).additions) await catalog.adopt(addition);
 	assert.deepEqual(split(contents.get(blanc)!).properties.aliases, ['Rhum Agricole Blanc']);
 	assert.deepEqual(split(contents.get(vieux)!).properties.aliases, ['Vieux']);
+});
+
+void test('catalog aliases reach existing starter notes once, beside the user’s own', async () => {
+	const { contents, catalog, state, split } = fixture();
+	const soda = 'Cocktails/Types/Soda Water.md';
+	const id = 'type/Soda Water';
+	const aliases = () => split(contents.get(soda)!).properties.aliases;
+	state.seen = [];
+	// A note from before the catalog had these aliases, with one of the user's own.
+	contents.set(soda, contents.get(soda)!.replace(/^aliases: .*\n/m, 'aliases: ["Fizzy Water"]\n'));
+	const first = await catalog.sync();
+	assert.deepEqual(aliases(), ['Fizzy Water', 'Seltzer', 'Sparkling Water']);
+	assert.ok(first!.updated.includes(soda));
+	assert.deepEqual(first!.aliases[id], ['Seltzer', 'Sparkling Water']);
+	// One the user removed after it was offered stays removed.
+	state.aliases = first!.aliases;
+	contents.set(soda, contents.get(soda)!.replace(/^aliases: .*\n/m, 'aliases: ["Fizzy Water","Seltzer"]\n'));
+	const second = await catalog.sync();
+	assert.deepEqual(aliases(), ['Fizzy Water', 'Seltzer']);
+	assert.ok(!second!.updated.includes(soda));
+	// An alias new to the catalog since the last sync is added, compared without case.
+	state.aliases = { ...second!.aliases, [id]: ['Seltzer'] };
+	contents.set(soda, contents.get(soda)!.replace(/^aliases: .*\n/m, 'aliases: ["sparkling water"]\n'));
+	await catalog.sync();
+	assert.deepEqual(aliases(), ['sparkling water']);
+	state.aliases = { [id]: [] };
+	contents.set(soda, contents.get(soda)!.replace(/^aliases: .*\n/m, ''));
+	await catalog.sync();
+	assert.deepEqual(aliases(), ['Seltzer', 'Sparkling Water']);
 });
 
 void test('a note of another kind can’t stand in for a missing entry', async () => {

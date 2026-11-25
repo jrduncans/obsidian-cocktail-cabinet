@@ -41,6 +41,7 @@ export default class CocktailCabinetPlugin extends Plugin {
 			skipped: this.settings.catalogSkipped,
 			seen: this.settings.catalogSeen,
 			pending: this.settings.catalogPending,
+			aliases: this.settings.catalogAliases,
 		}));
 		this.registerView(AVAILABILITY_VIEW, (leaf) => new AvailabilityView(leaf, this));
 		this.registerView(BUY_VIEW, (leaf) => new BuyView(leaf, this));
@@ -162,7 +163,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 	 * notes were updated or added.
 	 */
 	private async syncCatalog(force: boolean): Promise<number> {
-		const current = this.settings.catalogVersion === CATALOG_VERSION && this.settings.catalogSeen !== null;
+		// Cabinets from before aliases were offered sync once more, so starter notes get the catalog's aliases.
+		const current =
+			this.settings.catalogVersion === CATALOG_VERSION &&
+			this.settings.catalogSeen !== null &&
+			this.settings.catalogAliases !== null;
 		if (!force && current) return 0;
 		try {
 			const result = await this.catalog.sync();
@@ -170,6 +175,7 @@ export default class CocktailCabinetPlugin extends Plugin {
 			if (result) {
 				this.settings.catalogSeen = result.seen;
 				this.settings.catalogPending = result.pending;
+				this.settings.catalogAliases = result.aliases;
 			}
 			await this.saveSettings();
 			if (!result) return 0;

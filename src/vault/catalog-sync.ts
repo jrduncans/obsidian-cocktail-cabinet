@@ -61,22 +61,32 @@ export interface CatalogPlan {
  * the cabinet has had a chance to hold, so a missing one on it was deleted on purpose and stays deleted;
  * `null` means it was never recorded (a cabinet from before this was tracked). `pending` lists missing
  * entries offered for review, `skipped` the ones the user declined, `kept` fields kept against a value.
+ * `aliases` lists, by entry, the catalog aliases already offered to the cabinet's note, so one the user
+ * removed isn't added back; `null` means none were recorded yet.
  */
 export interface CatalogState {
 	kept: Readonly<Record<string, string>>;
 	skipped: readonly string[];
 	seen: readonly string[] | null;
 	pending: readonly string[];
+	aliases?: Readonly<Record<string, readonly string[]>> | null;
 }
 
-/** The outcome of a sync, with the `seen` and `pending` lists to save. */
+/** The outcome of a sync, with the `seen`, `pending`, and `aliases` records to save. */
 export interface CatalogSyncResult {
 	updated: string[];
 	added: string[];
 	review: number;
 	seen: string[];
 	pending: string[];
+	aliases: Record<string, string[]>;
 }
+
+const aliasKey = (alias: string) => alias.trim().toLowerCase();
+const aliasList = (value: unknown): string[] =>
+	(Array.isArray(value) ? value : [value]).filter(
+		(item): item is string => typeof item === 'string' && !!item.trim(),
+	);
 
 /** Key for a field the user chose to keep, recorded with the catalog value they kept it against. */
 export const keptKey = (update: Pick<CatalogFieldUpdate, 'id' | 'field'>) => `${update.id}|${update.field}`;
@@ -193,6 +203,8 @@ export class CatalogSync {
 			}
 		}
 		const present = await this.notes();
+		const aliases = await this.offerAliases(present, state.aliases ?? {});
+		for (const path of aliases.updated) if (!updated.includes(path)) updated.push(path);
 		const seen = new Set([
 			...(state.seen ?? []),
 			...present.keys(),
@@ -205,7 +217,45 @@ export class CatalogSync {
 			review: new Set(plan.review.map((item) => item.path)).size + pending.size,
 			seen: STARTER_CATALOG.map((entry) => entry.id).filter((id) => seen.has(id)),
 			pending: [...pending],
+			aliases: aliases.offered,
 		};
+	}
+
+	/**
+	 * Add to each starter note the catalog aliases not yet offered to it, beside the user's own. Aliases are
+	 * never removed: one the user deleted after it was offered stays deleted, and one the catalog drops stays
+	 * on the note. Returns the notes changed and the updated record of what was offered.
+	 */
+	private async offerAliases(
+		notes: Awaited<ReturnType<CatalogSync['notes']>>,
+		before: Readonly<Record<string, readonly string[]>>,
+	): Promise<{ updated: string[]; offered: Record<string, string[]> }> {
+		const offered: Record<string, string[]> = Object.fromEntries(
+			Object.entries(before).map(([id, list]) => [id, [...list]]),
+		);
+		const updated: string[] = [];
+		for (const entry of STARTER_CATALOG) {
+			const note = notes.get(entry.id);
+			const catalog = aliasList(entry.properties?.aliases);
+			if (!note || note.properties[PROP.kind] !== entry.kind || !catalog.length) continue;
+			const earlier = new Set((offered[entry.id] ?? []).map(aliasKey));
+			const fresh = catalog.filter((alias) => !earlier.has(aliasKey(alias)));
+			offered[entry.id] = [...(offered[entry.id] ?? []), ...fresh];
+			if (!fresh.length) continue;
+			const has = new Set(aliasList(note.properties.aliases).map(aliasKey));
+			if (fresh.every((alias) => has.has(aliasKey(alias)))) continue;
+			let wrote = false;
+			await this.app.fileManager.processFrontMatter(note.file, (properties: Properties) => {
+				const mine = aliasList(properties.aliases);
+				const present = new Set(mine.map(aliasKey));
+				const add = fresh.filter((alias) => !present.has(aliasKey(alias)));
+				if (!add.length) return;
+				properties.aliases = [...mine, ...add];
+				wrote = true;
+			});
+			if (wrote) updated.push(note.file.path);
+		}
+		return { updated, offered };
 	}
 
 	/** Write the catalog's value for each field, skipping any note that changed since it was planned. */

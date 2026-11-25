@@ -35,6 +35,8 @@ export interface CocktailCabinetSettings {
 	catalogSeen: string[] | null;
 	/** Missing catalog entries offered in **Review cabinet updates**. */
 	catalogPending: string[];
+	/** Catalog aliases already offered to each starter note, by entry; `null` until first recorded. */
+	catalogAliases: Record<string, string[]> | null;
 	/** The latest logs, oldest first, kept for **Undo last log**. */
 	recentLogs: LogRecord[];
 	/** Alcohol estimate: water added by chilling, as a share of the pour, by preparation. */
@@ -65,6 +67,7 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	catalogSkipped: [],
 	catalogSeen: null,
 	catalogPending: [],
+	catalogAliases: null,
 	recentLogs: [],
 	dilution: { ...DEFAULT_DILUTION },
 	topMl: DEFAULT_TOP_ML,
@@ -117,6 +120,13 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 		settings.catalogSeen = saved.catalogSeen.filter((id): id is string => typeof id === 'string');
 	if (Array.isArray(saved.catalogPending))
 		settings.catalogPending = saved.catalogPending.filter((id): id is string => typeof id === 'string');
+	if (saved.catalogAliases && typeof saved.catalogAliases === 'object' && !Array.isArray(saved.catalogAliases))
+		settings.catalogAliases = Object.fromEntries(
+			Object.entries(saved.catalogAliases as Record<string, unknown>).map(([id, list]) => [
+				id,
+				Array.isArray(list) ? list.filter((alias): alias is string => typeof alias === 'string') : [],
+			]),
+		);
 	const dilution = saved.dilution;
 	if (dilution && typeof dilution === 'object') {
 		for (const key of Object.keys(DEFAULT_DILUTION) as Preparation[]) {
