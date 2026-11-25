@@ -68,6 +68,7 @@ Checked on 2026-11-22 against saved copies of the sampled pages, then in the dev
 - **Page text.** Images are dropped, links and emphasis keep only their text (Liber & Co's ingredient was a bold link), and table rows become one line each (Difford's ingredient table). Not every article counts: on Difford's they're reader comments, so without a post body or recipe-like article the body is read.
 - **Sites vary by client.** Obsidian was served a version of Difford's with no recipe data, which curl got, and liquor.com answered Obsidian though it refused curl. Testing a site means testing it in Obsidian.
 - **Fraction slash.** Amounts accept `2⁄3` (U+2044) as well as `2/3`.
+- **Spaced fractions, qualifiers, and other echoes** (2026-11-25, from the unlinked lines in `knowledge`). `1 ½ oz` reads like `1½ oz`; it had been left whole as the wording, so logging skipped the gin in three recipes. A qualifier before the amount (`heavy ¾ oz`, `a scant 1 oz`, also generous, short, healthy, full, heaping, rounded, bare, barely) stays with the amount, which remains unmeasured. An echo may be a range or another volume unit (`1 barspoon / 1 tsp`, `⅓–½ oz. / 10–15 ml.`), so it no longer ends up in the wording.
 - **Failure.** The text field is left as `Source: <url>` and a blank line, so pasting the recipe below keeps the source. Shaker of Spirits builds its page with scripts and lands here.
 
 ### Not supported

@@ -12,13 +12,26 @@ const FRACTIONS: Record<string, string> = {
 /** A barspoon is treated as one US teaspoon; a tablespoon is three. */
 const US_TEASPOON_ML = 4.92892159375;
 // A fraction may use the fraction slash (⁄, U+2044), as some recipe sites write 2⁄3.
-const NUMBER = '(?:\\d+\\s+\\d+\\s*[/⁄]\\s*\\d+|\\d+\\s*[/⁄]\\s*\\d+|\\d*[¼½¾⅓⅔⅛⅜⅝⅞]|(?:\\d+(?:[.,]\\d+)?|[.,]\\d+))';
+// A whole number may be spaced from its fraction character, as in 1 ½.
+const NUMBER =
+	'(?:\\d+\\s+\\d+\\s*[/⁄]\\s*\\d+|\\d+\\s*[/⁄]\\s*\\d+|(?:\\d+\\s*)?[¼½¾⅓⅔⅛⅜⅝⅞]|(?:\\d+(?:[.,]\\d+)?|[.,]\\d+))';
 const UNIT =
 	'(?:fl\\.?\\s*oz\\.?|oz\\.?|ounces?|ml|millilit(?:er|re)s?|cl|centilit(?:er|re)s?|dash(?:es)?|drops?|barspoons?|teaspoons?|tablespoons?|tsp\\.?|tbsp\\.?|parts?|sprigs?|leaf|leaves|slices?|wedges?|pieces?)';
-const PREFIX = new RegExp(`^(${NUMBER}(?:\\s*[-–—]\\s*${NUMBER})?\\s*${UNIT}(?:\\s*\\([^)]*\\))?)\\s+(.+)$`, 'i');
+/** A word some sources put before an amount ("heavy ¾ oz", "a scant 1 oz"); it makes the amount inexact. */
+const QUALIFIER = '(?:a\\s+)?(?:heavy|scant|generous|short|healthy|full|heaping|rounded|bare|barely)\\s+';
+const PREFIX = new RegExp(
+	`^((?:${QUALIFIER})?${NUMBER}(?:\\s*[-–—]\\s*${NUMBER})?\\s*${UNIT}(?:\\s*\\([^)]*\\))?)\\s+(.+)$`,
+	'i',
+);
 
-/** An echoed volume some sources add after the amount, as in "1 oz. / 30 ml." or "1 oz · 30 ml". */
-const ECHO = /^([/·]\s*\d+(?:[.,]\d+)?\s*(?:ml|cl|oz)\.?)\s+(.+)$/i;
+/**
+ * An echoed amount some sources add after the first, as in "1 oz. / 30 ml.", "1 oz · 30 ml", "1 barspoon /
+ * 1 tsp", or "⅓–½ oz. / 10–15 ml.": a volume, possibly a range, in the same or another unit.
+ */
+const ECHO = new RegExp(
+	`^([/·]\\s*${NUMBER}(?:\\s*[-–—]\\s*${NUMBER})?\\s*(?:ml|cl|(?:fl\\.?\\s*)?oz|barspoons?|teaspoons?|tablespoons?|tsp|tbsp)\\.?)\\s+(.+)$`,
+	'i',
+);
 
 /** Split an echoed volume off the start of an ingredient's text: `· 30 ml pineapple rum` → its lead and wording. */
 export function splitEcho(text: string): { lead: string; wording: string } {

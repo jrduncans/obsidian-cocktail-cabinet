@@ -70,9 +70,26 @@ export function ingredientKey(wording: string): string {
 
 export const isMeasured = (text: string) => recipeVolumeMl(splitIngredient(plainIngredient(text)).amount) !== null;
 
-/** Measured lines without a link: logging can't subtract them. */
+/**
+ * A line that pours a volume, even one logging can't measure exactly: a range ("1–2 oz") or a qualified
+ * amount ("scant 1 oz"). The alcohol estimate counts these, so an unlinked one leaves it partial.
+ */
+export function isPour(text: string): boolean {
+	const amount = splitIngredient(plainIngredient(text)).amount;
+	if (recipeVolumeMl(amount) !== null) return true;
+	const exact = amount.replace(/^(?:a\s+)?\S+\s+(?=[\d¼½¾⅓⅔⅛⅜⅝⅞.,])/i, '');
+	if (exact !== amount && recipeVolumeMl(exact) !== null) return true;
+	const range = exact.match(/^(.+?)\s*[-–—]\s*(.+?)\s*([a-z.]+)$/i);
+	return (
+		!!range &&
+		recipeVolumeMl(`${range[1]} ${range[3]}`) !== null &&
+		recipeVolumeMl(`${range[2]} ${range[3]}`) !== null
+	);
+}
+
+/** Lines that pour a volume without a link: logging can't subtract them and the estimate stays partial. */
 export function unlinkedLines(content: string): IngredientLine[] {
-	return ingredientLines(content).filter((line) => !/\[\[/.test(line.text) && isMeasured(line.text));
+	return ingredientLines(content).filter((line) => !/\[\[/.test(line.text) && isPour(line.text));
 }
 
 export interface UnlinkedReviewOptions {
@@ -93,7 +110,7 @@ export function reviewUnlinkedLines(
 	);
 	return ingredientLines(content).filter((line) => {
 		if (/\[\[/.test(line.text)) return false;
-		if (isMeasured(line.text)) return true;
+		if (isPour(line.text)) return true;
 		if (isGarnish(line.text) && !options.includeGarnishes) return false;
 		const key = ingredientKey(ingredientParts(line.text).wording);
 		return !!key && names.has(key);

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { classifyLoggingLines } from '../src/core/logging-lines';
-import { splitIngredient } from '../src/core/recipe-amount';
+import { lineVolumeMl, splitIngredient } from '../src/core/recipe-amount';
 import {
 	groupLines,
 	groupUnlinked,
@@ -198,6 +198,38 @@ void test('only measured lines without links count as unlinked', () => {
 	assert.deepEqual(
 		lines.map((line) => line.text),
 		['2 oz gin', '22.5 ml lemon'],
+	);
+});
+
+void test('amounts written with a spaced fraction, a qualifier, or a unit echo leave just the ingredient', () => {
+	for (const [line, amount, lead, wording, ml] of [
+		['1 ½ oz gin', '1 ½ oz', '', 'gin', 1.5 * 29.5735295625],
+		['2 ¾ ounces rye', '2 ¾ ounces', '', 'rye', 2.75 * 29.5735295625],
+		['1 barspoon / 1 tsp cane syrup', '1 barspoon', '/ 1 tsp', 'cane syrup', 4.92892159375],
+		['¾ oz · 22.5 ml lime', '¾ oz', '· 22.5 ml', 'lime', 0.75 * 29.5735295625],
+		['⅓–½ oz. / 10–15 ml. ginger syrup', '⅓–½ oz.', '/ 10–15 ml.', 'ginger syrup', null],
+		['Heavy 1 1/4 ounces lightly aged rum', 'Heavy 1 1/4 ounces', '', 'lightly aged rum', null],
+		['heavy 3/4 ounce Suze', 'heavy 3/4 ounce', '', 'Suze', null],
+		['scant 1 3/4 ounces balm-aged cachaça', 'scant 1 3/4 ounces', '', 'balm-aged cachaça', null],
+		['a generous 2 oz bourbon', 'a generous 2 oz', '', 'bourbon', null],
+	] as const) {
+		assert.deepEqual(ingredientParts(line), { amount, lead, wording }, line);
+		const volume = lineVolumeMl(line);
+		if (ml === null) assert.equal(volume, null, line);
+		else assert.ok(Math.abs(volume! - ml) < 1e-9, line);
+	}
+	// A word that merely starts like a qualifier, or a qualifier with no amount after it, stays in the wording.
+	assert.deepEqual(ingredientParts('light rum'), { amount: '', lead: '', wording: 'light rum' });
+	assert.deepEqual(ingredientParts('heavy cream'), { amount: '', lead: '', wording: 'heavy cream' });
+});
+
+void test('ranges and qualified pours are reviewed though logging can’t measure them', () => {
+	const lines = unlinkedLines(
+		'### Ingredients\n- 1 ½ oz gin\n- ⅓–½ oz. / 10–15 ml. ginger syrup\n- 1–2 oz rum\n- scant 1 3/4 ounces cachaça\n- 1–2 dashes absinthe\n- 3 lemon wedges\n- heavy cream',
+	);
+	assert.deepEqual(
+		lines.map((line) => line.text),
+		['1 ½ oz gin', '⅓–½ oz. / 10–15 ml. ginger syrup', '1–2 oz rum', 'scant 1 3/4 ounces cachaça'],
 	);
 });
 
