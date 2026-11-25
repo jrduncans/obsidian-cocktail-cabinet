@@ -1,5 +1,5 @@
-import { Keymap, Platform, TFile } from 'obsidian';
-import type { ItemView, Plugin, WorkspaceLeaf } from 'obsidian';
+import { Keymap, Menu, Platform, TFile } from 'obsidian';
+import type { ItemView, PaneType, Plugin, WorkspaceLeaf } from 'obsidian';
 
 /**
  * Where the cabinet's list views open, and where their links open notes. A view opens as a tab in
@@ -59,12 +59,48 @@ export async function openFromView(view: ItemView, path: string, event: MouseEve
 	await beside.openFile(file);
 }
 
-/** A link to `path` in `view` that opens as `openFromView` does and previews on Ctrl or Cmd hover. */
+/**
+ * The menu a note link's right-click (or long press) gets: where to open it, then what Obsidian and
+ * other plugins add for a file, as for a link in a note.
+ */
+function linkMenu(view: ItemView, file: TFile, event: MouseEvent): void {
+	const { workspace } = view.app;
+	const menu = new Menu();
+	const open = (title: string, icon: string, type: Exclude<PaneType, 'window'>) =>
+		menu.addItem((item) =>
+			item
+				.setSection('open')
+				.setTitle(title)
+				.setIcon(icon)
+				.onClick(() => void workspace.getLeaf(type).openFile(file)),
+		);
+	open('Open in new tab', 'file-plus', 'tab');
+	// A phone has no room for a split, as the views' own links know. Obsidian adds Open in new window itself.
+	if (!Platform.isPhone) open('Open to the right', 'separator-vertical', 'split');
+	workspace.trigger('file-menu', menu, file, 'link-context-menu', view.leaf);
+	menu.showAtMouseEvent(event);
+}
+
+/**
+ * A link to `path` in `view` that opens as `openFromView` does, previews on Ctrl or Cmd hover, opens a
+ * new tab on middle click, and has a note link's menu.
+ */
 export function viewLink(view: ItemView, el: HTMLElement, path: string, text: string, cls = ''): HTMLAnchorElement {
 	const link = el.createEl('a', { cls: `internal-link ${cls}`.trim(), text, href: path });
 	link.addEventListener('click', (event) => {
 		event.preventDefault();
 		void openFromView(view, path, event);
+	});
+	link.addEventListener('auxclick', (event) => {
+		if (event.button !== 1) return;
+		event.preventDefault();
+		void view.app.workspace.openLinkText(path, '', 'tab');
+	});
+	link.addEventListener('contextmenu', (event) => {
+		const file = view.app.vault.getAbstractFileByPath(path);
+		if (!(file instanceof TFile)) return;
+		event.preventDefault();
+		linkMenu(view, file, event);
 	});
 	link.addEventListener('mouseover', (event) => {
 		view.app.workspace.trigger('hover-link', {
