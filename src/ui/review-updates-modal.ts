@@ -79,8 +79,8 @@ export class ReviewUpdatesModal extends Modal {
 		this.contentEl.createEl('p', {
 			text:
 				updates.length || fields.length
-					? 'This release changes things you’ve edited. Choose which to keep, or close this to decide later.'
-					: 'Some starter notes are missing. Choose which to add, or close this to decide later.',
+					? 'This release changes things you’ve edited. Choose which to keep, or close this to decide later; you’ll be reminded when Obsidian starts.'
+					: 'Some starter notes are missing. Choose which to add, or close this to decide later; you’ll be reminded when Obsidian starts.',
 		});
 		if (updates.length) {
 			new Setting(this.contentEl).setName('Cabinet notes').setHeading();
@@ -120,6 +120,15 @@ export class ReviewUpdatesModal extends Modal {
 									: `Added ${added} starter notes.`;
 							}),
 						),
+				);
+			if (additions.length > 1)
+				heading.addButton((button) =>
+					button.setButtonText('Skip all').onClick(() =>
+						this.act(async () => {
+							await this.skip(additions);
+							return `Skipped ${additions.length} starter notes; they won’t be offered again.`;
+						}),
+					),
 				);
 			for (const addition of additions) this.renderAddition(addition);
 		}
@@ -180,11 +189,7 @@ export class ReviewUpdatesModal extends Modal {
 			.addButton((button) =>
 				button.setButtonText('Skip').onClick(() =>
 					this.act(async () => {
-						this.plugin.settings.catalogSkipped.push(addition.id);
-						this.plugin.settings.catalogPending = this.plugin.settings.catalogPending.filter(
-							(id) => id !== addition.id,
-						);
-						await this.plugin.saveSettings();
+						await this.skip([addition]);
 						return `Skipped ${addition.name}; it won’t be offered again.`;
 					}),
 				),
@@ -244,6 +249,15 @@ export class ReviewUpdatesModal extends Modal {
 			diff.createDiv({ text: `${mark}${line.text}`, cls: `cocktail-cabinet-diff-${line.side}` });
 		});
 		flush();
+	}
+
+	/** Never offer these entries again: they leave the review, and the reminder, for good. */
+	private async skip(additions: readonly CatalogAddition[]) {
+		const ids = new Set(additions.map((addition) => addition.id));
+		const settings = this.plugin.settings;
+		settings.catalogSkipped = [...new Set([...settings.catalogSkipped, ...ids])];
+		settings.catalogPending = settings.catalogPending.filter((id) => !ids.has(id));
+		await this.plugin.saveSettings();
 	}
 
 	private act(run: () => Promise<string>) {

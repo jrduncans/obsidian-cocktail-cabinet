@@ -99,7 +99,6 @@ export default class CocktailCabinetPlugin extends Plugin {
 		const sections = await this.syncSections(force);
 		const catalog = await this.syncCatalog(force);
 		let notes = 0;
-		let review: string[] = [];
 		try {
 			const result = await this.store.syncManaged(this.settings.managedVersions, force);
 			this.settings.managedVersions = result.written;
@@ -110,15 +109,36 @@ export default class CocktailCabinetPlugin extends Plugin {
 				new Notice(
 					`Cocktail Cabinet ${force ? 'restored' : 'updated'} ${changed.length === 1 ? 'a note' : `${changed.length} notes`}: ${changed.join(', ')}.`,
 				);
-			review = result.review.map(noteName);
 		} catch (error) {
 			new Notice(`Couldn’t update cabinet notes: ${error instanceof Error ? error.message : String(error)}`);
 		}
-		if (catalog.review) review.push(catalog.review === 1 ? 'a starter note' : `${catalog.review} starter notes`);
+		const review = await this.waitingReview();
 		if (review.length && force) new ReviewUpdatesModal(this).open();
 		else if (review.length) this.reviewNotice(review);
-		else if (force && !notes && !views && !sections && !catalog.updated)
+		else if (force && !notes && !views && !sections && !catalog)
 			new Notice('Cabinet notes and views are already current.');
+	}
+
+	/**
+	 * Everything **Review cabinet updates** would show, named for a notice. Checked on every startup, not
+	 * only after a release, so a dismissed notice comes back until each item is decided.
+	 */
+	private async waitingReview(): Promise<string[]> {
+		try {
+			const managed = (await this.store.managedUpdates()).map((update) => noteName(update.path));
+			const { review, additions } = await this.catalog.plan();
+			const starter = new Set(review.map((item) => item.path)).size;
+			const missing = additions.length;
+			return [
+				...managed,
+				...(starter
+					? [starter === 1 ? 'a starter note you edited' : `${starter} starter notes you edited`]
+					: []),
+				...(missing ? [missing === 1 ? 'a missing starter note' : `${missing} missing starter notes`] : []),
+			];
+		} catch {
+			return [];
+		}
 	}
 
 	/**
@@ -139,11 +159,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 	/**
 	 * Update starter notes from the catalog when it changed, with `force`, or until the cabinet's entries
 	 * are first recorded: untouched fields silently, and entries new to the cabinet added. Returns how many
-	 * notes were updated or added and how many have changes waiting for review.
+	 * notes were updated or added.
 	 */
-	private async syncCatalog(force: boolean): Promise<{ updated: number; review: number }> {
+	private async syncCatalog(force: boolean): Promise<number> {
 		const current = this.settings.catalogVersion === CATALOG_VERSION && this.settings.catalogSeen !== null;
-		if (!force && current) return { updated: 0, review: 0 };
+		if (!force && current) return 0;
 		try {
 			const result = await this.catalog.sync();
 			this.settings.catalogVersion = CATALOG_VERSION;
@@ -152,17 +172,17 @@ export default class CocktailCabinetPlugin extends Plugin {
 				this.settings.catalogPending = result.pending;
 			}
 			await this.saveSettings();
-			if (!result) return { updated: 0, review: 0 };
+			if (!result) return 0;
 			const { updated, added } = result;
 			if (updated.length)
 				new Notice(
 					`Cocktail Cabinet updated ${updated.length === 1 ? noteName(updated[0]!) : `${updated.length} starter notes`} from the catalog.`,
 				);
 			if (added.length) new Notice(`Cocktail Cabinet added new starter notes: ${listNames(added)}.`, 10000);
-			return { updated: updated.length + added.length, review: result.review };
+			return updated.length + added.length;
 		} catch (error) {
 			new Notice(`Couldn’t update starter notes: ${error instanceof Error ? error.message : String(error)}`);
-			return { updated: 0, review: 0 };
+			return 0;
 		}
 	}
 
