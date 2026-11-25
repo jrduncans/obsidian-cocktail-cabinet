@@ -21,11 +21,6 @@ export default class CocktailCabinetPlugin extends Plugin {
 	availability!: AvailabilityStore;
 	recipes!: RecipeSync;
 	catalog!: CatalogSync;
-	/**
-	 * Remembered choices cancelled in **Review unlinked ingredients** (wording key and note path), so
-	 * they don't start chosen again until Obsidian restarts, even after the review is closed and reopened.
-	 */
-	readonly declinedRememberedLinks = new Set<string>();
 
 	async onload() {
 		this.settings = loadSettings(await this.loadData());

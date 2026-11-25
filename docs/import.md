@@ -85,6 +85,7 @@ When a line is linked in the review, in **Review unlinked ingredients**, or with
 - A wording remembered for two notes is a suggestion, not a link, with both offered.
 - The skill's approved defaults become starting entries in `knowledge`: `Gin` and `Gin (London Dry)` on London Dry Gin, `Cocchi American` on Cocchi Americano Bianco, `Vermouth (Sweet)` on Sweet Vermouth, `Rye (Bonded)` on Rye Whiskey. Simple syrup "2:1 or rich" stays a suggestion: it's a rule about wordings, not one wording.
 - The review's line "Nothing is linked automatically" changes to say which lines were linked from remembered wordings.
+- **Review unlinked ingredients** chooses nothing in advance (decided 2026-11-25): it suggests a note remembering the wording first, marked remembered. Choosing it in advance ticked every recipe's line at once, skipping the look at each recipe the review is for (plain `gin` is usually London Dry Gin, sometimes better the Gin family), made those cards start differently from the rest, and brought a cancelled choice back on every read.
 
 This also helps pasted recipes and one-offs, and it's what makes batches workable.
 

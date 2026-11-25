@@ -11,14 +11,12 @@ import { addCreateItems, pickIngredient } from './link-choice';
 import { rememberAfterLink, renderPreview, renderRemember } from './link-text';
 import { defaultLinkSource, wordingLink } from '../core/link-text';
 import type { LinkTextSource } from '../core/link-text';
-import { rememberedNote } from '../core/written-as';
+import { rememberingNotes } from '../core/written-as';
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 const recipeCount = (group: UnlinkedGroup) => new Set(group.uses.map((use) => use.recipe.path)).size;
 /** Lines shown in a wording's card before "Show all", so what the wording means is visible before choosing. */
 const PREVIEW_LINES = 3;
-/** A remembered choice cancelled for a wording, held on the plugin. */
-const declinedKey = (group: UnlinkedGroup, note: CabinetNote) => `${group.key}\n${note.path}`;
 
 export const UNLINKED_VIEW = 'cocktail-cabinet-unlinked';
 
@@ -47,7 +45,6 @@ export class UnlinkedView extends ItemView {
 			ticked: Set<number>;
 			source: LinkTextSource;
 			text: string;
-			remembered?: boolean;
 			remember?: boolean;
 			/** The link text choice is open; otherwise one line says what the link will show. */
 			editText?: boolean;
@@ -117,23 +114,6 @@ export class UnlinkedView extends ItemView {
 			const after = new Map(this.groups.map((group) => [group.key, UnlinkedView.lines(group)]));
 			for (const key of [...this.pending.keys()])
 				if (!after.has(key) || after.get(key) !== before.get(key)) this.pending.delete(key);
-			// A wording one note remembers starts chosen; nothing is written until Link.
-			const notes = this.plugin.store.notes();
-			for (const group of this.groups) {
-				const note = rememberedNote(group.wording, notes);
-				if (
-					note &&
-					!this.pending.has(group.key) &&
-					!this.plugin.declinedRememberedLinks.has(declinedKey(group, note))
-				)
-					this.pending.set(group.key, {
-						note,
-						ticked: new Set(group.uses.map((_use, index) => index)),
-						source: 'original',
-						text: group.wording,
-						remembered: true,
-					});
-			}
 			this.renderList();
 		} catch (error) {
 			if (!this.closed)
@@ -269,10 +249,13 @@ export class UnlinkedView extends ItemView {
 		};
 		renderUses();
 
-		// What to link this wording to: the likely notes first, each saying what kind of note it is. The
-		// chosen one stays here, highlighted, and choosing another switches to it.
+		// What to link this wording to: the likely notes first, each saying what kind of note it is and
+		// whether it remembers this wording (those come first). Nothing starts chosen, so each wording
+		// gets a look at its lines. The chosen one stays here, highlighted; choosing another switches.
 		const actions = el.createDiv({ cls: 'cocktail-cabinet-unlinked-actions' });
-		const suggested = suggestIngredient(group.wording, this.plugin.store.notes());
+		const notes = this.plugin.store.notes();
+		const suggested = suggestIngredient(group.wording, notes);
+		const remembering = new Set(rememberingNotes(group.wording, notes).map((note) => note.path));
 		if (pending && !suggested.some((note) => note.path === pending.note.path)) suggested.unshift(pending.note);
 		actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'Link to' });
 		for (const note of suggested) {
@@ -286,7 +269,12 @@ export class UnlinkedView extends ItemView {
 			button.buttonEl.toggleClass('is-active', chosen);
 			button.buttonEl.setAttribute('aria-pressed', String(chosen));
 			button.buttonEl.createSpan({ text: note.name });
-			button.buttonEl.createSpan({ cls: 'cocktail-cabinet-unlinked-kind', text: note.kind });
+			button.buttonEl.createSpan({
+				cls: 'cocktail-cabinet-unlinked-kind',
+				text: remembering.has(note.path) ? `${note.kind}, remembered` : note.kind,
+			});
+			if (remembering.has(note.path))
+				button.setTooltip(`${chosen ? 'Linking' : 'Link'} to ${note.path}, which remembers this wording`);
 		}
 		if (suggested.length) actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'or' });
 		new ButtonComponent(actions)
@@ -326,14 +314,11 @@ export class UnlinkedView extends ItemView {
 		});
 		typed.inputEl.setAttribute('aria-label', 'Link text');
 		const commit = bar.createDiv({ cls: 'cocktail-cabinet-unlinked-commit-buttons' });
-		if (!pending.remembered)
-			renderRemember(commit, group.wording, pending.note, !!pending.remember, (value) => {
-				pending.remember = value;
-			});
+		renderRemember(commit, group.wording, pending.note, !!pending.remember, (value) => {
+			pending.remember = value;
+		});
 		const errorEl = bar.createDiv({ cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 		new ButtonComponent(commit).setButtonText('Cancel').onClick(() => {
-			// Cancelling a remembered choice keeps it from starting chosen again this session.
-			if (pending.remembered) this.plugin.declinedRememberedLinks.add(declinedKey(group, pending.note));
 			this.pending.delete(group.key);
 			this.renderGroup(el, group);
 		});
@@ -342,9 +327,7 @@ export class UnlinkedView extends ItemView {
 		const update = () => {
 			const lines = pending.ticked.size;
 			const recipes = new Set([...pending.ticked].map((index) => group.uses[index]!.recipe.path)).size;
-			summary.setText(
-				`Link ${plural(lines, 'line')} to ${pending.note.name} (${pending.note.kind})${pending.remembered ? ', from a remembered wording' : ''}`,
-			);
+			summary.setText(`Link ${plural(lines, 'line')} to ${pending.note.name} (${pending.note.kind})`);
 			for (const [button, source] of sourceButtons) {
 				button.buttonEl.toggleClass('is-active', source === pending.source);
 				button.buttonEl.setAttribute('aria-pressed', String(source === pending.source));
