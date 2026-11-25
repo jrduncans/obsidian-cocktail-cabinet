@@ -193,41 +193,101 @@ export function recipeIngredientNotes(notes: readonly CabinetNote[]): CabinetNot
 
 const normalize = (value: string) =>
 	value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
-const words = (value: string) => ` ${value.replace(/[^\p{L}\p{N}]+/gu, ' ').trim()} `;
+/** Words that don't tell ingredients apart: "crème de cacao" is "creme cacao", "Smith and Cross" is "Smith & Cross". */
+const MINOR = new Set(['a', 'an', 'and', 'the', 'of', 'de', 'di', 'da', 'del', 'du', 'des', 'la', 'le']);
+// Single characters ("Q", the "s" of "Peychaud's") name nothing on their own.
+const tokens = (value: string) =>
+	new Set(value.split(/[^\p{L}\p{N}]+/u).filter((word) => word.length > 1 && !MINOR.has(word)));
+/** Every word of `part` is in `whole`, and one of them is a word, not a number such as the 2 and 1 of "(2:1)". */
+const within = (part: Set<string>, whole: Set<string>) =>
+	[...part].some((word) => /\p{L}/u.test(word)) && [...part].every((word) => whole.has(word));
+const same = (a: Set<string>, b: Set<string>) => a.size === b.size && within(a, b);
+/** Shared words over all words: how closely two wordings name the same thing. */
+const overlap = (a: Set<string>, b: Set<string>) => {
+	const shared = [...a].filter((word) => b.has(word)).length;
+	return shared / (a.size + b.size - shared);
+};
+/** A brand the recipe prefers: "preferably Plymouth", "such as Beefeater", "pref. Havana Club 3". */
+const PREFERENCE = /^(?:preferably|pref\.?|such as|ideally|e\.?g\.?|like)\s+/;
+/** Notes on serving rather than identity: ", to top", ", for garnish", "(optional)", "(see Editor's Note)". */
+const SERVING = /^(?:to|for|optional|see|or|if|as|about|plus)\b/;
+
+/**
+ * A wording's parts: the words naming the ingredient (with any bare parenthetical, as in "Tequila (Blanco)"),
+ * and hints that may name a brand: a parenthetical, or text after a comma, such as "preferably Plymouth".
+ */
+function wordingParts(query: string): {
+	base: string;
+	identity: Set<string>;
+	hints: Set<string>[];
+	qualifiers: Set<string>[];
+} {
+	const hints: Set<string>[] = [];
+	const qualifiers: Set<string>[] = [];
+	const identity = new Set<string>();
+	const hint = (text: string, bare: boolean) => {
+		const trimmed = text.trim();
+		if (!trimmed || SERVING.test(trimmed)) return;
+		const preference = PREFERENCE.test(trimmed);
+		const words = tokens(trimmed.replace(PREFERENCE, ''));
+		if (!words.size) return;
+		hints.push(words);
+		if (!bare || preference) return;
+		qualifiers.push(words);
+		for (const word of words) identity.add(word);
+	};
+	const parentheticals = [...query.matchAll(/\(([^)]*)\)?/g)].map((match) => match[1]!);
+	const [base = '', ...tail] = query.replace(/\([^)]*\)?/g, ' ').split(',');
+	for (const text of parentheticals) hint(text, true);
+	for (const text of tail) hint(text, false);
+	for (const word of tokens(base)) identity.add(word);
+	return { base: base.replace(/\s+/g, ' ').trim(), identity, hints, qualifiers };
+}
 
 /** Suggest identities by names/aliases, never by owned stock or inferred substitutions. */
 export function suggestIngredient(text: string, notes: readonly CabinetNote[]): CabinetNote[] {
 	if (/\[\[/.test(text)) return [];
 	// Notes remembering this exact wording come first; a wording remembered for several offers each.
 	const remembered = rememberingNotes(text, notes);
-	if (/\b(?:or|and)\b|\//i.test(text)) return remembered.slice(0, 3);
 	const query = normalize(text);
-	if (!query) return [];
-	const parenthetical = [...query.matchAll(/\(([^)]+)\)/g)].map((match) => match[1]!);
-	const base = query.replace(/\([^)]*\)/g, '').trim();
+	if (!query) return remembered.slice(0, 3);
+	const { base, identity, hints, qualifiers } = wordingParts(query);
+	// Alternatives ("lemon or lime juice", "gin / vodka") name no single note; a brand hint may hold "and".
+	if (/\b(?:or|and)\b|\//.test(base) || !identity.size) return remembered.slice(0, 3);
+	const baseWords = tokens(base);
+	const everything = new Set([...identity, ...hints.flatMap((words) => [...words])]);
 	const ranked = recipeIngredientNotes(notes)
 		.map((note) => {
 			const filename = note.path.split('/').at(-1)!.replace(/\.md$/, '');
 			const labels = [note.name, filename, ...(note.aliases || [])].map(normalize);
-			const score = Math.max(
-				...labels.map((label) => {
-					if (label === query) return 5;
-					if (
-						note.kind === 'bottle' &&
-						parenthetical.some(
-							(brand) =>
-								label === brand ||
-								(words(label).includes(words(brand)) && words(label).includes(words(base))),
-						)
-					)
-						return 4;
-					if (label === base || parenthetical.includes(label)) return 3;
-					return words(label).includes(words(query)) || words(query).includes(words(label)) ? 1 : 0;
-				}),
-			);
-			return { note, score };
+			const score = (label: string): number => {
+				if (label === query) return 5;
+				const words = tokens(label);
+				// The preferred one, named exactly ("Plymouth Gin" for "gin, preferably Plymouth").
+				if (hints.length && same(words, everything)) return 4.8;
+				const hinted = hints.some((hint) => within(hint, words));
+				// A bottle the recipe names in full, beside the ingredient: "rum, preferably Smith and Cross".
+				if (note.kind === 'bottle' && hinted && within(words, everything)) return 4.7;
+				if (same(words, identity)) return 4.5;
+				// A category is too broad to suggest from one shared word: "Marion Blackberry Syrup" isn't Syrup.
+				if (note.kind === 'category') return 0;
+				// Words naming part of this note: more than one, or one beside a word of the ingredient.
+				const partly = (part: Set<string>) =>
+					within(part, words) && (part.size > 1 || [...baseWords].some((word) => words.has(word)));
+				// A bottle a hint partly names: "Appleton Signature" for Appleton Estate Signature.
+				if (note.kind === 'bottle' && hints.some(partly)) return 4 + overlap(words, everything) / 10;
+				if (within(words, identity) || within(identity, words)) return overlap(words, identity);
+				// A parenthetical naming the style: "Rum (Rhum Agricole)" is Aged or Unaged Rhum Agricole.
+				return qualifiers.some(partly) ? overlap(words, identity) : 0;
+			};
+			// The best-matching label, the shorter on a tie.
+			const best = labels
+				.map((label) => ({ score: score(label), size: tokens(label).size }))
+				.sort((x, y) => y.score - x.score || x.size - y.size)[0]!;
+			return { note, ...best };
 		})
 		.filter((item) => item.score > 0)
-		.sort((a, b) => b.score - a.score || a.note.name.localeCompare(b.note.name));
+		// Equal matches: the broader note first, as "Rum" before "Aged Overproof Jamaican Rum".
+		.sort((a, b) => b.score - a.score || a.size - b.size || a.note.name.localeCompare(b.note.name));
 	return [...remembered, ...ranked.map((item) => item.note).filter((note) => !remembered.includes(note))].slice(0, 3);
 }

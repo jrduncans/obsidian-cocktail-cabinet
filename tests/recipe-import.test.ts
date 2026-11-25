@@ -161,6 +161,93 @@ void test('suggestions rank exact identities and aliases without inferring a sto
 	assert.equal(notes[0]?.name, 'Gin');
 });
 
+// Wordings from unlinked lines in a real vault, against a slice of its cabinet.
+const cabinet: CabinetNote[] = [
+	...(
+		[
+			['Gin', 'family'],
+			['Rum', 'family'],
+			['Bitters', 'family'],
+			['Juice', 'category'],
+			['Liqueur', 'category'],
+			['Syrup', 'category'],
+			['Blanco Tequila', 'type'],
+			['Aged Rhum Agricole', 'type'],
+			['Unaged Rhum Agricole', 'type'],
+			['Pineapple Rum', 'type'],
+			['Bonded Rye', 'type'],
+			['Rye Whiskey', 'type'],
+			['White Blended Rum', 'type'],
+			['Aged Overproof Jamaican Rum', 'type'],
+			['Unaged Overproof Jamaican Rum', 'type'],
+			['Lime Juice', 'type'],
+			['Orange Juice', 'type'],
+			['Pineapple Juice', 'type'],
+			['Red Bitter Liqueur', 'type'],
+			['Coffee Liqueur', 'type'],
+			['Plymouth Gin', 'type'],
+			['London Dry Gin', 'type'],
+			['Fernet', 'type'],
+			['Soda Water', 'type'],
+			['Tonic Water', 'type'],
+			['Cream of Coconut', 'type'],
+			['Crème de Cacao', 'type'],
+			['Plymouth Sloe Gin', 'bottle'],
+			['Plymouth Gin Navy Strength', 'bottle'],
+			["Broker's London Dry Gin", 'bottle'],
+			['Appleton Estate Signature', 'bottle'],
+			['Smith & Cross', 'bottle'],
+			['Fernet Branca', 'bottle'],
+			['Angostura Cocoa Bitters', 'bottle'],
+			['Water', 'ingredient'],
+			['Heavy Cream', 'ingredient'],
+		] as const
+	).map(([name, kind]): CabinetNote => ({ path: `Cocktails/${kind}/${name}.md`, name, kind, parents: [] })),
+];
+const top = (wording: string) => suggestIngredient(wording, cabinet)[0]?.name;
+const names = (wording: string) => suggestIngredient(wording, cabinet).map((note) => note.name);
+
+void test('words match in any order, inside parentheses too', () => {
+	assert.equal(top('Tequila (Blanco)'), 'Blanco Tequila');
+	assert.equal(top('aged agricole rhum'), 'Aged Rhum Agricole');
+	assert.deepEqual(names('Rum (Rhum Agricole)').slice(0, 2), ['Aged Rhum Agricole', 'Unaged Rhum Agricole']);
+	assert.equal(top('Rum (Pineapple-Flavored)'), 'Pineapple Rum');
+	assert.equal(top('Rye (Bonded)'), 'Bonded Rye');
+	assert.equal(top('White Rum'), 'White Blended Rum');
+	assert.equal(top('Fernet-Branca'), 'Fernet Branca');
+	assert.equal(top('Cocoa Bitters'), 'Angostura Cocoa Bitters');
+	assert.equal(top('dark crème de cacao'), 'Crème de Cacao');
+	assert.equal(top('cream of coconut, preferably Coco Lopez'), 'Cream of Coconut');
+	// Whole words only.
+	assert.ok(!names('ginger syrup').includes('Gin'));
+});
+
+void test('the most specific match ranks first, and a category is suggested only by its own name', () => {
+	assert.equal(top('fresh lime juice'), 'Lime Juice');
+	assert.equal(top('freshly squeezed blood orange juice'), 'Orange Juice');
+	assert.equal(top('Italian red bitter liqueur'), 'Red Bitter Liqueur');
+	assert.equal(top('Galliano Espresso coffee liqueur'), 'Coffee Liqueur');
+	assert.deepEqual(names('Marion Blackberry Syrup'), []);
+	assert.ok(!names('pineapple juice, preferably fresh').includes('Juice'));
+	assert.equal(top('Syrup'), 'Syrup');
+	assert.deepEqual(names('dry gin').slice(0, 2), ['London Dry Gin', 'Gin']);
+});
+
+void test('a preferred brand points to its bottle, and serving notes are ignored', () => {
+	assert.deepEqual(names('gin, preferably Plymouth').slice(0, 2), ['Plymouth Gin', 'Gin']);
+	assert.equal(top('Jamaica rum, preferably Appleton Signature'), 'Appleton Estate Signature');
+	assert.equal(top('rum, preferably Smith and Cross'), 'Smith & Cross');
+	assert.equal(top('gold rum (preferably Barbancourt 4 Star Rum)'), 'Rum');
+	assert.equal(top('gin, such as Beefeater'), 'Gin');
+	assert.equal(top('Soda water, to top'), 'Soda Water');
+	assert.equal(top('tonic, to top (preferably Q)'), 'Tonic Water');
+	assert.equal(top('pineapple juice, preferably from golden Hawaiian pineapples'), 'Pineapple Juice');
+	assert.ok(!names('Coco Lopez coconut cream').includes('Heavy Cream'));
+	// Alternatives still get no suggestions, but "and" inside a brand isn't one.
+	assert.deepEqual(names('vodka or gin'), []);
+	assert.deepEqual(names('gin / vodka'), []);
+});
+
 void test('an explicitly empty Ingredients section cannot borrow unrelated lists', () => {
 	const result = parseRecipeText('# Test\n## Ingredients\n## Shopping\n- Buy a shaker');
 	assert.deepEqual(result.ingredients, []);
