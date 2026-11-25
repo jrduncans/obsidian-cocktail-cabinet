@@ -49,6 +49,16 @@ void test('a note’s ABV comes from the bottle, your in-stock bottles, the typi
 	assert.deepEqual(noteAbv({ kind: 'family', abvTypical: 0.4 }), { abv: null, source: 'unknown' });
 	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [0, 0] }), { abv: 0, source: 'typical' });
 	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [0, NaN] }), { abv: null, source: 'unknown' });
+	// Then the median of its alcoholic types' typical ABVs; a non-alcoholic type in it doesn't drag that down.
+	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [0.4, 0.5, NaN] }), { abv: 0.45, source: 'typical' });
+	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [0.12, 0, NaN] }), { abv: 0.12, source: 'typical' });
+	assert.deepEqual(noteAbv({ kind: 'family', bottleAbvs: [0.6], typeAbvs: [0.4] }), { abv: 0.6, source: 'past' });
+	assert.deepEqual(noteAbv({ kind: 'family', typeAbvs: [NaN] }), { abv: null, source: 'unknown' });
+	// A type with nothing of its own reaches the family's types too.
+	assert.deepEqual(noteAbv({ kind: 'type', parent: { kind: 'family', typeAbvs: [0.375, 0.5] } }), {
+		abv: 0.4375,
+		source: 'typical',
+	});
 	assert.deepEqual(noteAbv({ kind: 'ingredient', provides: [{ kind: 'type', abvTypical: 0 }] }), {
 		abv: 0,
 		source: 'typical',
