@@ -948,7 +948,8 @@
 	},
 	"type/Dry Sparkling Wine": {
 		"description": [
-			"Dry sparkling wine when no narrower style is specified."
+			"Dry sparkling wine when no narrower style is specified.",
+			"Dry sparkling wine when no narrower style is specified. Champagne, Cava, and Crémant are its subtypes, so their bottles fill these recipes too."
 		],
 		"parent": [
 			"Sparkling Wine"
@@ -961,10 +962,12 @@
 	"type/Champagne": {
 		"description": [
 			"Sparkling wine from Champagne; record the specific bottling when its style matters.",
-			"Sparkling wine from Champagne; record the specific bottle when its style matters."
+			"Sparkling wine from Champagne; record the specific bottle when its style matters.",
+			"Sparkling wine from Champagne; record the specific bottle when its style matters. Its bottles also fill recipes calling for Dry Sparkling Wine."
 		],
 		"parent": [
-			"Sparkling Wine"
+			"Sparkling Wine",
+			"Subtype of Dry Sparkling Wine"
 		],
 		"abvTypical": [
 			null,
@@ -2565,6 +2568,28 @@
 		],
 		"abvTypical": [
 			0
+		]
+	},
+	"type/Cava": {
+		"description": [
+			"Spanish traditional-method sparkling wine, usually dry. Its bottles also fill recipes calling for Dry Sparkling Wine."
+		],
+		"parent": [
+			"Subtype of Dry Sparkling Wine"
+		],
+		"abvTypical": [
+			0.12
+		]
+	},
+	"type/Cremant": {
+		"description": [
+			"French traditional-method sparkling wine from outside Champagne, such as crémant de Loire, d’Alsace, or de Bourgogne; usually dry. Its bottles also fill recipes calling for Dry Sparkling Wine."
+		],
+		"parent": [
+			"Subtype of Dry Sparkling Wine"
+		],
+		"abvTypical": [
+			0.12
 		]
 	}
 }

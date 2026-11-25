@@ -363,8 +363,10 @@ family('Still Wine', 'Wine', 'Non-sparkling wine ingredients.', [
 	['Red Wine', 'Red wine, including when used as a float.'],
 ]);
 family('Sparkling Wine', 'Wine', 'Sparkling wines used to lengthen cocktails.', [
-	['Dry Sparkling Wine', 'Dry sparkling wine when no narrower style is specified.'],
-	['Champagne', 'Sparkling wine from Champagne; record the specific bottle when its style matters.'],
+	[
+		'Dry Sparkling Wine',
+		'Dry sparkling wine when no narrower style is specified. Champagne, Cava, and Crémant are its subtypes, so their bottles fill these recipes too.',
+	],
 	['Prosecco', 'Prosecco; sweetness varies by bottle.'],
 ]);
 family('Vermouth', 'Fortified Wine', 'Vermouth styles: sweet, dry, blanc, and bitter.', [
@@ -634,6 +636,20 @@ subtypes('Orange Liqueur', [
 		'Orange liqueur colored blue, usually on a neutral base and sweeter than triple sec, such as Bols and Giffard. Its bottles also fill recipes calling for Orange Liqueur.',
 	],
 ]);
+subtypes('Dry Sparkling Wine', [
+	[
+		'Champagne',
+		'Sparkling wine from Champagne; record the specific bottle when its style matters. Its bottles also fill recipes calling for Dry Sparkling Wine.',
+	],
+	[
+		'Cava',
+		'Spanish traditional-method sparkling wine, usually dry. Its bottles also fill recipes calling for Dry Sparkling Wine.',
+	],
+	[
+		'Crémant',
+		'French traditional-method sparkling wine from outside Champagne, such as crémant de Loire, d’Alsace, or de Bourgogne; usually dry. Its bottles also fill recipes calling for Dry Sparkling Wine.',
+	],
+]);
 subtypes('Soda Water', [
 	[
 		'Club Soda',
@@ -785,6 +801,8 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Irish Cream': 17,
 	'Dry Sparkling Wine': 12,
 	Champagne: 12,
+	Cava: 12,
+	Crémant: 12,
 	'Sweet Vermouth': 16,
 	'Dry Vermouth': 17.5,
 	'Blanc Vermouth': 16,

@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-157 ingredient types, 29 families, 6 categories, and 3 reference bottles.
+159 ingredient types, 29 families, 6 categories, and 3 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -51,7 +51,8 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Calvados (subtype of Apple Brandy) | Brandy Family | Spirit |
 | Canadian Whisky | Whiskey | Spirit |
 | Cane Syrup (2:1) (subtype of Simple Syrup (2:1)) | Sugar Syrup | Syrup |
-| Champagne | Sparkling Wine | Wine |
+| Cava (subtype of Dry Sparkling Wine) | Sparkling Wine | Wine |
+| Champagne (subtype of Dry Sparkling Wine) | Sparkling Wine | Wine |
 | Cherry Liqueur | Fruit Liqueur | Liqueur |
 | Chocolate Bitters | Bitters | — |
 | Cinnamon Syrup | Flavored Syrup | Syrup |
@@ -64,6 +65,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Contemporary Gin | Gin | Spirit |
 | Cranberry Juice | Other Fruit Juice | Juice |
 | Cream of Coconut | — | — |
+| Crémant (subtype of Dry Sparkling Wine) | Sparkling Wine | Wine |
 | Crème de Cacao | Other Liqueur | Liqueur |
 | Crème de Cassis | Fruit Liqueur | Liqueur |
 | Crème de Menthe | Herbal & Spice Liqueur | Liqueur |
