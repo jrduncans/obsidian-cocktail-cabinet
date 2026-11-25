@@ -5,6 +5,7 @@ import { loadSettings, CocktailCabinetSettingTab } from './settings';
 import type { CocktailCabinetSettings } from './settings';
 import { AvailabilityStore } from './vault/availability-store';
 import { AVAILABILITY_VIEW, AvailabilityView } from './ui/availability-view';
+import { BUY_VIEW, BuyView } from './ui/buy-view';
 import { UNLINKED_VIEW, UnlinkedView } from './ui/unlinked-view';
 import { registerHoverSource } from './ui/view-leaves';
 import { CabinetStore } from './vault/cabinet-store';
@@ -42,6 +43,7 @@ export default class CocktailCabinetPlugin extends Plugin {
 			() => this.settings.catalogSkipped,
 		);
 		this.registerView(AVAILABILITY_VIEW, (leaf) => new AvailabilityView(leaf, this));
+		this.registerView(BUY_VIEW, (leaf) => new BuyView(leaf, this));
 		this.registerView(UNLINKED_VIEW, (leaf) => new UnlinkedView(leaf, this));
 		registerHoverSource(this);
 		registerCommands(this);

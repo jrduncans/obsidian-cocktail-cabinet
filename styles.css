@@ -432,15 +432,6 @@
 }
 
 /* What can I make? pane */
-.cocktail-cabinet-pane-tabs {
-	display: flex;
-	gap: var(--size-4-2);
-	margin-bottom: var(--size-4-2);
-}
-.cocktail-cabinet-pane-tabs button.is-active {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
-}
 /* A view's controls for its whole list: one compact row that stays in view, shared by every cabinet view. */
 .cocktail-cabinet-pane-toolbar {
 	position: sticky;
