@@ -2487,5 +2487,16 @@
 		"abvTypical": [
 			0
 		]
+	},
+	"type/Lime Cordial": {
+		"description": [
+			"Sweetened, preserved lime, homemade or bottled such as Rose’s, the original Gimlet ingredient. Not a stand-in for fresh Lime Juice, nor the other way round."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			0
+		]
 	}
 }

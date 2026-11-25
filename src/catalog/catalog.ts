@@ -477,6 +477,10 @@ family(
 		['Raspberry Syrup', 'Sweetened raspberry syrup, homemade or bottled, as in the Clover Club.'],
 		['Strawberry Syrup', 'Sweetened strawberry syrup, homemade or bottled.'],
 		[
+			'Lime Cordial',
+			'Sweetened, preserved lime, homemade or bottled such as Rose’s, the original Gimlet ingredient. Not a stand-in for fresh Lime Juice, nor the other way round.',
+		],
+		[
 			'Pineapple Syrup',
 			'Sweetened pineapple syrup, homemade or bottled. Gum (gomme) syrup, thickened with gum arabic for a silkier texture, counts too: recipes treat them as interchangeable.',
 			{ aliases: ['Pineapple Gum Syrup', 'Pineapple Gomme Syrup'] },
