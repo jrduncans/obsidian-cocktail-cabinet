@@ -469,7 +469,7 @@ void test('a managed note records its fingerprint, and edits other than the mark
 	const unquoted = content.replace(`cc-managed: "${marker}"`, `cc-managed: ${marker}`).replace(/\n/g, '\r\n');
 	assert.equal(managedState(unquoted, content, 'Cocktails'), 'current');
 	const older = asManaged(
-		{ ...note!, content: withoutMarker(content).replace('in one place', 'together') },
+		{ ...note!, content: withoutMarker(content).replace('New here?', 'First time?') },
 		'Cocktails',
 	);
 	assert.equal(managedState(older.content, content, 'Cocktails'), 'unchanged');

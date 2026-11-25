@@ -89,7 +89,7 @@ Your bottles, stock, recipes, and the notes you create are yours. The starter no
 `,
 
 	Recipes: ({ root, page, view }) => `
-${view('Recipes')} lists your recipes; its **Latest** tab shows the newest first, and **Recently made** what you've had lately.
+${view('Recipes')} lists your recipes; its **Latest** view shows the newest first, and **Recently made** what you've had lately.
 
 ## Adding recipes
 
@@ -149,7 +149,7 @@ Unknown means you haven't said, and never counts as in stock.
 ## Keeping stock current
 
 - **Edit stock** (the gauge in the note's header) sets the level as percent full or mL, records **Bought more** or **Finished**, and switches between amount and availability.
-- ${view(IN_STOCK_BASE)} shows everything on hand; its **Least used** tab puts what has sat longest first.
+- ${view(IN_STOCK_BASE)} shows everything on hand; its **Least used** view puts what has sat longest first.
 - Logging records **Last used**, and buying records **Last purchased**. See ${page('Making Drinks')} and ${page('Shopping')}.
 `,
 
@@ -206,7 +206,7 @@ ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} lists everything marked **Add
 	'Hierarchy and Substitutes': ({ view }) => `
 Recipes call for ingredients at different levels, and the cabinet's ingredient hierarchy matches them:
 
-- **Types** are what a recipe usually names: London Dry Gin, Aged Jamaican Rum, Lime Juice. ${view('Ingredient types')}; its **Browse** tab groups them.
+- **Types** are what a recipe usually names: London Dry Gin, Aged Jamaican Rum, Lime Juice. ${view('Ingredient types')}; its **Browse** view groups them.
 - **Subtypes** narrow a type: Bonded Bourbon is a kind of Bourbon. A type with subtypes lists them on its note.
 - **Families** group related types: Gin, Rum. ${view('Ingredient families')}.
 - **Categories** group families: Spirit, Liqueur. ${view('Ingredient categories')}.

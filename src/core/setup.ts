@@ -4,7 +4,7 @@ import { localDate, markdown, renderNote } from './notes';
 import { cabinetFolder, notePath, PROP, wikiLink } from './schema';
 import { IN_STOCK_BASE, inStockBase } from './in-stock';
 import { basePath, resourceBases } from './bases';
-import { NAVIGATION_BASE, navigationBase } from './navigation';
+import { navigationBase } from './navigation';
 import { SHOPPING_NOTE, shoppingBase, shoppingNote, shoppingNotePath } from './shopping';
 import { DEFAULT_RESTOCK, RESTOCK_BASE, restockBase } from './restock';
 import type { RestockThresholds } from './restock';
@@ -107,59 +107,29 @@ function cabinetNote(root: string, examples: ReadonlyMap<string, string>): Plann
 			properties,
 			`# Cocktail Cabinet
 
-Your bottles, ingredients, and cocktail recipes in one place. Start with one bottle or a favorite recipe and build your cabinet gradually.
+Your bottles, ingredients, and cocktail recipes. New here? Start with ${guideLink(root, 'Getting Started')}. Every command is in the command palette under **Cocktail Cabinet**.${exampleSection(examples)}
 
-Open Obsidian’s command palette and search for **Cocktail Cabinet** to find the commands below. The [guide](#Guide) explains each part in more depth, starting with ${guideLink(root, 'Getting Started')}.${exampleSection(examples)}
+## Make a drink
 
-## Start here
+- **What can I make?** (command): every recipe by what you have on hand.
+- ${viewLink('Recipes')}: your recipes, with **Latest** and **Recently made** views.
+- On a recipe, the glass button in the header logs the cocktail.
 
-1. Open **Other stock → Kitchen staples**, walk through your kitchen, and set availability on the staples you have.
-2. Set the stock on your bottles and other ingredients. **Ingredient types → Browse** shows what you have under each type.
-3. Open a favorite recipe and log a cocktail. Use **In stock** to see everything on hand.
+## Stock
 
-## Your collection
+- ${viewLink(IN_STOCK_BASE)}: everything on hand.
+- ${viewLink('Bottles')} · ${viewLink('Other stock')} · ${wikiLink(basePath(root, 'Other stock') + '#Kitchen staples', 'Kitchen staples')}
+- On a bottle or other stock, the gauge button in the header edits its stock.
 
-### Bottles
+## Shopping
 
-${viewLink('Bottles')} records named bottles and their stock. Starter bottle references have unknown availability; record your stock on the existing note when you have that bottle. Use **Cocktail Cabinet: Add a bottle** when a bottle is missing, enter its name, and select its ingredient type, if known.
+- ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)}: what you've marked to buy; the cart button in its header records purchases.
+- ${viewLink(RESTOCK_BASE)}: stock running low, out, or not filled in.
+- **What should I buy?** (command): what would unlock the most recipes.
 
-${viewLink(IN_STOCK_BASE)} brings bottles and other stock together: Have or Low availability, or a positive amount. Unknown availability and blank amounts do not count as stock.
+## Ingredients
 
-### Kitchen staples
-
-Open ${wikiLink(basePath(root, 'Other stock') + '#Kitchen staples', 'Kitchen staples')} to mark everyday ingredients such as salt, mint, and saline solution Have, Low, or Out. Each is tracked as itself, with no ingredient type to select. Use **Cocktail Cabinet: Add kitchen staple** for one that is missing.
-
-### Other stock
-
-${viewLink('Other stock')} records fresh ingredients, juice, syrups, and other sources. Use **Cocktail Cabinet: Add other stock** and select the ingredient types the source provides.
-
-An ingredient type describes what a recipe calls for, such as lime juice. Stock records your source of it, such as fresh limes or prepared juice. Ingredient definitions alone don’t mean you have anything in stock.
-
-### Shopping list
-
-${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} lists every bottle, ingredient type, and other stock marked **Add to shopping list**.
-
-${wikiLink(basePath(root, RESTOCK_BASE), RESTOCK_BASE)} suggests what to add: stock running low, stock that's out, and stock you haven't filled in. Tick **Shopping list** on a row to add it.
-
-### Recipes
-
-${viewLink('Recipes')} holds the cocktails you want to keep; its **Latest** view lists the newest first. Use **Cocktail Cabinet: Create a cocktail recipe** to save amounts and a method. Ingredients can name a type, a broader family such as rum, or a specific bottle. Tags on a recipe are your own groupings, such as how you serve it or when you'd make it; the recipe form offers the tags you've already used.
-
-Use **Cocktail Cabinet: What can I make?** to see every recipe by what you have on hand, and what to buy next; on an ingredient or bottle, **What can I make with this?** narrows it to recipes using that note. Each ingredient and bottle note lists the recipes that use it. On a recipe, the glass button in the note's header logs the cocktail; on a bottle or other stock, the gauge button edits its stock. Other actions for a note are in its **More options** menu.
-
-## Ingredient catalog
-
-### Types
-
-${viewLink('Ingredient types')} contains ingredient definitions and preparation notes. The **Browse** tab groups types by category and family, with standalone types and kitchen staples in their own groups; **Have** shows stock on hand. Every type appears in the default tab, including those without a family. Use **Cocktail Cabinet: Add ingredient type** if something you need is missing, or **New type** while creating a recipe.
-
-### Families
-
-${viewLink('Ingredient families')} groups types when a shared recipe reference or grouping is useful, such as Rum. Types can stand alone. Use **Cocktail Cabinet: Add ingredient family** to create a grouping.
-
-### Categories
-
-${viewLink('Ingredient categories')} groups families into broader classifications, such as Spirit. Families can stand alone too. Use **Cocktail Cabinet: Add ingredient category** when a broader grouping helps.
+- ${viewLink('Ingredient types')}, grouped by family in its **Browse** view · ${viewLink('Ingredient families')} · ${viewLink('Ingredient categories')}
 
 ## Guide
 
@@ -167,15 +137,7 @@ ${GUIDE_PAGES.map((page) => `- ${guideLink(root, page)}`).join('\n')}
 
 AI agents working in your vault can follow ${guideLink(root, AGENT_REFERENCE)}; link it from your vault’s \`AGENTS.md\`.
 
-## Make it yours
-
-Open a linked view to browse your current notes and edit properties. Enable **Bases** in **Settings → Core plugins** to use these views.
-
-The plugin keeps this page, the ${wikiLink(shoppingNotePath(root), SHOPPING_NOTE)} note, and the guide current with each release; the \`${PROP.managed}\` property records the version it last wrote. If you edit one of them, the plugin leaves your version alone and offers the new one in **Cocktail Cabinet: Review cabinet updates**, where you can switch to it or keep yours. To make a page entirely yours, delete its \`${PROP.managed}\` property. Your other notes are always yours; setup keeps existing notes when you run it again.
-
-The views in the **Views** folder belong to the plugin, which updates them in new releases; ${viewLink(NAVIGATION_BASE)} supplies the sections shown in each ingredient and bottle note, and the plugin adds any section a note is missing. To change a view, copy it into the **${CUSTOM_VIEWS_FOLDER}** folder and edit the copy; the plugin never touches that folder. **Cocktail Cabinet: Refresh cabinet notes** restores the original views and any of these pages you haven't edited.
-
-Your notes, links, and properties remain usable with Cocktail Cabinet disabled. The views need only Obsidian’s core Bases plugin.`,
+The plugin keeps this page current. To change it or the views, see ${guideLink(root, 'Views and Customizing')}.`,
 		),
 	};
 }

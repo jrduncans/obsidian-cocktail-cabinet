@@ -280,9 +280,8 @@ void test('the Cocktail Cabinet note introduces all six resource Bases in contex
 	assert.ok(!home.content.includes('![['));
 	assert.ok(!home.content.includes('0.5'));
 	assert.ok(!home.content.includes('fraction'));
-	assert.ok(home.content.indexOf('## Your collection') < home.content.indexOf('## Ingredient catalog'));
-	assert.ok(home.content.indexOf('### Types') < home.content.indexOf('### Families'));
-	assert.ok(home.content.indexOf('### Families') < home.content.indexOf('### Categories'));
+	assert.ok(home.content.indexOf('## Make a drink') < home.content.indexOf('## Ingredients'));
+	assert.ok(home.content.indexOf('## Ingredients') < home.content.indexOf('## Guide'));
 	assert.ok(!home.content.includes('/Types/'));
 });
 
@@ -995,8 +994,7 @@ void test('In stock combines sources with blank-safe amounts, and only Unknown e
 	for (const view of restock.views.slice(0, 2)) assert.ok(!view.filters!.and[0]!.includes('Kitchen staple'));
 	assert.match(restock.views[2]!.filters!.and[0]!, /!\(if\(note\["cc-kind"\] == "ingredient"/);
 	const home = files.find((file) => file.kind === 'cabinet')!.content;
-	assert.match(home, /## Start here/);
-	assert.match(home, /### Kitchen staples/);
+	assert.match(home, /Guide\/Getting Started\|Getting Started\]\]/);
 	assert.match(home, /Other stock.base#Kitchen staples/);
 });
 

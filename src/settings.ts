@@ -324,7 +324,7 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 			},
 			{
 				name: 'Local notes',
-				desc: 'All notes stay in your vault. This plugin uses no network services. Edit ingredient descriptions, stock properties, and recipes normally in Obsidian.',
+				desc: 'All notes stay in your vault. Edit ingredient descriptions, stock properties, and recipes normally in Obsidian.',
 			},
 		];
 	}
