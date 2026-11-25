@@ -2520,5 +2520,38 @@
 		"abvTypical": [
 			0.25
 		]
+	},
+	"type/Citron Vodka": {
+		"description": [
+			"Lemon-flavored vodka, such as Absolut Citron, the vodka of the Cosmopolitan."
+		],
+		"parent": [
+			"Vodka Family"
+		],
+		"abvTypical": [
+			0.4
+		]
+	},
+	"type/Vanilla Vodka": {
+		"description": [
+			"Vanilla-flavored vodka, the vodka of the Porn Star Martini."
+		],
+		"parent": [
+			"Vodka Family"
+		],
+		"abvTypical": [
+			0.35
+		]
+	},
+	"type/Flavored Vodka": {
+		"description": [
+			"Catch-all for flavored vodkas without close substitutes, such as pepper or berry vodkas. Bottles in this type are rarely interchangeable, so recipes usually name the bottle. Citron Vodka and Vanilla Vodka have their own types."
+		],
+		"parent": [
+			"Vodka Family"
+		],
+		"catchAll": [
+			true
+		]
 	}
 }

@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-153 ingredient types, 29 families, 6 categories, and 3 reference bottles.
+156 ingredient types, 29 families, 6 categories, and 3 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -55,6 +55,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Cherry Liqueur | Fruit Liqueur | Liqueur |
 | Chocolate Bitters | Bitters | — |
 | Cinnamon Syrup | Flavored Syrup | Syrup |
+| Citron Vodka | Vodka Family | Spirit |
 | Club Soda (subtype of Soda Water) | Carbonated Mixer | — |
 | Cocktail Cherry | — | — |
 | Coffee Liqueur | Other Liqueur | Liqueur |
@@ -82,6 +83,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Fernet | Amaro Family | Liqueur |
 | Fino Sherry | Sherry | Fortified Wine |
 | Flavored Rum | Rum | Spirit |
+| Flavored Vodka | Vodka Family | Spirit |
 | Génépy | Herbal & Spice Liqueur | Liqueur |
 | Genever | Gin | Spirit |
 | Gentian Liqueur | Amaro Family | Liqueur |
@@ -157,6 +159,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Unaged Rhum Agricole | Rum | Spirit |
 | Vanilla Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Vanilla Syrup | Flavored Syrup | Syrup |
+| Vanilla Vodka | Vodka Family | Spirit |
 | Vermouth Amaro | Vermouth | Fortified Wine |
 | Vodka | Vodka Family | Spirit |
 | White Blended Rum | Rum | Spirit |

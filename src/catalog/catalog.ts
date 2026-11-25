@@ -169,6 +169,17 @@ family('Vodka Family', 'Spirit', 'Vodka, plain or flavored. Add a type here for 
 		'Vodka',
 		'Neutral, unflavored vodka, what a recipe means by plain vodka. Flavored vodkas are their own types in this family and don’t fill these recipes.',
 	],
+	[
+		'Citron Vodka',
+		'Lemon-flavored vodka, such as Absolut Citron, the vodka of the Cosmopolitan.',
+		{ aliases: ['Lemon Vodka', 'Citrus Vodka'] },
+	],
+	['Vanilla Vodka', 'Vanilla-flavored vodka, the vodka of the Porn Star Martini.'],
+	[
+		'Flavored Vodka',
+		'Catch-all for flavored vodkas without close substitutes, such as pepper or berry vodkas. Bottles in this type are rarely interchangeable, so recipes usually name the bottle. Citron Vodka and Vanilla Vodka have their own types.',
+		{ [PROP.catchAll]: true },
+	],
 ]);
 family('Agave Spirit', 'Spirit', 'Tequila, mezcal, and related agave spirits.', [
 	['Blanco Tequila', 'Unaged or briefly rested tequila, also called plata.'],
@@ -720,6 +731,8 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	Applejack: 40,
 	Calvados: 40,
 	Kirsch: 40,
+	'Citron Vodka': 40,
+	'Vanilla Vodka': 35,
 	'Pear Brandy': 40,
 	'Pear Liqueur': 25,
 	'Unaged Aquavit': 40,
