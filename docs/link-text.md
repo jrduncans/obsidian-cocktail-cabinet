@@ -70,7 +70,7 @@ For fluid-ounce amounts only: `1 1/2 oz`, `1 ½ oz`, `1.5 oz`, and `.75 oz` beco
 3. **Tidy this recipe**, with the Edit mention.
 4. **Adopting as you go:** the form row buttons and the **Use cabinet name** editor command.
 
-Later, and only if needed: something across many recipes, reusing **Tidy this recipe**'s line changes.
+Later, and only if needed: something across many recipes, reusing **Tidy this recipe**'s line changes. Still deferred on 2026-11-24; see [upkeep views](cabinet-design.md#upkeep-views) for when to revisit.
 
 ## Decisions
 
