@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-143 ingredient types, 29 families, 6 categories, and 2 reference bottles.
+144 ingredient types, 29 families, 6 categories, and 2 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -36,7 +36,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Bergamot Liqueur | Fruit Liqueur | Liqueur |
 | Bitter Aperitif Wine | Aperitif Wine | Fortified Wine |
 | Black Jamaican Rum | Rum | Spirit |
-| Blackcurrant Liqueur | Fruit Liqueur | Liqueur |
+| Blackberry Liqueur | Fruit Liqueur | Liqueur |
 | Blanc Vermouth | Vermouth | Fortified Wine |
 | Blanco Tequila | Agave Spirit | Spirit |
 | Blended Overproof Rum | Rum | Spirit |
@@ -62,7 +62,9 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Cranberry Juice | Other Fruit Juice | Juice |
 | Cream of Coconut | — | — |
 | Crème de Cacao | Other Liqueur | Liqueur |
+| Crème de Cassis | Fruit Liqueur | Liqueur |
 | Crème de Menthe | Herbal & Spice Liqueur | Liqueur |
+| Crème de Violette | Floral Liqueur | Liqueur |
 | Creole Bitters | Bitters | — |
 | Curaçao (subtype of Orange Liqueur) | Fruit Liqueur | Liqueur |
 | Demerara 151 Rum | Rum | Spirit |
@@ -147,7 +149,6 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Vanilla Liqueur | Herbal & Spice Liqueur | Liqueur |
 | Vanilla Syrup | Flavored Syrup | Syrup |
 | Vermouth Amaro | Vermouth | Fortified Wine |
-| Violet Liqueur | Floral Liqueur | Liqueur |
 | Vodka | Vodka Family | Spirit |
 | White Blended Rum | Rum | Spirit |
 | White Port | Port | Fortified Wine |

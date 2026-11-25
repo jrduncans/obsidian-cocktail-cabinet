@@ -510,7 +510,7 @@ void test('reviewed liqueur groupings and the default Vodka type replace the ini
 		['Vermouth Amaro', 'Vermouth'],
 		['Vanilla Syrup', 'Flavored Syrup'],
 		['Elderflower Liqueur', 'Floral Liqueur'],
-		['Violet Liqueur', 'Floral Liqueur'],
+		['Crème de Violette', 'Floral Liqueur'],
 		['Allspice Dram', 'Herbal & Spice Liqueur'],
 		['Falernum', 'Herbal & Spice Liqueur'],
 		['Vanilla Liqueur', 'Herbal & Spice Liqueur'],

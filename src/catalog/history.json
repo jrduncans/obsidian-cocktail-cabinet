@@ -637,7 +637,8 @@
 	},
 	"type/Peach Liqueur": {
 		"description": [
-			"Sweet peach-flavored liqueur; distinguish from unsweetened peach brandy."
+			"Sweet peach-flavored liqueur; distinguish from unsweetened peach brandy.",
+			"Sweet peach-flavored liqueur, also called crème de pêche; distinguish from unsweetened peach brandy."
 		],
 		"parent": [
 			"Fruit Liqueur"
@@ -662,7 +663,8 @@
 	},
 	"type/Banana Liqueur": {
 		"description": [
-			"Sweet banana-flavored liqueur used as a cocktail modifier."
+			"Sweet banana-flavored liqueur used as a cocktail modifier.",
+			"Sweet banana-flavored liqueur used as a cocktail modifier, such as crème de banane."
 		],
 		"parent": [
 			"Fruit Liqueur"
@@ -2371,6 +2373,39 @@
 		],
 		"abvTypical": [
 			0.24
+		]
+	},
+	"type/Creme de Cassis": {
+		"description": [
+			"Sweet blackcurrant liqueur, the liqueur of the Kir and El Diablo."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			0.15
+		]
+	},
+	"type/Blackberry Liqueur": {
+		"description": [
+			"Sweet blackberry liqueur, such as crème de mûre, the liqueur of the Bramble. Liqueurs from blackberry cultivars such as marionberry fit here too."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			0.18
+		]
+	},
+	"type/Creme de Violette": {
+		"description": [
+			"Sweet violet-flavored floral liqueur, the liqueur of the Aviation. Crème Yvette, with berries and vanilla, is a bottle of its own."
+		],
+		"parent": [
+			"Floral Liqueur"
+		],
+		"abvTypical": [
+			0.16
 		]
 	}
 }

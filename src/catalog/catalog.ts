@@ -207,9 +207,26 @@ family('Fruit Liqueur', 'Liqueur', 'Fruit-flavored liqueurs.', [
 	['Maraschino Liqueur', 'Maraschino liqueur, distinct from cherry brandy and cherry syrup.'],
 	['Cherry Liqueur', 'Sweet cherry liqueur, such as Cherry Heering, distinct from Maraschino Liqueur and kirsch.'],
 	['Apricot Liqueur', 'Apricot liqueur, distinct from dry apricot brandy.'],
-	['Peach Liqueur', 'Sweet peach-flavored liqueur; distinguish from unsweetened peach brandy.'],
-	['Blackcurrant Liqueur', 'Blackcurrant liqueur, such as crème de cassis.'],
-	['Banana Liqueur', 'Sweet banana-flavored liqueur used as a cocktail modifier.'],
+	[
+		'Peach Liqueur',
+		'Sweet peach-flavored liqueur, also called crème de pêche; distinguish from unsweetened peach brandy.',
+		{ aliases: ['Crème de Pêche'] },
+	],
+	[
+		'Crème de Cassis',
+		'Sweet blackcurrant liqueur, the liqueur of the Kir and El Diablo.',
+		{ aliases: ['Blackcurrant Liqueur', 'Cassis'] },
+	],
+	[
+		'Blackberry Liqueur',
+		'Sweet blackberry liqueur, such as crème de mûre, the liqueur of the Bramble. Liqueurs from blackberry cultivars such as marionberry fit here too.',
+		{ aliases: ['Crème de Mûre'] },
+	],
+	[
+		'Banana Liqueur',
+		'Sweet banana-flavored liqueur used as a cocktail modifier, such as crème de banane.',
+		{ aliases: ['Crème de Banane'] },
+	],
 	['Pineapple Liqueur', 'Sweet pineapple liqueur, distinct from pineapple-flavored rum.'],
 	['Melon Liqueur', 'Sweet melon liqueur, such as Midori.'],
 	['Bergamot Liqueur', 'Bergamot-orange liqueur, such as Italicus; more floral and bitter than Orange Liqueur.'],
@@ -254,7 +271,11 @@ family(
 );
 family('Floral Liqueur', 'Liqueur', 'Flower-flavored liqueurs used as cocktail modifiers.', [
 	['Elderflower Liqueur', 'Sweet floral liqueur flavored with elderflower.'],
-	['Violet Liqueur', 'Sweet violet-flavored floral liqueur, also called crème de violette.'],
+	[
+		'Crème de Violette',
+		'Sweet violet-flavored floral liqueur, the liqueur of the Aviation. Crème Yvette, with berries and vanilla, is a bottle of its own.',
+		{ aliases: ['Violet Liqueur'] },
+	],
 ]);
 family(
 	'Amaro Family',
@@ -667,14 +688,15 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Cherry Liqueur': 24,
 	'Apricot Liqueur': 24,
 	'Peach Liqueur': 16,
-	'Blackcurrant Liqueur': 15,
+	'Crème de Cassis': 15,
+	'Blackberry Liqueur': 18,
 	'Crème de Menthe': 27,
 	'Green Herbal Liqueur': 55,
 	'Yellow Herbal Liqueur': 43,
 	'Allspice Dram': 22.5,
 	Falernum: 11,
 	'Elderflower Liqueur': 20,
-	'Violet Liqueur': 16,
+	'Crème de Violette': 16,
 	'Red Bitter Liqueur': 24,
 	'Orange Bitter Liqueur': 11,
 	Fernet: 39,
