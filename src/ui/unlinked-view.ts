@@ -17,6 +17,8 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
 const recipeCount = (group: UnlinkedGroup) => new Set(group.uses.map((use) => use.recipe.path)).size;
 /** Lines shown in a wording's card before "Show all", so what the wording means is visible before choosing. */
 const PREVIEW_LINES = 3;
+/** A remembered choice cancelled for a wording, held on the plugin. */
+const declinedKey = (group: UnlinkedGroup, note: CabinetNote) => `${group.key}\n${note.path}`;
 
 export const UNLINKED_VIEW = 'cocktail-cabinet-unlinked';
 
@@ -119,7 +121,11 @@ export class UnlinkedView extends ItemView {
 			const notes = this.plugin.store.notes();
 			for (const group of this.groups) {
 				const note = rememberedNote(group.wording, notes);
-				if (note && !this.pending.has(group.key))
+				if (
+					note &&
+					!this.pending.has(group.key) &&
+					!this.plugin.declinedRememberedLinks.has(declinedKey(group, note))
+				)
 					this.pending.set(group.key, {
 						note,
 						ticked: new Set(group.uses.map((_use, index) => index)),
@@ -326,6 +332,8 @@ export class UnlinkedView extends ItemView {
 			});
 		const errorEl = bar.createDiv({ cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 		new ButtonComponent(commit).setButtonText('Cancel').onClick(() => {
+			// Cancelling a remembered choice keeps it from starting chosen again this session.
+			if (pending.remembered) this.plugin.declinedRememberedLinks.add(declinedKey(group, pending.note));
 			this.pending.delete(group.key);
 			this.renderGroup(el, group);
 		});
