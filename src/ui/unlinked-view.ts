@@ -1,4 +1,4 @@
-import { ButtonComponent, ItemView, Menu, Notice, Setting } from 'obsidian';
+import { ButtonComponent, ItemView, Menu, Notice, SearchComponent, ToggleComponent } from 'obsidian';
 import { openView, viewLink } from './view-leaves';
 import type { WorkspaceLeaf } from 'obsidian';
 import type CocktailCabinetPlugin from '../main';
@@ -19,8 +19,8 @@ const recipeCount = (group: UnlinkedGroup) => new Set(group.uses.map((use) => us
 export const UNLINKED_VIEW = 'cocktail-cabinet-unlinked';
 
 /**
- * Reviewable unlinked lines across recipes, linked in bulk by wording. A side pane, so each recipe opens
- * in the main area beside it. It reads the recipes when opened and on Refresh, not on every change, so
+ * Reviewable unlinked lines across recipes, linked in bulk by wording. A main-area tab, so each recipe
+ * opens in a split beside it. It reads the recipes when opened and on Refresh, not on every change, so
  * choices in progress aren't lost; linking checks each line against what was read.
  */
 export class UnlinkedView extends ItemView {
@@ -68,7 +68,8 @@ export class UnlinkedView extends ItemView {
 
 	async onOpen() {
 		this.contentEl.addClass('cocktail-cabinet-pane', 'cocktail-cabinet-form', 'cocktail-cabinet-unlinked-pane');
-		this.contentEl.createEl('p', { text: 'Loading…' });
+		this.render();
+		this.listEl.setText('Loading…');
 		// A pane restored with the workspace waits for the vault to be indexed.
 		this.app.workspace.onLayoutReady(() => void this.read());
 		return Promise.resolve();
@@ -80,23 +81,34 @@ export class UnlinkedView extends ItemView {
 		return Promise.resolve();
 	}
 
-	/** Read the recipes again, dropping choices not yet linked. */
+	/**
+	 * Read the recipes again, keeping the toolbar and any choice whose wording still covers the same
+	 * lines; a choice whose lines changed is dropped, since its ticks point at lines by position.
+	 */
 	reload() {
 		if (this.busy) return;
-		this.pending.clear();
-		this.contentEl.empty();
-		this.contentEl.createEl('p', { text: 'Loading…' });
+		this.summaryEl.empty();
+		this.listEl.setText('Loading…');
 		void this.read();
+	}
+
+	/** The lines a group covers, to tell whether a choice made on it still applies. */
+	private static lines(group: UnlinkedGroup): string {
+		return JSON.stringify(group.uses.map((use) => [use.recipe.path, use.line, use.raw]));
 	}
 
 	private async read() {
 		try {
 			if (!(await this.plugin.store.isSetUp())) {
-				if (!this.closed) this.contentEl.setText('The cabinet isn’t set up yet.');
+				if (!this.closed) this.listEl.setText('The cabinet isn’t set up yet.');
 				return;
 			}
+			const before = new Map(this.groups.map((group) => [group.key, UnlinkedView.lines(group)]));
 			this.groups = await this.links.unlinked({ includeGarnishes: this.showGarnishes });
 			if (this.closed) return;
+			const after = new Map(this.groups.map((group) => [group.key, UnlinkedView.lines(group)]));
+			for (const key of [...this.pending.keys()])
+				if (!after.has(key) || after.get(key) !== before.get(key)) this.pending.delete(key);
 			// A wording one note remembers starts chosen; nothing is written until Link.
 			const notes = this.plugin.store.notes();
 			for (const group of this.groups) {
@@ -110,46 +122,51 @@ export class UnlinkedView extends ItemView {
 						remembered: true,
 					});
 			}
-			this.render();
+			this.renderList();
 		} catch (error) {
 			if (!this.closed)
-				this.contentEl.setText(error instanceof Error ? error.message : 'Couldn’t read the recipes.');
+				this.listEl.setText(error instanceof Error ? error.message : 'Couldn’t read the recipes.');
 		}
 	}
 
+	/** The toolbar, summary, and list, built once; reading the recipes again fills only the list. */
 	private render() {
 		this.contentEl.empty();
-		const header = this.contentEl.createDiv({ cls: 'cocktail-cabinet-pane-row' });
-		this.summaryEl = header.createEl('p');
-		new ButtonComponent(header)
+		// Controls for the whole list, kept in view while scrolling.
+		const bar = this.contentEl.createDiv({ cls: 'cocktail-cabinet-pane-toolbar' });
+		const search = new SearchComponent(bar)
+			.setPlaceholder('Filter wordings, such as gin')
+			.setValue(this.filter)
+			.onChange((value) => {
+				this.filter = value.trim().toLowerCase();
+				this.renderList();
+			});
+		search.inputEl.setAttribute('aria-label', 'Filter wordings');
+		const garnishes = bar.createDiv({
+			cls: 'cocktail-cabinet-pane-toolbar-item',
+			attr: { title: 'Include marked garnishes that match an ingredient' },
+		});
+		const toggle = new ToggleComponent(garnishes).setValue(this.showGarnishes).onChange((value) => {
+			if (this.busy) {
+				toggle.setValue(this.showGarnishes);
+				return;
+			}
+			this.showGarnishes = value;
+			this.reload();
+		});
+		toggle.toggleEl.setAttribute('aria-label', 'Show garnishes');
+		// The toggle isn't a form control, so its words switch it by hand.
+		garnishes
+			.createSpan({ cls: 'cocktail-cabinet-pane-toolbar-label', text: 'Show garnishes' })
+			.addEventListener('click', () => {
+				toggle.setValue(!toggle.getValue());
+			});
+		new ButtonComponent(bar)
 			.setIcon('refresh-cw')
 			.setTooltip('Read the recipes again')
-			.setClass('cocktail-cabinet-pane-shop')
 			.onClick(() => this.reload());
-		new Setting(this.contentEl).setName('Filter').addText((text) => {
-			text.setPlaceholder('Wording, such as gin')
-				.setValue(this.filter)
-				.onChange((value) => {
-					this.filter = value.trim().toLowerCase();
-					this.renderList();
-				});
-			text.inputEl.setAttribute('aria-label', 'Filter wordings');
-		});
-		new Setting(this.contentEl)
-			.setName('Show garnishes')
-			.setDesc('Include marked garnishes that match an ingredient.')
-			.addToggle((toggle) => {
-				toggle.setValue(this.showGarnishes).onChange((value) => {
-					if (this.busy) {
-						toggle.setValue(this.showGarnishes);
-						return;
-					}
-					this.showGarnishes = value;
-					this.reload();
-				});
-			});
+		this.summaryEl = this.contentEl.createEl('p', { cls: 'cocktail-cabinet-unlinked-summary' });
 		this.listEl = this.contentEl.createDiv({ cls: 'cocktail-cabinet-unlinked' });
-		this.renderList();
 	}
 
 	private renderSummary() {
@@ -157,7 +174,7 @@ export class UnlinkedView extends ItemView {
 		const recipes = new Set(this.groups.flatMap((group) => group.uses.map((use) => use.recipe.path))).size;
 		this.summaryEl.setText(
 			lines
-				? `${plural(lines, 'unlinked ingredient line')} in ${plural(recipes, 'recipe')}. Linking a wording links it in every recipe listed; untick any that mean something else.`
+				? `${plural(lines, 'unlinked ingredient line')} in ${plural(recipes, 'recipe')}. Choosing a note for a wording links it in every recipe listed; you can untick any where it means something else.`
 				: 'No unlinked ingredients to review.',
 		);
 	}
@@ -174,11 +191,13 @@ export class UnlinkedView extends ItemView {
 	private renderGroup(el: HTMLElement, group: UnlinkedGroup) {
 		el.empty();
 		const recipes = recipeCount(group);
-		const row = new Setting(el).setName(group.wording);
+		const head = el.createDiv({ cls: 'cocktail-cabinet-unlinked-head' });
+		head.createSpan({ cls: 'cocktail-cabinet-unlinked-wording', text: group.wording });
+		const count = head.createSpan({ cls: 'cocktail-cabinet-unlinked-count' });
 		const pending = this.pending.get(group.key);
-		if (recipes === 1) this.recipeLink(row.descEl, group.uses[0]!.recipe);
+		if (recipes === 1) this.recipeLink(count, group.uses[0]!.recipe);
 		else
-			row.setDesc(
+			count.setText(
 				`${plural(recipes, 'recipe')}${group.uses.length > recipes ? `, ${group.uses.length} lines` : ''}`,
 			);
 		const choose = (note: CabinetNote) => {
@@ -192,29 +211,33 @@ export class UnlinkedView extends ItemView {
 			this.renderGroup(el, group);
 		};
 		if (!pending) {
+			// What to link this wording to: the likely notes first, each saying what kind of note it is.
+			const actions = el.createDiv({ cls: 'cocktail-cabinet-unlinked-actions' });
 			const suggested = suggestIngredient(group.wording, this.plugin.store.notes());
-			const suggestions = suggested.length ? el.createDiv({ cls: 'cocktail-cabinet-suggestions' }) : el;
+			actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'Link to' });
 			for (const note of suggested) {
-				new ButtonComponent(suggestions)
-					.setButtonText(`${note.name} · ${note.kind}`)
+				const button = new ButtonComponent(actions)
+					.setClass('cocktail-cabinet-unlinked-suggestion')
 					.setTooltip(`Link to ${note.path}`)
 					.onClick(() => choose(note));
+				button.buttonEl.createSpan({ text: note.name });
+				button.buttonEl.createSpan({ cls: 'cocktail-cabinet-unlinked-kind', text: note.kind });
 			}
-			row.addButton((button) =>
-				button.setButtonText('Select link').onClick(() => pickIngredient(this.plugin, choose)),
-			);
-			row.addButton((button) =>
-				button.setButtonText('Create…').onClick((event) => {
-					const menu = new Menu();
-					addCreateItems(menu, this.plugin, group.wording, choose);
-					menu.showAtMouseEvent(event);
-				}),
-			);
+			if (suggested.length) actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'or' });
+			new ButtonComponent(actions)
+				.setButtonText(suggested.length ? 'Another note…' : 'A note…')
+				.onClick(() => pickIngredient(this.plugin, choose));
+			new ButtonComponent(actions).setButtonText('New note…').onClick((event) => {
+				const menu = new Menu();
+				addCreateItems(menu, this.plugin, group.wording, choose);
+				menu.showAtMouseEvent(event);
+			});
 			return;
 		}
-		row.setDesc(
-			`Link to ${pending.note.name} (${pending.note.kind}) in the ticked recipes${pending.remembered ? ', from a remembered wording' : ''}.`,
-		);
+		el.createEl('p', {
+			cls: 'cocktail-cabinet-unlinked-choice',
+			text: `Linking to ${pending.note.name} (${pending.note.kind}) in the ticked recipes${pending.remembered ? ', from a remembered wording' : ''}.`,
+		});
 		let linkButton!: ButtonComponent;
 		const textError = () => (pending.source === 'typed' ? linkTextError(pending.text) : '');
 		const lineLink = (use: UnlinkedUse) => this.lineLink(use, pending);
@@ -271,16 +294,12 @@ export class UnlinkedView extends ItemView {
 			});
 		};
 		renderUses();
-		new Setting(el)
-			.addButton((button) =>
-				button.setButtonText('Cancel').onClick(() => {
-					this.pending.delete(group.key);
-					this.renderGroup(el, group);
-				}),
-			)
-			.addButton((button) => {
-				linkButton = button.setCta().onClick(() => void this.link(el, group));
-			});
+		const buttons = el.createDiv({ cls: 'cocktail-cabinet-unlinked-buttons' });
+		new ButtonComponent(buttons).setButtonText('Cancel').onClick(() => {
+			this.pending.delete(group.key);
+			this.renderGroup(el, group);
+		});
+		linkButton = new ButtonComponent(buttons).setCta().onClick(() => void this.link(el, group));
 		update();
 	}
 

@@ -1,5 +1,14 @@
-import { ItemView, Notice, Setting, TFile, debounce, setIcon } from 'obsidian';
-import { openView, viewLink } from './view-leaves';
+import {
+	ButtonComponent,
+	DropdownComponent,
+	ExtraButtonComponent,
+	ItemView,
+	Notice,
+	TFile,
+	debounce,
+	setIcon,
+} from 'obsidian';
+import { openView, toolbarItem, viewLink } from './view-leaves';
 import type { WorkspaceLeaf } from 'obsidian';
 import { lineStatus, recipeSections, recipeTags, STATUS_LABELS, toBuy } from '../core/availability-lists';
 import type { RecipeEntry } from '../core/availability-lists';
@@ -108,46 +117,39 @@ export class AvailabilityView extends ItemView {
 	}
 
 	private renderRecipes(el: HTMLElement, data: CabinetAvailability) {
-		const filters = el.createDiv({ cls: 'cocktail-cabinet-pane-filters' });
-		new Setting(filters).setName('Uses').then((setting) => {
-			if (this.uses) {
-				setting.setDesc(this.name(this.uses));
-				setting.addExtraButton((button) =>
-					button
-						.setIcon('x')
-						.setTooltip('Show every recipe')
-						.onClick(() => this.setUses(undefined)),
-				);
-			}
-			setting.addButton((button) =>
-				button.setButtonText(this.uses ? 'Change…' : 'Choose…').onClick(() => {
-					const choices = data.notes.filter((note) => note.kind !== 'recipe');
-					new NotePicker(this.app, choices, (note) => this.setUses(note.path)).open();
-				}),
-			);
-		});
-		new Setting(filters).setName('Rating').addDropdown((dropdown) => {
-			dropdown.addOption('0', 'Any');
-			for (let stars = 1; stars <= RATING_MAX; stars++)
-				dropdown.addOption(
-					String(stars),
-					stars === RATING_MAX ? '★'.repeat(stars) : `${'★'.repeat(stars)} or more`,
-				);
-			dropdown.setValue(String(this.minRating)).onChange((value) => {
-				this.minRating = Number(value);
-				this.render();
+		// One compact row of filters, styled like the other cabinet views' toolbars.
+		const bar = el.createDiv({ cls: 'cocktail-cabinet-pane-toolbar' });
+		const uses = toolbarItem(bar, 'Uses');
+		new ButtonComponent(uses)
+			.setButtonText(this.uses ? this.name(this.uses) : 'Any ingredient…')
+			.setTooltip(this.uses ? 'Choose another ingredient' : 'Only recipes that use an ingredient')
+			.onClick(() => {
+				const choices = data.notes.filter((note) => note.kind !== 'recipe');
+				new NotePicker(this.app, choices, (note) => this.setUses(note.path)).open();
 			});
+		if (this.uses)
+			new ExtraButtonComponent(uses)
+				.setIcon('x')
+				.setTooltip('Show every recipe')
+				.onClick(() => this.setUses(undefined));
+		const rating = new DropdownComponent(toolbarItem(bar, 'Rating'));
+		rating.addOption('0', 'Any');
+		for (let stars = 1; stars <= RATING_MAX; stars++)
+			rating.addOption(String(stars), stars === RATING_MAX ? '★'.repeat(stars) : `${'★'.repeat(stars)} or more`);
+		rating.setValue(String(this.minRating)).onChange((value) => {
+			this.minRating = Number(value);
+			this.render();
 		});
 		const tags = recipeTags(data.recipes);
-		if (tags.length)
-			new Setting(filters).setName('Tag').addDropdown((dropdown) => {
-				dropdown.addOption('', 'Any');
-				for (const tag of tags) dropdown.addOption(tag, `#${tag}`);
-				dropdown.setValue(this.tag).onChange((value) => {
-					this.tag = value;
-					this.render();
-				});
+		if (tags.length) {
+			const tag = new DropdownComponent(toolbarItem(bar, 'Tag'));
+			tag.addOption('', 'Any');
+			for (const name of tags) tag.addOption(name, `#${name}`);
+			tag.setValue(this.tag).onChange((value) => {
+				this.tag = value;
+				this.render();
 			});
+		}
 		const sections = recipeSections(data.recipes, data.notes, {
 			...(this.uses ? { uses: this.uses } : {}),
 			...(this.minRating ? { minRating: this.minRating } : {}),
