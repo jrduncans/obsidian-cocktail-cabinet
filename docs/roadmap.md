@@ -76,11 +76,14 @@ Found while testing logging on 2026-11-04. Order within the phase is open. Navig
     - Not built: Convert Salt, Mint, Heavy Cream, and Milk in `knowledge`, and add its Eggs note, once this release is installed there.
 - Not built: a `knowledge` session to decide the personal tag set and move each recipe's trailing inline tags into the `tags` property (Edit already moves them one recipe at a time). `#lowerabv` waits for the alcohol estimate.
 
+- New, [designed 2026-11-24](cabinet-design.md#upkeep-views): upkeep views. **Review unlinked ingredients** and **What can I make?** open as main-area tabs, with recipes opening in a split beside them, instead of in the right sidebar, and their links get Page Preview. Upkeep that frontmatter can express moves to Base views rather than commands. No review across recipes for **Tidy this recipe** for now. Not built.
+
 - New, raised 2026-11-13, [design reviewed and agreed](alcohol-estimate.md) the same day: estimate each recipe's alcohol, so lower-alcohol drinks are found by a number rather than a `#lowerabv` tag.
     - Total alcohol (mL and standard drinks), ABV as served, and volume per recipe, stored as `cc-est-` properties with a basis label, plus `cc-contains` facts; the logging dialog shows figures for the bottles selected.
     - ABV from the bottle, else the type's `cc-abv-typical`, else the median of your bottles (labeled), else the family. Fixed dilution percentages by preparation (BevNap's), with a per-recipe override.
     - Five build slices; see the design. Slice 1, `cc-abv-typical` on types and families with starter zeros for non-alcoholic ingredients, slice 2, the calculator as pure code, slice 3, stored estimates and `cc-contains` kept by background sync, and slice 4, the Recipes columns, Lower alcohol view, and logging dialog line, built 2026-11-13. All slices are built; `#lowerabv` retires in the `knowledge` tagging session. **Review missing ABV values** (built the same day) shows what keeps estimates partial.
     - Until then `#lowerabv` stays in `knowledge`; it retires once the Lower alcohol view exists.
+    - New, [designed 2026-11-24](alcohol-estimate.md#missing-values): ask for bottles' ABVs, not types'. A **Missing ABV** view in Bottles and a **Partial estimates** view in Recipes, backed by a new `cc-est-missing` property, replace **Review missing ABV values**; a family with no bottles falls back to its types' typical ABVs; the typical ABV field says it's only used until you've owned a bottle. Not built.
 
 ### 5. Reach: retire the remaining skills
 
