@@ -26,10 +26,28 @@ export class ReviewUpdatesModal extends Modal {
 	}
 
 	onOpen() {
+		this.ignoreEarlyBackdropClicks();
 		this.titleEl.setText('Review cabinet updates');
 		this.modalEl.addClass('cocktail-cabinet-modal');
 		this.contentEl.addClass('cocktail-cabinet-form');
 		void this.reload();
+	}
+
+	/**
+	 * The startup notice's **Review** button sits where the backdrop appears, so the second click of a
+	 * double-click would close the review before it's seen. Backdrop clicks in the first moment are ignored;
+	 * the close button and Escape work at once.
+	 */
+	private ignoreEarlyBackdropClicks() {
+		const until = Date.now() + 600;
+		const guard = (event: Event) => {
+			if (Date.now() > until) return;
+			if (!(event.target instanceof Element) || !event.target.closest('.modal-bg')) return;
+			event.stopPropagation();
+			event.preventDefault();
+		};
+		for (const type of ['pointerdown', 'mousedown', 'click'] as const)
+			this.containerEl.addEventListener(type, guard, { capture: true });
 	}
 
 	onClose() {
