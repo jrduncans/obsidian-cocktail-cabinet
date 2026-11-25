@@ -38,6 +38,8 @@ export interface CatalogAddition {
 	name: string;
 	kind: CatalogEntry['kind'];
 	path: string;
+	/** A note of the user's already at `path`, with its `cc-kind`: a conflict, not something to add. */
+	existing?: { kind: string | null };
 }
 
 export interface CatalogPlan {
@@ -123,14 +125,20 @@ export class CatalogSync {
 			const note = notes.get(entry.id);
 			if (!note) {
 				if (skipped.has(entry.id)) continue;
-				const addition = {
+				const addition: CatalogAddition = {
 					id: entry.id,
 					name: entry.name,
 					kind: entry.kind,
 					path: renderNote(root, catalogDraft(root, entry, paths(notes)), localDate()).path,
 				};
+				const there = this.app.vault.getAbstractFileByPath(addition.path);
+				if (there) {
+					const kind =
+						there instanceof TFile ? frontmatter(await this.app.vault.read(there))[PROP.kind] : null;
+					addition.existing = { kind: typeof kind === 'string' ? kind : null };
+				}
 				if (!seen || pending.has(entry.id)) plan.additions.push(addition);
-				else if (!seen.has(entry.id)) plan.fresh.push(addition);
+				else if (!seen.has(entry.id)) (addition.existing ? plan.additions : plan.fresh).push(addition);
 				continue;
 			}
 			if (note.properties[PROP.kind] !== entry.kind) continue;
@@ -226,6 +234,25 @@ export class CatalogSync {
 			changed.add(update.path);
 		}
 		return [...changed];
+	}
+
+	/**
+	 * Make the user's note at a missing entry's path that entry's starter note, by giving it the catalog
+	 * ID; nothing else in it changes. Only a note of the same kind can stand in for the entry.
+	 */
+	async adopt(addition: CatalogAddition): Promise<void> {
+		const entry = STARTER_CATALOG.find((item) => item.id === addition.id);
+		if (!entry) throw new Error(`${addition.name} is no longer in the catalog.`);
+		if ((await this.notes()).has(entry.id)) throw new Error(`${addition.name} is already in the cabinet.`);
+		const file = this.app.vault.getAbstractFileByPath(addition.path);
+		if (!(file instanceof TFile))
+			throw new Error(`${addition.path} is gone. Review again to add ${addition.name}.`);
+		const kind = frontmatter(await this.app.vault.read(file))[PROP.kind];
+		if (kind !== entry.kind)
+			throw new Error(`${addition.path} isn’t a ${entry.kind} note, so it can’t stand in for ${addition.name}.`);
+		await this.app.fileManager.processFrontMatter(file, (properties: Properties) => {
+			properties[PROP.catalogId] = entry.id;
+		});
 	}
 
 	/** Create a starter note the cabinet lacks. */

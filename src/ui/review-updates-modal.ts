@@ -97,40 +97,51 @@ export class ReviewUpdatesModal extends Modal {
 				.setHeading();
 			for (const field of fields) this.renderField(field);
 		}
-		if (additions.length) {
+		const conflicts = additions.filter((addition) => addition.existing);
+		const missing = additions.filter((addition) => !addition.existing);
+		if (missing.length) {
 			const heading = new Setting(this.contentEl)
 				.setName('Missing starter notes')
 				.setDesc(
 					'Your cabinet doesn’t have these, and the plugin can’t tell whether you deleted them. New starter notes in later releases are added for you.',
 				)
 				.setHeading();
-			if (additions.length > 1)
-				heading.addButton((button) =>
-					button
-						.setButtonText(`Add all ${additions.length}`)
-						.setCta()
-						.onClick(() =>
+			if (missing.length > 1)
+				heading
+					.addButton((button) =>
+						button
+							.setButtonText(`Add all ${missing.length}`)
+							.setCta()
+							.onClick(() =>
+								this.act(async () => {
+									const failed: string[] = [];
+									for (const addition of missing)
+										await this.plugin.catalog.add(addition).catch(() => failed.push(addition.name));
+									const added = missing.length - failed.length;
+									return failed.length
+										? `Added ${added}; couldn’t add ${failed.join(', ')}, since a file is in the way.`
+										: `Added ${added} starter notes.`;
+								}),
+							),
+					)
+					.addButton((button) =>
+						button.setButtonText('Skip all').onClick(() =>
 							this.act(async () => {
-								const failed: string[] = [];
-								for (const addition of additions)
-									await this.plugin.catalog.add(addition).catch(() => failed.push(addition.name));
-								const added = additions.length - failed.length;
-								return failed.length
-									? `Added ${added}; couldn’t add ${failed.join(', ')}, since a file is in the way.`
-									: `Added ${added} starter notes.`;
+								await this.skip(missing);
+								return `Skipped ${missing.length} starter notes; they won’t be offered again.`;
 							}),
 						),
-				);
-			if (additions.length > 1)
-				heading.addButton((button) =>
-					button.setButtonText('Skip all').onClick(() =>
-						this.act(async () => {
-							await this.skip(additions);
-							return `Skipped ${additions.length} starter notes; they won’t be offered again.`;
-						}),
-					),
-				);
-			for (const addition of additions) this.renderAddition(addition);
+					);
+			for (const addition of missing) this.renderAddition(addition);
+		}
+		if (conflicts.length) {
+			new Setting(this.contentEl)
+				.setName('Already in your vault')
+				.setDesc(
+					'A note of yours already has the name of one of these starter notes. Use mine makes your note the starter one, keeping its text and stock; Skip leaves it as it is.',
+				)
+				.setHeading();
+			for (const addition of conflicts) this.renderConflict(addition);
 		}
 	}
 
@@ -249,6 +260,44 @@ export class ReviewUpdatesModal extends Modal {
 			diff.createDiv({ text: `${mark}${line.text}`, cls: `cocktail-cabinet-diff-${line.side}` });
 		});
 		flush();
+	}
+
+	private renderConflict(addition: CatalogAddition) {
+		const sameKind = addition.existing?.kind === addition.kind;
+		const setting = new Setting(this.contentEl)
+			.setName(addition.name)
+			.setDesc(
+				sameKind
+					? `Your note: ${addition.path}`
+					: `${addition.path} is a different kind of note, so it can’t stand in for this ${addition.kind}.`,
+			);
+		if (sameKind)
+			setting.addButton((button) =>
+				button
+					.setButtonText('Use mine')
+					.setCta()
+					.onClick(() =>
+						this.act(async () => {
+							await this.plugin.catalog.adopt(addition);
+							// Your note's own text and properties stay yours: don't ask about them now.
+							const settings = this.plugin.settings;
+							for (const update of (await this.plugin.catalog.plan()).review)
+								if (update.id === addition.id)
+									settings.catalogKept[keptKey(update)] = keptValue(update);
+							settings.catalogPending = settings.catalogPending.filter((id) => id !== addition.id);
+							await this.plugin.saveSettings();
+							return `${addition.name} is now your starter note.`;
+						}),
+					),
+			);
+		setting.addButton((button) =>
+			button.setButtonText('Skip').onClick(() =>
+				this.act(async () => {
+					await this.skip([addition]);
+					return `Skipped ${addition.name}; your note stays as it is.`;
+				}),
+			),
+		);
 	}
 
 	/** Never offer these entries again: they leave the review, and the reminder, for good. */
