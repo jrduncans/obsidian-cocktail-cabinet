@@ -1293,7 +1293,8 @@
 	},
 	"type/Passion Fruit Juice": {
 		"description": [
-			"Passion fruit juice; distinguish sweetened preparations when they affect a recipe."
+			"Passion fruit juice; distinguish sweetened preparations when they affect a recipe.",
+			"Passion fruit juice; distinguish sweetened preparations when they affect a recipe. Passion Fruit Purée is its own type."
 		],
 		"parent": [
 			"Other Fruit Juice"
@@ -2553,6 +2554,17 @@
 		],
 		"catchAll": [
 			true
+		]
+	},
+	"type/Passion Fruit Puree": {
+		"description": [
+			"Thick passion fruit purée, such as Boiron, as in the Porn Star Martini. Thicker and more concentrated than juice; some recipes thin it with water. Distinct from sweetened Passion Fruit Syrup."
+		],
+		"parent": [
+			"Other Fruit Juice"
+		],
+		"abvTypical": [
+			0
 		]
 	}
 }

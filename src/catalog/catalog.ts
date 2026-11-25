@@ -458,7 +458,16 @@ family('Other Fruit Juice', 'Juice', 'Other fruit juices; track purchased juice 
 	['Pineapple Juice', 'Pineapple juice, fresh by default.'],
 	['Cranberry Juice', 'Cranberry juice; sweetened blends can require a different recipe amount.'],
 	['Apple Juice', 'Juice from apples; specify a preparation when it changes your recipe.'],
-	['Passion Fruit Juice', 'Passion fruit juice; distinguish sweetened preparations when they affect a recipe.'],
+	[
+		'Passion Fruit Juice',
+		'Passion fruit juice; distinguish sweetened preparations when they affect a recipe. Passion Fruit Purée is its own type.',
+		{ aliases: ['Passionfruit Juice'] },
+	],
+	[
+		'Passion Fruit Purée',
+		'Thick passion fruit purée, such as Boiron, as in the Porn Star Martini. Thicker and more concentrated than juice; some recipes thin it with water. Distinct from sweetened Passion Fruit Syrup.',
+		{ aliases: ['Passionfruit Purée'] },
+	],
 ]);
 family('Vegetable Juice', 'Juice', 'Vegetable juices.', [
 	[
@@ -498,7 +507,11 @@ family(
 		],
 		['Ginger Syrup', 'A sweet ginger preparation; record the concentration and preparation you use.'],
 		['Cinnamon Syrup', 'A sweet cinnamon preparation; record the concentration and preparation you use.'],
-		['Passion Fruit Syrup', 'Sweetened passion fruit syrup, distinct from unsweetened juice.'],
+		[
+			'Passion Fruit Syrup',
+			'Sweetened passion fruit syrup, distinct from unsweetened juice.',
+			{ aliases: ['Passionfruit Syrup'] },
+		],
 		['Raspberry Syrup', 'Sweetened raspberry syrup, homemade or bottled, as in the Clover Club.'],
 		['Strawberry Syrup', 'Sweetened strawberry syrup, homemade or bottled.'],
 		[
