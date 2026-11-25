@@ -51,7 +51,7 @@ interface ResourceView {
 	filter?: string;
 	/** Columns for this view alone, after the linked name; otherwise the Base's columns. */
 	columns?: Column[];
-	/** Rows grouped by a formula; the heading shows only the group's value. */
+	/** Rows grouped by a formula, not shown as a column; the heading shows only the group's value. */
 	groupBy?: string;
 }
 
@@ -182,8 +182,12 @@ function renderBase(root: string, resource: ResourceBase, drinkGrams: number): s
 		...view,
 		order: view.columns ? withName(view.columns) : columns,
 	}));
-	// Labels belong to the whole Base, so every view's columns are listed once.
-	const labelled = new Map(views.flatMap((view) => view.order));
+	// Labels belong to the whole Base, so every view's columns are listed once. A blank label on a
+	// grouped formula leaves only the group's value in each heading; an empty one shows the formula's name.
+	const labelled = new Map([
+		...views.flatMap((view) => view.order),
+		...views.flatMap((view): Column[] => (view.groupBy ? [[view.groupBy, ' ']] : [])),
+	]);
 	const used = Object.entries(FORMULAS).filter(([name]) =>
 		views.some(
 			(view) =>
