@@ -1,6 +1,6 @@
 import { DEFAULT_VOLUME_UNIT, lineVolumeMl } from './recipe-amount';
 import type { VolumeUnit } from './recipe-amount';
-import { isWithin, parentType, swapTypes } from './relationships';
+import { isWithin, parentType, pathIndex, swapTypes } from './relationships';
 import { PROP } from './schema';
 import type { CabinetNote } from './schema';
 import { isStocked } from './logging-stock';
@@ -41,7 +41,7 @@ function sharedTypes(notes: readonly CabinetNote[], source: CabinetNote, target:
 	if (source.kind !== 'bottle' || target.kind !== 'bottle' || source.path === target.path) return [];
 	return target.parents
 		.filter((path) => source.parents.includes(path))
-		.flatMap((path) => notes.filter((note) => note.path === path));
+		.flatMap((path) => pathIndex(notes).get(path) ?? []);
 }
 
 /**
@@ -52,7 +52,7 @@ export function fitsLine(notes: readonly CabinetNote[], source: CabinetNote, tar
 	if (source.path === target.path) return true;
 	if (target.kind === 'bottle') {
 		if (source.kind !== 'bottle') return false;
-		const swaps = swapTypes(new Map(notes.map((note) => [note.path, note])), source);
+		const swaps = swapTypes(pathIndex(notes), source);
 		return target.parents.some((parent) => swaps.includes(parent));
 	}
 	if (target.kind === 'ingredient') return false;
@@ -70,7 +70,7 @@ export function lesserType(
 ): CabinetNote | undefined {
 	const catchAll = sharedTypes(notes, source, target).find((type) => type.catchAll);
 	if (catchAll) return catchAll;
-	const byPath = new Map(notes.map((note) => [note.path, note]));
+	const byPath = pathIndex(notes);
 	const subtype =
 		target.kind === 'type' ? target : target.kind === 'bottle' ? byPath.get(target.parents[0] ?? '') : undefined;
 	const parent = parentType(byPath, subtype);

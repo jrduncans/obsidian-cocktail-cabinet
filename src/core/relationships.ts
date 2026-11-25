@@ -1,9 +1,24 @@
 import type { CabinetNote } from './schema';
 
+const indexes = new WeakMap<readonly CabinetNote[], { size: number; byPath: Map<string, CabinetNote> }>();
+
+/**
+ * The notes by path, built once per notes list: availability asks about every stock note against every
+ * linked target, and rebuilding this each time made What can I make? take most of a second. Rebuilt if
+ * the list grows, since a form adds notes it creates to its own list.
+ */
+export function pathIndex(notes: readonly CabinetNote[]): ReadonlyMap<string, CabinetNote> {
+	let index = indexes.get(notes);
+	if (!index || index.size !== notes.length) {
+		index = { size: notes.length, byPath: new Map(notes.map((note) => [note.path, note])) };
+		indexes.set(notes, index);
+	}
+	return index.byPath;
+}
+
 /** Traverses only explicit parent links. No inference from names or sibling groups. */
 export function isWithin(notes: readonly CabinetNote[], child: string, ancestor: string): boolean {
-	const byPath = new Map(notes.map((note) => [note.path, note]));
-	return hasAncestor(byPath, child, ancestor);
+	return hasAncestor(pathIndex(notes), child, ancestor);
 }
 
 function hasAncestor(byPath: ReadonlyMap<string, CabinetNote>, child: string, ancestor: string): boolean {
@@ -30,7 +45,7 @@ export function parentType(
 
 /** Types a type can be a subtype of: not itself, and not a subtype, since subtypes have no subtypes. */
 export function subtypeParents(notes: readonly CabinetNote[], self?: string): CabinetNote[] {
-	const byPath = new Map(notes.map((note) => [note.path, note]));
+	const byPath = pathIndex(notes);
 	return notes.filter((note) => note.kind === 'type' && note.path !== self && !parentType(byPath, note));
 }
 
@@ -49,7 +64,7 @@ export function swapTypes(notes: ReadonlyMap<string, CabinetNote>, bottle: Cabin
 export function relatedTargets(notes: readonly CabinetNote[], target: CabinetNote): Set<string> {
 	const targets = new Set<string>([target.path]);
 	if (target.kind === 'recipe') return targets;
-	const byPath = new Map(notes.map((note) => [note.path, note]));
+	const byPath = pathIndex(notes);
 	for (const note of notes) {
 		// A broadly specified recipe can also use a more specific ingredient.
 		if (hasAncestor(byPath, note.path, target.path) || hasAncestor(byPath, target.path, note.path)) {

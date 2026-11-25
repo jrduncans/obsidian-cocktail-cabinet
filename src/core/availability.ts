@@ -1,6 +1,7 @@
 import { fitsLine, lesserType } from './logging-lines';
 import type { StockSource } from './logging-stock';
 import { lineVolumeMl } from './recipe-amount';
+import { pathIndex } from './relationships';
 import type { VolumeUnit } from './recipe-amount';
 import type { RestockThresholds } from './restock';
 import { PROP } from './schema';
@@ -127,8 +128,8 @@ export function resolveLine(text: string, context: AvailabilityContext, at?: Lin
 		...new Set(
 			[...text.matchAll(/\[\[([^\]]+)\]\]/g)].flatMap((match) => {
 				const path = resolve(match[1]!);
-				const note = notes.find((item) => item.path === path && item.kind !== 'recipe');
-				return note ? [note.path] : [];
+				const note = path === null ? undefined : pathIndex(notes).get(path);
+				return note && note.kind !== 'recipe' ? [note.path] : [];
 			}),
 		),
 	];
@@ -145,7 +146,7 @@ export function resolveLine(text: string, context: AvailabilityContext, at?: Lin
 		...(at ? { at } : {}),
 	};
 	if (!targets.length) return line;
-	const linked = targets.map((path) => notes.find((note) => note.path === path)!);
+	const linked = targets.map((path) => pathIndex(notes).get(path)!);
 	const answers = linked.map((target) => forTarget(target, context));
 	const fitting = sources.filter((source) => answers.some((answer) => answer.fits.has(source)));
 	const levels = new Map(fitting.map((source) => [source, stockLevel(source, thresholds)]));

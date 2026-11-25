@@ -14,7 +14,7 @@ import {
 } from '../src/core/schema';
 import type { CabinetNote } from '../src/core/schema';
 import { ingredientSection, localDate, renderNote } from '../src/core/notes';
-import { isWithin, relatedTargets } from '../src/core/relationships';
+import { isWithin, pathIndex, relatedTargets } from '../src/core/relationships';
 import { starterPlan } from '../src/core/setup';
 import { isLinkedView, LINKED_VIEWS, viewOpenLink } from '../src/core/view-links';
 import { STARTER_EXAMPLES, examplePlan } from '../src/catalog/examples';
@@ -1057,4 +1057,14 @@ void test('the Cocktail Cabinet note links each view it names, and only those vi
 	assert.equal(viewOpenLink('can-make'), '[What can I make?](obsidian://cocktail-cabinet?open=can-make)');
 	assert.ok(isLinkedView('buy'));
 	for (const other of ['toString', '__proto__', 'setup', undefined]) assert.ok(!isLinkedView(other), String(other));
+});
+
+void test('the path index is reused for a notes list and rebuilt when the list grows', () => {
+	const note = (path: string, parents: string[] = []) =>
+		({ path, name: path, kind: 'type', parents }) as unknown as CabinetNote;
+	const notes = [note('Gin'), note('London Dry Gin', ['Gin'])];
+	assert.equal(pathIndex(notes), pathIndex(notes));
+	assert.ok(!isWithin(notes, 'Old Tom Gin', 'Gin'));
+	notes.push(note('Old Tom Gin', ['Gin']));
+	assert.ok(isWithin(notes, 'Old Tom Gin', 'Gin'));
 });
