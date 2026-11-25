@@ -49,8 +49,11 @@ try {
 			if (!entry.id) continue;
 			const id = catalogKey(entry.id);
 			const fields = entryFields(entry);
+			// An entry already recorded had every missing field empty: those were pruned below, so restore
+			// the empty value before adding a new one, or a note still empty would look edited.
+			const known = id in history;
 			for (const field of CATALOG_FIELDS) {
-				const values = ((history[id] ??= {})[field] ??= []);
+				const values = ((history[id] ??= {})[field] ??= known ? [null] : []);
 				if (!values.some((value) => sameValue(value, fields[field]))) {
 					values.push(fields[field]);
 					added++;

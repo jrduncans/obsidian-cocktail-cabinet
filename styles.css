@@ -520,9 +520,35 @@
 	font-style: italic;
 }
 
+/* Review cabinet updates: each starter field is a card holding its comparison, outcomes, and choices. */
+.cocktail-cabinet-review-card {
+	margin-top: var(--size-4-3);
+	padding: var(--size-4-3);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+}
+
+.cocktail-cabinet-review-card-title {
+	margin-bottom: var(--size-4-2);
+	font-weight: var(--font-semibold);
+}
+
+.cocktail-cabinet-review-outcome {
+	margin-top: var(--size-4-2);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.cocktail-cabinet-review-actions {
+	display: flex;
+	margin-top: var(--size-4-3);
+	justify-content: flex-end;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+}
+
 .cocktail-cabinet-field-compare {
 	display: grid;
-	margin-bottom: var(--size-4-4);
 	grid-template-columns: max-content 1fr;
 	gap: var(--size-4-1) var(--size-4-3);
 	font-size: var(--font-smaller);
@@ -665,4 +691,8 @@ a.external-link[href^='obsidian://cocktail-cabinet?'] {
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	user-select: none;
+}
+
+.cocktail-cabinet-review-card + .setting-item-heading {
+	margin-top: var(--size-4-6);
 }

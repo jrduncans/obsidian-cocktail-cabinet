@@ -331,12 +331,13 @@
 			"A neutral, unflavored spirit for recipes calling for vodka. Flavored vodkas can be added as distinct ingredients.",
 			"Neutral, unflavored vodka, what a recipe means by plain vodka. Flavored vodkas are their own types in this family and don’t fill these recipes."
 		],
+		"parent": [
+			null,
+			"Vodka Family"
+		],
 		"abvTypical": [
 			null,
 			0.4
-		],
-		"parent": [
-			"Vodka Family"
 		]
 	},
 	"family/Agave Spirit": {
@@ -879,24 +880,26 @@
 			"Sweet coffee-flavored liqueur; sugar content and strength vary by bottling.",
 			"Sweet coffee-flavored liqueur; sugar content and strength vary by bottle."
 		],
+		"parent": [
+			null,
+			"Other Liqueur"
+		],
 		"abvTypical": [
 			null,
 			0.2
-		],
-		"parent": [
-			"Other Liqueur"
 		]
 	},
 	"type/Creme de Cacao": {
 		"description": [
 			"Chocolate liqueur; specify light or dark when the recipe needs that distinction."
 		],
+		"parent": [
+			null,
+			"Other Liqueur"
+		],
 		"abvTypical": [
 			null,
 			0.27
-		],
-		"parent": [
-			"Other Liqueur"
 		]
 	},
 	"family/Still Wine": {
@@ -1096,6 +1099,7 @@
 			"Port"
 		],
 		"abvTypical": [
+			null,
 			0.195
 		]
 	},
@@ -1109,6 +1113,7 @@
 			"Port"
 		],
 		"abvTypical": [
+			null,
 			0.2
 		]
 	},
@@ -2194,39 +2199,6 @@
 			0.4
 		]
 	},
-	"bottle/Peychaud's Bitters": {
-		"description": [
-			"Peychaud’s bitters, the anise-forward bitters of the Sazerac. Recipes can name this bottle specifically or call for its Creole Bitters type. Set availability or quantities to record your stock."
-		],
-		"parent": [
-			"Creole Bitters"
-		]
-	},
-	"ingredient/Sugar": {
-		"description": [
-			"White granulated sugar, for rims and for recipes that call for sugar itself rather than a syrup."
-		]
-	},
-	"ingredient/Sugar Cubes": {
-		"description": [
-			"White sugar cubes, for an Old Fashioned or Champagne Cocktail built on a cube."
-		]
-	},
-	"ingredient/Espresso": {
-		"description": [
-			"Freshly pulled espresso; cold brew concentrate is a different staple."
-		]
-	},
-	"ingredient/Worcestershire Sauce": {
-		"description": [
-			"Worcestershire sauce, for savory drinks such as the Bloody Mary."
-		]
-	},
-	"ingredient/Hot Sauce": {
-		"description": [
-			"Vinegar-based hot sauce, such as Tabasco. Recipes naming a specific sauce can link it as its own staple."
-		]
-	},
 	"type/Canadian Whisky": {
 		"description": [
 			"Light Canadian whisky, usually a corn-based blend, such as Canadian Club; Canadians often call it rye. Rye Whiskey is a separate type."
@@ -2268,25 +2240,6 @@
 			"Spirit"
 		]
 	},
-	"family/Port": {
-		"description": [
-			"Port styles. A recipe calling for plain port accepts any of them."
-		],
-		"parent": [
-			"Fortified Wine"
-		]
-	},
-	"type/White Port": {
-		"description": [
-			"Port from white grapes, dry to sweet, as in a Portonic with tonic water."
-		],
-		"parent": [
-			"Port"
-		],
-		"abvTypical": [
-			0.19
-		]
-	},
 	"family/Cream Liqueur": {
 		"description": [
 			"Liqueurs made with cream or egg, such as Irish cream, RumChata, Amarula, and advocaat. They curdle with citrus and keep best refrigerated once opened."
@@ -2312,6 +2265,58 @@
 		],
 		"parent": [
 			"Liqueur"
+		]
+	},
+	"family/Port": {
+		"description": [
+			"Port styles. A recipe calling for plain port accepts any of them."
+		],
+		"parent": [
+			"Fortified Wine"
+		]
+	},
+	"type/White Port": {
+		"description": [
+			"Port from white grapes, dry to sweet, as in a Portonic with tonic water."
+		],
+		"parent": [
+			"Port"
+		],
+		"abvTypical": [
+			0.19
+		]
+	},
+	"bottle/Peychaud's Bitters": {
+		"description": [
+			"Peychaud’s bitters, the anise-forward bitters of the Sazerac. Recipes can name this bottle specifically or call for its Creole Bitters type. Set availability or quantities to record your stock."
+		],
+		"parent": [
+			"Creole Bitters"
+		]
+	},
+	"ingredient/Sugar": {
+		"description": [
+			"White granulated sugar, for rims and for recipes that call for sugar itself rather than a syrup."
+		]
+	},
+	"ingredient/Sugar Cubes": {
+		"description": [
+			"White sugar cubes, for an Old Fashioned or Champagne Cocktail built on a cube."
+		]
+	},
+	"ingredient/Espresso": {
+		"description": [
+			"Freshly pulled espresso; cold brew concentrate is a different staple."
+		]
+	},
+	"ingredient/Worcestershire Sauce": {
+		"description": [
+			"Worcestershire sauce, for savory drinks such as the Bloody Mary."
+		]
+	},
+	"ingredient/Hot Sauce": {
+		"description": [
+			"Vinegar-based hot sauce, such as Tabasco. Recipes naming a specific sauce can link it as its own staple."
 		]
 	}
 }

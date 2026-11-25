@@ -1,9 +1,9 @@
-import { Modal, Notice, Setting } from 'obsidian';
+import { ButtonComponent, Modal, Notice, Setting } from 'obsidian';
 import { lineDiff } from '../core/managed';
 import type CocktailCabinetPlugin from '../main';
 import type { ManagedUpdate } from '../vault/cabinet-store';
 import { FIELD_LABELS } from '../catalog/fields';
-import type { FieldValue } from '../catalog/fields';
+import type { CatalogField, FieldValue } from '../catalog/fields';
 import { keptKey, keptValue } from '../vault/catalog-sync';
 import type { CatalogAddition, CatalogFieldUpdate } from '../vault/catalog-sync';
 
@@ -58,7 +58,10 @@ export class ReviewUpdatesModal extends Modal {
 			return;
 		}
 		this.contentEl.createEl('p', {
-			text: 'This release changes things you’ve edited. Choose which to keep, or close this to decide later.',
+			text:
+				updates.length || fields.length
+					? 'This release changes things you’ve edited. Choose which to keep, or close this to decide later.'
+					: 'This release adds starter notes. Choose which to add, or close this to decide later.',
 		});
 		if (updates.length) {
 			new Setting(this.contentEl).setName('Cabinet notes').setHeading();
@@ -84,35 +87,41 @@ export class ReviewUpdatesModal extends Modal {
 		}
 	}
 
+	/** One card per field: what changes, what each choice does, then the choices, all inside the card. */
 	private renderField(update: CatalogFieldUpdate) {
-		const section = this.contentEl.createDiv({ cls: 'cocktail-cabinet-review' });
-		const setting = new Setting(section).setName(`${update.name}: ${FIELD_LABELS[update.field]}`);
-		setting.addButton((button) =>
-			button
-				.setButtonText('Use catalog’s')
-				.setCta()
-				.onClick(() =>
-					this.act(async () => {
-						const changed = await this.plugin.catalog.apply([update]);
-						if (!changed.length) throw new Error(`${update.name} changed after review opened.`);
-						return `${update.name}: ${FIELD_LABELS[update.field].toLowerCase()} updated.`;
-					}),
-				),
-		);
-		setting.addButton((button) =>
-			button.setButtonText('Keep mine').onClick(() =>
-				this.act(async () => {
-					this.plugin.settings.catalogKept[keptKey(update)] = keptValue(update);
-					await this.plugin.saveSettings();
-					return `${update.name}: keeping your ${FIELD_LABELS[update.field].toLowerCase()}.`;
-				}),
-			),
-		);
-		const compare = section.createDiv({ cls: 'cocktail-cabinet-field-compare' });
-		compare.createDiv({ text: 'Yours', cls: 'cocktail-cabinet-field-label' });
-		compare.createDiv({ text: show(update.yours), cls: 'cocktail-cabinet-diff-yours' });
+		const label = FIELD_LABELS[update.field];
+		const card = this.contentEl.createDiv({ cls: 'cocktail-cabinet-review-card' });
+		const title = card.createDiv({ cls: 'cocktail-cabinet-review-card-title' });
+		title.createSpan({ text: update.name });
+		title.createSpan({ text: ` · ${label}`, cls: 'cocktail-cabinet-field-label' });
+		const compare = card.createDiv({ cls: 'cocktail-cabinet-field-compare' });
+		compare.createDiv({ text: 'Your note', cls: 'cocktail-cabinet-field-label' });
+		compare.createDiv({ text: show(update.field, update.yours), cls: 'cocktail-cabinet-diff-yours' });
 		compare.createDiv({ text: 'Catalog', cls: 'cocktail-cabinet-field-label' });
-		compare.createDiv({ text: show(update.next), cls: 'cocktail-cabinet-diff-new' });
+		compare.createDiv({ text: show(update.field, update.next), cls: 'cocktail-cabinet-diff-new' });
+		const outcome = card.createDiv({ cls: 'cocktail-cabinet-review-outcome' });
+		outcome.createDiv({ text: `Use catalog’s: ${change(update)}` });
+		outcome.createDiv({
+			text: 'Keep mine: nothing changes, and you’re asked again only if the catalog changes it again.',
+		});
+		const actions = card.createDiv({ cls: 'cocktail-cabinet-review-actions' });
+		new ButtonComponent(actions).setButtonText('Keep mine').onClick(() =>
+			this.act(async () => {
+				this.plugin.settings.catalogKept[keptKey(update)] = keptValue(update);
+				await this.plugin.saveSettings();
+				return `${update.name}: keeping your ${lower(update.field)}.`;
+			}),
+		);
+		new ButtonComponent(actions)
+			.setButtonText('Use catalog’s')
+			.setCta()
+			.onClick(() =>
+				this.act(async () => {
+					const changed = await this.plugin.catalog.apply([update]);
+					if (!changed.length) throw new Error(`${update.name} changed after review opened.`);
+					return `${update.name}: ${lower(update.field)} updated.`;
+				}),
+			);
 	}
 
 	private renderAddition(addition: CatalogAddition) {
@@ -209,9 +218,26 @@ export class ReviewUpdatesModal extends Modal {
 	}
 }
 
-function show(value: FieldValue): string {
-	if (value === null) return '(none)';
+function show(field: CatalogField, value: FieldValue): string {
+	if (value === null) return field === 'parent' ? 'None (standalone)' : field === 'catchAll' ? 'No' : 'Not set';
+	if (field === 'abvTypical' && typeof value === 'number') return `${Math.round(value * 1000) / 10}%`;
 	if (Array.isArray(value)) return value.join(', ');
 	if (typeof value === 'boolean') return value ? 'Yes' : 'No';
 	return String(value);
+}
+
+/** A field label inside a sentence: lowercase, except initialisms such as ABV. */
+function lower(field: CatalogField): string {
+	return FIELD_LABELS[field].replace(/\b[A-Z][a-z]/g, (start) => start.toLowerCase());
+}
+
+/** What **Use catalog’s** does to the note, in words. */
+function change(update: CatalogFieldUpdate): string {
+	const { name, field, next } = update;
+	if (field === 'parent')
+		return next === null ? `${name} becomes standalone, with no parent.` : `${name} moves to ${show(field, next)}.`;
+	if (next === null) return `${name}’s ${lower(field)} is cleared.`;
+	if (field === 'description' || field === 'preparation')
+		return `${name}’s ${lower(field)} is replaced with the catalog’s text.`;
+	return `${name}’s ${lower(field)} becomes ${show(field, next)}.`;
 }
