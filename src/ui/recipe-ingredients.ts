@@ -34,7 +34,7 @@ export interface IngredientOptions {
 
 /** What each row's ⋯ menu does, for a form's ingredient guidance. */
 export const ROW_MENU =
-	'Each row’s ⋯ menu can also pick or create a note, unlink it, and move the row or add one below it.';
+	'Enter moves to the next field, adding a row after the last. Each row’s ⋯ menu can also pick or create a note, unlink it, and move the row or add one below it.';
 
 /** Shared review controls for pasted and manually entered ingredients. */
 export class RecipeIngredients {
@@ -325,12 +325,29 @@ export class RecipeIngredients {
 		nameInput.inputEl.setAttribute('aria-label', 'Ingredient name');
 		nameInput.inputEl.addClass('cocktail-cabinet-ingredient-input');
 		// What was typed is only a search, so the link shows the note's name.
-		new IngredientSuggest(
+		const suggest = new IngredientSuggest(
 			this.plugin.app,
 			nameInput.inputEl,
 			() => this.notes,
 			(note) => choose(note, true),
 		);
+		// Enter moves through the rows: the amount to its ingredient, the ingredient to the next row's amount,
+		// adding a row after the last. With the type-ahead open, Enter picks the suggestion instead.
+		const onEnter = (input: HTMLInputElement, next: () => void) =>
+			input.addEventListener('keydown', (event) => {
+				if (event.key !== 'Enter' || event.isComposing || event.defaultPrevented) return;
+				if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
+				event.preventDefault();
+				next();
+			});
+		onEnter(amountInput.inputEl, () => nameInput.inputEl.focus());
+		onEnter(nameInput.inputEl, () => {
+			if (suggest.isOpen) return;
+			const following = wrapper.nextElementSibling?.querySelector<HTMLInputElement>(
+				'.cocktail-cabinet-amount-input',
+			);
+			(following ?? this.add({ amount: '', text: '' }, wrapper)).focus();
+		});
 		const move = (step: -1 | 1) => {
 			const index = this.rows.indexOf(data);
 			const other = step < 0 ? wrapper.previousElementSibling : wrapper.nextElementSibling;

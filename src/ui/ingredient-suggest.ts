@@ -8,6 +8,9 @@ import { pickerText } from './picker';
  * the cabinet pickers (name, filename, aliases, kind). Ignoring the list leaves the text unlinked.
  */
 export class IngredientSuggest extends AbstractInputSuggest<CabinetNote> {
+	/** The list is showing, so Enter picks a suggestion rather than moving on. */
+	isOpen = false;
+
 	constructor(
 		app: App,
 		private inputEl: HTMLInputElement,
@@ -16,6 +19,16 @@ export class IngredientSuggest extends AbstractInputSuggest<CabinetNote> {
 	) {
 		super(app, inputEl);
 		this.limit = 20;
+	}
+
+	open() {
+		super.open();
+		this.isOpen = true;
+	}
+
+	close() {
+		super.close();
+		this.isOpen = false;
 	}
 
 	protected getSuggestions(query: string): CabinetNote[] {
