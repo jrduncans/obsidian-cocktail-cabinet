@@ -398,6 +398,10 @@ family('Aperitif Wine', 'Fortified Wine', 'Aromatized wine aperitifs outside the
 		'Bitter Aperitif Wine',
 		'Quinquina-style aromatized wine with quinine or other bitter notes, such as Cocchi Americano and Lillet Blanc.',
 	],
+	[
+		'Red Aperitif Wine',
+		'Red quinquina-style aromatized wine, such as Lillet Rouge, Cocchi Americano Rosso, Dubonnet Rouge, and Byrrh. Not a stand-in for the white Bitter Aperitif Wine; sweet vermouth is a common substitute.',
+	],
 ]);
 family('Bitters', undefined, 'Concentrated bitters used in small cocktail seasoning quantities.', [
 	['Aromatic Bitters', 'Concentrated aromatic bitters used in dashes or other small seasoning amounts.'],
@@ -815,6 +819,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Vermouth Amaro': 16,
 	'Amontillado Sherry': 18.5,
 	'Bitter Aperitif Wine': 17,
+	'Red Aperitif Wine': 17,
 	'Aromatic Bitters': 45,
 	'Orange Bitters': 45,
 	'Creole Bitters': 35,

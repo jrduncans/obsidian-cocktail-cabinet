@@ -2605,5 +2605,16 @@
 		"abvTypical": [
 			0.755
 		]
+	},
+	"type/Red Aperitif Wine": {
+		"description": [
+			"Red quinquina-style aromatized wine, such as Lillet Rouge, Cocchi Americano Rosso, Dubonnet Rouge, and Byrrh. Not a stand-in for the white Bitter Aperitif Wine; sweet vermouth is a common substitute."
+		],
+		"parent": [
+			"Aperitif Wine"
+		],
+		"abvTypical": [
+			0.17
+		]
 	}
 }
