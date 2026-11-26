@@ -46,8 +46,8 @@ The plain name goes to the type recipes link; the family takes the suffixed name
 ### What this supersedes
 
 - [Cabinet design](cabinet-design.md#classification-principles): "Use Brandy colloquially for French-style grape brandy, with Cognac and Armagnac as types." The meaning survives as the Brandy type; Cognac and Armagnac become its subtypes. The removed Grape Brandy type stays removed.
-- The French Brandy proposal in the [bottle coverage review](knowledge-bottle-coverage-review.md) and [product research](knowledge-bottle-product-research.md): St-Rémy goes on Brandy, which needs no Cognac/Armagnac carve-out in its definition.
-- The [adoption mapping](knowledge-adoption-mapping.md)'s familyless local Kirsch: it becomes the starter type.
+- The French Brandy proposal in the bottle coverage review and product research: St-Rémy goes on Brandy, which needs no Cognac/Armagnac carve-out in its definition.
+- The adoption mapping's familyless local Kirsch: it becomes the starter type.
 
 ## Building it
 

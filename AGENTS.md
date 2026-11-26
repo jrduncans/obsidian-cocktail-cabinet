@@ -1,34 +1,28 @@
 # Cocktail Cabinet
 
-## Project purpose and workspace
+## Project purpose
 
-Turn the cocktail workflows already implemented as skills, scripts, and templates in the `knowledge` vault into an Obsidian community plugin. Use those workflows as the starting reference when designing plugin features.
+An Obsidian community plugin for cocktail recipes and bottle inventory, kept as ordinary Markdown notes and core Bases. It began as a replacement for the cocktail skills, scripts, and templates in the author's own vault, `knowledge`, which is still its main real-world cabinet.
 
-- Chosen identity: display name **Cocktail Cabinet**, plugin ID `cocktail-cabinet`, repository `obsidian-cocktail-cabinet`. The repository is intended to remain private for now; publication is a later decision.
-- This repository is also the intended home for the supporting cocktail scripts as they are migrated from the vault.
-- Before planning ingredient resolution, logging, imports, or agent integration, read [the workflow assessment](docs/workflow-assessment.md) for existing behavior, known gaps, and proposed architecture. Its recommendations are proposals, not an approved implementation scope.
-- Before changing cabinet setup, hierarchy, note schemas, recipe creation, or ingredient resolution, read [the cabinet design](docs/cabinet-design.md) for agreed behavior, the collection-coherence goal, and current implementation choices. Use [the glossary](GLOSSARY.md) for domain terms.
-- When choosing what to work on next, consult [the development roadmap](docs/roadmap.md) for workflow status and phase order. It is a plan, not approved scope.
+- Identity: display name **Cocktail Cabinet**, plugin ID `cocktail-cabinet`, repository `obsidian-cocktail-cabinet`. The repository is public and the plugin is in beta.
+- Before changing cabinet setup, hierarchy, note schemas, recipe creation, or ingredient resolution, read [the cabinet design](docs/cabinet-design.md) for agreed behavior, the collection-coherence goal, and current implementation choices. Use [the glossary](GLOSSARY.md) for domain terms. [docs/README.md](docs/README.md) lists the other references and design records.
+- When choosing what to work on next, consult [the development roadmap](docs/roadmap.md) for workflow status. It is a plan, not approved scope.
 
-This project spans three workspace folders:
+## Workspace
 
-| Folder                      | Role                                                                    | Local path                                                                                    |
-| --------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `obsidian-cocktail-cabinet` | Plugin source, build tooling, and project guidance                      | `/Users/jrduncans/workspace/personal/obsidian-cocktail-cabinet`                               |
-| `knowledge`                 | Personal vault containing the existing cocktail workflows and real data | `/Users/jrduncans/Library/Mobile Documents/iCloud~md~obsidian/Documents/knowledge`            |
-| `Cocktail Cabinet Dev`      | Vault for plugin development and testing                                | `/Users/jrduncans/Library/Mobile Documents/iCloud~md~obsidian/Documents/Cocktail Cabinet Dev` |
+If `AGENTS.local.md` exists (it is ignored by Git), read it: it lists this machine's vaults and their paths. The author works across three folders: this repository, the personal `knowledge` vault, and a `Cocktail Cabinet Dev` vault for experiments.
 
 - Run plugin development commands from the repository. Use absolute paths when working across workspace folders.
-- Keep shared project context here. Before working in another folder, read its applicable `AGENTS.md`; this repository's instructions do not automatically govern sibling vaults.
-- Use `knowledge` as reference material and `Cocktail Cabinet Dev` for plugin experiments. Make changes to the personal vault only when the task calls for them; use synthetic or deliberately selected data for test fixtures.
-- When porting a workflow, inspect the relevant sources under `knowledge`: `.agents/skills/cocktail-inventory-query/`, `.agents/skills/cocktail-inventory-update/`, `.agents/skills/cocktail-recipe-import/`, `Templates/Cocktails/`, and `Cocktails/Views/`. Each skill's `SKILL.md` describes its workflow and supporting scripts. `Cocktails/` also contains the note schema, taxonomy, and Bases views the plugin must account for.
+- Before working in another folder, read its applicable `AGENTS.md`; this repository's instructions do not automatically govern sibling vaults.
+- Use the dev vault for plugin experiments. Make changes to a personal vault only when the task calls for them; use synthetic or deliberately selected data for test fixtures, never personal notes.
+- Keep personal details (names, paths, inventory, and journal content from a personal vault) out of committed files. Design records may cite measurements and examples from it.
 
 ## Local development setup
 
 - The dev vault's `.obsidian/plugins/cocktail-cabinet` is a symlink to this repository. Builds in the repository therefore supply the plugin files directly to that vault; a separate copy step is unnecessary for this setup.
 - Plugin settings written to `data.json` also land in the repository through that symlink. Keep that local state ignored by Git.
 - The Hot Reload community plugin is installed in `Cocktail Cabinet Dev` to support development reloads.
-- Real vaults, including `knowledge`, get a copy, not a symlink, so it syncs to mobile and only merged work reaches them: `npm run install:vault -- --vault PATH` from a clean `main`. Run it only when the user asks to install or update.
+- Real vaults get a copy, not a symlink, so it syncs to mobile and only merged work reaches them: `npm run install:vault -- --vault PATH` from a clean `main`. Run it only when the user asks to install or update.
 
 ## Development conventions
 
@@ -47,4 +41,4 @@ This project spans three workspace folders:
 - Keep runtime operations local to the selected vault. No telemetry or network services without an explicit feature need, opt-in, and documentation. Follow Obsidian's developer policies and plugin guidelines.
 - Keep `node_modules/`, `main.js`, and local `data.json` out of Git. Release artifacts are `main.js`, `manifest.json`, and optional `styles.css` at the plugin root.
 - Use `0.x` during early development. Keep `package.json`, `manifest.json`, and `versions.json` aligned; pin the Obsidian development dependency.
-- Publication remains a separate decision. When releasing, use the manifest version as the tag without a leading `v`, and attach the release artifacts individually.
+- Releases are published from tags by `.github/workflows/release.yml` as drafts; publishing a release and submitting to the community catalog are confirmed with the author each time. When releasing, use the manifest version as the tag without a leading `v`, and attach the release artifacts individually.

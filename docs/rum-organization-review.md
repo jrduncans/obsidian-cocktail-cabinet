@@ -30,7 +30,7 @@ Recipe counts below are distinct recipes directly linking a type, including alia
 
 The existing rum type pages provide Base embeds but no explanatory definitions. Bottle assignments and recipe wording therefore supply evidence of intended meaning; they do not conclusively define every boundary.
 
-Local sources: [starter catalog](../src/catalog/catalog.ts), [cabinet design](cabinet-design.md), [earlier hierarchy comparison](knowledge-hierarchy-adoption-review.md), and live knowledge notes in `Cocktails/Types/`, `Cocktails/Bottles/`, and `Cocktails/Recipes/`.
+Local sources: [starter catalog](../src/catalog/catalog.ts), [cabinet design](cabinet-design.md), earlier hierarchy comparison, and live knowledge notes in `Cocktails/Types/`, `Cocktails/Bottles/`, and `Cocktails/Recipes/`.
 
 ## Pietrek reference
 

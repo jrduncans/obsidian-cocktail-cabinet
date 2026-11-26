@@ -98,7 +98,7 @@ The remaining branches retain their previous draft classifications for later foc
 - Keep Orange Liqueur broad across triple sec, curaçao, and brandy- or rum-based styles. Accept Pierre Ferrand Orange Curaçao alongside Cointreau and Üla as candidates without encoding which is the closer substitute. Users can choose narrower types or bottle references when needed.
 - Filenames use plain Latin characters. Preserve the proper name in a property and on the page, and use it as the displayed text of plugin-generated links, for example `[[Cachaca|Cachaça]]`. Accented and unaccented spellings should both be findable.
 - Prefer a useful shared ingredient type when it can represent local alternatives to named bottles. Explicit bottle-to-bottle substitution remains a candidate for exceptions; whether to include it has not been decided. Classification and substitution should remain distinguishable.
-- Before replacing the legacy substitution field, consult the [review of all populated knowledge-vault substitutions](knowledge-substitutions-review.md) for the agreed groupings and remaining questions. The Gentian Liqueur grouping now covers Bitter Bianco → Salers; the initial audit's suggestion that it needed an explicit exception is superseded. Whether to retain a directional exception feature remains open.
+- A review of all populated knowledge-vault substitutions (removed after cutover; it is in the Git history) set the groupings for replacing the legacy substitution field. The Gentian Liqueur grouping now covers Bitter Bianco → Salers; the initial audit's suggestion that it needed an explicit exception is superseded. Whether to retain a directional exception feature remains open.
 - Apple Brandy Family contained Apple Brandy, Bonded Apple Brandy, Applejack, and Calvados types. Superseded 2026-11-13 by [subtypes](#subtypes): Apple Brandy is the broad type in the Brandy family, and the other three are its subtypes.
 - Give a family the suffix Family when its name would otherwise duplicate a type: Amaro Family. Keep other family names singular where natural, such as Gin. The types keep the ordinary ingredient names used more frequently in recipes.
 - Use Brandy colloquially for French-style grape brandy, with Cognac and Armagnac as types. Remove the residual Grape Brandy type from the starter catalog. Revised and built 2026-11-25 by the [brandy organization](brandy-organization.md): Brandy becomes the type recipes link for plain brandy, with Cognac and Armagnac as its subtypes, and the family is renamed Brandy Family, gaining Kirsch. Grape Brandy stays removed.
@@ -405,7 +405,7 @@ Decided 2026-11-24, from the question of whether **Tidy this recipe** should rea
 
 ## Classification principles
 
-Agreed on 2026-11-03 while building the [knowledge adoption mapping](knowledge-adoption-mapping.md), which applies them.
+Agreed on 2026-11-03 while building the knowledge adoption mapping, which applies them.
 
 - A type exists so its bottles can be swapped; a narrower type needs several real near-substitutes.
 - Products without near-substitutes go in their family's catch-all type, as amari do in Amaro. Bottles always have a type.
