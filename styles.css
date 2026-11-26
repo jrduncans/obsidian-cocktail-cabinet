@@ -152,7 +152,8 @@
 	width: min(48rem, calc(100vw - 2rem));
 }
 
-/* Leave room for the property prefix, only in cabinet property panels. */
+/* Leave room for the property prefix, only in cabinet property panels. :has is the one way to tell them apart
+   in CSS; scoped to the properties panel, it stays cheap. */
 .metadata-container:has(.metadata-property[data-property-key='cc-kind']) {
 	--metadata-label-width: min(14em, 45%);
 }
@@ -196,7 +197,7 @@
 }
 
 /* Record purchases: anchored near the top so it doesn't re-center as content changes; only the list scrolls. */
-.modal-container:has(.cocktail-cabinet-purchases) {
+.modal-container.cocktail-cabinet-purchases-container {
 	align-items: flex-start;
 }
 .modal.cocktail-cabinet-purchases {
@@ -234,7 +235,7 @@
 .cocktail-cabinet-purchase-row {
 	display: grid;
 	grid-template-columns: auto minmax(8rem, 1fr) auto;
-	column-gap: var(--size-4-3);
+	gap: 0 var(--size-4-3);
 	align-items: center;
 	padding: var(--size-4-2) 0;
 	border-bottom: var(--border-width) solid var(--background-modifier-border-hover);
@@ -266,7 +267,7 @@
 	grid-template-columns: minmax(5rem, max-content) minmax(7rem, max-content) minmax(8rem, max-content);
 	align-items: center;
 	justify-items: end;
-	column-gap: var(--size-4-3);
+	gap: 0 var(--size-4-3);
 	transition: opacity 120ms ease;
 }
 .cocktail-cabinet-purchase-fields > .is-amount {

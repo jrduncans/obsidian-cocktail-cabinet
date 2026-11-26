@@ -40,9 +40,10 @@ export class ReviewUpdatesModal extends Modal {
 	 */
 	private ignoreEarlyBackdropClicks() {
 		const until = Date.now() + 600;
-		const guard = (event: Event) => {
+		const guard = (event: UIEvent) => {
 			if (Date.now() > until) return;
-			if (!(event.target instanceof Element) || !event.target.closest('.modal-bg')) return;
+			const target = event.targetNode;
+			if (!target?.instanceOf(Element) || !target.closest('.modal-bg')) return;
 			event.stopPropagation();
 			event.preventDefault();
 		};

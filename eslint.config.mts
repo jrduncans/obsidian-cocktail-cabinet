@@ -43,6 +43,8 @@ export default defineConfig(
 				'warn',
 				{ enforceCamelCaseLower: true, acronyms: [...DEFAULT_ACRONYMS, 'ABV', 'I'] },
 			],
+			// Not in the recommended set, but the community directory's review checks it.
+			'obsidianmd/prefer-create-el': 'error',
 		},
 	},
 	{

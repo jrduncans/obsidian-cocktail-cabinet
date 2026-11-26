@@ -186,7 +186,7 @@ const AMOUNT = /\d\s*(?:oz|ml|cl|ounces?|dash(?:es)?|tsp|barspoons?)\b/i;
  * from the microdata recipe, else a post body or article that reads like a recipe, else `main`, else the body
  * (not just any article: on some pages those are reader comments).
  */
-export function visibleContent(doc: Document): Element | null {
+export function visibleContent(doc: Document, parse: ParseHtml): Element | null {
 	const recipeLike = (el: Element) =>
 		/\bingredients?\b/i.test(el.textContent ?? '') || AMOUNT.test(el.textContent ?? '');
 	const articles = Array.from(doc.querySelectorAll('article'));
@@ -203,13 +203,19 @@ export function visibleContent(doc: Document): Element | null {
 	for (const el of Array.from(copy.querySelectorAll(UNWRAPPED))) el.replaceWith(...Array.from(el.childNodes));
 	// Ingredient tables (Difford's) read as one line per row, not Markdown table syntax.
 	for (const table of Array.from(copy.querySelectorAll('table'))) {
-		const block = doc.createElement('div');
-		for (const row of Array.from(table.querySelectorAll('tr'))) {
-			const cells = Array.from(row.querySelectorAll('th, td'))
-				.map((cell) => (cell.textContent ?? '').replace(/\s+/g, ' ').trim())
-				.filter(Boolean);
-			if (cells.length) block.appendChild(doc.createElement('p')).textContent = cells.join(' ');
-		}
+		const rows = Array.from(table.querySelectorAll('tr'))
+			.map((row) =>
+				Array.from(row.querySelectorAll('th, td'))
+					.map((cell) => (cell.textContent ?? '').replace(/\s+/g, ' ').trim())
+					.filter(Boolean)
+					.join(' '),
+			)
+			.filter(Boolean);
+		// Parsed rather than made with createElement, which Obsidian's lint keeps for its createEl helpers;
+		// those make elements in Obsidian's window, and this is an inert copy of the page.
+		const block = parse(`<!doctype html><html><body><div>${'<p></p>'.repeat(rows.length)}</div></body></html>`).body
+			.firstElementChild!;
+		rows.forEach((row, index) => (block.children[index]!.textContent = row));
 		table.replaceWith(block);
 	}
 	return copy;
@@ -252,7 +258,7 @@ export function readRecipePage(
 	const canonical = doc.querySelector('link[rel~="canonical"]')?.getAttribute('href');
 	const source = sourceUrl(url, canonical);
 	const structured = structuredRecipe(doc, parse);
-	const content = visibleContent(doc);
+	const content = visibleContent(doc, parse);
 	const markdown = content ? fromFirstHeading(toMarkdown(content).trim()) : '';
 	const text = parseRecipeText(markdown);
 	const original = [
@@ -303,8 +309,8 @@ export function readRecipePage(
 	};
 }
 
-/** An HTML tag's opening `<`, unless already escaped: what Obsidian would render as HTML in a note. */
-const TAG_START = /(?<!\\)<(?=[A-Za-z!/?])/g;
+/** An HTML tag's opening `<`, with what precedes it: what Obsidian would render as HTML in a note unless escaped. */
+const TAG_START = /(^|[^\\])<(?=[A-Za-z!/?])/g;
 
 /**
  * A page's text kept as text in the note: HTML a page smuggles into its recipe (such as a double-escaped
@@ -312,7 +318,7 @@ const TAG_START = /(?<!\\)<(?=[A-Za-z!/?])/g;
  * name, which becomes a filename, loses tags; other text shows them as written.
  */
 export function inert(recipe: RecipeImport): RecipeImport {
-	const escape = (text: string) => text.replace(TAG_START, '&lt;');
+	const escape = (text: string) => text.replace(TAG_START, '$1&lt;');
 	return {
 		...recipe,
 		name: recipe.name

@@ -607,6 +607,11 @@ void test('hashtag text stays in its ingredient line (Wix hashtag links)', () =>
 		"## Ingredients\n- .5oz Don's Spices [#2](https://www.shakerofspirits.com/shaker-of-spirits/hashtags/2)\n- .5oz lime",
 	);
 	assert.deepEqual(linked.ingredients[0], { amount: '.5oz', text: "Don's Spices #2" });
+	// Two links in a row both lose their address; one right after a "[" is bracketed text and is kept.
+	const lines = parseRecipeText(
+		'## Ingredients\n- 1 oz [Rum](https://e.test/a)[Fire](https://e.test/b)\n- 1 oz [[Gin](https://e.test/c)]',
+	).ingredients.map((line) => line.text);
+	assert.deepEqual(lines, ['RumFire', '[[Gin](https://e.test/c)]']);
 	for (const split of [
 		"## Ingredients\n- .25oz Don's Spices\n- #2\n- .5oz lime",
 		"## Ingredients\n- .25oz Don's Spices\n#2\n- .5oz lime",
