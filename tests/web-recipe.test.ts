@@ -191,3 +191,19 @@ void test('ingredient tables read as one line per row', () => {
 		{ amount: '2⁄3 fl oz', text: 'Amaro' },
 	]);
 });
+
+void test('HTML smuggled into a page’s recipe stays text in the note', () => {
+	const data = {
+		'@type': 'Recipe',
+		name: 'Tracked <b>Sour</b>',
+		description: 'Bright &lt;img src="https://t.example/p.gif"&gt; and tart.',
+		recipeIngredient: ['2 oz gin &lt;iframe src="https://t.example/"&gt;&lt;/iframe&gt;', '¾ oz lemon juice'],
+		recipeInstructions: ['Shake &lt;script&gt;x&lt;/script&gt; with ice.'],
+	};
+	const { recipe } = read(page(`<script type="application/ld+json">${JSON.stringify(data)}</script>`, ''));
+	assert.equal(recipe.name, 'Tracked Sour');
+	assert.equal(recipe.ingredients[0]!.text, 'gin &lt;iframe src="https://t.example/">&lt;/iframe>');
+	assert.equal(recipe.description, 'Bright &lt;img src="https://t.example/p.gif"> and tart.');
+	assert.equal(recipe.method, 'Shake &lt;script>x&lt;/script> with ice.');
+	assert.equal(recipe.ingredients[1]!.text, 'lemon juice');
+});

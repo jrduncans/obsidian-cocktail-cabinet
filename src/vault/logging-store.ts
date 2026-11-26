@@ -1,4 +1,5 @@
-import { parseYaml, TFile } from 'obsidian';
+import { TFile } from 'obsidian';
+import { readProperties } from './frontmatter';
 import type { App } from 'obsidian';
 import { classifyLoggingLines } from '../core/logging-lines';
 import type { LoggingLines } from '../core/logging-lines';
@@ -89,13 +90,8 @@ export class LoggingStore {
 	}
 
 	/** A note's properties read from the file, never from the metadata cache, which lags behind writes. */
-	async readProperties(path: string, name: string): Promise<Record<string, unknown>> {
-		const content = await this.app.vault.read(this.file(path));
-		const yaml = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
-		const properties: unknown = yaml ? parseYaml(yaml) : {};
-		if (!properties || typeof properties !== 'object' || Array.isArray(properties))
-			throw new Error(`Couldn’t read the properties of ${name}.`);
-		return properties as Record<string, unknown>;
+	async readProperties(path: string, _name: string): Promise<Record<string, unknown>> {
+		return readProperties(await this.app.vault.read(this.file(path)), path);
 	}
 
 	async readSource(note: CabinetNote): Promise<StockSource> {
@@ -105,7 +101,8 @@ export class LoggingStore {
 	async review(recipe: CabinetNote, date?: string): Promise<LoggingReview> {
 		const notes = await this.cabinet.readNotes();
 		const currentRecipe = notes.find((note) => note.path === recipe.path && note.kind === 'recipe');
-		if (!currentRecipe) throw new Error('This note isn’t a cabinet recipe.');
+		if (!currentRecipe)
+			throw this.cabinet.unreadable(recipe.path) ?? new Error('This note isn’t a cabinet recipe.');
 		recipe = currentRecipe;
 		const content = await this.app.vault.read(this.file(recipe.path));
 		const sources = await Promise.all(

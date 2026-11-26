@@ -1,4 +1,5 @@
-import { parseYaml, TFile } from 'obsidian';
+import { TFile } from 'obsidian';
+import { readProperties } from './frontmatter';
 import type { App } from 'obsidian';
 import { PROP } from '../core/schema';
 import type { CabinetNote, Properties } from '../core/schema';
@@ -24,12 +25,8 @@ export class StockStore {
 	}
 
 	async read(note: CabinetNote): Promise<StockState> {
-		const content = await this.app.vault.read(this.file(note));
-		const yaml = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
-		const properties: unknown = yaml ? parseYaml(yaml) : {};
-		if (!properties || typeof properties !== 'object' || Array.isArray(properties))
-			throw new Error(`Couldn’t read the stock for ${note.name}.`);
-		return readStockState(this.kind(note), properties as Record<string, unknown>);
+		const file = this.file(note);
+		return readStockState(this.kind(note), readProperties(await this.app.vault.read(file), file.path));
 	}
 
 	/** Write the plan only if the note still has the stock the form opened with. */

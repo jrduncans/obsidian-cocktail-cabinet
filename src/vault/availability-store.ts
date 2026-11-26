@@ -94,7 +94,7 @@ export class AvailabilityStore {
 	async recipe(path: string, fresh = false): Promise<{ notes: CabinetNote[]; recipe: RecipeEntry }> {
 		const notes = fresh ? await this.cabinet.readNotes() : this.cabinet.notes();
 		const note = notes.find((item) => item.path === path && item.kind === 'recipe');
-		if (!note) throw new Error(`${path} isn’t a cabinet recipe.`);
+		if (!note) throw (fresh && this.cabinet.unreadable(path)) || new Error(`${path} isn’t a cabinet recipe.`);
 		return { notes, recipe: await this.entry(note, await this.context(notes, fresh), fresh) };
 	}
 

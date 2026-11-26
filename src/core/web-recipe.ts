@@ -283,14 +283,14 @@ export function readRecipePage(
 			fromText.name = pageTitle(doc) || fromText.name;
 			if (guessed >= 0) fromText.warnings.splice(guessed, 1);
 		}
-		return { recipe: fromText, original };
+		return { recipe: inert(fromText), original };
 	}
 	const warnings: string[] = [];
 	const garnishes = garnishLines(markdown, structured.ingredients);
 	const method = structured.instructions.length ? numbered(structured.instructions) : text.method;
 	if (!method) warnings.push('The page has no method that could be read. Add it from the page if it has one.');
 	return {
-		recipe: {
+		recipe: inert({
 			name: structured.name || text.name || pageTitle(doc),
 			source,
 			ingredients: [...structured.ingredients, ...garnishes].map((line) => splitIngredient(line)),
@@ -298,8 +298,31 @@ export function readRecipePage(
 			description: structured.description,
 			tastingNotes: '',
 			warnings,
-		},
+		}),
 		original,
+	};
+}
+
+/** An HTML tag's opening `<`, unless already escaped: what Obsidian would render as HTML in a note. */
+const TAG_START = /(?<!\\)<(?=[A-Za-z!/?])/g;
+
+/**
+ * A page's text kept as text in the note: HTML a page smuggles into its recipe (such as a double-escaped
+ * `<img>`) would otherwise render in the note and load something from the web whenever it's viewed. The
+ * name, which becomes a filename, loses tags; other text shows them as written.
+ */
+export function inert(recipe: RecipeImport): RecipeImport {
+	const escape = (text: string) => text.replace(TAG_START, '&lt;');
+	return {
+		...recipe,
+		name: recipe.name
+			.replace(/<[^>]*>/g, '')
+			.replace(/\s+/g, ' ')
+			.trim(),
+		ingredients: recipe.ingredients.map((line) => ({ amount: escape(line.amount), text: escape(line.text) })),
+		method: escape(recipe.method),
+		description: escape(recipe.description),
+		tastingNotes: escape(recipe.tastingNotes),
 	};
 }
 

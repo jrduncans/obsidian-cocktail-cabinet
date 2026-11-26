@@ -18,12 +18,18 @@ function fixture() {
 		const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)!;
 		return { properties: parseYaml(match[1]!) as Record<string, unknown>, body: match[2]! };
 	};
+	// Files read in full, for checking that planning passes over notes the metadata cache rules out.
+	const reads: string[] = [];
 	const app = {
 		vault: {
 			getMarkdownFiles: () => [...contents.keys()].map((path) => new TFile(path)),
 			getAbstractFileByPath: (path: string) =>
 				contents.has(path) ? new TFile(path) : folders.has(path) ? new TFolder() : null,
 			read: (file: TFile) => Promise.resolve(contents.get(file.path)!),
+			cachedRead: (file: TFile) => {
+				reads.push(file.path);
+				return Promise.resolve(contents.get(file.path)!);
+			},
 			process: (file: TFile, transform: (content: string) => string) => {
 				contents.set(file.path, transform(contents.get(file.path)!));
 				return Promise.resolve(contents.get(file.path)!);
@@ -36,6 +42,16 @@ function fixture() {
 			createFolder: (path: string) => {
 				folders.add(path);
 				return Promise.resolve();
+			},
+		},
+		// Like Obsidian's: a note whose YAML doesn't parse has no cached frontmatter.
+		metadataCache: {
+			getFileCache: (file: TFile) => {
+				try {
+					return { frontmatter: split(contents.get(file.path)!).properties };
+				} catch {
+					return {};
+				}
 			},
 		},
 		fileManager: {
@@ -61,7 +77,7 @@ function fixture() {
 		...state,
 	}));
 	const edit = (path: string, change: (content: string) => string) => contents.set(path, change(contents.get(path)!));
-	return { contents, catalog, kept, skipped, state, edit, split };
+	return { contents, catalog, kept, skipped, state, edit, split, reads };
 }
 
 const NAVY = 'Cocktails/Types/Navy Strength Gin.md';
@@ -293,4 +309,35 @@ void test('description and preparation edits leave the rest of the note alone', 
 	assert.equal(withPreparation(note, null), note.replace('### Preparation\n\nStir.\n\n', ''));
 	const bare = '---\ncc-kind: type\n---\n# Syrup\n\nText.\n\n![[Cocktails/Views/Related.base#Stock]]\n';
 	assert.equal(withPreparation(bare, 'Stir.'), bare.replace('Text.\n\n', 'Text.\n\n### Preparation\n\nStir.\n\n'));
+});
+
+void test('planning reads only starter notes and notes the metadata cache has no properties for', async () => {
+	const { contents, catalog, reads } = fixture();
+	const recipe = 'Cocktails/Recipes/House Sour.md';
+	contents.set(recipe, '---\ncc-kind: "recipe"\n---\n# House Sour\n');
+	await catalog.plan();
+	assert.ok(!reads.includes(recipe));
+	assert.ok(reads.includes(NAVY));
+});
+
+void test('a note with unreadable properties is skipped, and new entries wait for review while it is', async () => {
+	const { contents, catalog, state, edit } = fixture();
+	const absinthe = 'Cocktails/Types/Absinthe.md';
+	const all = (await catalog.sync())!.seen;
+	contents.delete(absinthe);
+	Object.assign(state, { seen: all.filter((id) => id !== 'type/Absinthe'), pending: [] });
+	// Broken YAML: it may be Absinthe, renamed, so Absinthe isn't added behind its back.
+	const broken = 'Cocktails/Types/My Absinthe.md';
+	contents.set(broken, '---\n{"cc-kind": "type",\n---\n# My Absinthe\n');
+	const plan = await catalog.plan();
+	assert.deepEqual(plan.fresh, []);
+	assert.deepEqual(
+		plan.additions.map((item) => item.id),
+		['type/Absinthe'],
+	);
+	edit(broken, () => '---\n{"cc-kind": "type"}\n---\n# My Absinthe\n');
+	assert.deepEqual(
+		(await catalog.plan()).fresh.map((item) => item.id),
+		['type/Absinthe'],
+	);
 });

@@ -621,3 +621,45 @@ void test('the guide and Agent Reference are managed notes in Guide, linked from
 	assert.match(agents, /obsidian cocktail-cabinet:makeable/);
 	assert.match(agents, /`Drinks\/Bar\/Views\/`/);
 });
+
+void test('a note with unreadable properties is skipped by fresh reads and named when it is needed', async () => {
+	const { app, contents, store } = fixture();
+	const broken = 'Cocktails/Recipes/Broken.md';
+	contents.set(broken, '---\n{"cc-kind": "recipe",\n---\n# Broken\n');
+	app.vault.getMarkdownFiles = () =>
+		[...contents.keys()]
+			.filter((path) => path.endsWith('.md'))
+			.map((path) => new TFile(path)) as unknown as ReturnType<typeof app.vault.getMarkdownFiles>;
+	Object.assign(app, { metadataCache: { getFileCache: () => undefined, getFirstLinkpathDest: () => null } });
+	const notes = await store.readNotes();
+	assert.ok(notes.length > 100);
+	assert.deepEqual(store.skipped, [broken]);
+	assert.match(
+		store.unreadable(broken)?.message ?? '',
+		/Couldn’t read the properties of Cocktails\/Recipes\/Broken\.md/,
+	);
+	assert.equal(store.unreadable(notes[0]!.path), null);
+	// Setup treats it as a note in the way only if it sits at a starter path; elsewhere preview goes ahead.
+	assert.deepEqual((await store.previewSetup('Cocktails')).conflicts, []);
+});
+
+void test('cabinet changes made while another runs wait their turn instead of failing', async () => {
+	const { store } = fixture();
+	const order: string[] = [];
+	const write = (store as unknown as { write: <T>(op: () => Promise<T>) => Promise<T> }).write.bind(store);
+	let release!: () => void;
+	const gate = new Promise<void>((resolve) => (release = resolve));
+	const first = write(async () => {
+		await gate;
+		order.push('first');
+		throw new Error('first failed');
+	});
+	const second = write(() => {
+		order.push('second');
+		return Promise.resolve('done');
+	});
+	release();
+	await assert.rejects(first, /first failed/);
+	assert.equal(await second, 'done');
+	assert.deepEqual(order, ['first', 'second']);
+});

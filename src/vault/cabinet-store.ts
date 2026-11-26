@@ -1,10 +1,11 @@
-import { App, TFile, TFolder, getAllTags, parseFrontMatterAliases, parseYaml } from 'obsidian';
+import { App, TFile, TFolder, getAllTags, parseFrontMatterAliases } from 'obsidian';
+import { readProperties, readPropertiesOrNone, UnreadableProperties } from './frontmatter';
 import { cabinetFolder, contentFingerprint, KINDS, PROP, wikiLink } from '../core/schema';
 import type { CabinetNote, NoteDraft, NoteKind } from '../core/schema';
 import { localDate, renderNote } from '../core/notes';
 import { withNavigationSections, withSubtypesSection } from '../core/navigation';
 import { cabinetNotePath, cabinetViews, customViewsPath, managedNotes, starterPlan } from '../core/setup';
-import { managedFingerprint, managedState, withoutMarker, yourVersionPath } from '../core/managed';
+import { managedFingerprint, managedMarker, managedState, withoutMarker, yourVersionPath } from '../core/managed';
 import { STARTER_EXAMPLES } from '../catalog/examples';
 import { basePath, RETIRED_BASES } from '../core/bases';
 import { DEFAULT_RESTOCK } from '../core/restock';
@@ -33,7 +34,7 @@ const PARENT_PROPERTIES: Partial<Record<NoteKind, string>> = {
 };
 
 export class CabinetStore {
-	private writing = false;
+	private writes: Promise<unknown> = Promise.resolve();
 
 	constructor(
 		readonly app: App,
@@ -75,13 +76,35 @@ export class CabinetStore {
 		return counts;
 	}
 
-	/** Logging needs current properties even while a recent write invalidates the metadata cache. */
+	/**
+	 * Logging needs current properties even while a recent write invalidates the metadata cache. A note
+	 * whose properties can't be read is left out and listed in `skipped`, so one broken note doesn't stop
+	 * logging; a caller that needs a particular note reports it with `unreadable`.
+	 */
 	async readNotes(): Promise<CabinetNote[]> {
 		const files = this.cabinetFiles();
+		const skipped: string[] = [];
 		const properties = await Promise.all(
-			files.map(async (file) => [file.path, await this.frontmatter(file)] as const),
+			files.map(async (file) => {
+				try {
+					return [file.path, await this.frontmatter(file)] as const;
+				} catch (error) {
+					if (!(error instanceof UnreadableProperties)) throw error;
+					skipped.push(file.path);
+					return [file.path, undefined] as const;
+				}
+			}),
 		);
+		this.skipped = skipped;
 		return this.notesFrom(files, new Map(properties));
+	}
+
+	/** Notes the last `readNotes` left out because their properties couldn't be read. */
+	skipped: readonly string[] = [];
+
+	/** The error for a note `readNotes` skipped, or null when it was read. */
+	unreadable(path: string): UnreadableProperties | null {
+		return this.skipped.includes(path) ? new UnreadableProperties(path) : null;
 	}
 
 	private cabinetFiles(): TFile[] {
@@ -182,7 +205,8 @@ export class CabinetStore {
 		// Read current content rather than relying on a cache immediately after a write or rename.
 		const markdownFiles = allFiles.filter((file) => file.extension === 'md' && file.path.startsWith(`${root}/`));
 		for (const file of markdownFiles) {
-			const properties = await this.frontmatter(file);
+			// A note with unreadable properties has no catalog ID here; at a planned path it's a conflict below.
+			const properties = await this.frontmatterOrNone(file);
 			const id = properties[PROP.catalogId];
 			if (typeof id !== 'string') continue;
 			if (catalogPaths.has(id)) result.conflicts.push(file.path);
@@ -222,7 +246,7 @@ export class CabinetStore {
 				continue;
 			}
 			if (existing instanceof TFile && existing.extension === 'md' && existing.path === planned.path) {
-				const properties = await this.frontmatter(existing);
+				const properties = await this.frontmatterOrNone(existing);
 				// Someone may have added their own Salt before the starter offered one; it stays theirs.
 				if (
 					properties[PROP.kind] === planned.kind &&
@@ -321,7 +345,7 @@ export class CabinetStore {
 		for (const file of this.app.vault.getFiles()) {
 			if (file.extension !== 'md' || !file.path.startsWith(`${root}/`)) continue;
 			const properties: Record<string, unknown> =
-				this.app.metadataCache.getFileCache(file)?.frontmatter ?? (await this.frontmatter(file));
+				this.app.metadataCache.getFileCache(file)?.frontmatter ?? (await this.frontmatterOrNone(file));
 			const id = properties[PROP.catalogId];
 			if (typeof id === 'string' && ids.has(id) && !examples.has(id)) examples.set(id, file.path);
 		}
@@ -367,6 +391,38 @@ export class CabinetStore {
 				} else if (state === 'changed') result.review.push(planned.path);
 			}
 			return { ...result, written: next };
+		});
+	}
+
+	/**
+	 * Right after the cabinet folder moved from `oldRoot`: the managed notes nobody had edited. The reads
+	 * start together, before Obsidian begins rewriting links in its own link format, which would otherwise
+	 * make them look edited.
+	 */
+	async untouchedManaged(oldRoot: string): Promise<string[]> {
+		const planned = await this.plannedManaged();
+		const contents = await Promise.all(planned.map((note) => this.contentAt(note.path).catch(() => null)));
+		return planned.flatMap((note, index) => {
+			const current = contents[index];
+			const marker = current == null ? null : managedMarker(current);
+			return current != null && marker !== null && marker === managedFingerprint(current, oldRoot)
+				? [note.path]
+				: [];
+		});
+	}
+
+	/** Write the plugin's current version of these managed notes, such as ones only a folder move changed. */
+	async rewriteManaged(paths: readonly string[]): Promise<string[]> {
+		return this.write(async () => {
+			const written: string[] = [];
+			for (const planned of await this.plannedManaged()) {
+				if (!paths.includes(planned.path)) continue;
+				const file = this.app.vault.getAbstractFileByPath(planned.path);
+				if (!(file instanceof TFile)) continue;
+				await this.app.vault.process(file, () => planned.content);
+				written.push(planned.path);
+			}
+			return written;
 		});
 	}
 
@@ -551,14 +607,17 @@ export class CabinetStore {
 		await this.app.workspace.getLeaf(false).openFile(file);
 	}
 
-	/** A note's properties read from the file, not the metadata cache, which lags behind writes. */
+	/**
+	 * A note's properties read from the file, not the metadata cache, which lags behind writes. Throws
+	 * `UnreadableProperties`, naming the note, when its YAML can't be read.
+	 */
 	async frontmatter(file: TFile): Promise<Record<string, unknown>> {
-		const content = await this.app.vault.read(file);
-		const source = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
-		if (!source) return {};
-		const parsed: unknown = parseYaml(source);
-		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-		return parsed as Record<string, unknown>;
+		return readProperties(await this.app.vault.read(file), file.path);
+	}
+
+	/** A note's properties, or none when they can't be read. */
+	private async frontmatterOrNone(file: TFile): Promise<Record<string, unknown>> {
+		return readPropertiesOrNone(await this.app.vault.read(file), file.path);
 	}
 
 	async ensureFolder(path: string): Promise<void> {
@@ -571,14 +630,17 @@ export class CabinetStore {
 		}
 	}
 
-	private async write<T>(operation: () => Promise<T>): Promise<T> {
-		if (this.writing) throw new Error('Another cabinet change is still running. Try again when it finishes.');
-		this.writing = true;
-		try {
-			return await operation();
-		} finally {
-			this.writing = false;
-		}
+	/**
+	 * Run cabinet changes one at a time, in order: a command used while startup is still updating views
+	 * waits for that to finish instead of failing. Operations must not call `write` themselves.
+	 */
+	private write<T>(operation: () => Promise<T>): Promise<T> {
+		const run = this.writes.then(operation);
+		this.writes = run.then(
+			() => undefined,
+			() => undefined,
+		);
+		return run;
 	}
 }
 

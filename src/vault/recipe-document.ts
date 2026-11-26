@@ -6,7 +6,12 @@ import type { NoteDraft } from '../core/schema';
 export function readRecipeDocument(content: string): { body: string; metadata: Record<string, unknown> } {
 	const frontmatter = content.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
 	if (!frontmatter) return { body: content, metadata: {} };
-	const parsed: unknown = parseYaml(frontmatter[1]!);
+	let parsed: unknown;
+	try {
+		parsed = parseYaml(frontmatter[1]!);
+	} catch {
+		throw new Error('This note’s properties (YAML) can’t be read. Fix them in source mode, then try again.');
+	}
 	if (parsed !== null && parsed !== undefined && (typeof parsed !== 'object' || Array.isArray(parsed))) {
 		throw new Error('Recipe frontmatter must contain named properties.');
 	}

@@ -1,4 +1,5 @@
-import { App, TFile, parseYaml } from 'obsidian';
+import { App, TFile } from 'obsidian';
+import { readProperties, readPropertiesOrNone, UnreadableProperties } from './frontmatter';
 import { STARTER_CATALOG, catalogDraft } from '../catalog/catalog';
 import type { CatalogEntry } from '../catalog/catalog';
 import HISTORY from '../catalog/history.json';
@@ -111,24 +112,47 @@ export class CatalogSync {
 		private state: () => CatalogState,
 	) {}
 
+	/** Starter notes by catalog ID, read from their files. */
 	private async notes() {
+		return (await this.scan(false)).found;
+	}
+
+	/**
+	 * Starter notes by catalog ID, and the cabinet notes whose properties can't be read (any of which may be
+	 * a starter note). `fast`, for planning, trusts the metadata cache to pass over notes without a catalog
+	 * ID, so startup doesn't read every recipe and bottle; writes read every note.
+	 */
+	private async scan(fast: boolean) {
 		const root = this.cabinet.root;
 		const found = new Map<string, { file: TFile; properties: Properties; content: string }>();
+		const unreadable: string[] = [];
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (!file.path.startsWith(`${root}/`)) continue;
-			const content = await this.app.vault.read(file);
-			const properties = frontmatter(content);
+			if (fast) {
+				const cached: unknown = this.app.metadataCache.getFileCache(file)?.frontmatter?.[PROP.catalogId];
+				// No cached properties may mean a note not yet indexed, or broken YAML: those are read.
+				if (cached === undefined && this.app.metadataCache.getFileCache(file)?.frontmatter) continue;
+			}
+			const content = fast ? await this.app.vault.cachedRead(file) : await this.app.vault.read(file);
+			let properties: Properties;
+			try {
+				properties = readProperties(content, file.path) as Properties;
+			} catch (error) {
+				if (!(error instanceof UnreadableProperties)) throw error;
+				unreadable.push(file.path);
+				continue;
+			}
 			const id = properties[PROP.catalogId];
 			if (typeof id === 'string' && !found.has(id)) found.set(id, { file, properties, content });
 		}
-		return found;
+		return { found, unreadable };
 	}
 
 	async plan(): Promise<CatalogPlan> {
 		const plan: CatalogPlan = { silent: [], review: [], fresh: [], additions: [] };
 		if (!(await this.cabinet.isSetUp())) return plan;
 		const root = this.cabinet.root;
-		const notes = await this.notes();
+		const { found: notes, unreadable } = await this.scan(true);
 		const state = this.state();
 		const kept = state.kept;
 		const skipped = new Set(state.skipped);
@@ -147,7 +171,7 @@ export class CatalogSync {
 				const there = this.app.vault.getAbstractFileByPath(addition.path);
 				if (there) {
 					const content = there instanceof TFile ? await this.app.vault.read(there) : '';
-					const properties = frontmatter(content);
+					const properties = readPropertiesOrNone(content, addition.path) as Properties;
 					const kind = properties[PROP.kind];
 					const mine = kind === entry.kind ? noteFields(entry.kind, properties, content) : null;
 					const next = entryFields(entry);
@@ -157,7 +181,9 @@ export class CatalogSync {
 					};
 				}
 				if (!seen || pending.has(entry.id)) plan.additions.push(addition);
-				else if (!seen.has(entry.id)) (addition.existing ? plan.additions : plan.fresh).push(addition);
+				// A note with unreadable properties may be this entry, renamed, so new entries wait for review.
+				else if (!seen.has(entry.id))
+					(addition.existing || unreadable.length ? plan.additions : plan.fresh).push(addition);
 				continue;
 			}
 			if (note.properties[PROP.kind] !== entry.kind) continue;
@@ -341,9 +367,7 @@ export class CatalogSync {
 const paths = (notes: ReadonlyMap<string, { file: TFile }>) =>
 	new Map([...notes].map(([id, note]) => [id, note.file.path]));
 
+/** Properties for comparing and planning; unreadable ones read as none, which matches nothing. */
 function frontmatter(content: string): Properties {
-	const source = content.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
-	if (!source) return {};
-	const parsed: unknown = parseYaml(source);
-	return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Properties) : {};
+	return readPropertiesOrNone(content, '') as Properties;
 }
