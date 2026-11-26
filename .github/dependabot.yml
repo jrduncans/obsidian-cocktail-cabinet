@@ -18,6 +18,14 @@ updates:
           - dependency-name: '@types/node'
             update-types:
                 - version-update:semver-major
+          # eslint-plugin-obsidianmd 0.6.0 pulls in plugins that only support
+          # ESLint 9. Remove these once it supports ESLint 10.
+          - dependency-name: eslint
+            update-types:
+                - version-update:semver-major
+          - dependency-name: '@eslint/js'
+            update-types:
+                - version-update:semver-major
       groups:
           # eslint and @eslint/js majors only install together.
           eslint:
