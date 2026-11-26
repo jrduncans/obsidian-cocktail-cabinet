@@ -2688,5 +2688,15 @@
 		"abvTypical": [
 			0
 		]
+	},
+	"ingredient/Basil": {
+		"description": [
+			"Fresh basil leaves or sprigs, as in the Gin Basil Smash."
+		]
+	},
+	"ingredient/Orange Marmalade": {
+		"description": [
+			"Bitter orange marmalade, as in the Breakfast Martini."
+		]
 	}
 }

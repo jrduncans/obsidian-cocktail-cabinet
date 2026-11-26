@@ -601,6 +601,8 @@ staples([
 		['Saline'],
 	],
 	['Mint', 'Fresh mint leaves or sprigs for flavor and garnish.', ['Mint Leaves']],
+	['Basil', 'Fresh basil leaves or sprigs, as in the Gin Basil Smash.', ['Basil Leaves']],
+	['Orange Marmalade', 'Bitter orange marmalade, as in the Breakfast Martini.'],
 	['Water', 'Still water, for recipes that call for it.'],
 	['Heavy Cream', 'High-fat dairy cream for recipes that specify cream.', ['Cream']],
 	['Milk', 'Dairy milk for recipes calling for milk. Add a separate staple where a substitution changes the recipe.'],

@@ -194,6 +194,7 @@ Kitchen staples are the ingredient themselves and provide no type; recipes link 
 
 | Name | Form | Provides |
 | --- | --- | --- |
+| Basil | Kitchen staple | — |
 | Cinnamon Sticks | Kitchen staple | — |
 | Eggs | Fresh ingredient | Egg White, Whole Egg |
 | Espresso | Kitchen staple | — |
@@ -201,6 +202,7 @@ Kitchen staples are the ingredient themselves and provide no type; recipes link 
 | Hot Sauce | Kitchen staple | — |
 | Milk | Kitchen staple | — |
 | Mint | Kitchen staple | — |
+| Orange Marmalade | Kitchen staple | — |
 | Saline Solution | Kitchen staple | — |
 | Salt | Kitchen staple | — |
 | Sugar | Kitchen staple | — |
