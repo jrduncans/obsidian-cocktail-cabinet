@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-cocktail-cabinet",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Cocktail recipes and bottle inventory tools for your vault.",
 	"main": "main.js",
 	"type": "module",
