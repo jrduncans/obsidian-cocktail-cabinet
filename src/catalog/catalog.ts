@@ -598,7 +598,7 @@ subtypes('Simple Syrup (2:1)', [
 // Ratio names are unambiguous; the everyday names are aliases so pickers find them too.
 const sugar = [
 	['Simple Syrup (1:1)', '1:1', 'white sugar', ['Simple Syrup']],
-	['Simple Syrup (2:1)', '2:1', 'white sugar', ['Rich Simple Syrup']],
+	['Simple Syrup (2:1)', '2:1', 'white sugar', ['Rich Simple Syrup', 'Rock Candy Syrup']],
 	['Demerara Syrup (2:1)', '2:1', 'demerara sugar', ['Demerara Syrup', 'Rich Demerara Syrup']],
 	['Cane Syrup (2:1)', '2:1', 'cane sugar', ['Cane Syrup', 'Rich Cane Syrup']],
 ] as const;
