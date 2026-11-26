@@ -315,14 +315,16 @@ const TAG_START = /(^|[^\\])<(?=[A-Za-z!/?])/g;
 /**
  * A page's text kept as text in the note: HTML a page smuggles into its recipe (such as a double-escaped
  * `<img>`) would otherwise render in the note and load something from the web whenever it's viewed. The
- * name, which becomes a filename, loses tags; other text shows them as written.
+ * name, which becomes a filename, loses tags and any stray `<`; other text shows them as written.
  */
 export function inert(recipe: RecipeImport): RecipeImport {
 	const escape = (text: string) => text.replace(TAG_START, '$1&lt;');
 	return {
 		...recipe,
+		// Whole tags go, then any "<" an unclosed tag leaves behind.
 		name: recipe.name
 			.replace(/<[^>]*>/g, '')
+			.replace(/</g, '')
 			.replace(/\s+/g, ' ')
 			.trim(),
 		ingredients: recipe.ingredients.map((line) => ({ amount: escape(line.amount), text: escape(line.text) })),
