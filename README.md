@@ -14,6 +14,18 @@ Keep your cocktail recipes and home bar in Obsidian: what you have, what you can
 - **Shopping list and alcohol estimates.** Flag anything for the shopping list. Each recipe gets an estimate of its alcohol and ABV, so you can find lower-alcohol drinks.
 - **Agent-friendly.** An **Agent Reference** note and `obsidian` command-line handlers let AI agents check availability and add recipes.
 
+## Screenshots
+
+![What can I make? lists recipes by how close you are to making them, with a recipe note open beside it](docs/screenshots/desktop-1-split.png)
+
+![Log this cocktail picks a bottle for each line and previews what each one loses](docs/screenshots/desktop-2-log.png)
+
+![What should I buy? ranks missing ingredients by how many recipes each would unlock](docs/screenshots/desktop-3-buy.png)
+
+![The In stock view, a core Base listing every bottle and other stock with its amount](docs/screenshots/desktop-4-instock.png)
+
+![An ingredient type note lists its subtypes, the bottles you have of it, and the recipes that call for it](docs/screenshots/desktop-5-type.png)
+
 ## Install
 
 Cocktail Cabinet needs Obsidian 1.12.2 or later, on desktop or mobile, with the core **Bases** plugin enabled (**Settings → Core plugins**).
