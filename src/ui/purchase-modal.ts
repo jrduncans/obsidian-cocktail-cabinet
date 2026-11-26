@@ -307,7 +307,9 @@ export class PurchaseModal extends CabinetForm {
 			try {
 				return { row, before: row.before, updates: planPurchase(row.before, row.entry) };
 			} catch (error) {
-				throw new Error(`${name}: ${error instanceof Error ? error.message : 'check the amounts.'}`);
+				throw new Error(`${name}: ${error instanceof Error ? error.message : 'check the amounts.'}`, {
+					cause: error,
+				});
 			}
 		});
 		const date = localDate();
