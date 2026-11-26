@@ -2655,5 +2655,38 @@
 		"abvTypical": [
 			0
 		]
+	},
+	"type/Passion Fruit Liqueur": {
+		"description": [
+			"Sweet passion fruit liqueur, such as Passoã, as in the Porn Star Martini. Distinct from Passion Fruit Syrup and Passion Fruit Purée."
+		],
+		"parent": [
+			"Fruit Liqueur"
+		],
+		"abvTypical": [
+			0.2
+		]
+	},
+	"type/Creme de Noyaux": {
+		"description": [
+			"Sweet liqueur from apricot and cherry pits, marzipan-like and traditionally pink, such as Tempus Fugit, as in the Pink Squirrel. Sweeter and more bitter-almond than Amaretto, though both can be made from apricot kernels."
+		],
+		"parent": [
+			"Nut Liqueur"
+		],
+		"abvTypical": [
+			0.3
+		]
+	},
+	"type/Blood Orange Juice": {
+		"description": [
+			"Juice of blood oranges, red and berry-tart, in season through winter. Its sources also fill recipes calling for Orange Juice; regular orange juice is offered as a substitute for it."
+		],
+		"parent": [
+			"Subtype of Orange Juice"
+		],
+		"abvTypical": [
+			0
+		]
 	}
 }

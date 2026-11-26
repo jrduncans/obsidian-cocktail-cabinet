@@ -261,6 +261,11 @@ family('Fruit Liqueur', 'Liqueur', 'Fruit-flavored liqueurs.', [
 		{ aliases: ['Crème de Banane'] },
 	],
 	['Pineapple Liqueur', 'Sweet pineapple liqueur, distinct from pineapple-flavored rum.'],
+	[
+		'Passion Fruit Liqueur',
+		'Sweet passion fruit liqueur, such as Passoã, as in the Porn Star Martini. Distinct from Passion Fruit Syrup and Passion Fruit Purée.',
+		{ aliases: ['Passionfruit Liqueur'] },
+	],
 	['Melon Liqueur', 'Sweet melon liqueur, such as Midori.'],
 	['Bergamot Liqueur', 'Bergamot-orange liqueur, such as Italicus; more floral and bitter than Orange Liqueur.'],
 ]);
@@ -345,7 +350,14 @@ family(
 	'Nut Liqueur',
 	'Liqueur',
 	'Liqueurs that taste nutty, such as amaretto, crème de noyaux, Frangelico (hazelnut), and nocino (walnut). Go by taste: amaretto and crème de noyaux taste of almond even when made from apricot pits.',
-	[['Amaretto', 'Sweet almond-flavored liqueur in the amaretto style.']],
+	[
+		['Amaretto', 'Sweet almond-flavored liqueur in the amaretto style.'],
+		[
+			'Crème de Noyaux',
+			'Sweet liqueur from apricot and cherry pits, marzipan-like and traditionally pink, such as Tempus Fugit, as in the Pink Squirrel. Sweeter and more bitter-almond than Amaretto, though both can be made from apricot kernels.',
+			{ aliases: ['Crème de Noyau'] },
+		],
+	],
 );
 family(
 	'Cream Liqueur',
@@ -686,6 +698,12 @@ subtypes('Soda Water', [
 		'Soda water with added minerals, such as sodium bicarbonate, for a slightly salty taste. Its bottles also fill recipes calling for Soda Water; plain soda water is offered as a substitute for it.',
 	],
 ]);
+subtypes('Orange Juice', [
+	[
+		'Blood Orange Juice',
+		'Juice of blood oranges, red and berry-tart, in season through winter. Its sources also fill recipes calling for Orange Juice; regular orange juice is offered as a substitute for it.',
+	],
+]);
 subtypes('Aged Jamaican Rum', [
 	[
 		'Aged Overproof Jamaican Rum',
@@ -741,6 +759,7 @@ const NON_ALCOHOLIC_TYPES = [
 	'Grapefruit Peel',
 	'Cocktail Cherry',
 	'Club Soda',
+	'Blood Orange Juice',
 	'Cane Syrup (2:1)',
 ];
 for (const entry of entries) {
@@ -828,6 +847,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	Fernet: 39,
 	'Artichoke Amaro': 16.5,
 	Amaretto: 28,
+	'Crème de Noyaux': 30,
 	'Coffee Liqueur': 20,
 	'Crème de Cacao': 27,
 	'Irish Cream': 17,
@@ -858,6 +878,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	Armagnac: 40,
 	'Banana Liqueur': 25,
 	'Pineapple Liqueur': 20,
+	'Passion Fruit Liqueur': 20,
 	'Melon Liqueur': 20,
 	'Bergamot Liqueur': 20,
 	'Vanilla Liqueur': 20,

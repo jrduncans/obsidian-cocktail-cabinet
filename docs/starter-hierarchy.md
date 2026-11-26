@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-164 ingredient types, 29 families, 6 categories, and 3 reference bottles.
+167 ingredient types, 29 families, 6 categories, and 3 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -42,6 +42,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Blanco Tequila | Agave Spirit | Spirit |
 | Blended Overproof Rum | Rum | Spirit |
 | Blended Scotch | Whiskey | Spirit |
+| Blood Orange Juice (subtype of Orange Juice) | Citrus Juice | Juice |
 | Blue Curaçao (subtype of Orange Liqueur) | Fruit Liqueur | Liqueur |
 | Bonded Apple Brandy (subtype of Apple Brandy) | Brandy Family | Spirit |
 | Bonded Bourbon (subtype of Bourbon) | Whiskey | Spirit |
@@ -70,6 +71,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Crème de Cacao | Other Liqueur | Liqueur |
 | Crème de Cassis | Fruit Liqueur | Liqueur |
 | Crème de Menthe | Herbal & Spice Liqueur | Liqueur |
+| Crème de Noyaux | Nut Liqueur | Liqueur |
 | Crème de Violette | Floral Liqueur | Liqueur |
 | Creole Bitters | Bitters | — |
 | Curaçao (subtype of Orange Liqueur) | Fruit Liqueur | Liqueur |
@@ -127,6 +129,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Orange Peel | — | — |
 | Orgeat | Flavored Syrup | Syrup |
 | Passion Fruit Juice | Other Fruit Juice | Juice |
+| Passion Fruit Liqueur | Fruit Liqueur | Liqueur |
 | Passion Fruit Purée | Other Fruit Juice | Juice |
 | Passion Fruit Syrup | Flavored Syrup | Syrup |
 | Pastis | Anise Spirit | Spirit |
