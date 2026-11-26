@@ -660,6 +660,7 @@ subtypes('Aged Jamaican Rum', [
 	[
 		'Aged Overproof Jamaican Rum',
 		'High-strength, lightly aged Jamaican rum, such as Smith & Cross. Its bottles also fill recipes calling for Aged Jamaican Rum.',
+		{ aliases: ['Navy Strength Jamaican Rum'] },
 	],
 ]);
 subtypes('London Dry Gin', [
