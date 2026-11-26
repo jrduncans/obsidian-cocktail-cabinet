@@ -42,13 +42,24 @@ function words(text: string): Word[] {
 function nameSpan(wording: string, names: readonly string[]): { start: number; end: number } | null {
 	const said = words(wording);
 	const candidates = names
-		.map((name) => words(name).map((word) => word.key))
-		.filter((keys) => keys.length)
-		.sort((a, b) => b.length - a.length);
-	for (const keys of candidates) {
+		.map((name) => {
+			const nameWords = words(name);
+			// Punctuation the name opens or closes with, such as the ")" of "Simple Syrup (2:1)".
+			const lead = nameWords.length ? name.slice(0, nameWords[0]!.start).trimStart() : '';
+			const trail = nameWords.length ? name.slice(nameWords.at(-1)!.end).trimEnd() : '';
+			return { keys: nameWords.map((word) => word.key), lead, trail };
+		})
+		.filter(({ keys }) => keys.length)
+		.sort((a, b) => b.keys.length - a.keys.length);
+	for (const { keys, lead, trail } of candidates) {
 		for (let index = 0; index + keys.length <= said.length; index++) {
-			if (keys.every((key, offset) => said[index + offset]!.key === key))
-				return { start: said[index]!.start, end: said[index + keys.length - 1]!.end };
+			if (!keys.every((key, offset) => said[index + offset]!.key === key)) continue;
+			let start = said[index]!.start;
+			let end = said[index + keys.length - 1]!.end;
+			// Take the name's own punctuation into the span when the wording repeats it there.
+			if (lead && wording.slice(0, start).endsWith(lead)) start -= lead.length;
+			if (trail && wording.slice(end).startsWith(trail)) end += trail.length;
+			return { start, end };
 		}
 	}
 	return null;

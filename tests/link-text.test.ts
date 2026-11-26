@@ -130,3 +130,28 @@ void test('text linked whole starts on the cabinet name only when all of it is t
 	assert.equal(wholeLinkSource('fresh lime juice', lime, 'alias'), 'original');
 	assert.equal(wholeLinkSource('lime juice', lime, 'keep'), 'original');
 });
+
+void test('a name ending in punctuation takes that punctuation into the link, not after it', () => {
+	const rich = note('Simple Syrup (2:1)', ['Rich Simple Syrup']);
+	assert.deepEqual(cabinetNameLink('Simple Syrup (2:1)', rich), {
+		before: '',
+		text: 'Simple Syrup (2:1)',
+		after: '',
+	});
+	assert.deepEqual(cabinetNameLink('rich Simple Syrup (2:1), chilled', rich), {
+		before: 'rich ',
+		text: 'Simple Syrup (2:1)',
+		after: ', chilled',
+	});
+	assert.deepEqual(cabinetNameLink('(Simple Syrup 2:1)', note('(Simple Syrup 2:1)')), {
+		before: '',
+		text: '(Simple Syrup 2:1)',
+		after: '',
+	});
+	// Punctuation the wording doesn't repeat stays out of the span.
+	assert.deepEqual(cabinetNameLink('Simple Syrup 2:1 chilled', rich), {
+		before: '',
+		text: 'Simple Syrup (2:1)',
+		after: ' chilled',
+	});
+});
