@@ -45,6 +45,8 @@ export default defineConfig(
 			],
 			// Not in the recommended set, but the community directory's review checks it.
 			'obsidianmd/prefer-create-el': 'error',
+			// In ESLint 10's recommended set; on early so the upgrade only bumps versions.
+			'preserve-caught-error': 'error',
 		},
 	},
 	{

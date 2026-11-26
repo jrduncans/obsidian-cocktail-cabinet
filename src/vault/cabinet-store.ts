@@ -584,6 +584,7 @@ export class CabinetStore {
 					const reason = error instanceof Error ? error.message : 'The move failed.';
 					throw new Error(
 						`Could not move the recipe: ${reason} ${restored ? 'The original note content was restored.' : `The enhanced note remains at ${file.path}; inspect it before retrying.`}`,
+						{ cause: error },
 					);
 				}
 			}

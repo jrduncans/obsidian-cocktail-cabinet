@@ -66,6 +66,7 @@ export class LogUndoStore {
 				const reason = (error instanceof Error ? error.message : 'write failed').replace(/\.$/, '');
 				throw new Error(
 					`Couldn’t put back ${restore.name} (${reason}). Already put back: ${restored.join(', ') || 'none'}. Undo last log again to finish.`,
+					{ cause: error },
 				);
 			}
 		}
