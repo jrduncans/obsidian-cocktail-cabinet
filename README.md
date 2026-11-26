@@ -2,7 +2,7 @@
 
 Keep your cocktail recipes and home bar in Obsidian: what you have, what you can make with it, and what to buy next. Everything is ordinary Markdown notes and core Bases, so your collection stays readable and editable without the plugin.
 
-> **Beta.** The plugin is in daily use, but note properties may still change between releases, and it has had less testing on phones than on desktop. Feedback and bug reports are very welcome in [Issues](https://github.com/jrduncans/obsidian-cocktail-cabinet/issues).
+> **Beta.** The plugin is in daily use, but note properties may still change between releases, and it has had less testing on phones than on desktop. Bug reports are very welcome in [Issues](https://github.com/jrduncans/obsidian-cocktail-cabinet/issues), and questions and ideas in [Discussions](https://github.com/jrduncans/obsidian-cocktail-cabinet/discussions); see [contributing](CONTRIBUTING.md).
 
 ## What it does
 
@@ -56,7 +56,7 @@ Most commands also appear in a note's file menu (right-click, or **More options*
 
 ## Storage and privacy
 
-All runtime operations stay in your vault, with one exception: when you give **Add recipe** a web address and select **Read recipe**, **Read page**, or **Read recipe page…**, the plugin fetches that one page to read its recipe. It sends nothing but that request, fetches nothing else (no images, linked pages, or searches), and never fetches on its own. It collects no telemetry. External reference links on ingredient pages open only when selected.
+All runtime operations stay in your vault, with one exception: when you give **Add recipe** a web address and select **Read recipe**, **Read page**, or **Read recipe page…**, the plugin fetches that one page to read its recipe. It sends nothing but that request, fetches nothing else (no images, linked pages, or searches), and never fetches on its own. It collects no telemetry. The plugin lists file names across the vault, to find cabinet notes, catch name clashes, and find your daily note; it reads notes' contents only in the cabinet folder, your daily notes, a note you run one of its commands on, and, when you rename a cabinet note, the notes that link to it. External reference links on ingredient pages open only when selected.
 
 ## Development
 
