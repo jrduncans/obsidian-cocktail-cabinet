@@ -2,7 +2,7 @@
 
 Keep your cocktail recipes and home bar in Obsidian: what you have, what you can make with it, and what to buy next. Everything is ordinary Markdown notes and core Bases, so your collection stays readable and editable without the plugin.
 
-> **Beta.** The plugin is in daily use, but note properties may still change between releases, and it has had little testing on phones. Feedback and bug reports are very welcome in [Issues](https://github.com/jrduncans/obsidian-cocktail-cabinet/issues).
+> **Beta.** The plugin is in daily use, but note properties may still change between releases, and it has had less testing on phones than on desktop. Feedback and bug reports are very welcome in [Issues](https://github.com/jrduncans/obsidian-cocktail-cabinet/issues).
 
 ## What it does
 
@@ -52,7 +52,7 @@ Most commands also appear in a note's file menu (right-click, or **More options*
 - Recipe pages are read from their recipe data or visible text. Pages behind a sign-in or built by scripts can't be read; paste the text instead.
 - Batches and measured juice yields are not modeled.
 - After you move or rename the cabinet folder, restart Obsidian once its link updating has finished (a minute or two). The plugin holds off changing notes until then. See [moving the cabinet](docs/features.md#setup).
-- Testing has been on desktop. Everything is available on mobile, but logging hasn't been tried on a real phone.
+- Testing has mostly been on desktop. Everything is available on mobile; logging and moving the cabinet folder have been tried on a phone, other workflows less so.
 
 ## Storage and privacy
 
