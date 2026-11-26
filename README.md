@@ -51,6 +51,7 @@ Most commands also appear in a note's file menu (right-click, or **More options*
 - There is no importer for an existing cocktail collection in another format; set up a fresh cabinet folder and add recipes with **Add recipe** or **Convert note to recipe**.
 - Recipe pages are read from their recipe data or visible text. Pages behind a sign-in or built by scripts can't be read; paste the text instead.
 - Batches and measured juice yields are not modeled.
+- After you move or rename the cabinet folder, restart Obsidian once its link updating has finished (a minute or two). The plugin holds off changing notes until then. See [moving the cabinet](docs/features.md#setup).
 - Testing has been on desktop. Everything is available on mobile, but logging hasn't been tried on a real phone.
 
 ## Storage and privacy

@@ -6,6 +6,7 @@ import { localDate, renderNote } from '../core/notes';
 import { withNavigationSections, withSubtypesSection } from '../core/navigation';
 import { cabinetNotePath, cabinetViews, customViewsPath, managedNotes, starterPlan } from '../core/setup';
 import { managedFingerprint, managedMarker, managedState, withoutMarker, yourVersionPath } from '../core/managed';
+import { frontmatterOf, fullPathLinks, fullPathPropertyLinks } from '../core/rename';
 import { STARTER_EXAMPLES } from '../catalog/examples';
 import { basePath, RETIRED_BASES } from '../core/bases';
 import { DEFAULT_RESTOCK } from '../core/restock';
@@ -395,34 +396,69 @@ export class CabinetStore {
 	}
 
 	/**
-	 * Right after the cabinet folder moved from `oldRoot`: the managed notes nobody had edited. The reads
-	 * start together, before Obsidian begins rewriting links in its own link format, which would otherwise
-	 * make them look edited.
+	 * After cabinet notes moved from `oldRoot` (the same folder when notes moved within it): managed notes
+	 * nobody edited get the plugin's current version, since the move changed their links and the folder they
+	 * name. Run after `restoreFullPaths`, which puts their links back. Returns the notes rewritten.
 	 */
-	async untouchedManaged(oldRoot: string): Promise<string[]> {
-		const planned = await this.plannedManaged();
-		const contents = await Promise.all(planned.map((note) => this.contentAt(note.path).catch(() => null)));
-		return planned.flatMap((note, index) => {
-			const current = contents[index];
-			const marker = current == null ? null : managedMarker(current);
-			return current != null && marker !== null && marker === managedFingerprint(current, oldRoot)
-				? [note.path]
-				: [];
-		});
-	}
-
-	/** Write the plugin's current version of these managed notes, such as ones only a folder move changed. */
-	async rewriteManaged(paths: readonly string[]): Promise<string[]> {
+	async relinkManaged(oldRoot: string): Promise<string[]> {
 		return this.write(async () => {
+			const root = this.root;
 			const written: string[] = [];
 			for (const planned of await this.plannedManaged()) {
-				if (!paths.includes(planned.path)) continue;
-				const file = this.app.vault.getAbstractFileByPath(planned.path);
-				if (!(file instanceof TFile)) continue;
-				await this.app.vault.process(file, () => planned.content);
+				const current = await this.contentAt(planned.path);
+				const marker = current === null ? null : managedMarker(current);
+				if (current === null || marker === null || current === planned.content) continue;
+				// Every mention of either folder reads as the current one; the longer name first, in case one holds the other.
+				const moved = [oldRoot, root]
+					.sort((left, right) => right.length - left.length)
+					.reduce((text, folder) => text.split(folder).join('\u0000'), current)
+					.split('\u0000')
+					.join(root);
+				if (marker !== managedFingerprint(moved, root)) continue;
+				await this.replace(planned.path, planned.content, current);
 				written.push(planned.path);
 			}
 			return written;
+		});
+	}
+
+	/**
+	 * Give links in cabinet notes that point at other cabinet notes their full paths back, as the cabinet
+	 * writes them, after Obsidian rewrote them in its own link format for a move. Only safe once Obsidian has
+	 * finished rewriting, such as at the next start. Returns how many notes changed and which couldn't be.
+	 */
+	async restoreFullPaths(): Promise<{ updated: number; failed: string[] }> {
+		return this.write(async () => {
+			const root = this.root;
+			const failed: string[] = [];
+			let updated = 0;
+			for (const file of this.cabinetFiles()) {
+				const resolve = (target: string) => {
+					const found = this.app.metadataCache.getFirstLinkpathDest(target, file.path);
+					if (!found?.path.startsWith(`${root}/`)) return null;
+					return found.extension === 'md' ? found.path.slice(0, -3) : found.path;
+				};
+				try {
+					const content = await this.app.vault.read(file);
+					const head = frontmatterOf(content);
+					const properties = fullPathPropertyLinks({ ...readProperties(content, file.path) }, resolve);
+					const links = fullPathLinks(content.slice(head.length), resolve) !== content.slice(head.length);
+					if (!properties && !links) continue;
+					if (properties)
+						await this.app.fileManager.processFrontMatter(file, (values: Record<string, unknown>) => {
+							fullPathPropertyLinks(values, resolve);
+						});
+					if (links)
+						await this.app.vault.process(file, (current) => {
+							const start = frontmatterOf(current);
+							return start + fullPathLinks(current.slice(start.length), resolve);
+						});
+					updated++;
+				} catch {
+					failed.push(file.path);
+				}
+			}
+			return { updated, failed };
 		});
 	}
 

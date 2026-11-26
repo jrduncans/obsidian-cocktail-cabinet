@@ -115,6 +115,66 @@ export function renamePropertyLinks(properties: Record<string, unknown>, rename:
 	return changed;
 }
 
+/**
+ * Rewrites each wiki link whose target `resolve` finds to that full path (a vault path, without `.md` for
+ * notes), keeping its heading and display text: what the cabinet writes, after Obsidian shortened its links
+ * for a moved folder. A link without display text gets its target as written, so it reads as before.
+ */
+export function fullPathLinks(text: string, resolve: (target: string) => string | null): string {
+	// Code isn't linked, so Obsidian leaves it alone, and so does this: fenced blocks and inline code spans.
+	let fenced = false;
+	return text
+		.split('\n')
+		.map((line) => {
+			if (/^\s*(?:```|~~~)/.test(line)) {
+				fenced = !fenced;
+				return line;
+			}
+			if (fenced) return line;
+			return line
+				.split('`')
+				.map((part, index) => (index % 2 ? part : fullPathPart(part, line, resolve)))
+				.join('`');
+		})
+		.join('\n');
+}
+
+function fullPathPart(part: string, line: string, resolve: (target: string) => string | null): string {
+	return part.replace(/(!?)\[\[([^\]\n]+?)\]\]/g, (link: string, embed: string, inner: string) => {
+		const pipeAt = inner.indexOf('|');
+		const escaped = pipeAt > 0 && inner[pipeAt - 1] === '\\';
+		const full = pipeAt < 0 ? inner : inner.slice(0, escaped ? pipeAt - 1 : pipeAt);
+		const display = pipeAt < 0 ? undefined : inner.slice(pipeAt + 1);
+		const hash = full.indexOf('#');
+		const target = hash < 0 ? full : full.slice(0, hash);
+		const subpath = hash < 0 ? '' : full.slice(hash);
+		const path = target ? resolve(target) : null;
+		if (!path || path === target) return link;
+		// Embeds' display text sets their size, so an embed never gains any.
+		const shown = display ?? (embed ? undefined : target);
+		const pipe = escaped || (display === undefined && /^\s*\|/.test(line)) ? '\\|' : '|';
+		return `${embed}[[${path}${subpath}${shown === undefined ? '' : `${pipe}${shown}`}]]`;
+	});
+}
+
+/** Applies `fullPathLinks` to string and string-list property values; returns whether any changed. */
+export function fullPathPropertyLinks(
+	properties: Record<string, unknown>,
+	resolve: (target: string) => string | null,
+): boolean {
+	let changed = false;
+	const apply = (value: unknown): unknown => {
+		if (typeof value !== 'string') return value;
+		const next = fullPathLinks(value, resolve);
+		if (next !== value) changed = true;
+		return next;
+	};
+	for (const [key, value] of Object.entries(properties)) {
+		properties[key] = Array.isArray(value) ? value.map(apply) : apply(value);
+	}
+	return changed;
+}
+
 /** Raw targets of every wiki link in a note, without headings, for resolving before a rename. */
 export function linkTargets(content: string): Set<string> {
 	const targets = new Set<string>();

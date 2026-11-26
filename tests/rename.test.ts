@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
 	followedName,
+	fullPathLinks,
+	fullPathPropertyLinks,
 	linkTargets,
 	renamedAliases,
 	renameHeading,
@@ -348,4 +350,38 @@ void test('following a native rename brings the name, aliases, heading, and link
 		await f.renamer.follow(file as unknown as VaultFile, 'Cocktails/Types/Fruit Juice.md', 'Cocktails'),
 		null,
 	);
+});
+
+void test('shortened links get their full paths back, keeping headings, display text, and table pipes', () => {
+	const paths: Record<string, string> = {
+		Gin: 'Bar/Types/London Dry Gin',
+		'London Dry Gin': 'Bar/Types/London Dry Gin',
+		'Related.base': 'Bar/Views/Related.base',
+	};
+	const resolve = (target: string) => paths[target] ?? (target.startsWith('Bar/') ? target : null);
+	assert.equal(
+		fullPathLinks('- 2 oz [[London Dry Gin|Gin]] and [[Gin]]', resolve),
+		'- 2 oz [[Bar/Types/London Dry Gin|Gin]] and [[Bar/Types/London Dry Gin|Gin]]',
+	);
+	assert.equal(fullPathLinks('![[Related.base#Recipes]]', resolve), '![[Bar/Views/Related.base#Recipes]]');
+	assert.equal(
+		fullPathLinks('| [[London Dry Gin\\|Gin]] | 2 oz |', resolve),
+		'| [[Bar/Types/London Dry Gin\\|Gin]] | 2 oz |',
+	);
+	// Code isn't linked: inline spans and fenced blocks are left alone.
+	assert.equal(
+		fullPathLinks('See `[[Gin]]` or [[Gin]]', resolve),
+		'See `[[Gin]]` or [[Bar/Types/London Dry Gin|Gin]]',
+	);
+	assert.equal(
+		fullPathLinks('```\n[[Gin]]\n```\n[[Gin]]', resolve),
+		'```\n[[Gin]]\n```\n[[Bar/Types/London Dry Gin|Gin]]',
+	);
+	// Already full, outside the cabinet, or unresolved: left alone.
+	const text = '[[Bar/Types/London Dry Gin|Gin]] [[Daily note]] [[Missing]]';
+	assert.equal(fullPathLinks(text, resolve), text);
+	const properties: Record<string, unknown> = { 'cc-type': '[[Gin]]', aliases: ['Gin'], 'cc-abv': 0.4 };
+	assert.ok(fullPathPropertyLinks(properties, resolve));
+	assert.deepEqual(properties, { 'cc-type': '[[Bar/Types/London Dry Gin|Gin]]', aliases: ['Gin'], 'cc-abv': 0.4 });
+	assert.ok(!fullPathPropertyLinks(properties, resolve));
 });

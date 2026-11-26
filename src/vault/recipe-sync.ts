@@ -81,6 +81,8 @@ export class RecipeSync {
 		private app: App,
 		private root: () => string,
 		private settings: () => EstimateSettings,
+		/** While true, nothing is written: notes are moving (see `pauseForMove`). The next start catches up. */
+		private paused: () => boolean = () => false,
 	) {
 		this.recalc = debounce(() => void this.syncAll(), RECALC_MS, true);
 	}
@@ -254,6 +256,7 @@ export class RecipeSync {
 	}
 
 	async sync(file: TFile, bottles?: Map<string, number[]>): Promise<boolean> {
+		if (this.paused()) return false;
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (!cache || !this.isRecipe(file, cache)) return false;
 		const updates: Record<string, unknown> = {};
@@ -282,7 +285,7 @@ export class RecipeSync {
 
 	/** A note changed: a recipe updates once quiet; a change to another note's ABV or hierarchy recalculates recipes. */
 	changed(file: TFile, cache: CachedMetadata): void {
-		if (!this.inCabinet(file)) return;
+		if (this.paused() || !this.inCabinet(file)) return;
 		if (!this.isRecipe(file, cache)) {
 			const inputs = this.inputsOf(cache);
 			const before = this.inputs.get(file.path);
@@ -309,6 +312,7 @@ export class RecipeSync {
 
 	/** Bring every recipe in step; returns how many were updated. Records other notes' inputs to watch. */
 	async syncAll(): Promise<number> {
+		if (this.paused()) return 0;
 		const files = this.app.vault.getMarkdownFiles().filter((file) => this.inCabinet(file));
 		for (const file of files) {
 			const cache = this.app.metadataCache.getFileCache(file);

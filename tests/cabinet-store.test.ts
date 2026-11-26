@@ -663,3 +663,61 @@ void test('cabinet changes made while another runs wait their turn instead of fa
 	assert.equal(await second, 'done');
 	assert.deepEqual(order, ['first', 'second']);
 });
+
+void test('after a move, links get their full paths back and unedited managed notes the current version', async () => {
+	const { app, contents, store } = fixture();
+	// Written while the cabinet was in Old Bar, then moved to Cocktails, where Obsidian shortened the links.
+	const shorten = (text: string) =>
+		text
+			.split('`')
+			.map((part, index) =>
+				index % 2 ? part : part.replace(/\[\[Old Bar\/(?:[^\]|#\n]*\/)?([^\]|#/\n]+)/g, '[[$1'),
+			)
+			.join('`');
+	const planned = managedNotes('Cocktails');
+	for (const note of managedNotes('Old Bar'))
+		contents.set(note.path.replace('Old Bar/', 'Cocktails/'), shorten(note.content));
+	const [cabinet, shopping] = planned.map((note) => note.path) as [string, string];
+	contents.set(shopping, contents.get(shopping)!.replace('# Shopping list', '# Groceries'));
+	const recipe = 'Cocktails/Recipes/House Sour.md';
+	contents.set(
+		recipe,
+		'---\ncc-kind: "recipe"\ncc-ingredients: ["[[Bourbon|Bourbon]]"]\n---\n# House Sour\n\n- 2 oz [[Bourbon|Bourbon]] and [[Daily note]]\n',
+	);
+	Object.assign(app.metadataCache, {
+		getFirstLinkpathDest: (link: string) => {
+			const path = [...contents.keys()].find(
+				(key) =>
+					key === `${link}.md` || key === link || key.endsWith(`/${link}.md`) || key.endsWith(`/${link}`),
+			);
+			return path ? new TFile(path) : null;
+		},
+	});
+	Object.assign(app, {
+		fileManager: {
+			processFrontMatter: (file: TFile, edit: (properties: Record<string, unknown>) => void) => {
+				const content = contents.get(file.path)!;
+				const match = content.match(/^---\n([\s\S]*?)\n---\n/)!;
+				const properties = parseYaml(match[1]!) as Record<string, unknown>;
+				edit(properties);
+				const lines = Object.entries(properties).map(([key, value]) => `${key}: ${JSON.stringify(value)}`);
+				contents.set(file.path, `---\n${lines.join('\n')}\n---\n${content.slice(match[0].length)}`);
+				return Promise.resolve();
+			},
+		},
+	});
+	const { failed } = await store.restoreFullPaths();
+	assert.deepEqual(failed, []);
+	assert.match(contents.get(recipe)!, /cc-ingredients: \["\[\[Cocktails\/Types\/Bourbon\|Bourbon\]\]"\]/);
+	assert.match(contents.get(recipe)!, /- 2 oz \[\[Cocktails\/Types\/Bourbon\|Bourbon\]\] and \[\[Daily note\]\]/);
+	// The Agent Reference names the folder in its text too, which only rewriting brings up to date.
+	const reference = planned.find((note) => note.path.endsWith('/Agent Reference.md'))!.path;
+	assert.match(contents.get(reference)!, /Old Bar\//);
+	const written = await store.relinkManaged('Old Bar');
+	assert.ok(written.includes(reference));
+	assert.ok(!written.includes(shopping));
+	assert.equal(contents.get(cabinet), planned[0]!.content);
+	for (const note of planned.filter((item) => item.path !== shopping))
+		assert.equal(contents.get(note.path), note.content);
+	assert.match(contents.get(shopping)!, /# Groceries/);
+});

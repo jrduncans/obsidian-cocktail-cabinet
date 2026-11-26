@@ -21,6 +21,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 	availability!: AvailabilityStore;
 	recipes!: RecipeSync;
 	catalog!: CatalogSync;
+	/**
+	 * Cabinet notes moved in bulk since Obsidian started, and Obsidian may still be rewriting links in them:
+	 * the plugin writes no notes on its own until restart (see `pauseForMove`).
+	 */
+	paused = false;
 
 	async onload() {
 		this.settings = loadSettings(await this.loadData());
@@ -69,6 +74,7 @@ export default class CocktailCabinetPlugin extends Plugin {
 				topMl: this.settings.topMl,
 				volumeUnit: this.settings.volumeUnit,
 			}),
+			() => this.paused,
 		);
 		this.register(() => this.recipes.cancel());
 		this.app.workspace.onLayoutReady(() => {
@@ -96,6 +102,11 @@ export default class CocktailCabinetPlugin extends Plugin {
 	 * section when a release changes the section rules, and on Refresh.
 	 */
 	async syncCabinet(force = false): Promise<void> {
+		if (this.paused) {
+			if (force) new Notice('Cabinet notes moved since Obsidian started. Restart Obsidian, then try again.');
+			return;
+		}
+		await this.finishMove();
 		const views = await this.syncViews(force);
 		const sections = await this.syncSections(force);
 		const catalog = await this.syncCatalog(force);
@@ -118,6 +129,35 @@ export default class CocktailCabinetPlugin extends Plugin {
 		else if (review.length) this.reviewNotice(review);
 		else if (force && !notes && !views && !sections && !catalog)
 			new Notice('Cabinet notes and views are already current.');
+	}
+
+	/**
+	 * After cabinet notes moved in bulk in the last session, once Obsidian has restarted and is done rewriting
+	 * links: links in cabinet notes get their full paths back, and managed notes nobody edited, which the move
+	 * changed (their links, and the folder they name), get the plugin's version.
+	 */
+	private async finishMove(): Promise<void> {
+		const move = this.settings.afterMove;
+		if (!move) return;
+		const progress = new Notice('Restoring cabinet links after the move…', 0);
+		try {
+			const { updated, failed } = await this.store.restoreFullPaths();
+			await this.store.relinkManaged(move.from);
+			progress.hide();
+			if (updated)
+				new Notice(
+					`Cocktail Cabinet restored full-path links in ${updated === 1 ? 'a note' : `${updated} notes`} after the move.`,
+				);
+			if (failed.length)
+				new Notice(
+					`Couldn’t restore links in ${failed.length === 1 ? failed[0] : `${failed.length} notes`}. Tidy ingredient lines can fix a recipe’s.`,
+				);
+		} catch (error) {
+			progress.hide();
+			new Notice(`Couldn’t finish the move: ${error instanceof Error ? error.message : String(error)}`);
+		}
+		this.settings.afterMove = null;
+		await this.saveSettings();
 	}
 
 	/**

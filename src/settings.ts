@@ -53,6 +53,11 @@ export interface CocktailCabinetSettings {
 	linkText: LinkTextLevel;
 	/** Fluid-ounce amounts are written with fraction characters, as in 1½ oz (docs/link-text.md#fractions). */
 	fractionCharacters: boolean;
+	/**
+	 * Cabinet notes moved in bulk since Obsidian started, from the cabinet folder `from`: the next start
+	 * restores what Obsidian's link updating changed (see `CocktailCabinetPlugin.finishMove`).
+	 */
+	afterMove: { from: string } | null;
 }
 
 export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
@@ -76,6 +81,7 @@ export const DEFAULT_SETTINGS: CocktailCabinetSettings = {
 	volumeUnit: DEFAULT_VOLUME_UNIT,
 	linkText: DEFAULT_LINK_TEXT_LEVEL,
 	fractionCharacters: true,
+	afterMove: null,
 };
 
 const positive = (value: unknown, max = Infinity): value is number =>
@@ -142,6 +148,8 @@ export function loadSettings(data: unknown): CocktailCabinetSettings {
 	if (saved.linkText === 'keep' || saved.linkText === 'name' || saved.linkText === 'alias')
 		settings.linkText = saved.linkText;
 	if (saved.fractionCharacters === false) settings.fractionCharacters = false;
+	const afterMove = saved.afterMove as { from?: unknown } | null | undefined;
+	if (afterMove && typeof afterMove.from === 'string') settings.afterMove = { from: afterMove.from };
 	if (Array.isArray(saved.recentLogs)) settings.recentLogs = saved.recentLogs.filter(isLogRecord).slice(-KEPT_LOGS);
 	return settings;
 }
