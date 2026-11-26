@@ -74,8 +74,12 @@ function quantity(fields: Record<string, unknown>, key: string, integer = false)
 	return value;
 }
 
+/**
+ * mL for display: whole mL, as the Bases show stock, with one decimal below 10 mL so a dash still reads.
+ * Stock is saved exactly; only what's shown is rounded.
+ */
 export function formatMl(value: number): string {
-	return String(Number(value.toFixed(3)));
+	return String(Math.abs(value) < 10 ? Number(value.toFixed(1)) : Math.round(value));
 }
 
 /**

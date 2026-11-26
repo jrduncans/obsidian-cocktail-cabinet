@@ -80,7 +80,7 @@ export function stockProperties(input: StockInput): Properties {
 		if (volume === 0) throw new Error('Bottle volume must be greater than zero.');
 		const abv = optionalNumber(input.abv, 'Alcohol by volume', 0, 100);
 		properties[PROP.volume] = volume;
-		properties[PROP.abv] = abv === null ? null : abv / 100;
+		properties[PROP.abv] = abv === null ? null : Number((abv / 100).toFixed(6));
 	} else {
 		if (!Object.keys(STOCK_FORMS).includes(input.form)) throw new Error('Select an ingredient form.');
 		properties[PROP.form] = input.form;

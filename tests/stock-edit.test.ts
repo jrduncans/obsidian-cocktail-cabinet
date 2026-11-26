@@ -95,7 +95,8 @@ void test('summaries match the Stock sections', () => {
 
 void test('bottle stock text drops zero parts and says None when there is nothing', () => {
 	assert.equal(bottleStockText(660, 0, 750), '88% (660 mL)');
-	assert.equal(bottleStockText(660.4, 2, 750), '88% (660.4 mL), 2 unopened');
+	// Shown in whole mL, as the Stock formula shows it; below 10 mL, to one decimal.
+	assert.equal(bottleStockText(450.426, 2, 750), '60% (450 mL), 2 unopened');
 	assert.equal(bottleStockText(660, 0, null), '660 mL');
 	assert.equal(bottleStockText(5, 0, 750), '<1% (5 mL)');
 	assert.equal(bottleStockText(7.5, 0, 750), '1% (7.5 mL)');

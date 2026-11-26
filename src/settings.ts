@@ -217,7 +217,7 @@ export class CocktailCabinetSettingTab extends PluginSettingTab {
 				.onChange((value) => {
 					const number = Number(value.trim());
 					if (!value.trim() || !Number.isFinite(number) || number < 0 || number > 200) return;
-					this.plugin.settings.dilution[preparation] = number / 100;
+					this.plugin.settings.dilution[preparation] = Number((number / 100).toFixed(6));
 					this.saveEstimate();
 				});
 		});
