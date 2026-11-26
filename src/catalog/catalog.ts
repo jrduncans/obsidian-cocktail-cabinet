@@ -659,7 +659,7 @@ subtypes('Soda Water', [
 subtypes('Aged Jamaican Rum', [
 	[
 		'Aged Overproof Jamaican Rum',
-		'High-strength, lightly aged Jamaican rum, such as Smith & Cross. Its bottles also fill recipes calling for Aged Jamaican Rum.',
+		'High-strength, lightly aged, pot-still-heavy Jamaican rum, such as Smith & Cross. 100-proof bottles in the same role, such as Doctor Bird, belong here too, though not strictly overproof. Its bottles also fill recipes calling for Aged Jamaican Rum.',
 		{ aliases: ['Navy Strength Jamaican Rum'] },
 	],
 ]);
