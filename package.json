@@ -11,7 +11,8 @@
 		"lint": "eslint .",
 		"test": "node scripts/test.mjs && node scripts/catalog-docs.mjs --check && node scripts/catalog-history.mjs --check",
 		"catalog:docs": "node scripts/catalog-docs.mjs && node scripts/catalog-history.mjs",
-		"install:vault": "node scripts/run-ts.mjs scripts/install-vault.ts"
+		"install:vault": "node scripts/run-ts.mjs scripts/install-vault.ts",
+		"install:dev": "node scripts/run-ts.mjs scripts/install-vault.ts --dev"
 	},
 	"keywords": [],
 	"license": "0-BSD",

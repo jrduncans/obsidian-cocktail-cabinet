@@ -4,15 +4,16 @@ import { parseArgs } from 'node:util';
 import { installPlugin, releaseCheck } from './vault/install';
 
 /**
- * Install the plugin into a real vault: npm run install:vault -- --vault PATH
- * Builds from a clean main, copies main.js, manifest.json, and styles.css, then asks
- * Obsidian to reload the plugin. Development vaults use a symlink instead.
+ * Install the plugin into a vault: npm run install:vault -- --vault PATH
+ * Builds, copies main.js, manifest.json, and styles.css, then asks Obsidian to reload the plugin.
+ * A real vault takes only merged work, so it must be installed from a clean main. A development
+ * vault (npm run install:dev -- --vault PATH) skips that check and takes whatever is checked out.
  */
-const { values } = parseArgs({ options: { vault: { type: 'string' } } });
-if (!values.vault) throw new Error('npm run install:vault -- --vault PATH');
+const { values } = parseArgs({ options: { vault: { type: 'string' }, dev: { type: 'boolean' } } });
+if (!values.vault) throw new Error(`npm run install:${values.dev ? 'dev' : 'vault'} -- --vault PATH`);
 const repo = process.cwd(),
 	vault = resolve(values.vault);
-await releaseCheck(repo);
+if (!values.dev) await releaseCheck(repo);
 execFileSync('npm', ['run', 'build'], { stdio: 'inherit' });
 const version = await installPlugin(repo, vault);
 process.stdout.write(`Installed Cocktail Cabinet ${version} in ${vault}.\n`);

@@ -19,8 +19,8 @@ export async function releaseCheck(repo: string): Promise<void> {
 
 /**
  * Copy the built plugin into a vault's plugin folder, keeping its settings (data.json).
- * Refuses a symlinked plugin folder: that is a development vault, where the link already
- * points at this repository.
+ * Refuses a symlinked plugin folder: it likely points at this repository, and iCloud
+ * doesn't sync a symlink's target to mobile anyway. Replace the link with a folder first.
  */
 export async function installPlugin(repo: string, vault: string): Promise<string> {
 	const config = join(vault, '.obsidian');
@@ -29,7 +29,7 @@ export async function installPlugin(repo: string, vault: string): Promise<string
 	const target = join(config, 'plugins', manifest.id);
 	const existing = await lstat(target).catch(() => null);
 	if (existing?.isSymbolicLink())
-		throw new Error(`${target} is a symlink (a development vault); builds already reach it.`);
+		throw new Error(`${target} is a symlink; replace it with a folder so the copy syncs.`);
 	if (existing && !existing.isDirectory()) throw new Error(`${target} is not a folder.`);
 	if (
 		await realpath(vault)

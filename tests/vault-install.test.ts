@@ -14,7 +14,7 @@ async function repository(directory: string): Promise<string> {
 	return repo;
 }
 
-void test('copies the release files, keeps settings, and refuses development vaults', async () => {
+void test('copies the release files, keeps settings, and refuses a symlinked plugin folder', async () => {
 	const directory = await mkdtemp(join(tmpdir(), 'vault-install-'));
 	try {
 		const repo = await repository(directory);
@@ -27,10 +27,10 @@ void test('copies the release files, keeps settings, and refuses development vau
 		for (const file of PLUGIN_FILES)
 			assert.equal(await readFile(join(plugin, file), 'utf8'), await readFile(join(repo, file), 'utf8'));
 		assert.equal(await readFile(join(plugin, 'data.json'), 'utf8'), '{"cabinetFolder":"Cocktails"}');
-		const dev = join(directory, 'dev');
-		await mkdir(join(dev, '.obsidian', 'plugins'), { recursive: true });
-		await symlink(repo, join(dev, '.obsidian', 'plugins', 'cocktail-cabinet'));
-		await assert.rejects(installPlugin(repo, dev), /symlink/);
+		const linked = join(directory, 'linked');
+		await mkdir(join(linked, '.obsidian', 'plugins'), { recursive: true });
+		await symlink(repo, join(linked, '.obsidian', 'plugins', 'cocktail-cabinet'));
+		await assert.rejects(installPlugin(repo, linked), /symlink/);
 		assert.equal(await readFile(join(repo, 'main.js'), 'utf8'), 'built', 'the repository is untouched');
 	} finally {
 		await rm(directory, { recursive: true, force: true });

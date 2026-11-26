@@ -77,7 +77,13 @@ npm run lint
 
 After changing starter ingredients, run `npm run catalog:docs` to regenerate the hierarchy table and catalog history. `npm test` checks that both are current.
 
-For development, symlink a test vault's `.obsidian/plugins/cocktail-cabinet` to this repository; builds then supply `main.js` directly, and the [Hot Reload](https://github.com/pjeby/hot-reload) plugin reloads it. Generated bundles and local `data.json` settings are ignored by Git.
+For development, install into a test vault from any branch, uncommitted changes included:
+
+```sh
+npm run install:dev -- --vault '/path/to/test vault'
+```
+
+It works like `install:vault` below without the clean-`main` check. Avoid symlinking the plugin folder to this repository instead: iCloud doesn't sync a symlink's target, so the plugin never reaches mobile. Generated bundles are ignored by Git.
 
 To install in a real vault, or update it, run from a clean `main`:
 
@@ -85,7 +91,7 @@ To install in a real vault, or update it, run from a clean `main`:
 npm run install:vault -- --vault '/path/to/vault'
 ```
 
-It builds, copies `main.js`, `manifest.json`, and `styles.css` to `<vault>/.obsidian/plugins/cocktail-cabinet/`, keeps the vault's `data.json` settings, and asks Obsidian to reload the plugin. It refuses a branch other than `main`, uncommitted changes, and a symlinked plugin folder (a development vault). Bump the version with `npm version patch` before an install you want to tell apart.
+It builds, copies `main.js`, `manifest.json`, and `styles.css` to `<vault>/.obsidian/plugins/cocktail-cabinet/`, keeps the vault's `data.json` settings, and asks Obsidian to reload the plugin. It refuses a branch other than `main`, uncommitted changes, and a symlinked plugin folder. Bump the version with `npm version patch` before an install you want to tell apart.
 
 The development override pins Obsidian's transitive Moment dependency to `2.31.0`. The plugin bundle keeps `obsidian` external and uses its bundled `moment` export for Daily notes; it does not bundle a separate Moment library.
 

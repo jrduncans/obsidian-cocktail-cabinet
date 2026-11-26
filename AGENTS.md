@@ -19,10 +19,8 @@ If `AGENTS.local.md` exists (it is ignored by Git), read it: it lists this machi
 
 ## Local development setup
 
-- The dev vault's `.obsidian/plugins/cocktail-cabinet` is a symlink to this repository. Builds in the repository therefore supply the plugin files directly to that vault; a separate copy step is unnecessary for this setup.
-- Plugin settings written to `data.json` also land in the repository through that symlink. Keep that local state ignored by Git.
-- The Hot Reload community plugin is installed in `Cocktail Cabinet Dev` to support development reloads.
-- Real vaults get a copy, not a symlink, so it syncs to mobile and only merged work reaches them: `npm run install:vault -- --vault PATH` from a clean `main`. Run it only when the user asks to install or update.
+- The dev vault gets a copy of the plugin, like any vault, so it syncs to mobile for phone testing. After a change you want to try there, run `npm run install:dev -- --vault PATH`: it builds whatever is checked out, copies it in, keeps the vault's `data.json` settings, and reloads the plugin. Builds alone don't reach the vault.
+- Real vaults take only merged work: `npm run install:vault -- --vault PATH` from a clean `main`. Run it only when the user asks to install or update.
 
 ## Development conventions
 
