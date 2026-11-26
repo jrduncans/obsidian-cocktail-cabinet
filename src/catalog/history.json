@@ -2616,5 +2616,44 @@
 		"abvTypical": [
 			0.17
 		]
+	},
+	"type/Don's Mix": {
+		"description": [
+			"Donn Beach’s blend of two parts white grapefruit juice to one part cinnamon syrup, as in his 1934 Zombie. Many recipes list the two separately instead."
+		],
+		"preparation": [
+			"Combine two parts white grapefruit juice with one part cinnamon syrup, and refrigerate."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			0
+		]
+	},
+	"type/Don's Spices No 2": {
+		"description": [
+			"Donn Beach’s blend of equal parts vanilla syrup and allspice dram, about 11% ABV mixed at home; B.G. Reynolds bottles a non-alcoholic version. Many recipes list the two separately instead."
+		],
+		"preparation": [
+			"Combine equal parts vanilla syrup and allspice dram."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			0.11
+		]
+	},
+	"type/Fassionola": {
+		"description": [
+			"Red tropical-fruit syrup, usually passion fruit with others such as strawberry and pineapple, from early tiki drinks like the Cobra’s Fang and Hurricane. Brands differ widely, such as Cocktail & Sons and Jonathan English, which also makes a gold version."
+		],
+		"parent": [
+			"Flavored Syrup"
+		],
+		"abvTypical": [
+			0
+		]
 	}
 }

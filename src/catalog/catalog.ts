@@ -533,6 +533,20 @@ family(
 			'Sweetened pineapple syrup, homemade or bottled. Gum (gomme) syrup, thickened with gum arabic for a silkier texture, counts too: recipes treat them as interchangeable.',
 			{ aliases: ['Pineapple Gum Syrup', 'Pineapple Gomme Syrup'] },
 		],
+		[
+			"Don's Mix",
+			'Donn Beach’s blend of two parts white grapefruit juice to one part cinnamon syrup, as in his 1934 Zombie. Many recipes list the two separately instead.',
+			{ aliases: ["Donn's Mix"] },
+		],
+		[
+			"Don's Spices #2",
+			'Donn Beach’s blend of equal parts vanilla syrup and allspice dram, about 11% ABV mixed at home; B.G. Reynolds bottles a non-alcoholic version. Many recipes list the two separately instead.',
+			{ aliases: ["Donn's Spices #2", "Don's Spices No. 2"] },
+		],
+		[
+			'Fassionola',
+			'Red tropical-fruit syrup, usually passion fruit with others such as strawberry and pineapple, from early tiki drinks like the Cobra’s Fang and Hurricane. Brands differ widely, such as Cocktail & Sons and Jonathan English, which also makes a gold version.',
+		],
 	],
 );
 family('Carbonated Mixer', undefined, 'Carbonated cocktail mixers.', [
@@ -615,6 +629,14 @@ for (const [name, ratio, ingredient, aliases] of sugar) {
 	if (!entry) throw new Error(`Missing starter syrup: ${name}`);
 	entry.properties = { [PROP.sugarWaterRatio]: `${ratio} by weight`, aliases: [...aliases] };
 	entry.method = `Combine ${ratio === '1:1' ? 'equal weights of' : 'two parts by weight of'} ${ingredient} and ${ratio === '1:1' ? '' : 'one part by weight of '}water. This ratio is by weight. Stir until dissolved. Concentration figures are nominal, not measurements of a prepared batch.\n\nReference: [Simple syrup ratios and Brix](https://www.cocktailarium.com/lessons/sweetness-i-simple-syrup).`;
+}
+for (const [name, method] of [
+	["Don's Mix", 'Combine two parts white grapefruit juice with one part cinnamon syrup, and refrigerate.'],
+	["Don's Spices #2", 'Combine equal parts vanilla syrup and allspice dram.'],
+] as const) {
+	const entry = entries.find((item) => item.name === name);
+	if (!entry) throw new Error(`Missing starter syrup: ${name}`);
+	entry.method = method;
 }
 
 subtypes('Bourbon', [
@@ -820,6 +842,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Amontillado Sherry': 18.5,
 	'Bitter Aperitif Wine': 17,
 	'Red Aperitif Wine': 17,
+	"Don's Spices #2": 11,
 	'Aromatic Bitters': 45,
 	'Orange Bitters': 45,
 	'Creole Bitters': 35,

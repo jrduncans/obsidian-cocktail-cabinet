@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-161 ingredient types, 29 families, 6 categories, and 3 reference bottles.
+164 ingredient types, 29 families, 6 categories, and 3 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -76,6 +76,8 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Demerara 151 Rum | Rum | Spirit |
 | Demerara Rum | Rum | Spirit |
 | Demerara Syrup (2:1) | Sugar Syrup | Syrup |
+| Don's Mix | Flavored Syrup | Syrup |
+| Don's Spices #2 | Flavored Syrup | Syrup |
 | Dry Sparkling Wine | Sparkling Wine | Wine |
 | Dry Vermouth | Vermouth | Fortified Wine |
 | Dry White Wine | Still Wine | Wine |
@@ -83,6 +85,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Elderflower Liqueur | Floral Liqueur | Liqueur |
 | Falernum | Herbal & Spice Liqueur | Liqueur |
 | Falernum Syrup | Flavored Syrup | Syrup |
+| Fassionola | Flavored Syrup | Syrup |
 | Fernet | Amaro Family | Liqueur |
 | Fino Sherry | Sherry | Fortified Wine |
 | Flavored Rum | Rum | Spirit |
