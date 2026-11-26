@@ -4,7 +4,7 @@ Generated from `src/catalog/catalog.ts`. Run `npm run catalog:docs` after changi
 
 Ingredient types are the starting point. Families and categories are optional groupings. A dash means no parent, not missing information.
 
-159 ingredient types, 29 families, 6 categories, and 3 reference bottles.
+160 ingredient types, 29 families, 6 categories, and 3 reference bottles.
 
 Names below are the proper displayed names. Filenames use plain Latin characters; generated links display the proper name, for example `[[Cocktails/Families/Cachaca|Cachaça]]`.
 
@@ -62,6 +62,7 @@ Names below are the proper displayed names. Filenames use plain Latin characters
 | Coffee Liqueur | Other Liqueur | Liqueur |
 | Cognac (subtype of Brandy) | Brandy Family | Spirit |
 | Cola | Carbonated Mixer | — |
+| Column Still Overproof Rum | Rum | Spirit |
 | Contemporary Gin | Gin | Spirit |
 | Cranberry Juice | Other Fruit Juice | Juice |
 | Cream of Coconut | — | — |

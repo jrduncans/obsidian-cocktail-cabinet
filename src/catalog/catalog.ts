@@ -87,7 +87,7 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 	],
 	[
 		'White Blended Rum',
-		'Clear rum blended from several regions for more character than Light Rum, such as Probitas. Its components may be aged or unaged.',
+		'Clear rum blended for more character than Light Rum, from several regions or from pot and column stills, such as Probitas and Chairman’s Reserve White. Its components may be aged or unaged.',
 	],
 	[
 		'Aged Barbados Rum',
@@ -99,7 +99,7 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 	],
 	[
 		'Aged Blended Rum',
-		'Aged rum blended from several regions, such as Planteray Original Dark. A single-island style is Aged Barbados Rum or Aged Jamaican Rum.',
+		'Aged rum blended from several regions or from pot and column stills, such as Planteray Original Dark and Diplomático Reserva Exclusiva. A blend from one island with its own style is Aged Barbados Rum or Aged Jamaican Rum.',
 	],
 	[
 		'Aged Jamaican Rum',
@@ -114,6 +114,10 @@ family('Rum', 'Spirit', 'Rum styles. These are starting distinctions; refine the
 	[
 		'Demerara 151 Rum',
 		'Demerara rum bottled at 151 US proof (75.5% ABV), such as Hamilton 151. Standard-strength Demerara Rum and overproof blends are separate types.',
+	],
+	[
+		'Column Still Overproof Rum',
+		'High-strength, light-bodied rum from column stills, such as Bacardi 151, Don Q 151, Cruzan 151, and Denros Strong. For floating, flaming, or adding proof without heavy flavor. Not a stand-in for Demerara 151 Rum.',
 	],
 	[
 		'Blended Overproof Rum',
@@ -743,6 +747,7 @@ const TYPICAL_ABV_PERCENT: Record<string, number> = {
 	'Aged Overproof Jamaican Rum': 57,
 	'Unaged Overproof Jamaican Rum': 63,
 	'Demerara 151 Rum': 75.5,
+	'Column Still Overproof Rum': 75.5,
 	'Unaged Rhum Agricole': 50,
 	'Aged Rhum Agricole': 40,
 	'Black Jamaican Rum': 40,

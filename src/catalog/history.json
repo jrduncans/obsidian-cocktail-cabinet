@@ -121,7 +121,8 @@
 		"description": [
 			"Aged blended rum; flavor and strength vary by bottling.",
 			"Aged blends of rum from multiple regions, in the recipe role represented by Planteray Original Dark. Keep distinct from Aged Barbados Rum and Aged Column Still Rum.",
-			"Aged rum blended from several regions, such as Planteray Original Dark. A single-island style is Aged Barbados Rum or Aged Jamaican Rum."
+			"Aged rum blended from several regions, such as Planteray Original Dark. A single-island style is Aged Barbados Rum or Aged Jamaican Rum.",
+			"Aged rum blended from several regions or from pot and column stills, such as Planteray Original Dark and Diplomático Reserva Exclusiva. A blend from one island with its own style is Aged Barbados Rum or Aged Jamaican Rum."
 		],
 		"parent": [
 			"Rum"
@@ -1700,7 +1701,8 @@
 	"type/White Blended Rum": {
 		"description": [
 			"Clear multi-region rum blends, such as Probitas, combining different flavor profiles. Components may be aged or unaged; kept distinct from the more restrained Light Rum role.",
-			"Clear rum blended from several regions for more character than Light Rum, such as Probitas. Its components may be aged or unaged."
+			"Clear rum blended from several regions for more character than Light Rum, such as Probitas. Its components may be aged or unaged.",
+			"Clear rum blended for more character than Light Rum, from several regions or from pot and column stills, such as Probitas and Chairman’s Reserve White. Its components may be aged or unaged."
 		],
 		"parent": [
 			"Rum"
@@ -2591,6 +2593,17 @@
 		],
 		"abvTypical": [
 			0.12
+		]
+	},
+	"type/Column Still Overproof Rum": {
+		"description": [
+			"High-strength, light-bodied rum from column stills, such as Bacardi 151, Don Q 151, Cruzan 151, and Denros Strong. For floating, flaming, or adding proof without heavy flavor. Not a stand-in for Demerara 151 Rum."
+		],
+		"parent": [
+			"Rum"
+		],
+		"abvTypical": [
+			0.755
 		]
 	}
 }
