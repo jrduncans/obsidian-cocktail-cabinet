@@ -44,6 +44,10 @@ void test('bottle notes store open mL directly, retain fractional ABV, and seria
 	assert.ok(!note.content.includes('cc-availability'));
 });
 
+void test('a percent ABV is saved as a fraction without floating-point leftovers', () => {
+	assert.equal(stockProperties(input({ abv: '41.2' }))[PROP.abv], 0.412);
+});
+
 void test('unknown amounts and prices remain distinct from known zero in both resource kinds', () => {
 	for (const value of ['', '0']) {
 		const expected = value === '' ? null : 0;

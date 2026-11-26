@@ -54,7 +54,10 @@ const STRENGTH = /\bstandard drinks?\b|\balc\.?\s*\/\s*vol\b|\bgrams? of (?:pure
 const ingredientText = (line: string) =>
 	line
 		.replace(/^\s{0,3}(?:[-*+]\s+|\d+[.)]\s+)/, '')
-		.replace(/(?<!\[)\[([^[\]]+)\]\(https?:\/\/[^)\s]*\)/g, '$1')
+		// A Markdown link to the web keeps its text; one right after a "[" isn't a link but bracketed text.
+		.replace(/\[([^[\]]+)\]\(https?:\/\/[^)\s]*\)/g, (link, text: string, at: number, whole: string) =>
+			whole[at - 1] === '[' ? link : text,
+		)
 		.trim();
 
 /** Read copied text or Markdown; uncertain content stays in the description for review. */

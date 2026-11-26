@@ -49,6 +49,7 @@ export class PurchaseModal extends CabinetForm {
 	onOpen() {
 		this.begin('Record purchases', 'Check what you bought. Anything unchecked stays on the shopping list.');
 		this.modalEl.addClass('cocktail-cabinet-purchases');
+		this.containerEl.addClass('cocktail-cabinet-purchases-container');
 		this.listEl = this.contentEl.createDiv({ cls: 'cocktail-cabinet-purchase-list' });
 		this.submit('Save', () => this.save());
 		void this.run(() => this.load());

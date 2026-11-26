@@ -317,7 +317,6 @@ export class UnlinkedView extends ItemView {
 			if (remembering.has(note.path))
 				button.setTooltip(`${chosen ? 'Linking' : 'Link'} to ${note.path}, which remembers this wording`);
 		}
-		if (suggested.length) actions.createSpan({ cls: 'cocktail-cabinet-unlinked-label', text: 'or' });
 		new ButtonComponent(actions)
 			.setButtonText(suggested.length ? 'Another note…' : 'A note…')
 			.onClick(() => pickIngredient(this.plugin, choose));

@@ -206,4 +206,20 @@ void test('HTML smuggled into a page’s recipe stays text in the note', () => {
 	assert.equal(recipe.description, 'Bright &lt;img src="https://t.example/p.gif"> and tart.');
 	assert.equal(recipe.method, 'Shake &lt;script>x&lt;/script> with ice.');
 	assert.equal(recipe.ingredients[1]!.text, 'lemon juice');
+	// A tag at the very start is escaped too; one already escaped is left as written.
+	const escaped = read(
+		page(
+			`<script type="application/ld+json">${JSON.stringify({ ...data, description: '&lt;b&gt;Bold&lt;/b&gt; and \\&lt;i&gt; kept.' })}</script>`,
+			'',
+		),
+	);
+	assert.equal(escaped.recipe.description, '&lt;b>Bold&lt;/b> and \\<i> kept.');
+	// An unclosed tag in the name can't survive tag stripping.
+	const unclosed = read(
+		page(
+			`<script type="application/ld+json">${JSON.stringify({ ...data, name: 'Sour &lt;img src=x onerror=y' })}</script>`,
+			'',
+		),
+	);
+	assert.equal(unclosed.recipe.name, 'Sour img src=x onerror=y');
 });

@@ -3,7 +3,12 @@ import type { App } from 'obsidian';
 import { hasDailyLog } from '../core/logging-daily';
 import type { CabinetNote } from '../core/schema';
 
-type DailyDate = ReturnType<typeof moment>;
+/** The part of Obsidian's bundled moment used here, typed locally so it doesn't rest on moment's own types. */
+interface DailyDate {
+	format(format: string): string;
+	isValid(): boolean;
+}
+const dailyDate = moment as unknown as (input?: string, format?: string, strict?: boolean) => DailyDate;
 interface DailyOptions {
 	folder?: string;
 	format?: string;
@@ -51,13 +56,13 @@ export class LoggingDaily {
 	 * The daily note for `day` (`YYYY-MM-DD`, default today); a drink remembered later is logged on the day it was made.
 	 * Without a recipe (a one-off) nothing counts as a duplicate: the same one-off can be made twice.
 	 */
-	async preview(recipe: CabinetNote | null, day = moment().format('YYYY-MM-DD')): Promise<DailyPreview> {
-		const date = moment(day, 'YYYY-MM-DD');
+	async preview(recipe: CabinetNote | null, day = dailyDate().format('YYYY-MM-DD')): Promise<DailyPreview> {
+		const date = dailyDate(day, 'YYYY-MM-DD');
 		const result: DailyPreview = { date: day, path: '', configuration: '', duplicate: false };
 		try {
 			if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || Number.isNaN(Date.parse(day)))
 				throw new Error('Enter a valid date.');
-			if (day > moment().format('YYYY-MM-DD')) throw new Error('Pick today or an earlier date.');
+			if (day > dailyDate().format('YYYY-MM-DD')) throw new Error('Pick today or an earlier date.');
 			const instance = this.instance();
 			result.configuration = JSON.stringify(instance.options);
 			const folder = instance.options.folder
@@ -116,7 +121,7 @@ export class LoggingDaily {
 			const instance = this.instance();
 			const folder = instance.options.folder ? normalizePath(instance.options.folder) : '';
 			if (folder && !file.path.startsWith(`${folder}/`)) return null;
-			const date = moment(
+			const date = dailyDate(
 				file.path.slice(folder ? folder.length + 1 : 0).replace(/\.md$/, ''),
 				instance.getFormat(),
 				true,
@@ -132,7 +137,7 @@ export class LoggingDaily {
 		if (preview.configuration !== JSON.stringify(instance.options)) {
 			throw new Error('The daily note settings changed.');
 		}
-		const file = await instance.getDailyNote(moment(preview.date, 'YYYY-MM-DD'));
+		const file = await instance.getDailyNote(dailyDate(preview.date, 'YYYY-MM-DD'));
 		if (!(file instanceof TFile) || file.path !== preview.path)
 			throw new Error('Couldn’t open or create the daily note.');
 		let appended = false;

@@ -238,7 +238,7 @@ export class LoggingModal extends Modal {
 					if (path === SPLIT) {
 						const first = selected && selected !== SKIP_LINE ? selected : null;
 						this.selections.set(line.id, [
-							{ path: first, amount: `${formatMl(line.ml)} ml` },
+							{ path: first, amount: `${Number(line.ml.toFixed(3))} ml` },
 							{ path: null, amount: '' },
 						]);
 						this.render();

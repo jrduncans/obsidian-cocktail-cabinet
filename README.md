@@ -2,7 +2,7 @@
 
 Keep your cocktail recipes and home bar in Obsidian: what you have, what you can make with it, and what to buy next. Everything is ordinary Markdown notes and core Bases, so your collection stays readable and editable without the plugin.
 
-> **Beta.** The plugin is in daily use, but note properties may still change between releases, and it has had less testing on phones than on desktop. Feedback and bug reports are very welcome in [Issues](https://github.com/jrduncans/obsidian-cocktail-cabinet/issues).
+> **Beta.** The plugin is in daily use, but note properties may still change between releases, and it has had less testing on phones than on desktop. Bug reports are very welcome in [Issues](https://github.com/jrduncans/obsidian-cocktail-cabinet/issues), and questions and ideas in [Discussions](https://github.com/jrduncans/obsidian-cocktail-cabinet/discussions); see [contributing](CONTRIBUTING.md).
 
 ## What it does
 
@@ -13,6 +13,18 @@ Keep your cocktail recipes and home bar in Obsidian: what you have, what you can
 - **What can I make?** Every recipe sorted by how close you are: can make, with a substitute, missing one, and so on. **What should I buy?** ranks missing ingredients by how many recipes each would unlock.
 - **Shopping list and alcohol estimates.** Flag anything for the shopping list. Each recipe gets an estimate of its alcohol and ABV, so you can find lower-alcohol drinks.
 - **Agent-friendly.** An **Agent Reference** note and `obsidian` command-line handlers let AI agents check availability and add recipes.
+
+## Screenshots
+
+![What can I make? lists recipes by how close you are to making them, with a recipe note open beside it](docs/screenshots/desktop-1-split.png)
+
+![Log this cocktail picks a bottle for each line and previews what each one loses](docs/screenshots/desktop-2-log.png)
+
+![What should I buy? ranks missing ingredients by how many recipes each would unlock](docs/screenshots/desktop-3-buy.png)
+
+![The In stock view, a core Base listing every bottle and other stock with its amount](docs/screenshots/desktop-4-instock.png)
+
+![An ingredient type note lists its subtypes, the bottles you have of it, and the recipes that call for it](docs/screenshots/desktop-5-type.png)
 
 ## Install
 
@@ -56,7 +68,7 @@ Most commands also appear in a note's file menu (right-click, or **More options*
 
 ## Storage and privacy
 
-All runtime operations stay in your vault, with one exception: when you give **Add recipe** a web address and select **Read recipe**, **Read page**, or **Read recipe page…**, the plugin fetches that one page to read its recipe. It sends nothing but that request, fetches nothing else (no images, linked pages, or searches), and never fetches on its own. It collects no telemetry. External reference links on ingredient pages open only when selected.
+All runtime operations stay in your vault, with one exception: when you give **Add recipe** a web address and select **Read recipe**, **Read page**, or **Read recipe page…**, the plugin fetches that one page to read its recipe. It sends nothing but that request, fetches nothing else (no images, linked pages, or searches), and never fetches on its own. It collects no telemetry. The plugin lists file names across the vault, to find cabinet notes, catch name clashes, and find your daily note; it reads notes' contents only in the cabinet folder, your daily notes, a note you run one of its commands on, and, when you rename a cabinet note, the notes that link to it. External reference links on ingredient pages open only when selected.
 
 ## Development
 
