@@ -45,6 +45,18 @@ function isNameLine(line: string): boolean {
 	);
 }
 
+/** An unmeasured line naming only glassware: "Pearl Diver Glass", "Cocktail Coupe". */
+const GLASS = /^[\p{L}&'’ -]*\b(?:glass|coupe|flute|mug|snifter|tumbler)$/iu;
+/** A line giving the drink's strength, not an ingredient: "1.6 standard drinks", "22.96% alc./vol.". */
+const STRENGTH = /\bstandard drinks?\b|\balc\.?\s*\/\s*vol\b|\bgrams? of (?:pure )?alcohol\b/i;
+
+/** An ingredient line without its list marker, a web link kept as its text ("[#2](https://…)" is "#2"). */
+const ingredientText = (line: string) =>
+	line
+		.replace(/^\s{0,3}(?:[-*+]\s+|\d+[.)]\s+)/, '')
+		.replace(/(?<!\[)\[([^[\]]+)\]\(https?:\/\/[^)\s]*\)/g, '$1')
+		.trim();
+
 /** Read copied text or Markdown; uncertain content stays in the description for review. */
 export function parseRecipeText(body: string, metadata: Record<string, unknown> = {}): RecipeImport {
 	const textProperty = (...keys: string[]) =>
@@ -160,25 +172,74 @@ export function parseRecipeText(body: string, metadata: Record<string, unknown> 
 	}
 	let implicitMethod = false;
 	const implicitMethodLines: string[] = [];
+	/** Glass and tools lines found among the ingredients, for the top of Method. */
+	const serving: string[] = [];
+	/** Alcohol-content lines found among the ingredients, for Description. */
+	const strength: string[] = [];
+	/** The label of a bare `Garnish:`, `Glass:`, or `Alcohol content:` line, which applies to the lines below it. */
+	let label: 'garnish' | 'glass' | 'strength' | '' = '';
 	for (const line of sections.ingredients) {
 		if (!line.trim()) continue;
 		if (
 			implicitMethod ||
-			(result.ingredients.length > 0 && /^(?:stir|shake|combine|strain|garnish|serve)\b/i.test(line.trim()))
+			(result.ingredients.length > 0 &&
+				/^(?:stir|shake|combine|strain|garnish|serve)\b/i.test(line.trim()) &&
+				!/^garnish(?:es)?\s*:\s*$/i.test(line.trim()))
 		) {
 			implicitMethod = true;
 			implicitMethodLines.push(line);
+			continue;
+		}
+		const text = ingredientText(line);
+		// A Wix hashtag link ("Don's Spices #2") can land on its own line: it belongs to the line above.
+		const previous = result.ingredients.at(-1);
+		if (/^#\d+$/.test(text) && previous) {
+			previous.text = `${previous.text} ${text}`;
 			continue;
 		}
 		if ((/^\s/.test(line) && !/^\s{0,3}(?:[-*+]\s+|\d+[.)]\s+)/.test(line)) || /^\s*#/.test(line)) {
 			sections.extra.push(line);
 			continue;
 		}
-		result.ingredients.push(splitIngredient(line.replace(/^\s{0,3}(?:[-*+]\s+|\d+[.)]\s+)/, '')));
+		const labeled = text.replace(/\*\*/g, '').match(/^(garnish(?:es)?|glass|tools?|alcohol content)\s*:\s*(.*)$/i);
+		if (labeled) {
+			const kind = labeled[1]!.toLowerCase();
+			const value = labeled[2]!.trim();
+			if (kind.startsWith('tool')) serving.push(text.replace(/\*\*/g, ''));
+			else if (kind === 'glass') value ? serving.push(`Glass: ${value}`) : (label = 'glass');
+			else if (kind === 'alcohol content') value ? strength.push(value) : (label = 'strength');
+			else if (!value) label = 'garnish';
+			// An inline garnish line stays as the source wrote it.
+			else result.ingredients.push(splitIngredient(text));
+			continue;
+		}
+		const measured = !!splitIngredient(text).amount;
+		if (label === 'strength' || STRENGTH.test(text)) {
+			strength.push(text);
+			continue;
+		}
+		if (label === 'glass' || (!measured && GLASS.test(text))) {
+			serving.push(label === 'glass' ? `Glass: ${text}` : text);
+			label = '';
+			continue;
+		}
+		if (label === 'garnish' && !measured) {
+			result.ingredients.push({ amount: '', text: `Garnish: ${text}` });
+			continue;
+		}
+		label = '';
+		result.ingredients.push(splitIngredient(text));
 	}
-	result.method = [...implicitMethodLines, ...sections.method].join('\n').trim();
+	result.method = [serving.join('\n'), [...implicitMethodLines, ...sections.method].join('\n').trim()]
+		.filter(Boolean)
+		.join('\n\n');
 	result.tastingNotes = sections.tastingNotes.join('\n').trim();
-	result.description = sections.description.join('\n').trim();
+	result.description = [
+		sections.description.join('\n').trim(),
+		strength.length ? `Alcohol content: ${strength.map((part) => part.replace(/\.$/, '')).join(', ')}.` : '',
+	]
+		.filter(Boolean)
+		.join('\n\n');
 	const extra = sections.extra.join('\n').trim();
 	if (extra) {
 		result.description = [result.description, extra].filter(Boolean).join('\n\n');

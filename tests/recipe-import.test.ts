@@ -548,3 +548,88 @@ void test('amounts without an exact fraction character, ranges, and other units 
 	])
 		assert.equal(fractionAmount(amount), amount, amount);
 });
+
+void test('a bare Garnish: label gives one Garnish line per item below it (Liber & Co)', () => {
+	const result = parseRecipeText(
+		'## Ingredients\n- ¾ oz Marion Blackberry Syrup\n- 1 ½ oz gin\n- Garnish:\n- blackberries\n- lemon wheel\n## Method\nShake.',
+	);
+	assert.deepEqual(result.ingredients, [
+		{ amount: '¾ oz', text: 'Marion Blackberry Syrup' },
+		{ amount: '1 ½ oz', text: 'gin' },
+		{ amount: '', text: 'Garnish: blackberries' },
+		{ amount: '', text: 'Garnish: lemon wheel' },
+	]);
+	// Bold labels and a trailing label with nothing below it.
+	assert.deepEqual(parseRecipeText('## Ingredients\n- 1 oz gin\n- **Garnish:**\n- lemon twist').ingredients.at(-1), {
+		amount: '',
+		text: 'Garnish: lemon twist',
+	});
+	assert.deepEqual(parseRecipeText('## Ingredients\n- 1 oz gin\n- Garnish:').ingredients, [
+		{ amount: '1 oz', text: 'gin' },
+	]);
+});
+
+void test('glass and tools lines move from Ingredients to the top of Method', () => {
+	const result = parseRecipeText(
+		'## Ingredients\n- ¾ oz Lemon Lavender Cordial\n- 1 oz gin\n- Glass:\n- champagne flute\n- Garnish:\n- lemon twist\n## Method\nShake and strain.',
+	);
+	assert.deepEqual(result.ingredients, [
+		{ amount: '¾ oz', text: 'Lemon Lavender Cordial' },
+		{ amount: '1 oz', text: 'gin' },
+		{ amount: '', text: 'Garnish: lemon twist' },
+	]);
+	assert.equal(result.method, 'Glass: champagne flute\n\nShake and strain.');
+	const named = parseRecipeText(
+		'## Ingredients\n- .75oz gin\n- Pearl Diver Glass\n- Cocktail Coupe\n- Tools: shaker, strainer\n- Glass: rocks\n## Method\nShake.',
+	);
+	assert.deepEqual(named.ingredients, [{ amount: '.75oz', text: 'gin' }]);
+	assert.equal(named.method, 'Pearl Diver Glass\nCocktail Coupe\nTools: shaker, strainer\nGlass: rocks\n\nShake.');
+	// A measured line naming glassware is still an ingredient.
+	assert.equal(parseRecipeText('## Ingredients\n- 1 glass of wine').ingredients.length, 1);
+});
+
+void test('alcohol-content lines move from Ingredients to Description', () => {
+	const result = parseRecipeText(
+		'## Ingredients\n- 1 oz gin\n- 2/3 oz amaro\n- Alcohol content:\n- 1.6 standard drinks\n- 22.96% alc./vol. (45.92° proof)\n- 23 grams of pure alcohol\n## Method\nStir.',
+	);
+	assert.deepEqual(result.ingredients, [
+		{ amount: '1 oz', text: 'gin' },
+		{ amount: '2/3 oz', text: 'amaro' },
+	]);
+	assert.equal(
+		result.description,
+		'Alcohol content: 1.6 standard drinks, 22.96% alc./vol. (45.92° proof), 23 grams of pure alcohol.',
+	);
+});
+
+void test('hashtag text stays in its ingredient line (Wix hashtag links)', () => {
+	const linked = parseRecipeText(
+		"## Ingredients\n- .5oz Don's Spices [#2](https://www.shakerofspirits.com/shaker-of-spirits/hashtags/2)\n- .5oz lime",
+	);
+	assert.deepEqual(linked.ingredients[0], { amount: '.5oz', text: "Don's Spices #2" });
+	for (const split of [
+		"## Ingredients\n- .25oz Don's Spices\n- #2\n- .5oz lime",
+		"## Ingredients\n- .25oz Don's Spices\n#2\n- .5oz lime",
+	]) {
+		const result = parseRecipeText(split);
+		assert.deepEqual(result.ingredients, [
+			{ amount: '.25oz', text: "Don's Spices #2" },
+			{ amount: '.5oz', text: 'lime' },
+		]);
+		assert.equal(result.description, '');
+	}
+});
+
+void test('an inline garnish line keeps its wording, and a bare label without a bullet still labels the lines below', () => {
+	assert.deepEqual(parseRecipeText('## Ingredients\n- 1 oz gin\n- **Garnish:** lemon twist').ingredients.at(-1), {
+		amount: '',
+		text: '**Garnish:** lemon twist',
+	});
+	assert.deepEqual(
+		parseRecipeText('## Ingredients\n- 1 oz gin\nGarnish:\n- lime wheel\n## Method\nShake.').ingredients,
+		[
+			{ amount: '1 oz', text: 'gin' },
+			{ amount: '', text: 'Garnish: lime wheel' },
+		],
+	);
+});

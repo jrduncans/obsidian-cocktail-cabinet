@@ -51,7 +51,7 @@ The page is parsed with `DOMParser`, never run. In order:
 2. **Visible text.** Scripts, styles, navigation, forms, and elements hidden inline (`hidden`, `aria-hidden="true"`, `display:none`) are removed; the page's `article` or `main` (else `body`) goes through Obsidian's `htmlToMarkdown`, then the existing `parseRecipeText`.
 3. **Combined.** Structured lines win where present; any part they lack comes from the text. Punch gives ingredients from microdata and Method from its Directions heading.
 
-The review opens as for pasted text, with the warnings it gives today, and **Original text** shows what was read from the page, so a fidelity check needs no second window. Glass, ice, and garnish have no fields; they stay where the source put them, in Method or Description.
+The review opens as for pasted text, with the warnings it gives today, and **Original text** shows what was read from the page, so a fidelity check needs no second window. Glass, ice, and garnish have no fields; they stay where the source put them, in Method or Description, except for the lines read out of Ingredients described under [as built](#as-built).
 
 ### Source
 
@@ -69,6 +69,7 @@ Checked on 2026-11-22 against saved copies of the sampled pages, then in the dev
 - **Sites vary by client.** Obsidian was served a version of Difford's with no recipe data, which curl got, and liquor.com answered Obsidian though it refused curl. Testing a site means testing it in Obsidian.
 - **Fraction slash.** Amounts accept `2⁄3` (U+2044) as well as `2/3`.
 - **Spaced fractions, qualifiers, and other echoes** (2026-11-25, from the unlinked lines in `knowledge`). `1 ½ oz` reads like `1½ oz`; it had been left whole as the wording, so logging skipped the gin in three recipes. A qualifier before the amount (`heavy ¾ oz`, `a scant 1 oz`, also generous, short, healthy, full, heaping, rounded, bare, barely) stays with the amount, which remains unmeasured. An echo may be a range or another volume unit (`1 barspoon / 1 tsp`, `⅓–½ oz. / 10–15 ml.`), so it no longer ends up in the wording.
+- **Labels and stray lines in Ingredients** (2026-11-25, from cleaning up imported recipes in `knowledge`). A bare `Garnish:` line with its items on the lines below (Liber & Co) gives one `Garnish: <item>` line per item, so each reads as a garnish; an inline `Garnish: …` line stays as written. `Glass:` with its value below, a line naming only glassware ("Pearl Diver Glass", "Cocktail Coupe"), and `Tools: …` move to the top of Method, as written. Alcohol-content lines ("Alcohol content:", "1.6 standard drinks", "22.96% alc./vol.", "23 grams of pure alcohol") move to Description as one sentence; dropping them was rejected, since they're the source's words. A web link in an ingredient line keeps only its text, and a hashtag left on its own line (`#2`) joins the line above: Wix blogs such as Shaker of Spirits link "#2" in "Don's Spices #2" to a hashtag page.
 - **Failure.** The text field is left as `Source: <url>` and a blank line, so pasting the recipe below keeps the source. Shaker of Spirits builds its page with scripts and lands here.
 
 ### Not supported
