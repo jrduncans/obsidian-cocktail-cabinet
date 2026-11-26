@@ -15,6 +15,7 @@ try {
 		'rename.test',
 		'note-edit.test',
 		'recipe-import.test',
+		'agent-cli.test',
 		'written-as.test',
 		'web-recipe.test',
 		'recipe-draft.test',

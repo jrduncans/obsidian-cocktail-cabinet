@@ -328,6 +328,18 @@ obsidian cocktail-cabinet:link-line path="<recipe>" line=<n> target=<note> [text
 - \`link-line\` links one line of the Ingredients list, numbered from 1 as \`create-recipe\` reports it, choosing the link text as the **Link text** setting does (the cabinet name for a name it counts, other words kept beside the link, else the recipe's wording) unless \`text\` is given, which links the whole wording. It refuses a line that's already linked. \`remember\` adds the wording to the note's \`${PROP.writtenAs}\`: only when the user asks.
 - Both write to the vault, so expect the user to approve each call.
 
+## Linking existing recipes
+
+To work through recipe lines that link to nothing:
+
+\`\`\`bash
+obsidian cocktail-cabinet:unlinked [recipe=<path>] [garnishes] [limit=<n>]
+obsidian cocktail-cabinet:add-bottle name=<name> [type=<type note>] [abv=<percent>] [volume=<mL>] [open=<mL>] [unopened=<n>] [aliases=<a,b>] [description=<text>]
+\`\`\`
+
+- \`unlinked\` lists what **Review unlinked ingredients** shows, grouped by wording, most widely used first: each line's recipe \`path\` and \`line\` as \`link-line\` takes it, and up to three \`suggestions\` per wording. \`lines\` counts every line, even past \`limit\`. Link each with \`link-line\`, at the level the recipe asks for.
+- \`add-bottle\` creates a bottle as **Add a bottle** does, in volume tracking with nothing open unless \`open\` or \`unopened\` is given, for a bottle a recipe names that has no note yet. \`abv\` is a percent. It refuses a name already in use. It writes to the vault, so expect the user to approve each call.
+
 ## Asking the cabinet
 
 With Obsidian running and its command line enabled, these commands print JSON computed by the plugin's own matching rules. Use them instead of reading Bases or scanning notes:

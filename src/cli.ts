@@ -10,6 +10,8 @@ import { defaultLinkSource, wordingLink } from './core/link-text';
 import { canRemember } from './core/written-as';
 import type { CabinetNote } from './core/schema';
 import { RecipeLinkStore } from './vault/recipe-links';
+import { bottleProperties, unlinkedReport } from './core/agent-cli';
+import { PROP } from './core/schema';
 
 /**
  * Commands for agents, through the official `obsidian` CLI (Obsidian 1.12.2): read-only availability, and
@@ -176,6 +178,71 @@ export function registerCli(plugin: CocktailCabinetPlugin) {
 				link: target.path,
 				remembered,
 			};
+		}),
+	);
+	register(
+		'cocktail-cabinet:unlinked',
+		'Unlinked ingredient lines, as Review unlinked ingredients shows them, numbered for link-line',
+		{
+			recipe: { value: '<path>', description: 'Only this recipe' },
+			garnishes: { description: 'Also marked garnishes that match a note, as the review’s toggle shows them' },
+			limit: listFlags.limit,
+		},
+		json(async (params) => {
+			const { limit } = parseListFlags(params);
+			const notes = plugin.store.notes();
+			const recipe = params.recipe === undefined ? undefined : notePath(params.recipe, 'recipe');
+			const recipes = notes.filter((note) => note.kind === 'recipe' && (!recipe || note.path === recipe));
+			if (recipe && !recipes.length) throw new Error(`${recipe} isn’t a cabinet recipe.`);
+			const contents = await Promise.all(
+				recipes.map((note) => {
+					const file = plugin.app.vault.getAbstractFileByPath(note.path);
+					return file instanceof TFile ? plugin.app.vault.cachedRead(file) : Promise.resolve('');
+				}),
+			);
+			return unlinkedReport(
+				recipes.map((note, index) => ({ note, content: contents[index]! })),
+				notes,
+				{ includeGarnishes: params.garnishes === 'true', ...(limit ? { limit } : {}) },
+			);
+		}),
+	);
+	register(
+		'cocktail-cabinet:add-bottle',
+		'Create a bottle note, as Add a bottle does: volume tracking, nothing open unless given',
+		{
+			name: { value: '<name>', description: 'The bottle’s name, as the label gives it', required: true },
+			type: { value: '<path or name>', description: 'Its ingredient type; leave out when none fits' },
+			abv: { value: '<percent>', description: 'Alcohol by volume as a percent, such as 40' },
+			volume: { value: '<mL>', description: 'One bottle’s volume in mL, such as 750' },
+			open: { value: '<mL>', description: 'mL left in an open bottle; 0 when left out' },
+			unopened: { value: '<n>', description: 'Unopened bottles; 0 when left out' },
+			aliases: { value: '<a,b>', description: 'Other names for it, comma-separated' },
+			description: { value: '<text>', description: 'A description for the note' },
+		},
+		json(async (params) => {
+			const name = optional(params.name)?.trim();
+			if (!name) throw new Error('Give name=<name>.');
+			const given = optional(params.type);
+			const type = given === undefined ? undefined : notePath(given, 'type');
+			const typeNote = type ? plugin.store.notes().find((note) => note.path === type) : undefined;
+			if (type && typeNote?.kind !== 'type') throw new Error(`${type} isn’t an ingredient type.`);
+			const properties = bottleProperties({
+				...(optional(params.abv) !== undefined ? { abv: optional(params.abv) } : {}),
+				...(optional(params.volume) !== undefined ? { volume: optional(params.volume) } : {}),
+				...(optional(params.open) !== undefined ? { open: optional(params.open) } : {}),
+				...(optional(params.unopened) !== undefined ? { unopened: optional(params.unopened) } : {}),
+				...(optional(params.aliases) !== undefined ? { aliases: optional(params.aliases) } : {}),
+			});
+			if (typeNote) properties[PROP.type] = plugin.store.link(typeNote);
+			const description = optional(params.description);
+			const file = await plugin.store.create({
+				kind: 'bottle',
+				name,
+				description: description === undefined ? '' : unescape(description),
+				properties,
+			});
+			return { path: file.path, name, ...(typeNote ? { type: typeNote.path } : {}) };
 		}),
 	);
 }

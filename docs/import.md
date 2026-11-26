@@ -120,6 +120,11 @@ As built on 2026-11-22:
 - **`name=`** names a recipe whose text doesn't start with its name; `link-line` takes `remember` to add the wording to `cc-written-as`, refused silently (`remembered: false`) when the note already recognizes it.
 - **Tags** ending Tasting Notes move into `tags`, as in the recipe form.
 
+Added 2026-11-25, from a long agent session linking unlinked lines in `knowledge`, where the agent rebuilt the review's list from the plugin's source and wrote about 40 bottle notes by hand:
+
+- **`cocktail-cabinet:unlinked [recipe=<path>] [garnishes] [limit=<n>]`** prints what **Review unlinked ingredients** shows, grouped by wording, with each line's position as `link-line` takes it and up to three suggestions. Read-only.
+- **`cocktail-cabinet:add-bottle name=<name> [type=…] [abv=<percent>] [volume=<mL>] [open=<mL>] [unopened=<n>] [aliases=<a,b>] [description=…]`** creates a bottle as **Add a bottle** does, in volume tracking, with nothing open unless given, and refuses a name in use. It writes, so it belongs in the "ask" group with `create-recipe` and `link-line`. Status tracking and other stock stay in the form.
+
 ## Suggested slices
 
 1. **Remembered wordings.** `cc-written-as`, the offer to remember in the three linking places, pre-linking in the review, and the `knowledge` starting entries. Useful at once for pasted recipes.
