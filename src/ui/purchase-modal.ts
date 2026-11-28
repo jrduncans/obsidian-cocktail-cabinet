@@ -151,10 +151,12 @@ export class PurchaseModal extends CabinetForm {
 	private typePicker(row: Row, label: HTMLElement) {
 		const select = label.createEl('select', { cls: 'dropdown cocktail-cabinet-purchase-which' });
 		select.createEl('option', { value: '', text: 'Which one?' });
-		for (const source of this.sourcesFor(row.item))
-			select.createEl('option', { value: source.path, text: source.name });
+		const sources = [...this.sourcesFor(row.item)];
+		// A note just created here may not be indexed under the type yet: list it, chosen, either way.
+		if (row.source && !sources.some((source) => source.path === row.source!.path)) sources.push(row.source);
+		for (const source of sources) select.createEl('option', { value: source.path, text: source.name });
 		select.createEl('option', { value: NEW_STOCK, text: 'New stock…' });
-		select.value = row.source && !row.created ? row.source.path : '';
+		select.value = row.source?.path ?? '';
 		select.addEventListener('change', () => {
 			row.bought = true;
 			if (select.value === NEW_STOCK) {
@@ -176,8 +178,8 @@ export class PurchaseModal extends CabinetForm {
 
 	private fields(row: Row, fields: HTMLElement, el: HTMLElement) {
 		if (row.created) {
-			const name = row.item.kind === 'type' && row.source ? `: ${row.source.name}` : '';
-			fields.createSpan({ cls: 'cocktail-cabinet-purchase-note', text: `New${name}, added with its stock` });
+			// A type row's picker names the new note; any other row is the note itself.
+			fields.createSpan({ cls: 'cocktail-cabinet-purchase-note', text: 'New, added with its stock' });
 			return;
 		}
 		if (row.problem) {
