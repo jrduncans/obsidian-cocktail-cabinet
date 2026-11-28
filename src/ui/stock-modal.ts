@@ -67,26 +67,30 @@ export class StockModal extends CabinetForm {
 				nameInput?.setValue(value);
 			}
 		};
-		new Setting(this.contentEl)
-			.setName('Name')
-			.setClass('cocktail-cabinet-name')
-			.addText((text) => {
-				nameInput = text.setValue(name).onChange((value) => {
-					name = value;
+		const nameRow = () =>
+			new Setting(this.contentEl)
+				.setName('Name')
+				.setClass('cocktail-cabinet-name')
+				.addText((text) => {
+					nameInput = text.setValue(name).onChange((value) => {
+						name = value;
+					});
 				});
-			});
-		const typesRow = this.choose(
-			this.bottle ? 'Ingredient type (optional)' : 'Provides ingredients',
-			() => this.plugin.store.notes().filter((note) => note.kind === 'type'),
-			(notes) => {
-				types = notes;
-				suggest();
-			},
-			!this.bottle,
-			types,
-			newTypeChoice(this.plugin),
-		);
+		const typesRow = () =>
+			this.choose(
+				this.bottle ? 'Ingredient type (optional)' : 'Provides ingredients',
+				() => this.plugin.store.notes().filter((note) => note.kind === 'type'),
+				(notes) => {
+					types = notes;
+					suggest();
+				},
+				!this.bottle,
+				types,
+				newTypeChoice(this.plugin),
+			);
 		if (this.bottle) {
+			nameRow();
+			typesRow();
 			this.text('Bottle volume (mL)', volume, (value) => {
 				volume = value;
 				open.setVolume(value);
@@ -96,12 +100,16 @@ export class StockModal extends CabinetForm {
 				abv = value;
 			});
 		} else {
+			// Form and Provides decide the suggested name, so they come before it.
+			let provides: Setting | undefined;
 			this.select('Form', STOCK_FORMS, form, (value) => {
 				form = value;
 				// A staple is the ingredient itself. Any selection comes back if the form changes again.
-				typesRow.settingEl.toggle(form !== KITCHEN_STAPLE_FORM);
+				provides?.settingEl.toggle(form !== KITCHEN_STAPLE_FORM);
 				suggest();
 			});
+			provides = typesRow();
+			nameRow();
 		}
 		this.select('Track stock by', STOCK_TRACKING, tracking, (value) => {
 			tracking = value;

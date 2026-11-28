@@ -57,7 +57,7 @@ export class IngredientModal extends CabinetForm {
 		let parentType: CabinetNote[] = [];
 		this.text('Name', this.name, (value) => {
 			this.name = value;
-		});
+		}).setClass('cocktail-cabinet-name');
 		this.area('Description', this.description, (value) => {
 			this.description = value;
 		});
