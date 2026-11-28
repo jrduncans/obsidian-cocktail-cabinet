@@ -2,7 +2,17 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PROP } from '../src/core/schema';
 import { renderNote } from '../src/core/notes';
-import { houseName, KITCHEN_STAPLE_FORM, stapleProperties, stockProperties, suggestedName } from '../src/core/stock';
+import {
+	BOTTLE_ANSWER,
+	defaultTracking,
+	houseName,
+	KITCHEN_STAPLE_FORM,
+	STOCK_ANSWERS,
+	stapleProperties,
+	stockKind,
+	stockProperties,
+	suggestedName,
+} from '../src/core/stock';
 import { BottleAmount } from '../src/core/bottle-amount';
 import { placeNewChoice } from '../src/core/picker-choices';
 import type { StockInput } from '../src/core/stock';
@@ -294,4 +304,20 @@ void test('a picker puts New type first until something is typed, then after the
 	assert.deepEqual(placeNewChoice(['Gin', 'Rum'], '   ', choice), ['new:', 'Gin', 'Rum']);
 	assert.deepEqual(placeNewChoice(['Hojicha Syrup'], ' hojicha ', choice), ['Hojicha Syrup', 'new:hojicha']);
 	assert.deepEqual(placeNewChoice([], 'Hojicha Syrup', choice), ['new:Hojicha Syrup']);
+});
+
+void test('Add stock asks what it is: nothing chosen, then Bottle, then each other-stock Form', () => {
+	assert.deepEqual(
+		STOCK_ANSWERS.slice(0, 2).map(([value]) => value),
+		['', BOTTLE_ANSWER],
+	);
+	assert.ok(STOCK_ANSWERS.some(([value]) => value === 'Homemade syrup'));
+	assert.ok(STOCK_ANSWERS.some(([value]) => value === KITCHEN_STAPLE_FORM));
+	assert.equal(stockKind(''), null);
+	assert.equal(stockKind(BOTTLE_ANSWER), 'bottle');
+	assert.equal(stockKind('Homemade syrup'), 'ingredient');
+	assert.equal(stockKind(KITCHEN_STAPLE_FORM), 'ingredient');
+	assert.equal(stockKind('Something else'), null);
+	assert.equal(defaultTracking(BOTTLE_ANSWER), 'volume');
+	assert.equal(defaultTracking('Homemade syrup'), 'status');
 });

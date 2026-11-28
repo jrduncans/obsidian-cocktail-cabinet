@@ -209,7 +209,7 @@ export function registerCli(plugin: CocktailCabinetPlugin) {
 	);
 	register(
 		'cocktail-cabinet:add-bottle',
-		'Create a bottle note, as Add a bottle does: volume tracking, nothing open unless given',
+		'Create a bottle note, as Add stock does for a bottle: volume tracking, nothing open unless given',
 		{
 			name: { value: '<name>', description: 'The bottle’s name, as the label gives it', required: true },
 			type: { value: '<path or name>', description: 'Its ingredient type; leave out when none fits' },

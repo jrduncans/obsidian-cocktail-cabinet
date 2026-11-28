@@ -123,7 +123,7 @@ As built on 2026-11-22:
 Added 2026-11-25, from a long agent session linking unlinked lines in `knowledge`, where the agent rebuilt the review's list from the plugin's source and wrote about 40 bottle notes by hand:
 
 - **`cocktail-cabinet:unlinked [recipe=<path>] [garnishes] [limit=<n>]`** prints what **Review unlinked ingredients** shows, grouped by wording, with each line's position as `link-line` takes it and up to three suggestions. Read-only.
-- **`cocktail-cabinet:add-bottle name=<name> [type=…] [abv=<percent>] [volume=<mL>] [open=<mL>] [unopened=<n>] [aliases=<a,b>] [description=…]`** creates a bottle as **Add a bottle** does, in volume tracking, with nothing open unless given, and refuses a name in use. It writes, so it belongs in the "ask" group with `create-recipe` and `link-line`. Status tracking and other stock stay in the form.
+- **`cocktail-cabinet:add-bottle name=<name> [type=…] [abv=<percent>] [volume=<mL>] [open=<mL>] [unopened=<n>] [aliases=<a,b>] [description=…]`** creates a bottle as **Add stock** does for a bottle, in volume tracking, with nothing open unless given, and refuses a name in use. It writes, so it belongs in the "ask" group with `create-recipe` and `link-line`. Status tracking and other stock stay in the form.
 
 ## Suggested slices
 

@@ -8,8 +8,6 @@ import { subtypeParents } from '../core/relationships';
 
 type Level = 'category' | 'family' | 'type';
 const LEVELS: Record<Level, string> = { type: 'Type', family: 'Family', category: 'Category' };
-/** What **Then add** opens for the new type: a bottle or other stock form, with the type selected. */
-const THEN_ADD = { '': 'Nothing', bottle: 'A bottle', ingredient: 'Other stock' } as const;
 
 /** **New type…** in a type picker: the type form over the current one, named from the search. */
 export function newTypeChoice(plugin: CocktailCabinetPlugin): NewNoteChoice {
@@ -21,7 +19,7 @@ export function newTypeChoice(plugin: CocktailCabinetPlugin): NewNoteChoice {
 
 export class IngredientModal extends CabinetForm {
 	private description = '';
-	private thenAdd: keyof typeof THEN_ADD = '';
+	private thenAddStock = false;
 
 	/** `chooseLevel` adds a Level dropdown, for **Add ingredient type**: families and categories are rarely added. */
 	constructor(
@@ -95,9 +93,14 @@ export class IngredientModal extends CabinetForm {
 			});
 			// Only from the command: a form that asked for the type carries on with it itself.
 			if (!this.created)
-				this.select('Then add', THEN_ADD, this.thenAdd, (value) => {
-					this.thenAdd = value as keyof typeof THEN_ADD;
-				}).setDesc('Open a bottle or other stock form for the new type after it’s created.');
+				this.toggle(
+					'Then add stock',
+					this.thenAddStock,
+					(value) => {
+						this.thenAddStock = value;
+					},
+					'Open Add stock for the new type after it’s created.',
+				);
 		}
 		this.submit('Create note', async () => {
 			const properties: Properties = {};
@@ -128,8 +131,7 @@ export class IngredientModal extends CabinetForm {
 				parents: (parentType[0] ? parentType : parents).map((item) => item.path),
 			};
 			if (this.created) this.created(note);
-			else if (this.kind === 'type' && this.thenAdd)
-				new StockModal(this.plugin, this.thenAdd === 'bottle', { types: [note] }).open();
+			else if (this.kind === 'type' && this.thenAddStock) new StockModal(this.plugin, { types: [note] }).open();
 			else await this.plugin.store.open(file.path);
 		});
 	}

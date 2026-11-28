@@ -10,12 +10,17 @@ export interface StockChange {
 	consumedMl: number;
 	updates: Record<string, number>;
 	opened: number;
+	/** Took everything the source held, short of what was poured: **Use what's left**. */
+	finished?: boolean;
 }
 export interface DrawdownPlan {
 	changes: StockChange[];
 	errors: string[];
-	/** Sources whose stock can't cover their pours, with their error; editing their stock may fix it. */
-	blocked: { path: string; error: string }[];
+	/**
+	 * Sources whose stock can't cover their pours, with their error; editing their stock may fix it.
+	 * `short` when the source holds too little, so **Use what's left** can take what it has.
+	 */
+	blocked: { path: string; error: string; short: boolean }[];
 }
 /** `rest` takes everything open in a bottle, or all of other stock's amount, whatever the servings: finishing it off. */
 export interface SelectedPour {
@@ -24,6 +29,9 @@ export interface SelectedPour {
 	rest?: boolean;
 }
 const EPSILON = 1e-8;
+
+/** A source holds less than its pours; **Use what's left** can take what it has instead. */
+class ShortError extends Error {}
 
 /** Capture active stock fields; an empty unopened count means zero. */
 export function stockSnapshot(note: CabinetNote, properties: Record<string, unknown>): StockSource {
@@ -113,7 +121,7 @@ function drawdown(source: StockSource, consumedMl: number): StockChange {
 	if (fields[PROP.stockTracking] !== 'volume') throw new Error('Not tracked in mL.');
 	if (source.note.kind === 'ingredient') {
 		const remaining = quantity(fields, PROP.remaining) ?? 0;
-		if (consumedMl > remaining + EPSILON) throw new Error(`${formatMl(consumedMl - remaining)} mL short.`);
+		if (consumedMl > remaining + EPSILON) throw new ShortError(`${formatMl(consumedMl - remaining)} mL short.`);
 		return { source, consumedMl, updates: { [PROP.remaining]: Math.max(0, remaining - consumedMl) }, opened: 0 };
 	}
 	if (source.note.kind !== 'bottle') throw new Error('Select a bottle or other stock.');
@@ -125,10 +133,10 @@ function drawdown(source: StockSource, consumedMl: number): StockChange {
 	if (consumedMl <= open + EPSILON) {
 		return { source, consumedMl, updates: { [PROP.open]: Math.max(0, open - consumedMl) }, opened: 0 };
 	}
-	if (unopened === 0) throw new Error(`${formatMl(consumedMl - open)} mL short.`);
+	if (unopened === 0) throw new ShortError(`${formatMl(consumedMl - open)} mL short.`);
 	if (volume === null) throw new Error('Bottle size is unknown, so another can’t be opened.');
 	const needed = consumedMl - open;
-	if (needed > unopened * volume + EPSILON) throw new Error(`${formatMl(needed - unopened * volume)} mL short.`);
+	if (needed > unopened * volume + EPSILON) throw new ShortError(`${formatMl(needed - unopened * volume)} mL short.`);
 	const opened = Math.max(1, Math.ceil((needed - EPSILON) / volume));
 	return {
 		source,
@@ -141,11 +149,43 @@ function drawdown(source: StockSource, consumedMl: number): StockChange {
 	};
 }
 
-/** Aggregate each source before arithmetic. Any error invalidates the entire plan. */
+/**
+ * **Use what's left**: pour as usual when the source has enough, otherwise take everything it holds
+ * (the open bottle and any sealed ones, or other stock's whole amount) and leave it at 0.
+ */
+function finishOff(source: StockSource, consumedMl: number): StockChange {
+	try {
+		return drawdown(source, consumedMl);
+	} catch (error) {
+		if (!(error instanceof ShortError)) throw error;
+	}
+	const fields = source.fields;
+	if (source.note.kind === 'ingredient') {
+		const remaining = quantity(fields, PROP.remaining) ?? 0;
+		return { source, consumedMl: remaining, updates: { [PROP.remaining]: 0 }, opened: 0, finished: true };
+	}
+	const open = quantity(fields, PROP.open) ?? 0;
+	const unopened = quantity(fields, PROP.unopened, true) ?? 0;
+	// drawdown has already refused a sealed bottle of unknown size, so volume is known when there are any.
+	const volume = quantity(fields, PROP.volume) ?? 0;
+	return {
+		source,
+		consumedMl: open + unopened * volume,
+		updates: { [PROP.open]: 0, [PROP.unopened]: 0 },
+		opened: unopened,
+		finished: true,
+	};
+}
+
+/**
+ * Aggregate each source before arithmetic. Any error invalidates the entire plan.
+ * Sources in `finish` take what they hold when it isn't enough (see `finishOff`).
+ */
 export function planDrawdown(
 	sources: readonly StockSource[],
 	pours: readonly SelectedPour[],
 	servings: number,
+	finish: ReadonlySet<string> = new Set(),
 ): DrawdownPlan {
 	if (!Number.isFinite(servings) || servings <= 0)
 		return { changes: [], errors: ['Enter more than 0 servings.'], blocked: [] };
@@ -175,11 +215,11 @@ export function planDrawdown(
 		try {
 			if (!source) throw new Error('Moved or deleted. Select another.');
 			if (!Number.isFinite(ml)) throw new Error('Too many servings.');
-			changes.push(drawdown(source, ml));
+			changes.push(finish.has(path) ? finishOff(source, ml) : drawdown(source, ml));
 		} catch (error) {
 			const message = `${source?.note.name ?? path}: ${error instanceof Error ? error.message : 'Couldn’t calculate.'}`;
 			errors.push(message);
-			if (source) blocked.push({ path, error: message });
+			if (source) blocked.push({ path, error: message, short: error instanceof ShortError });
 		}
 	}
 	return { changes, errors, blocked };

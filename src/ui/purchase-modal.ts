@@ -13,7 +13,7 @@ import type { StockStore } from '../vault/stock-store';
 import { CabinetForm } from './form';
 import { StockModal } from './stock-modal';
 
-const NEW_BOTTLE = '__new-bottle__';
+const NEW_STOCK = '__new-stock__';
 
 interface Row {
 	/** The note on the list, or the one added: a bottle, other stock, or an ingredient type. */
@@ -24,7 +24,7 @@ interface Row {
 	source?: CabinetNote;
 	before?: StockState;
 	entry?: PurchaseEntry;
-	/** Created here with Add a bottle or Add other stock, which recorded its stock already. */
+	/** Created here with Add stock, which recorded its stock already. */
 	created?: boolean;
 	problem?: string;
 	el?: HTMLElement;
@@ -153,12 +153,12 @@ export class PurchaseModal extends CabinetForm {
 		select.createEl('option', { value: '', text: 'Which one?' });
 		for (const source of this.sourcesFor(row.item))
 			select.createEl('option', { value: source.path, text: source.name });
-		select.createEl('option', { value: NEW_BOTTLE, text: 'New bottle…' });
+		select.createEl('option', { value: NEW_STOCK, text: 'New stock…' });
 		select.value = row.source && !row.created ? row.source.path : '';
 		select.addEventListener('change', () => {
 			row.bought = true;
-			if (select.value === NEW_BOTTLE) {
-				this.addNew(true, row);
+			if (select.value === NEW_STOCK) {
+				this.addNew(row);
 				return;
 			}
 			const source = this.plugin.store.notes().find((note) => note.path === select.value);
@@ -214,7 +214,7 @@ export class PurchaseModal extends CabinetForm {
 		const showHelp = () =>
 			help.setText(
 				entry.volume.trim() && Number(entry.volume) !== original
-					? 'New size for this bottle from now on, such as 750 to 700 mL. A 375 mL or 1 L is a separate bottle: use Add something else → New bottle.'
+					? 'New size for this bottle from now on, such as 750 to 700 mL. A 375 mL or 1 L is a separate bottle: use Add something else → New stock.'
 					: '',
 			);
 		this.input(
@@ -257,8 +257,8 @@ export class PurchaseModal extends CabinetForm {
 			.notes()
 			.filter((note) => (note.kind === 'bottle' || note.kind === 'ingredient') && !listed.has(note.path));
 		new AddPicker(this.app, notes, (choice) => {
-			if (choice === 'bottle' || choice === 'ingredient') {
-				this.addNew(choice === 'bottle');
+			if (choice === 'new') {
+				this.addNew();
 				return;
 			}
 			void this.run(async () => {
@@ -270,9 +270,9 @@ export class PurchaseModal extends CabinetForm {
 		}).open();
 	}
 
-	/** Add a bottle or other stock; for a type row, a bottle of that type. */
-	private addNew(bottle: boolean, forType?: Row) {
-		new StockModal(this.plugin, bottle, {
+	/** Add a bottle or other stock; for a type row, one of that type. */
+	private addNew(forType?: Row) {
+		new StockModal(this.plugin, {
 			types: forType ? [forType.item] : [],
 			created: (note) => {
 				const row = forType ?? { item: note, onList: false, bought: true };
@@ -350,9 +350,9 @@ function shapeRank(row: Row): number {
 	}
 }
 
-type AddChoice = CabinetNote | 'bottle' | 'ingredient';
+type AddChoice = CabinetNote | 'new';
 
-/** Bottles and other stock not already in the form, after options to create a new one. */
+/** Bottles and other stock not already in the form, after the option to create one. */
 class AddPicker extends FuzzySuggestModal<AddChoice> {
 	constructor(
 		app: App,
@@ -363,11 +363,10 @@ class AddPicker extends FuzzySuggestModal<AddChoice> {
 		this.setPlaceholder('What else did you buy?');
 	}
 	getItems(): AddChoice[] {
-		return ['bottle', 'ingredient', ...this.notes];
+		return ['new', ...this.notes];
 	}
 	getItemText(choice: AddChoice): string {
-		if (choice === 'bottle') return 'New bottle…';
-		if (choice === 'ingredient') return 'New other stock…';
+		if (choice === 'new') return 'New stock…';
 		return `${choice.name} · ${choice.kind === 'bottle' ? 'bottle' : 'other stock'}`;
 	}
 	onChooseItem(choice: AddChoice) {

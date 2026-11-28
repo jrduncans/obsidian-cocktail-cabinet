@@ -80,7 +80,7 @@ Notes, links, and properties are the system: they stay readable and editable wit
 ## First steps
 
 1. Open ${view('Other stock', 'Kitchen staples')}, walk through your kitchen, and set what you have: Have, Low, or Out.
-2. Record your bottles. Starter bottles and types start as Unknown; set the stock on a note you have, or use **Add a bottle** for one that's missing. See ${page('Stock')}.
+2. Record your bottles. Starter bottles and types start as Unknown; set the stock on a note you have, or use **Add stock** for one that's missing. See ${page('Stock')}.
 3. Add a favorite recipe with **Add recipe**, or paste one from a website. See ${page('Recipes')}.
 4. Run ${viewOpenLink('can-make')} to see what your cabinet makes now, then make one and run **Log this cocktail** on its recipe. See ${page('Making Drinks')}.
 
@@ -128,15 +128,15 @@ Stock is what you have: named bottles, and other stock such as fresh fruit, juic
 
 ## Bottles
 
-${view('Bottles')} lists your bottles. **Add a bottle** records one: its type, size, ABV, and stock. One note covers an open bottle and any sealed bottles of the same size and strength. Starter bottles start as Unknown; record stock on the existing note when you have that bottle.
+${view('Bottles')} lists your bottles. **Add stock** asks what you're adding first; choose **Bottle** for a product you buy by brand, with a size, and record its type, size, ABV, and stock. One note covers an open bottle and any sealed bottles of the same size and strength. Starter bottles start as Unknown; record stock on the existing note when you have that bottle.
 
 ## Other stock
 
-${view('Other stock')} lists everything else. **Add other stock** records a source and the types it provides: limes provide lime juice and lime peel. Homemade syrups and prepared juice are named “House …” by default. On a type note, **Add a bottle of this type** and **Add other stock for this type** start with the type filled in.
+${view('Other stock')} lists everything else: fresh ingredients, juices, syrups, and the like, even when you keep them in a bottle. In **Add stock**, choose what describes it, then the types it provides: limes provide lime juice and lime peel. Homemade syrups and prepared juice are named “House …” by default. On a type note, **Add stock for this type** starts with the type filled in.
 
 ## Kitchen staples
 
-Everyday things such as salt, mint, and saline solution are kitchen staples: one note each, tracked by availability, linked directly from recipes. ${view('Other stock', 'Kitchen staples')} lists them. **Add other stock** with the **Kitchen staple** form adds one.
+Everyday things such as salt, mint, and saline solution are kitchen staples: one note each, tracked by availability, linked directly from recipes. ${view('Other stock', 'Kitchen staples')} lists them. **Add stock**, choosing **Kitchen staple**, adds one.
 
 ## Amount or availability
 
@@ -338,7 +338,7 @@ obsidian cocktail-cabinet:add-bottle name=<name> [type=<type note>] [abv=<percen
 \`\`\`
 
 - \`unlinked\` lists what **Review unlinked ingredients** shows, grouped by wording, most widely used first: each line's recipe \`path\` and \`line\` as \`link-line\` takes it, and up to three \`suggestions\` per wording. \`lines\` counts every line, even past \`limit\`. Link each with \`link-line\`, at the level the recipe asks for.
-- \`add-bottle\` creates a bottle as **Add a bottle** does, in volume tracking with nothing open unless \`open\` or \`unopened\` is given, for a bottle a recipe names that has no note yet. \`abv\` is a percent. It refuses a name already in use. It writes to the vault, so expect the user to approve each call.
+- \`add-bottle\` creates a bottle as **Add stock** does for a bottle, in volume tracking with nothing open unless \`open\` or \`unopened\` is given, for a bottle a recipe names that has no note yet. \`abv\` is a percent. It refuses a name already in use. It writes to the vault, so expect the user to approve each call.
 
 ## Asking the cabinet
 

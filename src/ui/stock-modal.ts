@@ -6,10 +6,13 @@ import { PROP, noteName } from '../core/schema';
 import type { CabinetNote } from '../core/schema';
 import {
 	AVAILABILITY,
+	BOTTLE_ANSWER,
 	KITCHEN_STAPLE_FORM,
-	STOCK_FORMS,
+	STOCK_ANSWERS,
 	STOCK_TRACKING,
+	defaultTracking,
 	houseName,
+	stockKind,
 	stockProperties,
 	suggestedName,
 } from '../core/stock';
@@ -24,73 +27,94 @@ export interface StockModalOptions {
 	types?: readonly CabinetNote[];
 }
 
+/** **Add stock**: a bottle or other stock, asking which first, since the fields and the note kind follow from it. */
 export class StockModal extends CabinetForm {
+	private answer: string;
+	private name: string;
+	private types: CabinetNote[];
+	private description = '';
+	private lastPurchasePrice = '';
+	private shoppingList = false;
+	/** The House name last suggested, so a later suggestion replaces it but never what was typed. */
+	private suggestion = '';
+
 	constructor(
 		private plugin: CocktailCabinetPlugin,
-		private bottle: boolean,
 		private options: StockModalOptions = {},
 	) {
 		super(plugin.app);
+		this.answer = '';
+		this.name = options.name ?? '';
+		this.types = [...(options.types ?? [])];
+	}
+
+	private get bottle() {
+		return this.answer === BOTTLE_ANSWER;
 	}
 
 	onOpen() {
 		this.begin(
-			this.bottle ? 'Add a bottle' : 'Add other stock',
+			'Add stock',
 			'Record how much you have, or mark it as Have, Low, or Out. A blank amount means none.',
 		);
-		let name = this.options.name ?? '',
-			description = '',
-			volume = '',
+		let provides: Setting | undefined;
+		this.select('What is it?', STOCK_ANSWERS, this.answer, (value) => {
+			const before = stockKind(this.answer);
+			this.answer = value;
+			// The other kind has other fields: draw the form again, keeping the name, types, and details.
+			if (stockKind(value) !== before) return this.redraw();
+			// A staple is the ingredient itself. Any selection comes back if the form changes again.
+			provides?.settingEl.toggle(value !== KITCHEN_STAPLE_FORM);
+			suggest();
+		}).setDesc(
+			'A bottle is a product you buy by brand, with a size, where you’d count sealed bottles. For anything else, choose what describes it, even when you keep it in a bottle.',
+		);
+		if (!stockKind(this.answer)) return;
+
+		let volume = '',
 			abv = '';
 		let unopened = '',
-			remaining = '',
-			lastPurchasePrice = '';
+			remaining = '';
 		const open = new BottleAmount();
 		let refreshOpen: (() => void) | undefined;
-		let form = 'Fresh ingredient',
-			availability = 'Unknown';
-		let tracking = this.bottle ? 'volume' : 'status';
-		let shoppingList = false;
-		let types: CabinetNote[] = this.bottle
-			? (this.options.types ?? []).slice(0, 1)
-			: [...(this.options.types ?? [])];
+		let availability = 'Unknown';
+		let tracking: string = defaultTracking(this.answer);
 		let nameInput: TextComponent | undefined;
-		let suggestion = '';
 		// Homemade sources default to "House <type>" so they don't share their type's name.
 		const suggest = () => {
 			if (this.bottle) return;
-			const next = houseName(form, types[0]?.name);
-			const value = suggestedName(name, suggestion, next);
-			suggestion = next;
-			if (value !== name) {
-				name = value;
+			const next = houseName(this.answer, this.types[0]?.name);
+			const value = suggestedName(this.name, this.suggestion, next);
+			this.suggestion = next;
+			if (value !== this.name) {
+				this.name = value;
 				nameInput?.setValue(value);
 			}
 		};
-		const nameRow = () =>
-			new Setting(this.contentEl)
-				.setName('Name')
-				.setClass('cocktail-cabinet-name')
-				.addText((text) => {
-					nameInput = text.setValue(name).onChange((value) => {
-						name = value;
-					});
+		// What it is and what it provides decide the suggested name, so they come before it.
+		provides = this.choose(
+			this.bottle ? 'Ingredient type (optional)' : 'Provides ingredients',
+			() => this.plugin.store.notes().filter((note) => note.kind === 'type'),
+			(notes) => {
+				this.types = notes;
+				suggest();
+			},
+			!this.bottle,
+			this.bottle ? this.types.slice(0, 1) : this.types,
+			newTypeChoice(this.plugin),
+		);
+		if (this.bottle) this.types = this.types.slice(0, 1);
+		provides.settingEl.toggle(this.answer !== KITCHEN_STAPLE_FORM);
+		new Setting(this.contentEl)
+			.setName('Name')
+			.setClass('cocktail-cabinet-name')
+			.addText((text) => {
+				nameInput = text.setValue(this.name).onChange((value) => {
+					this.name = value;
 				});
-		const typesRow = () =>
-			this.choose(
-				this.bottle ? 'Ingredient type (optional)' : 'Provides ingredients',
-				() => this.plugin.store.notes().filter((note) => note.kind === 'type'),
-				(notes) => {
-					types = notes;
-					suggest();
-				},
-				!this.bottle,
-				types,
-				newTypeChoice(this.plugin),
-			);
+			});
+		suggest();
 		if (this.bottle) {
-			nameRow();
-			typesRow();
 			this.text('Bottle volume (mL)', volume, (value) => {
 				volume = value;
 				open.setVolume(value);
@@ -99,17 +123,6 @@ export class StockModal extends CabinetForm {
 			this.text('Alcohol by volume (%)', abv, (value) => {
 				abv = value;
 			});
-		} else {
-			// Form and Provides decide the suggested name, so they come before it.
-			let provides: Setting | undefined;
-			this.select('Form', STOCK_FORMS, form, (value) => {
-				form = value;
-				// A staple is the ingredient itself. Any selection comes back if the form changes again.
-				provides?.settingEl.toggle(form !== KITCHEN_STAPLE_FORM);
-				suggest();
-			});
-			provides = typesRow();
-			nameRow();
 		}
 		this.select('Track stock by', STOCK_TRACKING, tracking, (value) => {
 			tracking = value;
@@ -203,21 +216,22 @@ export class StockModal extends CabinetForm {
 		renderStock();
 		this.text(
 			'Last purchase price',
-			lastPurchasePrice,
+			this.lastPurchasePrice,
 			(value) => {
-				lastPurchasePrice = value;
+				this.lastPurchasePrice = value;
 			},
 			'Optional numeric amount, without a currency symbol.',
 		);
-		this.toggle('Add to shopping list', shoppingList, (value) => {
-			shoppingList = value;
+		this.toggle('Add to shopping list', this.shoppingList, (value) => {
+			this.shoppingList = value;
 		});
-		this.area('Description', description, (value) => {
-			description = value;
+		this.area('Description', this.description, (value) => {
+			this.description = value;
 		});
 		this.submit('Create note', async () => {
 			const kind = this.bottle ? 'bottle' : 'ingredient';
-			const staple = !this.bottle && form === KITCHEN_STAPLE_FORM;
+			const staple = this.answer === KITCHEN_STAPLE_FORM;
+			const types = this.types;
 			const properties = stockProperties({
 				kind,
 				tracking,
@@ -228,16 +242,17 @@ export class StockModal extends CabinetForm {
 				unopened,
 				remaining,
 				availability,
-				form,
-				lastPurchasePrice,
-				shoppingList,
+				form: this.answer,
+				lastPurchasePrice: this.lastPurchasePrice,
+				shoppingList: this.shoppingList,
 			});
 			if (this.bottle) {
 				if (types[0]) properties[PROP.type] = this.plugin.store.link(types[0]);
 			} else if (!staple) {
 				properties[PROP.provides] = types.map((note) => this.plugin.store.link(note));
 			}
-			const file = await this.plugin.store.create({ kind, name, description, properties });
+			const name = this.name;
+			const file = await this.plugin.store.create({ kind, name, description: this.description, properties });
 			this.close();
 			if (this.options.created)
 				this.options.created({
@@ -248,5 +263,10 @@ export class StockModal extends CabinetForm {
 				});
 			else await this.plugin.store.open(file.path);
 		});
+	}
+
+	private redraw() {
+		this.contentEl.empty();
+		this.onOpen();
 	}
 }

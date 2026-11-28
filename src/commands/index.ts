@@ -73,9 +73,9 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 		if (!note) throw new Error('This note isn’t in the cabinet.');
 		return note;
 	};
-	// On a type note, open a stock form with the type already filled in.
-	const forType = (bottle: boolean) => (file: TFile) =>
-		void handle(() => ready(() => new StockModal(plugin, bottle, { types: [noteFor(file)] }).open()));
+	// On a type note, open the stock form with the type already filled in.
+	const forType = (file: TFile) =>
+		void handle(() => ready(() => new StockModal(plugin, { types: [noteFor(file)] }).open()));
 	// A one-off goes from its ingredients to the logging review, and back to them to edit.
 	const logOneOff = (initial?: OneOff) => {
 		const step = (oneOff?: OneOff) =>
@@ -242,18 +242,11 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 			run: (file) => void handle(async () => new RenameModal(plugin.app, renamer, noteFor(file)).open()),
 		},
 		{
-			id: 'add-bottle-of-type',
-			name: 'Add a bottle of this type',
-			icon: 'wine',
-			kinds: ['type'],
-			run: forType(true),
-		},
-		{
-			id: 'add-other-stock-for-type',
-			name: 'Add other stock for this type',
+			id: 'add-stock-for-type',
+			name: 'Add stock for this type',
 			icon: 'package-plus',
 			kinds: ['type'],
-			run: forType(false),
+			run: forType,
 		},
 	]);
 	const open = () => handle(() => ready(() => plugin.store.open(`${plugin.store.root}/Cocktail Cabinet.md`)));
@@ -304,21 +297,16 @@ export function registerCommands(plugin: CocktailCabinetPlugin) {
 	plugin.registerObsidianProtocolHandler(VIEW_LINK_ACTION, ({ open }) => {
 		if (isLinkedView(open)) void handle(() => ready(() => views[open](plugin)));
 	});
-	// Families and categories are a Level choice in this form, and kitchen staples a Form in Add other stock.
+	// Families and categories are a Level choice in this form; bottles and every Form of other stock are answers in Add stock.
 	plugin.addCommand({
 		id: 'add-ingredient-type',
 		name: 'Add ingredient type',
 		callback: () => handle(() => ready(() => new IngredientModal(plugin, 'type', undefined, '', true).open())),
 	});
 	plugin.addCommand({
-		id: 'add-bottle',
-		name: 'Add a bottle',
-		callback: () => handle(() => ready(() => new StockModal(plugin, true).open())),
-	});
-	plugin.addCommand({
-		id: 'add-other-stock',
-		name: 'Add other stock',
-		callback: () => handle(() => ready(() => new StockModal(plugin, false).open())),
+		id: 'add-stock',
+		name: 'Add stock',
+		callback: () => handle(() => ready(() => new StockModal(plugin).open())),
 	});
 	plugin.addCommand({
 		id: 'add-recipe',

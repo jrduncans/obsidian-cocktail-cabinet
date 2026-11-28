@@ -42,6 +42,8 @@ export function planLogging(
 	selections: ReadonlyMap<number, LineSelection>,
 	servings: number,
 	volumeUnit: VolumeUnit = DEFAULT_VOLUME_UNIT,
+	/** Sources to finish off when they can't cover their pours: **Use what's left**. */
+	finish: ReadonlySet<string> = new Set(),
 ): LoggingPlan {
 	const pours: SelectedPour[] = [];
 	const errors: string[] = [];
@@ -77,7 +79,7 @@ export function planLogging(
 		}
 		if (missing) unselected++;
 	}
-	const plan = planDrawdown(sources, pours, servings);
+	const plan = planDrawdown(sources, pours, servings, finish);
 	const alsoUsed = [
 		...new Set(lines.skipped.flatMap((line) => (line.used && !selected.has(line.used) ? [line.used] : []))),
 	];
