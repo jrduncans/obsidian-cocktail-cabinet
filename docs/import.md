@@ -65,18 +65,27 @@ Checked on 2026-11-22 against saved copies of the sampled pages, then in the dev
 - **Name.** The structured name, else the first top-level heading in that text, else the post title (hAtom `entry-title`/`post-title`), else the page's first heading or title. Text before the first top-level heading is dropped, so navigation such as "Back to Recipes" isn't taken as the name.
 - **Garnish.** A "Garnish:" line in the page text is added to structured ingredients that have none (Punch keeps it outside its marked-up list).
 - **Echoed volumes.** `1 oz · 30 ml pineapple rum` (Daniel Zajic) keeps `· 30 ml` with the amount in the review, as `/ 30 ml.` already was elsewhere, so the wording linked and remembered is just the ingredient.
-- **Page text.** Images are dropped, links and emphasis keep only their text (Liber & Co's ingredient was a bold link), and table rows become one line each (Difford's ingredient table). Not every article counts: on Difford's they're reader comments, so without a post body or recipe-like article the body is read.
+- **Page text.** Images are dropped, links and emphasis keep only their text (Liber & Co's ingredient was a bold link), and table rows become one line each (first seen in Difford's ingredient table, which its [adapter](#site-adapters) now reads). Not every article counts: on Difford's they're reader comments, so without a post body or recipe-like article the body is read.
 - **Sites vary by client.** Obsidian was served a version of Difford's with no recipe data, which curl got, and liquor.com answered Obsidian though it refused curl. Testing a site means testing it in Obsidian.
 - **Fraction slash.** Amounts accept `2⁄3` (U+2044) as well as `2/3`.
 - **Spaced fractions, qualifiers, and other echoes** (2026-11-25, from the unlinked lines in `knowledge`). `1 ½ oz` reads like `1½ oz`; it had been left whole as the wording, so logging skipped the gin in three recipes. A qualifier before the amount (`heavy ¾ oz`, `a scant 1 oz`, also generous, short, healthy, full, heaping, rounded, bare, barely) stays with the amount, which remains unmeasured. An echo may be a range or another volume unit (`1 barspoon / 1 tsp`, `⅓–½ oz. / 10–15 ml.`), so it no longer ends up in the wording.
 - **Labels and stray lines in Ingredients** (2026-11-25, from cleaning up imported recipes in `knowledge`). A bare `Garnish:` line with its items on the lines below (Liber & Co) gives one `Garnish: <item>` line per item, so each reads as a garnish; an inline `Garnish: …` line stays as written. `Glass:` with its value below, a line naming only glassware ("Pearl Diver Glass", "Cocktail Coupe"), and `Tools: …` move to the top of Method, as written. Alcohol-content lines ("Alcohol content:", "1.6 standard drinks", "22.96% alc./vol.", "23 grams of pure alcohol") move to Description as one sentence; dropping them was rejected, since they're the source's words. A web link in an ingredient line keeps only its text, and a hashtag left on its own line (`#2`) joins the line above: Wix blogs such as Shaker of Spirits link "#2" in "Don's Spices #2" to a hashtag page.
 - **Failure.** The text field is left as `Source: <url>` and a blank line, so pasting the recipe below keeps the source. Shaker of Spirits builds its page with scripts and lands here.
 
+### Site adapters
+
+**Difford's Guide** (built 2026-11-27). Obsidian is served Difford's pages without recipe data, so the generic reading took the whole page: two control lines ("I'm making … measured in") as ingredients, the garnish lost, and comments, shop prices, and related drinks in Description. The JSON-LD that curl gets is no better a source: it abbreviates ingredients ("Vermouth amaro (Pun.)") and its description is boilerplate ("Discover how to make …"). On `diffordsguide.com` pages that have the ingredient table, the adapter reads the page's own sections instead, ahead of any recipe data:
+
+- **Name** from the title heading; **ingredients** one per table row, with notes such as "(chilled)" and "(optional)" kept.
+- **Method** from the How to make lists, numbered straight through Prepare, Method, and Garnish as the page numbers them. Difford's capitalized techniques and glasses ("STIR", "NICK & NORA GLASS") are lowercased, with the step's first letter capitalized. The Glass line ("Photographed in a …") is left out, since Prepare names the glass to use.
+- **Description** is the Review, then History, without the "More cocktails by …" link. Tasting notes stay empty: they're the reader's own, and the recipe form doesn't edit them.
+- Ratings, the flavour profile, nutrition, the shop, and comments are left out. **Original text** shows what was read.
+
 ### Not supported
 
 - Social posts and anything behind a login: paste the text.
 - Video: never played or transcribed, as in the skill.
-- Site-specific adapters. Added only for a site the generic reading gets wrong and that is used often ([decision 3](#decisions)).
+- Site-specific adapters beyond [Difford's Guide](#site-adapters). Another is added only for a site the generic reading gets wrong and that is used often ([decision 3](#decisions)).
 
 ## Remembered wordings
 
@@ -140,6 +149,6 @@ Agreed on 2026-11-22, taking the recommendation on each.
 
 1. **Network use.** No setting: fetching happens only on an explicit paste-and-review of a URL, and the README discloses it. A setting off by default was rejected; most users would never find it.
 2. **Structured data as source.** Accepted, though JSON-LD isn't visible on the page: the site's author wrote it, it's usually cleaner than the visible text, and **Original text** shows it. Visible text only was rejected: it repeats each Punch line twice and loses Difford's numbered steps.
-3. **Site adapters.** None in the first build; one is added only when a frequently used site reads wrong. cocktailvirgin is the likely first (its recipes are prose with an ingredient list at the end), but its pages may read well enough as text for review.
+3. **Site adapters.** None in the first build; one is added only when a frequently used site reads wrong. cocktailvirgin is the likely first (its recipes are prose with an ingredient list at the end), but its pages may read well enough as text for review. Difford's Guide became the first, on 2026-11-27 (see [site adapters](#site-adapters)).
 4. **`cc-written-as`, not aliases.** A new property, for the reasons under [remembered wordings](#remembered-wordings). Aliases only would need no new schema but would put odd entries in link autocomplete.
 5. **Bevnap last.** Built only with a real export to test against: it's low use for `knowledge` now, and the format is known only from the skill's description. Without one it waits until publication makes it matter.
