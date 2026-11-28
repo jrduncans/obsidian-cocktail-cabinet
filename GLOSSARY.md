@@ -8,6 +8,10 @@ Language for cocktail recipes, ingredients, and cabinet inventory.
 A named spirit, liqueur, or other bottled cocktail ingredient, with characteristics such as bottle volume and alcohol strength; referencing a bottle does not imply it is owned. For example, Angostura Bitters is a bottle whose ingredient type is Aromatic Bitters.
 _Avoid_: Product
 
+**Ingredient stock**:
+A **Bottle** or other stock (a fresh, prepared, homemade, or bought ingredient that isn't a bottle, including **Kitchen staples**): what the cabinet has, or could have, on hand. Where a recipe needs an **Ingredient type**, ingredient stock that provides it acts as its source; "source" names that role, not the thing.
+_Avoid_: Stock source, Ingredient source
+
 **Ingredient category**:
 An optional broad classification of ingredient families, such as Spirit or Juice.
 
@@ -43,7 +47,7 @@ _Avoid_: Draft recipe, Scratch recipe
 An ingredient requirement in a cocktail recipe, which may name a bottle, an ingredient type, or a broader classification such as rum.
 
 **Stock tracking**:
-The method chosen for a bottle or ingredient source to describe how much is available: volume tracking or status tracking.
+The method chosen for an **Ingredient stock** to describe how much is available: volume tracking or status tracking.
 
 **Volume tracking**:
 Stock recorded as milliliters remaining, with measured consumption deducted from that quantity. Bottles can additionally have unopened stock.
@@ -52,7 +56,7 @@ Stock recorded as milliliters remaining, with measured consumption deducted from
 Stock described by a manually maintained Unknown, Have, Low, or Out status, without asserting an exact quantity.
 
 **Shopping list item**:
-An ingredient type, bottle, or other ingredient source explicitly marked for purchase or replenishment, independently of its stock level.
+An **Ingredient type** or **Ingredient stock** explicitly marked for purchase or replenishment, independently of its stock level.
 
 **Brandy**:
 Aged grape brandy as an ingredient type: what a recipe means by plain brandy. Cognac and Armagnac are its subtypes, so their bottles fill recipes calling for brandy. It sits in **Brandy Family**, the family of spirits distilled from fruit, with Apple Brandy and Kirsch. See the [brandy organization](docs/brandy-organization.md).

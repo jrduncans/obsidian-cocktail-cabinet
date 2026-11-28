@@ -2,13 +2,26 @@ import type CocktailCabinetPlugin from '../main';
 import { PROP, noteName } from '../core/schema';
 import type { CabinetNote, NoteKind, Properties } from '../core/schema';
 import { CabinetForm } from './form';
+import type { NewNoteChoice } from './picker';
+import { StockModal } from './stock-modal';
 import { subtypeParents } from '../core/relationships';
 
 type Level = 'category' | 'family' | 'type';
 const LEVELS: Record<Level, string> = { type: 'Type', family: 'Family', category: 'Category' };
+/** What **Then add** opens for the new type: a bottle or other stock form, with the type selected. */
+const THEN_ADD = { '': 'Nothing', bottle: 'A bottle', ingredient: 'Other stock' } as const;
+
+/** **New type…** in a type picker: the type form over the current one, named from the search. */
+export function newTypeChoice(plugin: CocktailCabinetPlugin): NewNoteChoice {
+	return {
+		label: 'ingredient type',
+		open: (name, done) => new IngredientModal(plugin, 'type', done, name).open(),
+	};
+}
 
 export class IngredientModal extends CabinetForm {
 	private description = '';
+	private thenAdd: keyof typeof THEN_ADD = '';
 
 	/** `chooseLevel` adds a Level dropdown, for **Add ingredient type**: families and categories are rarely added. */
 	constructor(
@@ -80,6 +93,11 @@ export class IngredientModal extends CabinetForm {
 			this.toggle('Add to shopping list', shoppingList, (value) => {
 				shoppingList = value;
 			});
+			// Only from the command: a form that asked for the type carries on with it itself.
+			if (!this.created)
+				this.select('Then add', THEN_ADD, this.thenAdd, (value) => {
+					this.thenAdd = value as keyof typeof THEN_ADD;
+				}).setDesc('Open a bottle or other stock form for the new type after it’s created.');
 		}
 		this.submit('Create note', async () => {
 			const properties: Properties = {};
@@ -103,13 +121,15 @@ export class IngredientModal extends CabinetForm {
 			if (parentType[0])
 				await this.plugin.store.addSubtypesSection(this.plugin.store.link(parentType[0]), file.path);
 			this.close();
-			if (this.created)
-				this.created({
-					path: file.path,
-					name: noteName(this.name).normalize('NFC'),
-					kind: this.kind,
-					parents: (parentType[0] ? parentType : parents).map((note) => note.path),
-				});
+			const note: CabinetNote = {
+				path: file.path,
+				name: noteName(this.name).normalize('NFC'),
+				kind: this.kind,
+				parents: (parentType[0] ? parentType : parents).map((item) => item.path),
+			};
+			if (this.created) this.created(note);
+			else if (this.kind === 'type' && this.thenAdd)
+				new StockModal(this.plugin, this.thenAdd === 'bottle', { types: [note] }).open();
 			else await this.plugin.store.open(file.path);
 		});
 	}

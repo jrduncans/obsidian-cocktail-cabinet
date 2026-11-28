@@ -4,6 +4,7 @@ import { PROP } from '../src/core/schema';
 import { renderNote } from '../src/core/notes';
 import { houseName, KITCHEN_STAPLE_FORM, stapleProperties, stockProperties, suggestedName } from '../src/core/stock';
 import { BottleAmount } from '../src/core/bottle-amount';
+import { placeNewChoice } from '../src/core/picker-choices';
 import type { StockInput } from '../src/core/stock';
 
 function input(overrides: Partial<StockInput> = {}): StockInput {
@@ -285,4 +286,12 @@ void test('the kitchen staple form is accepted when adding other stock', () => {
 	const properties = stockProperties(input({ kind: 'ingredient', tracking: 'status', form: KITCHEN_STAPLE_FORM }));
 	assert.equal(properties[PROP.form], 'Kitchen staple');
 	assert.equal(houseName(KITCHEN_STAPLE_FORM, 'Salt'), '');
+});
+
+void test('a picker puts New type first until something is typed, then after the matches, named from it', () => {
+	const choice = (name: string) => `new:${name}`;
+	assert.deepEqual(placeNewChoice(['Gin', 'Rum'], '', choice), ['new:', 'Gin', 'Rum']);
+	assert.deepEqual(placeNewChoice(['Gin', 'Rum'], '   ', choice), ['new:', 'Gin', 'Rum']);
+	assert.deepEqual(placeNewChoice(['Hojicha Syrup'], ' hojicha ', choice), ['Hojicha Syrup', 'new:hojicha']);
+	assert.deepEqual(placeNewChoice([], 'Hojicha Syrup', choice), ['new:Hojicha Syrup']);
 });

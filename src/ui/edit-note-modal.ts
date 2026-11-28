@@ -18,6 +18,7 @@ import type { CabinetNote, NoteKind } from '../core/schema';
 import { hasChanges } from '../vault/edit-store';
 import type { EditChanges, EditSnapshot, EditStore } from '../vault/edit-store';
 import { CabinetForm } from './form';
+import { newTypeChoice } from './ingredient-modal';
 import { subtypeParents } from '../core/relationships';
 import { RecipeIngredients, savedRow } from './recipe-ingredients';
 import { RecipeTagsField } from './recipe-tags';
@@ -79,6 +80,7 @@ export class EditNoteModal extends CabinetForm {
 				},
 				multiple,
 				this.savedParents(properties[parentKey], parentKind),
+				parentKind === 'type' ? newTypeChoice(this.plugin) : undefined,
 			);
 		}
 		if (kind === 'type') this.subtypeOf(properties[PROP.type]);

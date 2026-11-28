@@ -2,6 +2,7 @@ import { Modal, Setting } from 'obsidian';
 import type { App, ButtonComponent } from 'obsidian';
 import type { CabinetNote } from '../core/schema';
 import { NotePicker } from './picker';
+import type { NewNoteChoice } from './picker';
 
 export abstract class CabinetForm extends Modal {
 	protected errorEl!: HTMLElement;
@@ -66,25 +67,28 @@ export abstract class CabinetForm extends Modal {
 		return row.addToggle((toggle) => toggle.setValue(value).onChange(change));
 	}
 
+	/** A picker row; `create` adds a choice that creates the note when it isn't there. */
 	protected choose(
 		label: string,
 		notes: () => CabinetNote[],
 		change: (notes: CabinetNote[]) => void,
 		multiple = false,
 		initial: readonly CabinetNote[] = [],
+		create?: NewNoteChoice,
 	) {
 		const selected: CabinetNote[] = multiple ? [...initial] : initial.slice(0, 1);
 		const row = new Setting(this.contentEl)
 			.setName(label)
 			.setDesc(selected.length ? selected.map((item) => item.name).join(', ') : 'None selected');
+		const pick = (note: CabinetNote) => {
+			if (!multiple) selected.length = 0;
+			if (!selected.some((item) => item.path === note.path)) selected.push(note);
+			row.setDesc(selected.map((item) => item.name).join(', '));
+			change([...selected]);
+		};
 		row.addButton((button) =>
 			button.setButtonText('Select').onClick(() => {
-				new NotePicker(this.app, notes(), (note) => {
-					if (!multiple) selected.length = 0;
-					if (!selected.some((item) => item.path === note.path)) selected.push(note);
-					row.setDesc(selected.map((item) => item.name).join(', '));
-					change([...selected]);
-				}).open();
+				new NotePicker(this.app, notes(), pick, create).open();
 			}),
 		);
 		row.addButton((button) =>
