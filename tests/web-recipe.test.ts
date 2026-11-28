@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DOMParser } from 'linkedom';
 import { readRecipePage, recipeUrl, sourceUrl } from '../src/core/web-recipe';
+import { unshout } from '../src/core/site-diffords';
 import { recipeVolumeMl, splitIngredient } from '../src/core/recipe-amount';
 import { roughMarkdown } from './support-markdown';
 
@@ -222,4 +223,84 @@ void test('HTML smuggled into a page’s recipe stays text in the note', () => {
 		),
 	);
 	assert.equal(unclosed.recipe.name, 'Sour img src=x onerror=y');
+});
+
+/** A synthetic page shaped like Difford's Guide as Obsidian is served it: no recipe data, comments in articles. */
+const diffords = (extra = '') =>
+	page(
+		'<link rel="canonical" href="https://www.diffordsguide.com/cocktails/recipe/1/test-prince">',
+		`<header><h1 class="dg-component-title-block__name">Test Prince</h1><p>Updated by Someone</p></header>
+		<div class="cocktail-ingredients"><p>I’m making <select><option>1</option></select> measured in</p>
+		<p><em>Read about cocktail <a href="#">measures and measuring</a></em></p>
+		<table class="cocktail-ingredients__table"><tbody>
+		<tr><td class="ingredient-measure">2 fl oz</td><td><a href="#">Aged rum</a></td></tr>
+		<tr><td class="ingredient-measure"><sup>3</sup>&frasl;<sub>4</sub> fl oz</td><td><a href="#">Punt E Mes vermouth amaro</a> <span class="tag"><svg><use></use></svg> (chilled)</span></td></tr>
+		<tr><td class="ingredient-measure">1 dash</td><td><a href="#">Orange bitters</a> (optional)</td></tr>
+		</tbody></table></div>
+		<div class="cocktail-method"><h2>How to make</h2><label>Keep screen awake</label>
+		<h3>Glass</h3><p>Photographed in a <a href="#">Bobo</a></p>
+		<h3>Prepare</h3><ol><li>Select and pre-chill a <a href="#">NICK &amp; NORA GLASS</a>.</li></ol>
+		<h3>Method</h3><ol start="2"><li><a href="#">STIR</a> all ingredients with ice.</li><li><a href="#">FINE STRAIN</a> into chilled glass.</li></ol>
+		<h3>Garnish</h3><ol start="4"><li>Garnish with a cherry.</li></ol></div>
+		<div class="cocktail-flavour-profile"><h2>Flavour Profile</h2><span>None</span><span>Boozy</span></div>
+		<div class="cocktail-history"><h2>History</h2><p>Created in 2009 by <a href="#">a bartender</a>.</p><div class="cocktail-history__more">More <a href="#">cocktails by them</a></div></div>
+		<div class="cocktail-review"><h2>Review</h2><p>A dark, bittersweet Manhattan.</p></div>
+		<div class="shopify-container">Punt E Mes 750ml - makes 33 cocktails $27.99</div>
+		${extra}
+		<article class="dg-component-comment"><p>Great with 1 oz rum.</p></article>`,
+	);
+
+void test("a Difford's Guide page is read from its ingredient table, steps, review, and history", () => {
+	const { recipe, original } = read(
+		diffords(),
+		'https://www.diffordsguide.com/cocktails/recipe/1/test-prince?utm_source=x',
+	);
+	assert.equal(recipe.name, 'Test Prince');
+	assert.equal(recipe.source, 'https://www.diffordsguide.com/cocktails/recipe/1/test-prince');
+	assert.deepEqual(recipe.ingredients, [
+		{ amount: '2 fl oz', text: 'Aged rum' },
+		{ amount: '3⁄4 fl oz', text: 'Punt E Mes vermouth amaro (chilled)' },
+		{ amount: '1 dash', text: 'Orange bitters (optional)' },
+	]);
+	assert.equal(
+		recipe.method,
+		[
+			'1. Select and pre-chill a nick & nora glass.',
+			'2. Stir all ingredients with ice.',
+			'3. Fine strain into chilled glass.',
+			'4. Garnish with a cherry.',
+		].join('\n'),
+	);
+	assert.equal(recipe.description, 'A dark, bittersweet Manhattan.\n\nCreated in 2009 by a bartender.');
+	assert.equal(recipe.tastingNotes, '');
+	assert.deepEqual(recipe.warnings, []);
+	assert.match(original, /^Recipe on the page \(Difford's Guide\):\nName: Test Prince\n- 2 fl oz Aged rum/);
+	assert.doesNotMatch(original, /shop|comment|27\.99|Great with/i);
+});
+
+void test("Difford's Guide's table is preferred to its abbreviated recipe data, and only on its own site", () => {
+	const data = {
+		'@type': 'Recipe',
+		name: 'Test Prince',
+		recipeIngredient: ['60 ml Aged rum (6-10yr)', '22.5 ml Vermouth amaro (Pun.)'],
+		recipeInstructions: [{ '@type': 'HowToStep', text: 'STIR all ingredients with ice.' }],
+		description: 'Discover how to make a Test Prince in just 4 easy to follow steps',
+	};
+	const html = diffords(`<script type="application/ld+json">${JSON.stringify(data)}</script>`);
+	const { recipe } = read(html, 'https://www.diffordsguide.com/cocktails/recipe/1/test-prince');
+	assert.equal(recipe.ingredients[1]?.text, 'Punt E Mes vermouth amaro (chilled)');
+	assert.doesNotMatch(recipe.description, /Discover/);
+	// The same markup elsewhere gets the generic reading, which takes the recipe data.
+	assert.equal(read(html).recipe.ingredients[1]?.text, 'Vermouth amaro (Pun.)');
+});
+
+void test("Difford's steps lose their capitals but keep ordinary words", () => {
+	assert.equal(unshout('STIR all ingredients with ice.'), 'Stir all ingredients with ice.');
+	assert.equal(
+		unshout('Select and pre-chill an OLD-FASHIONED GLASS.'),
+		'Select and pre-chill an old-fashioned glass.',
+	);
+	assert.equal(unshout('POUR into the shell. (Fills two shells.)'), 'Pour into the shell. (Fills two shells.)');
+	assert.equal(unshout('BLEND with one 12oz scoop of crushed ice.'), 'Blend with one 12oz scoop of crushed ice.');
+	assert.equal(unshout('Serve with a straw.'), 'Serve with a straw.');
 });

@@ -1,6 +1,7 @@
 import { FIRST_LINE_WARNING, parseRecipeText } from './recipe-import';
 import type { RecipeImport } from './recipe-import';
 import { splitIngredient } from './recipe-amount';
+import { isDiffordsRecipe, readDiffords } from './site-diffords';
 
 /**
  * Reading a recipe from a fetched web page (docs/import.md#web-pages). The page is parsed, never run:
@@ -257,6 +258,10 @@ export function readRecipePage(
 	const doc = parse(html);
 	const canonical = doc.querySelector('link[rel~="canonical"]')?.getAttribute('href');
 	const source = sourceUrl(url, canonical);
+	if (isDiffordsRecipe(doc, source)) {
+		const { recipe, original } = readDiffords(doc);
+		return { recipe: inert({ ...recipe, source }), original };
+	}
 	const structured = structuredRecipe(doc, parse);
 	const content = visibleContent(doc, parse);
 	const markdown = content ? fromFirstHeading(toMarkdown(content).trim()) : '';
