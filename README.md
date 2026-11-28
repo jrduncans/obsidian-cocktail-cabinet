@@ -39,7 +39,7 @@ Cocktail Cabinet needs Obsidian 1.12.2 or later, on desktop or mobile, with the 
 1. Select the glass ribbon icon or run **Cocktail Cabinet: Open cabinet**.
 2. Choose a folder (`Cocktails` by default) and select **Preview** to see what setup will create, then **Create cabinet**. Setup never overwrites existing notes.
 3. Open the **Cocktail Cabinet** note. It links to the views and to a guide in `<folder>/Guide/`: Getting Started, Recipes, Stock, Making Drinks, Shopping, Hierarchy and Substitutes, and Views and Customizing.
-4. Add a few bottles (**Add a bottle**) and a recipe (**Add recipe**), then try **What can I make?** and **Log this cocktail**.
+4. Add a few bottles (**Add stock**) and a recipe (**Add recipe**), then try **What can I make?** and **Log this cocktail**.
 
 Most commands also appear in a note's file menu (right-click, or **More options** on mobile) and as buttons in the note header where they apply.
 

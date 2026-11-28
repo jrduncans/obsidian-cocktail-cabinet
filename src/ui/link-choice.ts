@@ -8,8 +8,7 @@ import { StockModal } from './stock-modal';
 
 export const CREATE = [
 	['type', 'Ingredient type'],
-	['bottle', 'Bottle'],
-	['ingredient', 'Other stock'],
+	['stock', 'Stock'],
 	['family', 'Ingredient family'],
 	['category', 'Ingredient category'],
 ] as const;
@@ -21,8 +20,7 @@ export function createIngredient(
 	name: string,
 	choose: (note: CabinetNote) => void,
 ) {
-	if (kind === 'bottle' || kind === 'ingredient')
-		new StockModal(plugin, kind === 'bottle', { created: choose, name }).open();
+	if (kind === 'stock') new StockModal(plugin, { created: choose, name }).open();
 	else new IngredientModal(plugin, kind, choose, name).open();
 }
 

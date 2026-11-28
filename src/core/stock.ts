@@ -24,6 +24,27 @@ export const STOCK_FORMS = {
 	Other: 'Other',
 } as const;
 
+/** The answer to **Add stock**'s What is it? that makes a bottle; every other answer is an other-stock Form. */
+export const BOTTLE_ANSWER = 'Bottle';
+
+/** **Add stock**'s first question, in order: nothing chosen yet, a bottle, then each other-stock Form. */
+export const STOCK_ANSWERS: readonly (readonly [string, string])[] = [
+	['', 'Choose…'],
+	[BOTTLE_ANSWER, 'Bottle'],
+	...Object.entries(STOCK_FORMS),
+];
+
+/** The note kind an answer to What is it? creates, or null before one is chosen. */
+export function stockKind(answer: string): 'bottle' | 'ingredient' | null {
+	if (answer === BOTTLE_ANSWER) return 'bottle';
+	return Object.keys(STOCK_FORMS).includes(answer) ? 'ingredient' : null;
+}
+
+/** How new stock is tracked unless changed: bottles in mL, everything else by availability. */
+export function defaultTracking(answer: string): 'volume' | 'status' {
+	return answer === BOTTLE_ANSWER ? 'volume' : 'status';
+}
+
 /** Forms whose sources are made at home and would otherwise be named after their type. */
 const HOUSE_FORMS: readonly string[] = ['Homemade syrup', 'Prepared juice'];
 

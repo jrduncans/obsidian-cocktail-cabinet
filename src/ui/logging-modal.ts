@@ -45,6 +45,8 @@ export class LoggingModal extends Modal {
 	private review?: LoggingReview;
 	private servings = 1;
 	private selections = new Map<number, LineSelection>();
+	/** Sources chosen for **Use what's left**; they take what they hold only when it's short. */
+	private finishing = new Set<string>();
 	private addDaily = true;
 	private date = localDate();
 	private dateRequest = 0;
@@ -437,6 +439,7 @@ export class LoggingModal extends Modal {
 			this.selections,
 			this.servings,
 			this.plugin.settings.volumeUnit,
+			this.finishing,
 		);
 		this.previewEl.empty();
 		const estimate = this.estimateLine();
@@ -450,7 +453,9 @@ export class LoggingModal extends Modal {
 			for (const change of plan.changes) {
 				const row = body.createEl('tr');
 				row.createEl('td', { text: change.source.note.name });
-				row.createEl('td', { text: `${formatMl(change.consumedMl)} mL` });
+				row.createEl('td', {
+					text: `${formatMl(change.consumedMl)} mL${change.finished ? ', all that was left' : ''}`,
+				});
 				const unopened = change.updates[PROP.unopened] ?? change.source.fields[PROP.unopened];
 				const volume = change.source.fields[PROP.volume];
 				const after =
@@ -467,13 +472,24 @@ export class LoggingModal extends Modal {
 			const errors = this.previewEl.createDiv({ cls: 'cocktail-cabinet-error', attr: { role: 'alert' } });
 			for (const error of other) errors.createEl('p', { text: ingredientLabel(error) });
 		}
-		// Stock that can't cover the drink is often just out of date: offer the fix in place.
+		// Stock that can't cover the drink is often just out of date: offer the fix in place, and for a
+		// shortfall, taking what's there, since a bottle tracked by eye is often a few mL off.
 		for (const item of plan.blocked) {
 			const source = review.sources.find((candidate) => candidate.note.path === item.path)!;
 			const row = new Setting(this.previewEl)
 				.setName(source.note.name)
 				.setDesc(item.error.slice(source.note.name.length + 2))
 				.addButton((button) => button.setButtonText('Edit stock').onClick(() => this.editStock(item.path)));
+			if (item.short)
+				row.addButton((button) =>
+					button
+						.setButtonText('Use what’s left')
+						.setCta()
+						.onClick(() => {
+							this.finishing.add(item.path);
+							this.refreshPreview();
+						}),
+				);
 			row.descEl.addClass('cocktail-cabinet-error');
 			row.descEl.setAttribute('role', 'alert');
 		}
@@ -528,6 +544,7 @@ export class LoggingModal extends Modal {
 			this.selections,
 			this.servings,
 			this.plugin.settings.volumeUnit,
+			this.finishing,
 		);
 		if (plan.errors.length || plan.unselected || this.dateInvalid() || (this.addDaily && review.daily.error))
 			return;

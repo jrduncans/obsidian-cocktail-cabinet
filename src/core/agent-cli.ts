@@ -54,7 +54,7 @@ export interface BottleInput {
 	aliases?: string;
 }
 
-/** A new bottle's properties, as **Add a bottle** writes them in volume tracking: nothing open unless given. */
+/** A new bottle's properties, as **Add stock** writes a bottle's in volume tracking: nothing open unless given. */
 export function bottleProperties(input: BottleInput): Properties {
 	const properties = stockProperties({
 		kind: 'bottle',

@@ -579,3 +579,62 @@ void test('a tasting note line isn’t a log, even when it says made', () => {
 	assert.equal(hasDailyLog('Tasting note on [[Daiquiri]]: Made with too much lime.', recipe), false);
 	assert.equal(hasDailyLog(made, recipe), true);
 });
+void test('a short source is marked short, so Use what’s left is offered only for a shortfall', () => {
+	const short = planDrawdown([bottle(a, 15)], [{ path: a.path, ml: 22.2 }], 1);
+	assert.deepEqual(
+		short.blocked.map((item) => [item.path, item.short]),
+		[[a.path, true]],
+	);
+	const unknownSize = planDrawdown([bottle(a, 10, 1, null)], [{ path: a.path, ml: 30 }], 1);
+	assert.deepEqual(
+		unknownSize.blocked.map((item) => item.short),
+		[false],
+	);
+});
+void test('Use what’s left takes everything a short source holds and leaves it at 0', () => {
+	const finish = new Set([a.path, prepared.path]);
+	const plan = planDrawdown(
+		[bottle(a, 15), ingredient(prepared, 20)],
+		[
+			{ path: a.path, ml: 22.2 },
+			{ path: prepared.path, ml: 30 },
+		],
+		1,
+		finish,
+	);
+	assert.deepEqual(plan.errors, []);
+	assert.deepEqual(plan.blocked, []);
+	const [bottleChange, ingredientChange] = plan.changes;
+	assert.equal(bottleChange!.consumedMl, 15);
+	assert.deepEqual(bottleChange!.updates, { [PROP.open]: 0, [PROP.unopened]: 0 });
+	assert.equal(bottleChange!.finished, true);
+	assert.equal(ingredientChange!.consumedMl, 20);
+	assert.deepEqual(ingredientChange!.updates, { [PROP.remaining]: 0 });
+});
+void test('Use what’s left opens and empties sealed bottles that still fall short', () => {
+	const change = planDrawdown([bottle(a, 10, 1, 100)], [{ path: a.path, ml: 150 }], 1, new Set([a.path])).changes[0]!;
+	assert.equal(change.consumedMl, 110);
+	assert.equal(change.opened, 1);
+	assert.deepEqual(change.updates, { [PROP.open]: 0, [PROP.unopened]: 0 });
+});
+void test('Use what’s left pours as usual once the stock covers it, and leaves other errors alone', () => {
+	const enough = planDrawdown([bottle(a, 100)], [{ path: a.path, ml: 30 }], 1, new Set([a.path])).changes[0]!;
+	assert.deepEqual(enough.updates, { [PROP.open]: 70 });
+	assert.equal(enough.finished, undefined);
+	const unknownSize = planDrawdown([bottle(a, 10, 1, null)], [{ path: a.path, ml: 30 }], 1, new Set([a.path]));
+	assert.match(unknownSize.errors.join(), /Bottle size is unknown/);
+});
+void test('Use what’s left applies to a source poured on several lines together', () => {
+	const plan = planDrawdown(
+		[bottle(a, 20)],
+		[
+			{ path: a.path, ml: 15 },
+			{ path: a.path, ml: 15 },
+		],
+		1,
+		new Set([a.path]),
+	);
+	assert.equal(plan.changes.length, 1);
+	assert.equal(plan.changes[0]!.consumedMl, 20);
+	assert.deepEqual(plan.changes[0]!.updates, { [PROP.open]: 0, [PROP.unopened]: 0 });
+});
