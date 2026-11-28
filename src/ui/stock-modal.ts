@@ -14,6 +14,7 @@ import {
 	suggestedName,
 } from '../core/stock';
 import { CabinetForm } from './form';
+import { newTypeChoice } from './ingredient-modal';
 
 export interface StockModalOptions {
 	/** Called with the new note instead of opening it. */
@@ -83,6 +84,7 @@ export class StockModal extends CabinetForm {
 			},
 			!this.bottle,
 			types,
+			newTypeChoice(this.plugin),
 		);
 		if (this.bottle) {
 			this.text('Bottle volume (mL)', volume, (value) => {
