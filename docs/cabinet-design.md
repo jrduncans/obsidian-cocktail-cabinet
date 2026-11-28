@@ -182,6 +182,19 @@ Agreed on 2026-11-13 in place of retry protection alone: logging already preflig
 - **Daily entry.** The last exact copy of the appended entry (one line, or a one-off's header and list) is removed; if it's gone, the notice says so. A daily note the log created is left in place.
 - **Order.** Undo walks back from the latest log. Undoing an older log first isn't offered.
 
+### Short pours
+
+Proposed 2026-11-27; not yet agreed. Pouring the last of a bottle for a one-off, a little under the ¾ oz written, logging refused: "7.2 mL short." The note's stock was a few mL off from the real bottle, which is normal for a bottle tracked by eye.
+
+- **Today it's a dead end.** A shortfall blocks every write, and the short source's **Edit stock** button is the only way on. **Finished** sets the open bottle to 0 mL, which makes the shortfall larger. Getting the log through means switching the open amount from percent to mL and typing what the pour needs, so the log can bring it to 0. Nobody would think to do that.
+- **Proposal: Use what's left.** A short source gets **Use what's left** beside **Edit stock**. Choosing it logs that line as written and takes everything the source holds: the open bottle goes to 0 mL (a short bottle has no sealed spare, or it would have opened one), and other stock in mL goes to 0. The Stock preview shows the After amount like any other change, so the review still shows exactly what will be written, and the change goes into the undo record as usual. It applies per source, so a line split across sources affects only the short one, and it's the same in a recipe's review and a one-off's.
+- **Not automatic.** Accepting small shortfalls on its own (say, under 10 mL) was considered. It would take away the click, but the review would stop matching what's written, and stock that's badly wrong, a bottle that's actually empty, would go unnoticed. A deliberate choice that says what it does keeps both.
+- **Not Edit stock.** Opening **Edit stock** in mL when it comes from a shortfall would still leave the arithmetic to you. Making **Finished** mean "finished by this log" would give one button two meanings.
+- **Open questions.**
+    - Whether the alcohol estimate and the daily entry should use the amount written (the pour you meant) or what the bottle held (the pour you got). The written amount is simpler and usually closer, since the shortfall is mostly stock drift.
+    - Whether to offer it however large the shortfall, or only when it's small next to the pour. A bottle with 2 mL left against a 45 mL pour is more likely wrong stock than a short pour, but **Edit stock** is right there for that.
+    - Whether finishing a bottle this way should offer to add it to the shopping list. Restock's Out tab already lists it.
+
 ### One-off drinks
 
 Agreed on 2026-11-10 and built the same day. Logging needed a recipe note, so a drink made up on the spot meant inventing a name and keeping a file for something not yet worth keeping. That reluctance is likely shared, and an unlogged drink leaves stock wrong.
